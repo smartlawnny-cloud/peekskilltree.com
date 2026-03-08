@@ -7,6 +7,189 @@
   <link href="https://fonts.googleapis.com/css2?family=Elsie:wght@400;900&family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,400&family=Carter+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --black: #0a0a0a; --white: #fff; --off-white: #f7f7f5; --gray: #6b6b6b; --light: #e8e8e4; --border: #d8d8d4; }
+    body { background: var(--off-white); color: var(--black); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; }
+    .page-header { background: var(--black); color: white; padding: 32px 40px 28px; border-bottom: 3px solid var(--black); }
+    .header-logo { font-family: 'Elsie', serif; font-weight: 900; font-size: 1.8rem; color: rgba(255,255,255,0.5); font-style: italic; margin-bottom: 16px; }
+    .header-title { font-family: 'Elsie', serif; font-weight: 900; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.0; color: white; }
+    .header-sub { font-family: 'Averia Serif Libre', serif; font-size: 1rem; color: rgba(255,255,255,0.6); margin-top: 10px; max-width: 540px; line-height: 1.65; }
+    .header-note { display: inline-block; margin-top: 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); font-family: 'Carter One', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 6px 14px; border-radius: 2px; }
+    .form-body { max-width: 720px; margin: 0 auto; padding: 48px 32px 80px; }
+    .form-section { margin-bottom: 48px; }
+    .section-label { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--black); }
+    .section-num { font-family: 'Elsie', serif; font-weight: 900; font-size: 2rem; color: var(--light); line-height: 1; }
+    .section-name { font-family: 'Carter One', sans-serif; font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gray); }
+    .field-group { display: flex; flex-direction: column; gap: 20px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-family: 'Carter One', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray); }
+    label .req { color: var(--black); margin-left: 2px; }
+    input[type="text"], input[type="email"], input[type="url"], select, textarea { background: var(--white); border: 1.5px solid var(--border); border-radius: 4px; padding: 11px 14px; font-family: 'Averia Serif Libre', serif; font-size: 0.95rem; color: var(--black); transition: border-color 0.15s; width: 100%; outline: none; appearance: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--black); }
+    textarea { resize: vertical; min-height: 90px; }
+    .field-hint { font-family: 'Averia Serif Libre', serif; font-style: italic; font-size: 0.8rem; color: var(--gray); line-height: 1.4; }
+    .select-wrap { position: relative; }
+    .select-wrap::after { content: '▾'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 0.8rem; color: var(--gray); }
+    .setup-grid { display: flex; flex-direction: column; gap: 0; border: 1.5px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .setup-row-header { display: grid; grid-template-columns: 100px 1fr; background: var(--black); color: white; padding: 10px 16px; gap: 12px; font-family: 'Carter One', sans-serif; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; }
+    .setup-row-input { display: grid; grid-template-columns: 100px 1fr; gap: 12px; padding: 10px 16px; background: white; border-bottom: 1px solid var(--border); align-items: center; }
+    .setup-row-input:last-child { border-bottom: none; }
+    .setup-part-label { font-family: 'Carter One', sans-serif; font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); display: flex; align-items: center; }
+    .setup-row-input input { border: 1px solid var(--border); border-radius: 3px; padding: 8px 10px; font-size: 0.85rem; }
+    .video-entry { background: white; border: 1.5px solid var(--border); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .video-entry-header { font-family: 'Carter One', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray); }
+    .video-row-fields { display: grid; grid-template-columns: 1fr 100px 1fr; gap: 10px; }
+    .photo-drop { border: 2px dashed var(--border); border-radius: 6px; background: white; padding: 32px 24px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .photo-drop:hover { border-color: var(--black); background: var(--off-white); }
+    .photo-drop-icon { font-size: 2rem; margin-bottom: 8px; }
+    .photo-drop-text { font-family: 'Averia Serif Libre', serif; font-size: 0.9rem; color: var(--gray); line-height: 1.6; }
+    .photo-drop-sub { font-family: 'Carter One', sans-serif; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--border); margin-top: 6px; }
+    input[type="file"] { display: none; }
+    .check-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .check-item { display: flex; align-items: center; gap: 8px; background: white; border: 1.5px solid var(--border); border-radius: 4px; padding: 9px 12px; cursor: pointer; transition: border-color 0.15s; }
+    .check-item:hover { border-color: var(--black); }
+    .check-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--black); flex-shrink: 0; }
+    .check-item span { font-family: 'Averia Serif Libre', serif; font-size: 0.85rem; }
+    .submit-section { border-top: 2px solid var(--black); padding-top: 32px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .submit-note { font-family: 'Averia Serif Libre', serif; font-style: italic; font-size: 0.9rem; color: var(--gray); max-width: 380px; line-height: 1.65; }
+    .btn-submit { background: var(--black); color: white; font-family: 'Carter One', sans-serif; font-size: 0.85rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 16px 40px; border: none; border-radius: 6px; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+    .btn-submit:hover { background: #333; }
+    .success-banner { display: none; background: var(--black); color: white; padding: 20px 32px; border-radius: 6px; margin-bottom: 24px; font-family: 'Averia Serif Libre', serif; font-size: 1rem; line-height: 1.65; }
+    .success-banner strong { font-family: 'Carter One', sans-serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; display: block; margin-bottom: 6px; opacity: 0.6; }
+    .field-divider { height: 1px; background: var(--border); margin: 8px 0; }
+    @media (max-width: 600px) {
+      .page-header { padding: 24px 20px; } .form-body { padding: 32px 20px 60px; }
+      .field-row { grid-template-columns: 1fr; } .check-group { grid-template-columns: repeat(2, 1fr); }
+      .video-row-fields { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="header-logo">2nd Nature</div>
+  <h1 class="header-title">Rider Profile<br>Questionnaire</h1>
+  <p class="header-sub">Fill this out so we can build your page on the 2ntr website — gear specs, video parts, social links, and a photo. Takes about 5 minutes.</p>
+  <span class="header-note">🛹 For 2nd Nature Team Riders Only</span>
+</div>
+
+<div class="form-body">
+  <div class="success-banner" id="successBanner"><strong>✓ Submitted</strong>Got it — we'll build your page and send you a link to review before it goes live.</div>
+
+  <form id="riderForm" onsubmit="handleSubmit(event)">
+
+    <div class="form-section">
+      <div class="section-label"><span class="section-num">01</span><span class="section-name">The Basics</span></div>
+      <div class="field-group">
+        <div class="field-row">
+          <div class="field"><label>First Name <span class="req">*</span></label><input type="text" name="first_name" placeholder="Paul" required></div>
+          <div class="field"><label>Last Name <span class="req">*</span></label><input type="text" name="last_name" placeholder="Hintz" required></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Hometown <span class="req">*</span></label><input type="text" name="hometown" placeholder="Goldens Bridge, NY"></div>
+          <div class="field"><label>Stance <span class="req">*</span></label><div class="select-wrap"><select name="stance" required><option value="">Select...</option><option value="Regular">Regular</option><option value="Goofy">Goofy</option><option value="Switch">Switch</option></select></div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Email (for our records)</label><input type="email" name="email" placeholder="your@email.com"></div>
+          <div class="field"><label>Instagram Handle</label><input type="text" name="instagram" placeholder="@yourhandle"></div>
+        </div>
+        <div class="field full"><label>Short Bio — 2–3 sentences max <span class="req">*</span></label><textarea name="bio" rows="4" placeholder="Where you're from, how you skate, what makes you you."></textarea>
+          <span class="field-hint">This goes word-for-word on your profile page.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label"><span class="section-num">02</span><span class="section-name">Your Current Setup</span></div>
+      <p style="font-family:'Averia Serif Libre',serif;font-size:0.9rem;color:var(--gray);margin-bottom:20px;line-height:1.6;">This goes directly on your page as a “shop what he rides” section. Be as specific as you can — brand, model, and size.</p>
+      <div class="setup-grid">
+        <div class="setup-row-header"><span>Part</span><span>Brand / Model / Size</span></div>
+        <div class="setup-row-input"><span class="setup-part-label">Deck</span><input type="text" name="deck" placeholder="e.g. 5BORO 8.25&quot; Street"></div>
+        <div class="setup-row-input"><span class="setup-part-label">Trucks</span><input type="text" name="trucks" placeholder="e.g. Independent 149 Stage 11"></div>
+        <div class="setup-row-input"><span class="setup-part-label">Wheels</span><input type="text" name="wheels" placeholder="e.g. Ricta 52mm 99a"></div>
+        <div class="setup-row-input"><span class="setup-part-label">Bearings</span><input type="text" name="bearings" placeholder="e.g. Bones Reds"></div>
+        <div class="setup-row-input"><span class="setup-part-label">Shoes</span><input type="text" name="shoes" placeholder="e.g. adidas Busenitz Pro"></div>
+        <div class="setup-row-input"><span class="setup-part-label">Grip</span><input type="text" name="grip" placeholder="e.g. Mob, Jessup, Grizzly..."></div>
+        <div class="setup-row-input"><span class="setup-part-label">Hardware</span><input type="text" name="hardware" placeholder="e.g. 1&quot; standard, Shorty's..."></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label"><span class="section-num">03</span><span class="section-name">Sponsors &amp; Flow</span></div>
+      <div class="field-group">
+        <div class="field"><label>Current sponsors / flow (comma separated)</label><input type="text" name="sponsors" placeholder="e.g. 2nd Nature (shop), adidas (flow), Bones Bearings"><span class="field-hint">List brand first, then relationship in parens. Skip if just riding 2ntr.</span></div>
+        <div class="field"><label>Any sponsors you're looking for?</label><input type="text" name="sponsors_seeking" placeholder="e.g. Looking for a shoe sponsor"></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label"><span class="section-num">04</span><span class="section-name">Video Parts</span></div>
+      <p style="font-family:'Averia Serif Libre',serif;font-size:0.9rem;color:var(--gray);margin-bottom:20px;">List your best 3. These show up as a filmography on your page.</p>
+      <div class="field-group">
+        <div class="video-entry"><div class="video-entry-header">Video Part 1</div><div class="video-row-fields"><div class="field"><label>Title / Project Name</label><input type="text" name="video1_title" placeholder="e.g. PFP6"></div><div class="field"><label>Year</label><input type="text" name="video1_year" placeholder="2024"></div><div class="field"><label>YouTube URL (if online)</label><input type="url" name="video1_url" placeholder="https://youtube.com/..."></div></div></div>
+        <div class="video-entry"><div class="video-entry-header">Video Part 2</div><div class="video-row-fields"><div class="field"><label>Title / Project Name</label><input type="text" name="video2_title" placeholder=""></div><div class="field"><label>Year</label><input type="text" name="video2_year" placeholder=""></div><div class="field"><label>YouTube URL</label><input type="url" name="video2_url" placeholder=""></div></div></div>
+        <div class="video-entry"><div class="video-entry-header">Video Part 3</div><div class="video-row-fields"><div class="field"><label>Title / Project Name</label><input type="text" name="video3_title" placeholder=""></div><div class="field"><label>Year</label><input type="text" name="video3_year" placeholder=""></div><div class="field"><label>YouTube URL</label><input type="url" name="video3_url" placeholder=""></div></div></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label"><span class="section-num">05</span><span class="section-name">Profile Photo</span></div>
+      <div class="field-group">
+        <label for="photoFile" class="photo-drop"><div class="photo-drop-icon">📸</div><div class="photo-drop-text">Drag &amp; drop a photo here, or click to upload<br><span style="font-size:0.75rem;">Action shot preferred. At least 800px wide.</span></div><div class="photo-drop-sub">JPG or PNG</div></label>
+        <input type="file" id="photoFile" name="photo" accept="image/*">
+        <div class="field"><label>Or paste a photo URL / Instagram link</label><input type="url" name="photo_url" placeholder="https://..."></div>
+        <div class="field"><label>Photo credit (photographer name)</label><input type="text" name="photo_credit" placeholder="e.g. @mikesassdv"></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label"><span class="section-num">06</span><span class="section-name">Press &amp; Coverage</span></div>
+      <div class="field-group">
+        <div class="field"><label>Magazine features, website coverage, notable mentions</label><textarea name="press" placeholder="e.g. Thrasher Magazine (thrashermagazine.com/tag/paul-hintz/), Quartersnacks, Skate Nugg"></textarea><span class="field-hint">Include URLs if you have them. We'll link to coverage from your page.</span></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label"><span class="section-num">07</span><span class="section-name">Anything Else</span></div>
+      <div class="field-group">
+        <div class="field"><label>Anything you want on your page that we haven't asked?</label><textarea name="extras" placeholder="Upcoming projects, collabs, events, whatever..."></textarea></div>
+        <div class="field"><label>Anything you DON'T want included?</label><input type="text" name="exclude" placeholder="e.g. Don't mention my old sponsor, keep location vague..."></div>
+      </div>
+    </div>
+
+    <div class="submit-section">
+      <p class="submit-note">We'll build the page and send you a preview link before anything goes live. Usually within a week.</p>
+      <button type="submit" class="btn-submit">Submit →</button>
+    </div>
+  </form>
+</div>
+
+<script>
+function handleSubmit(e) {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  console.log('Rider Questionnaire Submission:', JSON.stringify(data, null, 2));
+  document.getElementById('successBanner').style.display = 'block';
+  e.target.style.opacity = '0.4';
+  e.target.style.pointerEvents = 'none';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+document.getElementById('photoFile').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) { const label = document.querySelector('.photo-drop'); label.querySelector('.photo-drop-text').innerHTML = '✓ ' + file.name + ' ready to submit'; label.style.borderColor = 'var(--black)'; }
+});
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2nd Nature — Rider Profile Form</title>
+  <link href="https://fonts.googleapis.com/css2?family=Elsie:wght@400;900&family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,400&family=Carter+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --black: #0a0a0a;

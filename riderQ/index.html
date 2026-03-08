@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2nd Nature — Rider Profile Form</title>
+  <link href="https://fonts.googleapis.com/css2?family=Elsie:wght@400;900&family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,400&family=Carter+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #fff;
+      --off-white: #f7f7f5;
+      --gray: #6b6b6b;
+      --light: #e8e8e4;
+      --accent: #0a0a0a;
+      --border: #d8d8d4;
+    }
+
+    body {
+      background: var(--off-white);
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .page-header {
+      background: var(--black);
+      color: white;
+      padding: 32px 40px 28px;
+      border-bottom: 3px solid var(--black);
+    }
+    .header-logo {
+      font-family: 'Elsie', serif;
+      font-weight: 900;
+      font-size: 1.8rem;
+      color: rgba(255,255,255,0.5);
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+    .header-title {
+      font-family: 'Elsie', serif;
+      font-weight: 900;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1.0;
+      color: white;
+    }
+    .header-sub {
+      font-family: 'Averia Serif Libre', serif;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 10px;
+      max-width: 540px;
+      line-height: 1.65;
+    }
+    .header-note {
+      display: inline-block;
+      margin-top: 16px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      font-family: 'Carter One', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      padding: 6px 14px;
+      border-radius: 2px;
+    }
+
+    /* ── FORM BODY ── */
+    .form-body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+
+    /* ── SECTION HEADER ── */
+    .form-section {
+      margin-bottom: 48px;
+    }
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--black);
+    }
+    .section-num {
+      font-family: 'Elsie', serif;
+      font-weight: 900;
+      font-size: 2rem;
+      color: var(--light);
+      line-height: 1;
+    }
+    .section-name {
+      font-family: 'Carter One', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+
+    /* ── FIELDS ── */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-family: 'Carter One', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+    label .req { color: var(--black); margin-left: 2px; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="url"],
+    select,
+    textarea {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      padding: 11px 14px;
+      font-family: 'Averia Serif Libre', serif;
+      font-size: 0.95rem;
+      color: var(--black);
+      transition: border-color 0.15s;
+      width: 100%;
+      outline: none;
+      appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--black);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+    .field-hint {
+      font-family: 'Averia Serif Libre', serif;
+      font-style: italic;
+      font-size: 0.8rem;
+      color: var(--gray);
+      line-height: 1.4;
+    }
+
+    /* ── SELECT WRAPPER ── */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '▾';
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+
+    /* ── SETUP TABLE ── */
+    .setup-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .setup-row-header {
+      display: grid;
+      grid-template-columns: 100px 1fr 180px;
+      background: var(--black);
+      color: white;
+      padding: 10px 16px;
+      gap: 12px;
+      font-family: 'Carter One', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .setup-row-input {
+      display: grid;
+      grid-template-columns: 100px 1fr 180px;
+      gap: 12px;
+      padding: 10px 16px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+    .setup-row-input:last-child { border-bottom: none; }
+    .setup-part-label {
+      font-family: 'Carter One', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+      display: flex;
+      align-items: center;
+    }
+    .setup-row-input input,
+    .setup-row-input select {
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
+    .setup-row-input select { padding-right: 28px; }
+
+    /* ── VIDEO ROWS ── */
+    .video-entry {
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .video-entry-header {
+      font-family: 'Carter One', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+    .video-row-fields {
+      display: grid;
+      grid-template-columns: 1fr 100px 1fr;
+      gap: 10px;
+    }
+
+    /* ── PHOTO UPLOAD ── */
+    .photo-drop {
+      border: 2px dashed var(--border);
+      border-radius: 6px;
+      background: white;
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .photo-drop:hover {
+      border-color: var(--black);
+      background: var(--off-white);
+    }
+    .photo-drop-icon { font-size: 2rem; margin-bottom: 8px; }
+    .photo-drop-text {
+      font-family: 'Averia Serif Libre', serif;
+      font-size: 0.9rem;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+    .photo-drop-sub {
+      font-family: 'Carter One', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--border);
+      margin-top: 6px;
+    }
+    input[type="file"] { display: none; }
+
+    /* ── CHECKBOX GROUP ── */
+    .check-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      padding: 9px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .check-item:hover { border-color: var(--black); }
+    .check-item input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      accent-color: var(--black);
+      flex-shrink: 0;
+    }
+    .check-item span {
+      font-family: 'Averia Serif Libre', serif;
+      font-size: 0.85rem;
+    }
+
+    /* ── SUBMIT ── */
+    .submit-section {
+      border-top: 2px solid var(--black);
+      padding-top: 32px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .submit-note {
+      font-family: 'Averia Serif Libre', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--gray);
+      max-width: 380px;
+      line-height: 1.65;
+    }
+    .btn-submit {
+      background: var(--black);
+      color: white;
+      font-family: 'Carter One', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 16px 40px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-submit:hover { background: #333; }
+
+    /* ── SUCCESS STATE ── */
+    .success-banner {
+      display: none;
+      background: var(--black);
+      color: white;
+      padding: 20px 32px;
+      border-radius: 6px;
+      margin-bottom: 24px;
+      font-family: 'Averia Serif Libre', serif;
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+    .success-banner strong {
+      font-family: 'Carter One', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 6px;
+      opacity: 0.6;
+    }
+
+    /* ── DIVIDER ── */
+    .field-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 8px 0;
+    }
+
+    @media (max-width: 600px) {
+      .page-header { padding: 24px 20px; }
+      .form-body { padding: 32px 20px 60px; }
+      .field-row { grid-template-columns: 1fr; }
+      .check-group { grid-template-columns: repeat(2, 1fr); }
+      .setup-row-header,
+      .setup-row-input { grid-template-columns: 80px 1fr; }
+      .setup-row-header > *:last-child,
+      .setup-row-input > *:last-child { display: none; }
+      .video-row-fields { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="header-logo">2nd Nature</div>
+  <h1 class="header-title">Rider Profile<br>Questionnaire</h1>
+  <p class="header-sub">
+    Fill this out so we can build your page on the 2ntr website — gear specs, video parts, social links, and a photo. Takes about 5 minutes.
+  </p>
+  <span class="header-note">🛹 For 2nd Nature Team Riders Only</span>
+</div>
+
+<div class="form-body">
+
+  <div class="success-banner" id="successBanner">
+    <strong>✓ Submitted</strong>
+    Got it — we'll build your page and send you a link to review before it goes live. Stoked to have you on the site.
+  </div>
+
+  <form id="riderForm" onsubmit="handleSubmit(event)">
+
+    <!-- ══ 1. BASICS ═════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="section-label">
+        <span class="section-num">01</span>
+        <span class="section-name">The Basics</span>
+      </div>
+
+      <div class="field-group">
+        <div class="field-row">
+          <div class="field">
+            <label>First Name <span class="req">*</span></label>
+            <input type="text" name="first_name" placeholder="Paul" required>
+          </div>
+          <div class="field">
+            <label>Last Name <span class="req">*</span></label>
+            <input type="text" name="last_name" placeholder="Hintz" required>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Hometown <span class="req">*</span></label>
+            <input type="text" name="hometown" placeholder="Goldens Bridge, NY">
+          </div>
+          <div class="field">
+            <label>Stance <span class="req">*</span></label>
+            <div class="select-wrap">
+              <select name="stance" required>
+                <option value="">Select...</option>
+                <option value="Regular">Regular</option>
+                <option value="Goofy">Goofy</option>
+                <option value="Switch">Switch (ambidextrous)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Email (for our records only)</label>
+            <input type="email" name="email" placeholder="your@email.com">
+          </div>
+          <div class="field">
+            <label>Instagram Handle</label>
+            <input type="text" name="instagram" placeholder="@yourhandle">
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>Short Bio — 2–3 sentences max <span class="req">*</span></label>
+          <textarea name="bio" placeholder="Street skater out of the Hudson Valley. Been skating 2nd Nature since the beginning. Known for..." rows="3"></textarea>
+          <span class="field-hint">Write it how you'd want it to read on your page. We'll clean it up if needed but keep your voice.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 2. YOUR SETUP ═══════════════════════════════ -->
+    <div class="form-section">
+      <div class="section-label">
+        <span class="section-num">02</span>
+        <span class="section-name">Your Current Setup</span>
+      </div>
+      <p style="font-family:'Averia Serif Libre',serif; font-size:0.9rem; color:var(--gray); margin-bottom:20px; line-height:1.6;">
+        This goes directly on your page as a "shop what he rides" section — drives gear sales. Be specific.
+      </p>
+
+      <div class="setup-grid">
+        <div class="setup-row-header">
+          <span>Part</span>
+          <span>Brand / Model / Size</span>
+          <span>In shop at 2ntr?</span>
+        </div>
+
+        <div class="setup-row-input">
+          <span class="setup-part-label">Deck</span>
+          <input type="text" name="deck" placeholder="e.g. 5BORO 8.25&quot; Street">
+          <div class="select-wrap">
+            <select name="deck_stock">
+              <option value="">Not sure</option>
+              <option value="yes">Yes, they carry it</option>
+              <option value="no">Not sure / probably not</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setup-row-input">
+          <span class="setup-part-label">Trucks</span>
+          <input type="text" name="trucks" placeholder="e.g. Independent 149 Stage 11">
+          <div class="select-wrap">
+            <select name="trucks_stock">
+              <option value="">Not sure</option>
+              <option value="yes">Yes, they carry it</option>
+              <option value="no">Not sure / probably not</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setup-row-input">
+          <span class="setup-part-label">Wheels</span>
+          <input type="text" name="wheels" placeholder="e.g. Ricta 52mm 99a">
+          <div class="select-wrap">
+            <select name="wheels_stock">
+              <option value="">Not sure</option>
+              <option value="yes">Yes, they carry it</option>
+              <option value="no">Not sure / probably not</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setup-row-input">
+          <span class="setup-part-label">Bearings</span>
+          <input type="text" name="bearings" placeholder="e.g. Bones Reds">
+          <div class="select-wrap">
+            <select name="bearings_stock">
+              <option value="">Not sure</option>
+              <option value="yes">Yes, they carry it</option>
+              <option value="no">Not sure / probably not</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setup-row-input">
+          <span class="setup-part-label">Shoes</span>
+          <input type="text" name="shoes" placeholder="e.g. adidas Busenitz Pro">
+          <div class="select-wrap">
+            <select name="shoes_stock">
+              <option value="">Not sure</option>
+              <option value="yes">Yes, they carry it</option>
+              <option value="no">Not sure / probably not</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setup-row-input">
+          <span class="setup-part-label">Grip</span>
+          <input type="text" name="grip" placeholder="e.g. Mob, Jessup, Grizzly...">
+          <div class="select-wrap">
+            <select name="grip_stock">
+              <option value="">Not sure</option>
+              <option value="yes">Yes, they carry it</option>
+              <option value="no">Not sure / probably not</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setup-row-input">
+          <span class="setup-part-label">Hardware</span>
+          <input type="text" name="hardware" placeholder="e.g. 1&quot; standard, Shorty's...">
+          <div class="select-wrap">
+            <select name="hardware_stock">
+              <option value="">Not sure</option>
+              <option value="yes">Yes, they carry it</option>
+              <option value="no">Not sure / probably not</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 3. SPONSORS ═════════════════════════════════ -->
+    <div class="form-section">
+      <div class="section-label">
+        <span class="section-num">03</span>
+        <span class="section-name">Sponsors & Flow</span>
+      </div>
+
+      <div class="field-group">
+        <div class="field">
+          <label>Current sponsors / flow (comma separated)</label>
+          <input type="text" name="sponsors" placeholder="e.g. 2nd Nature (shop), adidas (flow), Bones Bearings">
+          <span class="field-hint">List brand first, then relationship in parens. Skip if just riding 2ntr.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 4. VIDEO PARTS ════════════════════════════════ -->
+    <div class="form-section">
+      <div class="section-label">
+        <span class="section-num">04</span>
+        <span class="section-name">Video Parts & Edits</span>
+      </div>
+      <p style="font-family:'Averia Serif Libre',serif; font-size:0.9rem; color:var(--gray); margin-bottom:20px; line-height:1.6;">
+        List your most notable video parts, newest first. Include a YouTube link if you have one — that's what goes on the page.
+      </p>
+
+      <div class="field-group">
+        <div class="video-entry">
+          <span class="video-entry-header">Video Part 1 (most recent)</span>
+          <div class="video-row-fields">
+            <div class="field">
+              <label>Title / Project Name</label>
+              <input type="text" name="video1_title" placeholder="e.g. PFP6 — Mike Sassano">
+            </div>
+            <div class="field">
+              <label>Year</label>
+              <input type="text" name="video1_year" placeholder="2024">
+            </div>
+            <div class="field">
+              <label>YouTube or Vimeo URL</label>
+              <input type="url" name="video1_url" placeholder="https://youtube.com/...">
+            </div>
+          </div>
+        </div>
+
+        <div class="video-entry">
+          <span class="video-entry-header">Video Part 2</span>
+          <div class="video-row-fields">
+            <div class="field">
+              <label>Title / Project Name</label>
+              <input type="text" name="video2_title" placeholder="e.g. 2nd Nature — Eclectic">
+            </div>
+            <div class="field">
+              <label>Year</label>
+              <input type="text" name="video2_year" placeholder="2020">
+            </div>
+            <div class="field">
+              <label>YouTube or Vimeo URL</label>
+              <input type="url" name="video2_url" placeholder="https://youtube.com/...">
+            </div>
+          </div>
+        </div>
+
+        <div class="video-entry">
+          <span class="video-entry-header">Video Part 3</span>
+          <div class="video-row-fields">
+            <div class="field">
+              <label>Title / Project Name</label>
+              <input type="text" name="video3_title" placeholder="e.g. A Day in Yonkers">
+            </div>
+            <div class="field">
+              <label>Year</label>
+              <input type="text" name="video3_year" placeholder="2018">
+            </div>
+            <div class="field">
+              <label>YouTube or Vimeo URL</label>
+              <input type="url" name="video3_url" placeholder="https://youtube.com/...">
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Any other notable video parts or edits?</label>
+          <textarea name="other_videos" placeholder="List anything else worth linking — even if no YouTube URL. Name, year, who filmed it..." rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 5. PHOTO ═════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="section-label">
+        <span class="section-num">05</span>
+        <span class="section-name">Profile Photo</span>
+      </div>
+
+      <div class="field-group">
+        <div class="field">
+          <label for="photoUpload">Action photo <span class="req">*</span></label>
+          <label for="photoUpload" class="photo-drop" id="photoDropZone">
+            <div class="photo-drop-icon">📸</div>
+            <div class="photo-drop-text">
+              Drag & drop a photo here, or click to browse<br>
+              <strong>Action shot preferred</strong> — skating the park or street
+            </div>
+            <div class="photo-drop-sub">JPG or PNG · at least 800px wide · no filters needed</div>
+          </label>
+          <input type="file" id="photoUpload" name="photo" accept="image/jpeg,image/png,image/webp" onchange="handlePhotoSelect(this)">
+          <span class="field-hint">Can't upload right now? Drop a link to a photo or tag us on Instagram and we'll pull it from there.</span>
+        </div>
+
+        <div class="field">
+          <label>Or paste a photo link / Google Drive URL</label>
+          <input type="url" name="photo_url" placeholder="https://...">
+        </div>
+
+        <div class="field">
+          <label>Photo credit (if applicable)</label>
+          <input type="text" name="photo_credit" placeholder="e.g. Mike Sassano (@mikesassdv)">
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 6. PRESS & COVERAGE ════════════════════════════ -->
+    <div class="form-section">
+      <div class="section-label">
+        <span class="section-num">06</span>
+        <span class="section-name">Press & Coverage</span>
+      </div>
+
+      <div class="field-group">
+        <div class="field">
+          <label>Any magazine features, interviews, or website coverage?</label>
+          <textarea name="press" placeholder="e.g. Thrasher Magazine (Barcelona trip, 2020), Quartersnacks (PFP6 premiere), Skate Nugg..." rows="3"></textarea>
+          <span class="field-hint">Even mentions, tags, or premiere write-ups count. Link if you have it.</span>
+        </div>
+
+        <div class="field">
+          <label>Competition results worth noting</label>
+          <input type="text" name="contests" placeholder="e.g. Tampa Am 2019 — top 16, local contest wins...">
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 7. ANYTHING ELSE ════════════════════════════════ -->
+    <div class="form-section">
+      <div class="section-label">
+        <span class="section-num">07</span>
+        <span class="section-name">Anything Else</span>
+      </div>
+
+      <div class="field-group">
+        <div class="field">
+          <label>Other skate spots you're known for, crews, or anything the page should mention</label>
+          <textarea name="other" placeholder="Spots, crews, side projects, anything that makes your skating who you are..." rows="4"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Anything you DON'T want on the page</label>
+          <input type="text" name="exclude" placeholder="Old sponsors, anything sensitive, etc.">
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SUBMIT ═════════════════════════════════════════ -->
+    <div class="submit-section">
+      <p class="submit-note">
+        We'll review this, build your page, and send you a link before anything goes live. Questions? Hit up <strong>info@2ntr.com</strong> or find us at the park.
+      </p>
+      <button type="submit" class="btn-submit">Submit →</button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  function handlePhotoSelect(input) {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const zone = document.getElementById('photoDropZone');
+      zone.innerHTML = `
+        <div class="photo-drop-icon">✅</div>
+        <div class="photo-drop-text"><strong>${file.name}</strong><br>${(file.size / 1024 / 1024).toFixed(1)}MB — looks good</div>
+        <div class="photo-drop-sub">Click to change photo</div>
+      `;
+    }
+  }
+
+  const dropZone = document.getElementById('photoDropZone');
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = '#000';
+    dropZone.style.background = '#f0f0ee';
+  });
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.style.borderColor = '';
+    dropZone.style.background = '';
+  });
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = '';
+    dropZone.style.background = '';
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      document.getElementById('photoUpload').files = e.dataTransfer.files;
+      handlePhotoSelect(document.getElementById('photoUpload'));
+    }
+  });
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    document.getElementById('successBanner').style.display = 'block';
+    document.getElementById('riderForm').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const data = new FormData(e.target);
+    const obj = {};
+    data.forEach((v, k) => { obj[k] = v; });
+    console.log('Rider form submission:', obj);
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paul Hintz | 2nd Nature Team</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Elsie:wght@400;900&family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,400&family=Carter+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --black: #000;
+      --white: #fff;
+      --off-white: #f5f5f5;
+      --gray: #767676;
+      --light-gray: #e8e8e8;
+      --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: 'Inter', helvetica, arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────── */
+    .site-header {
+      border-bottom: 1px solid var(--border);
+      background: white;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-top {
+      display: flex; align-items: center;
+      justify-content: space-between; padding: 12px 32px;
+    }
+    .header-logo { flex: 1; display: flex; justify-content: center; }
+    .logo-text {
+      font-family: 'Elsie', serif; font-size: 2.2rem;
+      font-weight: 900; color: #888; text-decoration: none; font-style: italic;
+    }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-shop-all {
+      border: 1.5px solid var(--black); background: white; color: var(--black);
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600;
+      padding: 8px 18px; cursor: pointer; text-decoration: none;
+      letter-spacing: 0.02em; transition: all 0.15s;
+    }
+    .btn-shop-all:hover { background: var(--black); color: white; }
+    .header-icons { display: flex; gap: 16px; align-items: center; }
+    .icon-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; }
+    .site-nav { border-top: 1px solid var(--border); }
+    .site-nav ul {
+      display: flex; justify-content: center; list-style: none;
+      gap: 32px; padding: 14px 32px;
+    }
+    .site-nav a {
+      font-family: 'Averia Serif Libre', serif; font-size: 0.95rem;
+      color: var(--black); text-decoration: none;
+    }
+    .site-nav a:hover { opacity: 0.6; }
+    .site-nav a.active { font-weight: 700; }
+
+    /* ── TICKER ──────────────────────────────────────────── */
+    .ticker { background: var(--black); color: white; overflow: hidden; padding: 10px 0; }
+    .ticker-inner {
+      display: flex; gap: 60px;
+      animation: ticker 22s linear infinite; white-space: nowrap;
+    }
+    @keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .ticker span {
+      font-family: 'Averia Serif Libre', serif;
+      font-weight: 700; font-size: 0.85rem; letter-spacing: 0.05em;
+    }
+
+    /* ── HERO ────────────────────────────────────────────── */
+    .rider-hero {
+      display: grid; grid-template-columns: 1.15fr 0.85fr;
+      min-height: 540px; border-bottom: 1px solid var(--border);
+    }
+    .hero-photo {
+      background: #ccc; overflow: hidden;
+      display: flex; align-items: stretch;
+    }
+    .photo-placeholder {
+      width: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+      min-height: 480px; background: #d0d0d0;
+    }
+    .photo-placeholder-text {
+      font-family: 'Carter One', sans-serif; font-size: 0.7rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: #888; text-align: center; line-height: 2;
+    }
+    .hero-info {
+      padding: 44px 48px; display: flex;
+      flex-direction: column; justify-content: center; gap: 18px;
+    }
+    .breadcrumb { font-size: 0.8rem; color: var(--gray); display: flex; align-items: center; gap: 8px; }
+    .breadcrumb a { color: var(--gray); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .rider-tag {
+      display: inline-block; background: var(--black); color: white;
+      font-family: 'Carter One', sans-serif; font-size: 0.65rem;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      padding: 5px 14px; border-radius: 2px; width: fit-content;
+    }
+    .rider-name {
+      font-family: 'Elsie', serif; font-weight: 900;
+      font-size: clamp(2.8rem, 5vw, 4.2rem); line-height: 1.0;
+    }
+    .rider-bio {
+      font-family: 'Averia Serif Libre', serif; font-size: 1rem;
+      line-height: 1.75; color: #333; max-width: 380px;
+    }
+
+    /* ── SETUP BLOCK ─────────────────────────────────────── */
+    .setup-block {
+      background: var(--off-white); border-radius: 8px;
+      padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .setup-label {
+      font-family: 'Carter One', sans-serif; font-size: 0.65rem;
+      letter-spacing: 0.25em; text-transform: uppercase; color: var(--gray);
+    }
+    .setup-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+    }
+    .setup-row:last-child { border-bottom: none; }
+    .setup-part {
+      font-family: 'Carter One', sans-serif; font-size: 0.62rem;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); min-width: 68px;
+    }
+    .setup-item {
+      font-family: 'Averia Serif Libre', serif; font-weight: 700; flex: 1; padding: 0 10px;
+    }
+    .setup-shop-link {
+      font-family: 'Carter One', sans-serif; font-size: 0.62rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--black); text-decoration: none; white-space: nowrap;
+      border-bottom: 1px solid var(--black); transition: opacity 0.15s;
+    }
+    .setup-shop-link:hover { opacity: 0.45; }
+
+    .btn-primary {
+      display: block; background: var(--black); color: white;
+      font-family: 'Carter One', sans-serif; font-size: 0.85rem;
+      letter-spacing: 0.15em; text-transform: uppercase; text-align: center;
+      padding: 14px 28px; text-decoration: none; border-radius: 6px;
+      transition: background 0.15s; border: 2px solid var(--black);
+    }
+    .btn-primary:hover { background: #333; }
+    .btn-secondary {
+      display: inline-block; background: white; color: var(--black);
+      font-family: 'Carter One', sans-serif; font-size: 0.85rem;
+      letter-spacing: 0.15em; text-transform: uppercase; text-align: center;
+      padding: 12px 28px; text-decoration: none; border-radius: 6px;
+      border: 2px solid var(--black); transition: all 0.15s;
+    }
+    .btn-secondary:hover { background: var(--black); color: white; }
+
+    .rider-facts {
+      display: flex; gap: 24px; flex-wrap: wrap;
+      padding-top: 4px; border-top: 1px solid var(--border);
+    }
+    .fact { display: flex; flex-direction: column; gap: 2px; }
+    .fact-label {
+      font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--gray); font-family: 'Carter One', sans-serif;
+    }
+    .fact-value { font-family: 'Averia Serif Libre', serif; font-weight: 700; font-size: 0.9rem; }
+
+    /* ── SECTION ─────────────────────────────────────────── */
+    .section { padding: 64px 40px; border-bottom: 1px solid var(--border); }
+    .section-title {
+      font-family: 'Elsie', serif; font-weight: 900;
+      font-size: 2.2rem; text-align: center; margin-bottom: 8px;
+    }
+    .section-sub {
+      font-family: 'Averia Serif Libre', serif; font-size: 1rem;
+      color: var(--gray); text-align: center; margin-bottom: 40px;
+      max-width: 520px; margin-left: auto; margin-right: auto;
+    }
+
+    /* ── PRODUCT GRID ────────────────────────────────────── */
+    .product-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 20px; max-width: 1100px; margin: 0 auto;
+    }
+    .product-card {
+      border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; display: flex; flex-direction: column;
+      transition: box-shadow 0.2s;
+    }
+    .product-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.1); }
+    .product-card.featured { border: 2px solid var(--black); }
+    .product-img {
+      aspect-ratio: 1; display: flex; align-items: center;
+      justify-content: center; font-size: 3rem; position: relative;
+    }
+    .product-badge {
+      position: absolute; top: 10px; left: 10px;
+      background: var(--black); color: white;
+      font-family: 'Carter One', sans-serif; font-size: 0.6rem;
+      letter-spacing: 0.15em; text-transform: uppercase; padding: 3px 10px; border-radius: 2px;
+    }
+    .product-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .product-brand {
+      font-family: 'Carter One', sans-serif; font-size: 0.62rem;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray);
+    }
+    .product-name { font-family: 'Averia Serif Libre', serif; font-weight: 700; font-size: 0.9rem; line-height: 1.35; flex: 1; }
+    .product-note { font-family: 'Averia Serif Libre', serif; font-style: italic; font-size: 0.8rem; color: #555; line-height: 1.4; }
+    .product-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .product-price { font-family: 'Elsie', serif; font-weight: 900; font-size: 1.3rem; }
+    .product-cta {
+      background: var(--black); color: white;
+      font-family: 'Carter One', sans-serif; font-size: 0.65rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 8px 14px; text-decoration: none; border-radius: 4px; transition: background 0.15s;
+    }
+    .product-cta:hover { background: #333; }
+
+    /* ── SETUP TABLE ─────────────────────────────────────── */
+    .complete-setup-section { padding: 64px 40px; border-bottom: 1px solid var(--border); background: var(--off-white); }
+    .setup-table { max-width: 820px; margin: 0 auto; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .setup-table-header {
+      background: var(--black); color: white;
+      display: grid; grid-template-columns: 100px 1fr 110px 130px;
+      padding: 12px 20px; gap: 16px;
+      font-family: 'Carter One', sans-serif; font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+    }
+    .setup-table-row {
+      display: grid; grid-template-columns: 100px 1fr 110px 130px;
+      padding: 14px 20px; gap: 16px;
+      border-bottom: 1px solid var(--border); align-items: center;
+      background: white; transition: background 0.15s;
+    }
+    .setup-table-row:last-child { border-bottom: none; }
+    .setup-table-row:hover { background: #fafafa; }
+    .str-part {
+      font-family: 'Carter One', sans-serif; font-size: 0.62rem;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray);
+    }
+    .str-product { font-family: 'Averia Serif Libre', serif; font-weight: 700; font-size: 0.9rem; }
+    .str-product span { display: block; font-weight: 400; font-style: italic; font-size: 0.78rem; color: #666; margin-top: 2px; }
+    .str-price { font-family: 'Elsie', serif; font-weight: 900; font-size: 1.1rem; }
+    .str-cta {
+      background: var(--black); color: white;
+      font-family: 'Carter One', sans-serif; font-size: 0.62rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 8px 12px; text-decoration: none; border-radius: 4px;
+      text-align: center; transition: background 0.15s;
+    }
+    .str-cta:hover { background: #333; }
+    .setup-total-row {
+      background: var(--black); color: white;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 20px;
+    }
+    .setup-total-label { font-family: 'Carter One', sans-serif; font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; }
+    .setup-total-price { font-family: 'Elsie', serif; font-weight: 900; font-size: 1.7rem; }
+    .setup-total-cta {
+      background: white; color: var(--black);
+      font-family: 'Carter One', sans-serif; font-size: 0.75rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 12px 24px; text-decoration: none; border-radius: 6px; transition: opacity 0.15s;
+    }
+    .setup-total-cta:hover { opacity: 0.8; }
+
+    /* ── VIDEO + SHOP SPLIT ──────────────────────────────── */
+    .video-shop-section { padding: 64px 40px; border-bottom: 1px solid var(--border); }
+    .video-shop-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 56px; max-width: 1050px; margin: 0 auto; align-items: start;
+    }
+    .video-col { display: flex; flex-direction: column; gap: 12px; }
+    .video-thumb {
+      background: #1a1a1a; border-radius: 10px; aspect-ratio: 16/9;
+      position: relative; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .play-circle {
+      width: 56px; height: 56px; background: rgba(255,255,255,0.92);
+      border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 1.2rem; transition: transform 0.2s; z-index: 2;
+    }
+    .video-thumb:hover .play-circle { transform: scale(1.1); }
+    .video-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.75));
+      padding: 20px 16px 14px;
+    }
+    .video-meta-year { font-size: 0.7rem; color: rgba(255,255,255,0.6); font-family: 'Inter', sans-serif; }
+    .video-meta-title { font-family: 'Carter One', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: white; }
+    .video-list { display: flex; flex-direction: column; gap: 2px; }
+    .video-list-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px; background: var(--off-white); border-radius: 6px;
+      cursor: pointer; transition: background 0.15s; text-decoration: none;
+    }
+    .video-list-item:hover { background: var(--light-gray); }
+    .vli-title { font-family: 'Averia Serif Libre', serif; font-weight: 700; font-size: 0.85rem; color: var(--black); }
+    .vli-year { font-family: 'Carter One', sans-serif; font-size: 0.62rem; color: var(--gray); letter-spacing: 0.12em; }
+
+    .shop-col { display: flex; flex-direction: column; gap: 18px; }
+    .shop-col h2 { font-family: 'Elsie', serif; font-weight: 900; font-size: 2rem; line-height: 1.1; }
+    .shop-col p { font-family: 'Averia Serif Libre', serif; font-size: 1rem; line-height: 1.75; color: #444; }
+    .gear-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .gear-tag {
+      background: var(--off-white); border: 1px solid var(--border);
+      font-family: 'Carter One', sans-serif; font-size: 0.65rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 7px 14px; border-radius: 4px; color: var(--black);
+      text-decoration: none; transition: all 0.15s;
+    }
+    .gear-tag:hover { background: var(--black); color: white; border-color: var(--black); }
+
+    /* ── PRESS STRIP ─────────────────────────────────────── */
+    .press-strip {
+      padding: 26px 40px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      gap: 40px; flex-wrap: wrap; background: var(--off-white);
+    }
+    .press-label { font-family: 'Carter One', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray); }
+    .press-logos { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+    .press-logo { font-family: 'Elsie', serif; font-weight: 900; font-size: 1.05rem; color: #bbb; transition: color 0.2s; text-decoration: none; }
+    .press-logo:hover { color: var(--black); }
+
+    /* ── FINAL CTA ───────────────────────────────────────── */
+    .final-cta {
+      background: var(--black); color: white; padding: 64px 40px;
+      text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px;
+    }
+    .final-cta h2 { font-family: 'Elsie', serif; font-weight: 900; font-size: 2.6rem; color: white; }
+    .final-cta p { font-family: 'Averia Serif Libre', serif; font-size: 1.05rem; color: rgba(255,255,255,0.6); max-width: 460px; }
+    .btn-white {
+      display: inline-block; background: white; color: var(--black);
+      font-family: 'Carter One', sans-serif; font-size: 0.85rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 14px 36px; text-decoration: none; border-radius: 6px; transition: opacity 0.15s;
+    }
+    .btn-white:hover { opacity: 0.85; }
+    .btn-white-outline {
+      display: inline-block; background: transparent; color: white;
+      font-family: 'Carter One', sans-serif; font-size: 0.85rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 12px 36px; text-decoration: none; border-radius: 6px;
+      border: 2px solid rgba(255,255,255,0.35); transition: border-color 0.15s;
+    }
+    .btn-white-outline:hover { border-color: white; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    footer { background: #111; color: white; padding: 32px 40px; text-align: center; }
+    footer .footer-logo { font-family: 'Elsie', serif; font-size: 1.6rem; font-weight: 900; color: #555; margin-bottom: 10px; }
+    footer p { font-family: 'Averia Serif Libre', serif; font-size: 0.85rem; color: rgba(255,255,255,0.4); }
+    footer a { color: rgba(255,255,255,0.4); text-decoration: none; }
+    footer a:hover { color: white; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .rider-hero { grid-template-columns: 1fr; }
+      .hero-info { padding: 32px 24px; }
+      .product-grid { grid-template-columns: repeat(2, 1fr); }
+      .video-shop-grid { grid-template-columns: 1fr; }
+      .setup-table-header, .setup-table-row { grid-template-columns: 90px 1fr 90px; }
+      .setup-table-header > *:last-child, .setup-table-row > *:last-child { display: none; }
+      .section { padding: 48px 20px; }
+      .complete-setup-section { padding: 48px 20px; }
+      .site-nav ul { gap: 16px; flex-wrap: wrap; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="header-top">
+    <div style="flex:1"></div>
+    <div class="header-logo">
+      <a href="https://2ntr.com" class="logo-text">2nd Nature</a>
+    </div>
+    <div class="header-actions">
+      <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="btn-shop-all">Shop All</a>
+      <div class="header-icons">
+        <span class="icon-btn">🔍</span>
+        <span class="icon-btn">👤</span>
+        <span class="icon-btn">🛒</span>
+      </div>
+    </div>
+  </div>
+  <nav class="site-nav">
+    <ul>
+      <li><a href="https://2ntr.com/about-us">About Us</a></li>
+      <li><a href="https://2ntr.com/skate">Skate</a></li>
+      <li><a href="https://2ntr.com/membership">Membership</a></li>
+      <li><a href="https://2ntr.com/lessons">Lessons</a></li>
+      <li><a href="https://2ntr.com/camps">Camps</a></li>
+      <li><a href="https://2ntr.com/events">Events</a></li>
+      <li><a href="https://2ntr.com/parties">Parties</a></li>
+      <li><a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="active">Skate Shop</a></li>
+      <li><a href="https://2ntr.com/s/gift-cards">Gift cards</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="ticker">
+  <div class="ticker-inner">
+    <span>🛹 Shop gear used by the 2nd Nature team</span>
+    <span>📦 Decks · Trucks · Wheels · Accessories in stock</span>
+    <span>💳 Price match guarantee — we'll beat any price</span>
+    <span>🛹 Shop gear used by the 2nd Nature team</span>
+    <span>📦 Decks · Trucks · Wheels · Accessories in stock</span>
+    <span>💳 Price match guarantee — we'll beat any price</span>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     HERO — Paul's intro + his setup as instant shop CTAs
+════════════════════════════════════════════════════════ -->
+<section class="rider-hero">
+
+  <div class="hero-photo">
+    <!--
+      REPLACE with:
+      <img src="paul-hintz.jpg" alt="Paul Hintz skating"
+           style="width:100%;height:100%;object-fit:cover;object-position:top">
+    -->
+    <div class="photo-placeholder">
+      <div style="font-size:3rem;opacity:0.2">📸</div>
+      <div class="photo-placeholder-text">
+        Paul Hintz — Action Photo<br>
+        <span style="font-size:0.65rem;opacity:0.6">Source: Facebook · @2ntr Instagram · PFP6 stills</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-info">
+    <div class="breadcrumb">
+      <a href="https://2ntr.com">Home</a> ›
+      <a href="#">Team</a> › Paul Hintz
+    </div>
+
+    <div>
+      <div class="rider-tag">2nd Nature Team Rider</div>
+      <h1 class="rider-name" style="margin-top:10px;">Paul<br>Hintz</h1>
+    </div>
+
+    <p class="rider-bio">
+      Street skater out of Goldens Bridge, NY. Thrasher-featured, PFP6 video part, Barcelona edit, NYC spots. Goofy. Technical. The real deal.
+    </p>
+
+    <!-- PAUL'S SETUP — each row links to the shop category -->
+    <div class="setup-block">
+      <span class="setup-label">🛹 Paul's Setup — Shop What He Rides</span>
+
+      <div class="setup-row">
+        <span class="setup-part">Deck</span>
+        <span class="setup-item">8.25" Street Deck</span>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="setup-shop-link">Shop Decks →</a>
+      </div>
+      <div class="setup-row">
+        <span class="setup-part">Trucks</span>
+        <span class="setup-item">Independent / Thunder</span>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="setup-shop-link">Shop Trucks →</a>
+      </div>
+      <div class="setup-row">
+        <span class="setup-part">Wheels</span>
+        <span class="setup-item">52–54mm, 99a Hard</span>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="setup-shop-link">Shop Wheels →</a>
+      </div>
+      <div class="setup-row">
+        <span class="setup-part">Bearings</span>
+        <span class="setup-item">Bones Reds</span>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="setup-shop-link">Shop Bearings →</a>
+      </div>
+      <div class="setup-row">
+        <span class="setup-part">Shoes</span>
+        <span class="setup-item">adidas Skateboarding</span>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="setup-shop-link">Shop Shoes →</a>
+      </div>
+    </div>
+
+    <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="btn-primary">
+      Shop the 2nd Nature Skate Shop
+    </a>
+
+    <div class="rider-facts">
+      <div class="fact">
+        <span class="fact-label">Hometown</span>
+        <span class="fact-value">Goldens Bridge, NY</span>
+      </div>
+      <div class="fact">
+        <span class="fact-label">Stance</span>
+        <span class="fact-value">Goofy</span>
+      </div>
+      <div class="fact">
+        <span class="fact-label">Shoes</span>
+        <span class="fact-value">adidas (flow)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── PRESS ─────────────────────────────────────────────── -->
+<div class="press-strip">
+  <span class="press-label">Seen in</span>
+  <div class="press-logos">
+    <a href="https://www.thrashermagazine.com/tag/paul-hintz/" class="press-logo" target="_blank">Thrasher</a>
+    <a href="https://quartersnacks.com/2024/07/70-peanut-butter-30-jelly-a-web-premiere-of-mike-sassanos-pfp6-video/" class="press-logo" target="_blank">Quartersnacks</a>
+    <a href="https://skatenugg.com/tag/second-nature/" class="press-logo" target="_blank">Skate Nugg</a>
+    <span class="press-logo" style="cursor:default;">PFP6 · Eclectic · duzzed</span>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     FEATURED PRODUCTS — real inventory from 2ntr shop
+════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title">Shop the Skate Shop</h2>
+  <p class="section-sub">The same brands the 2ntr team rides — in stock at the park and online. 272 products and counting.</p>
+
+  <div class="product-grid">
+
+    <div class="product-card featured">
+      <div class="product-img" style="background:#f0ede8;">
+        🛹
+        <div class="product-badge">Crew Pick</div>
+      </div>
+      <div class="product-body">
+        <span class="product-brand">5BORO</span>
+        <span class="product-name">8.375" 5Ball Andrew Singh Deck</span>
+        <span class="product-note">Singh is Paul's PFP6 crewmate — same NYC street approach, same board brand.</span>
+        <div class="product-footer">
+          <span class="product-price">$64.99</span>
+          <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="product-cta">Shop Now</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-img" style="background:#ece8f0;">🛹</div>
+      <div class="product-body">
+        <span class="product-brand">Polar Skateboards</span>
+        <span class="product-name">Cowboy Cop Deck</span>
+        <span class="product-note">Clean street shape — the kind of board Paul's crew grinds NYC spots on.</span>
+        <div class="product-footer">
+          <span class="product-price">$72.95</span>
+          <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="product-cta">Shop Now</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-img" style="background:#f5f0e8;">🟠</div>
+      <div class="product-body">
+        <span class="product-brand">Ricta</span>
+        <span class="product-name">55mm Nunes Cores Wide 99a</span>
+        <span class="product-note">99a hardness — the street standard. Fast, no flat spots, grinds clean.</span>
+        <div class="product-footer">
+          <span class="product-price">$39.95</span>
+          <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="product-cta">Shop Now</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-img" style="background:#edf0f5;">⚙️</div>
+      <div class="product-body">
+        <span class="product-brand">Bones</span>
+        <span class="product-name">Bones REDS Bearings 8 Pack</span>
+        <span class="product-note">Industry standard. What every serious street skater runs — including Paul.</span>
+        <div class="product-footer">
+          <span class="product-price">$24.95</span>
+          <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="product-cta">Shop Now</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-img" style="background:#f0f5e8;">🟡</div>
+      <div class="product-body">
+        <span class="product-brand">OJ Wheels</span>
+        <span class="product-name">54mm Vianna TamTam Elite 99a</span>
+        <span class="product-note">Street shape, hard duro. Technical skating needs wheels that slide true.</span>
+        <div class="product-footer">
+          <span class="product-price">$39.95</span>
+          <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="product-cta">Shop Now</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-img" style="background:#f5ede8;">
+        🛹
+        <div class="product-badge">Complete</div>
+      </div>
+      <div class="product-body">
+        <span class="product-brand">Santa Cruz</span>
+        <span class="product-name">7.75" Mini Screaming Hand Complete</span>
+        <span class="product-note">Ready to skate out of the box. Great first setup or gift for a new skater.</span>
+        <div class="product-footer">
+          <span class="product-price">$108.95</span>
+          <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="product-cta">Shop Now</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-img" style="background:#eef5ee;">🛹</div>
+      <div class="product-body">
+        <span class="product-brand">Dais Skateboards</span>
+        <span class="product-name">8.25" Cowboy Logo Deck</span>
+        <span class="product-note">NYC underground label. The exact kind of brand the 2ntr crew supports.</span>
+        <div class="product-footer">
+          <span class="product-price">$65.00</span>
+          <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="product-cta">Shop Now</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-img" style="background:#f5e8e8;">🔴</div>
+      <div class="product-body">
+        <span class="product-brand">Slime Balls</span>
+        <span class="product-name">56mm Dressen Pup Green 97a</span>
+        <span class="product-note">Street/park crossover. Works on 2ntr's ramps and Westchester concrete alike.</span>
+        <div class="product-footer">
+          <span class="product-price">$37.95</span>
+          <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="product-cta">Shop Now</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center; margin-top:36px;">
+    <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="btn-primary" style="display:inline-block;">
+      View All 272 Products →
+    </a>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     BUILD YOUR SETUP — part-by-part like Paul's
+════════════════════════════════════════════════════════ -->
+<section class="complete-setup-section">
+  <h2 class="section-title">Build a Setup Like Paul's</h2>
+  <p class="section-sub">NYC street skating calls for a specific build. Every part below is in stock at 2nd Nature.</p>
+
+  <div class="setup-table">
+    <div class="setup-table-header">
+      <span>Part</span>
+      <span>What Paul Runs & Why</span>
+      <span>Price</span>
+      <span>Get It</span>
+    </div>
+    <div class="setup-table-row">
+      <span class="str-part">Deck</span>
+      <div class="str-product">8.25" Street Deck <span>Wider = more stable for tech tricks, hubbas, and big out-ledges.</span></div>
+      <span class="str-price">$60–79</span>
+      <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="str-cta">Shop Decks</a>
+    </div>
+    <div class="setup-table-row">
+      <span class="str-part">Trucks</span>
+      <div class="str-product">Independent / Thunder 149-159mm <span>Match width to deck. Street skaters need grind feel + durability.</span></div>
+      <span class="str-price">In store</span>
+      <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="str-cta">Ask In Store</a>
+    </div>
+    <div class="setup-table-row">
+      <span class="str-part">Wheels</span>
+      <div class="str-product">52–54mm, 99a Hardness <span>Hard wheels for street. Small = lower center of gravity = more control.</span></div>
+      <span class="str-price">$37–40</span>
+      <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="str-cta">Shop Wheels</a>
+    </div>
+    <div class="setup-table-row">
+      <span class="str-part">Bearings</span>
+      <div class="str-product">Bones Reds 8-Pack <span>Default choice for every serious street skater. Fast, long-lasting.</span></div>
+      <span class="str-price">$24.95</span>
+      <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="str-cta">Shop Bearings</a>
+    </div>
+    <div class="setup-table-row">
+      <span class="str-part">Hardware</span>
+      <div class="str-product">1" Mounting Hardware <span>Standard for flat setup. Goes on fast, keeps everything tight.</span></div>
+      <span class="str-price">$4–8</span>
+      <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="str-cta">Shop Accessories</a>
+    </div>
+    <div class="setup-table-row">
+      <span class="str-part">Grip</span>
+      <div class="str-product">Mob / Jessup Grip Tape <span>Consistent traction at the park and on NYC concrete.</span></div>
+      <span class="str-price">$8–12</span>
+      <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="str-cta">Shop Accessories</a>
+    </div>
+    <div class="setup-total-row">
+      <span class="setup-total-label">💳 Complete street setup</span>
+      <span class="setup-total-price">~$150–180</span>
+      <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="setup-total-cta">Build Your Setup →</a>
+    </div>
+  </div>
+
+  <p style="text-align:center; margin-top:18px; font-family:'Averia Serif Libre',serif; font-style:italic; font-size:0.9rem; color:var(--gray);">
+    Not sure what to get? Come into the shop — the team will set you up right.
+  </p>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     VIDEO + GEAR CALLOUT
+     Seeing him skate = wanting his gear
+════════════════════════════════════════════════════════ -->
+<section class="video-shop-section">
+  <div class="video-shop-grid">
+
+    <div class="video-col">
+      <h2 class="section-title" style="text-align:left; font-size:2rem;">Watch Paul Skate</h2>
+      <p style="font-family:'Averia Serif Libre',serif; font-size:0.95rem; color:#555; line-height:1.7;">
+        PFP6 dropped on Quartersnacks in 2024. Paul's part covers NYC rooftops, high-bust street spots, and the kind of skating that gets Thrasher coverage.
+      </p>
+      <div class="video-thumb" onclick="window.open('https://www.youtube.com/results?search_query=PFP6+Mike+Sassano+skate+video+2024','_blank')">
+        <div class="play-circle">▶</div>
+        <div class="video-overlay">
+          <div class="video-meta-year">2024 — Premiered on Quartersnacks</div>
+          <div class="video-meta-title">PFP6 — Mike Sassano</div>
+        </div>
+      </div>
+      <div class="video-list">
+        <a class="video-list-item" href="https://www.youtube.com/results?search_query=2nd+Nature+Barcelona+edit+2020" target="_blank">
+          <span class="vli-title">Barcelona — Days Before Lockdown</span>
+          <span class="vli-year">2020</span>
+        </a>
+        <a class="video-list-item" href="https://www.youtube.com/results?search_query=PFP5+Mike+Sassano+skate" target="_blank">
+          <span class="vli-title">PFP5 — Mike Sassano</span>
+          <span class="vli-year">2018</span>
+        </a>
+        <a class="video-list-item" href="https://www.youtube.com/results?search_query=2nd+Nature+Eclectic+skate" target="_blank">
+          <span class="vli-title">2nd Nature — Eclectic</span>
+          <span class="vli-year">Full Length</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="shop-col">
+      <h2>Get the Gear<br>You See Him Ride</h2>
+      <p>
+        The boards, wheels, and adidas shoes in Paul's videos are the same type of gear we carry at 2nd Nature. Skater-owned means we stock what the team actually uses.
+      </p>
+      <div class="gear-tags">
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="gear-tag">Street Decks</a>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="gear-tag">99a Wheels</a>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="gear-tag">Bones Reds</a>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="gear-tag">Completes</a>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="gear-tag">Accessories</a>
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="gear-tag">Apparel</a>
+      </div>
+      <div style="background:var(--off-white); border-radius:8px; padding:16px 18px;">
+        <p style="font-size:0.85rem; color:#555;">
+          <strong style="font-family:'Carter One',sans-serif; font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase; display:block; margin-bottom:6px;">Price Match Guarantee</strong>
+          Find it cheaper somewhere else? We'll beat it. Skater-owned means we don't mark up — we just keep it stocked.
+        </p>
+      </div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="btn-primary" style="flex:1;">Shop All Gear</a>
+        <a href="https://2ntr.com/s/gift-cards" class="btn-secondary" style="flex:1;">Gift Cards</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── FINAL CTA ──────────────────────────────────────────── -->
+<section class="final-cta">
+  <h2>272 Products.<br>One Skater-Owned Shop.</h2>
+  <p>Decks, trucks, wheels, completes, accessories — all hand-picked by the 2nd Nature team. In Peekskill, NY since 2004.</p>
+  <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center;">
+    <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK" class="btn-white">Shop the Skate Shop</a>
+    <a href="https://2ntr.com/s/gift-cards" class="btn-white-outline">Gift Cards</a>
+  </div>
+  <p style="font-size:0.8rem; color:rgba(255,255,255,0.3); margin-top:8px;">
+    1 Highland Industrial Park · Peekskill, NY 10566 · (914) 402-4624
+  </p>
+</section>
+
+<footer>
+  <div class="footer-logo">2nd Nature</div>
+  <p>Est. 2004 · Peekskill, NY · Skater Owned & Operated</p>
+  <p style="margin-top:8px;">
+    <a href="https://2ntr.com/about-us">About</a> &nbsp;·&nbsp;
+    <a href="https://www.2ntr.com/shop/skate-shop/4NDEJBJH6NPP5N2IXIYRNTPK">Shop</a> &nbsp;·&nbsp;
+    <a href="https://2ntr.com/membership">Membership</a> &nbsp;·&nbsp;
+    <a href="https://2ntr.com/camps">Camps</a> &nbsp;·&nbsp;
+    <a href="mailto:info@2ntr.com">info@2ntr.com</a>
+  </p>
+</footer>
+
+</body>
+</html>

@@ -190,7 +190,7 @@
           </thead>
           <tbody>
             <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:.75rem 1rem;"><strong>12&quot; Chipper</strong></td>
+              <td style="padding:.75rem 1rem;"><strong>12&quot; Drum Chipper</strong></td>
               <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">By crew</td>
               <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">$44</td>
               <td style="padding:.75rem 1rem;text-align:center;">$350</td>
@@ -212,77 +212,6 @@
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <!-- Package Rates -->
-      <h2 style="margin-top:2.5rem;">Package Day Rates</h2>
-      <p style="color:var(--text-light);margin-bottom:1.5rem;">Common crew + equipment combinations. Each line shows exactly what&rsquo;s included and how the total is built.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;">
-
-        <!-- Package 1 -->
-        <div style="border:2px solid var(--green-dark);border-radius:10px;overflow:hidden;">
-          <div style="background:var(--green-dark);color:var(--white);padding:1rem 1.25rem;">
-            <div style="font-size:1rem;font-weight:600;opacity:.85;text-transform:uppercase;letter-spacing:.05em;">Climb &amp; Chip</div>
-            <div style="font-size:2rem;font-weight:700;line-height:1.1;margin-top:.2rem;">$1,440<span style="font-size:1rem;font-weight:400;opacity:.75;"> / day</span></div>
-            <div style="font-size:.875rem;opacity:.7;margin-top:.2rem;">&#8776;&nbsp;$180 / hr</div>
-          </div>
-          <div style="padding:1rem 1.25rem;">
-            <table style="width:100%;font-size:.93rem;border-collapse:collapse;">
-              <tr style="border-bottom:1px solid var(--border);">
-                <td style="padding:.4rem 0;color:var(--text-light);">Lead Climber</td>
-                <td style="padding:.4rem 0;text-align:right;font-weight:600;">$450</td>
-              </tr>
-              <tr style="border-bottom:1px solid var(--border);">
-                <td style="padding:.4rem 0;color:var(--text-light);">2 Groundsmen</td>
-                <td style="padding:.4rem 0;text-align:right;font-weight:600;">$640</td>
-              </tr>
-              <tr style="border-bottom:2px solid var(--green-dark);">
-                <td style="padding:.4rem 0;color:var(--text-light);">12&quot; Chipper</td>
-                <td style="padding:.4rem 0;text-align:right;font-weight:600;">$350</td>
-              </tr>
-              <tr>
-                <td style="padding:.5rem 0;font-weight:700;">Total</td>
-                <td style="padding:.5rem 0;text-align:right;font-weight:700;color:var(--green-dark);">$1,440</td>
-              </tr>
-            </table>
-            <p style="font-size:.875rem;color:var(--text-light);margin-top:.75rem;margin-bottom:0;">Best for: standard tree removal with full cleanup. No bucket needed.</p>
-          </div>
-        </div>
-
-        <!-- Package 2 -->
-        <div style="border:2px solid var(--green-dark);border-radius:10px;overflow:hidden;">
-          <div style="background:var(--green-dark);color:var(--white);padding:1rem 1.25rem;">
-            <div style="font-size:1rem;font-weight:600;opacity:.85;text-transform:uppercase;letter-spacing:.05em;">Full Production</div>
-            <div style="font-size:2rem;font-weight:700;line-height:1.1;margin-top:.2rem;">$2,390<span style="font-size:1rem;font-weight:400;opacity:.75;"> / day</span></div>
-            <div style="font-size:.875rem;opacity:.7;margin-top:.2rem;">&#8776;&nbsp;$299 / hr</div>
-          </div>
-          <div style="padding:1rem 1.25rem;">
-            <table style="width:100%;font-size:.93rem;border-collapse:collapse;">
-              <tr style="border-bottom:1px solid var(--border);">
-                <td style="padding:.4rem 0;color:var(--text-light);">Lead Climber</td>
-                <td style="padding:.4rem 0;text-align:right;font-weight:600;">$450</td>
-              </tr>
-              <tr style="border-bottom:1px solid var(--border);">
-                <td style="padding:.4rem 0;color:var(--text-light);">2 Groundsmen</td>
-                <td style="padding:.4rem 0;text-align:right;font-weight:600;">$640</td>
-              </tr>
-              <tr style="border-bottom:1px solid var(--border);">
-                <td style="padding:.4rem 0;color:var(--text-light);">75 ft Bucket Truck + Op.</td>
-                <td style="padding:.4rem 0;text-align:right;font-weight:600;">$950</td>
-              </tr>
-              <tr style="border-bottom:2px solid var(--green-dark);">
-                <td style="padding:.4rem 0;color:var(--text-light);">12&quot; Chipper</td>
-                <td style="padding:.4rem 0;text-align:right;font-weight:600;">$350</td>
-              </tr>
-              <tr>
-                <td style="padding:.5rem 0;font-weight:700;">Total</td>
-                <td style="padding:.5rem 0;text-align:right;font-weight:700;color:var(--green-dark);">$2,390</td>
-              </tr>
-            </table>
-            <p style="font-size:.875rem;color:var(--text-light);margin-top:.75rem;margin-bottom:0;">Best for: large removals, tight access, or jobs where a bucket replaces climbing.</p>
-          </div>
-        </div>
-
       </div>
 
       <!-- ── Job Cost Calculator ─────────────────────────────────────── -->
@@ -342,7 +271,7 @@
             <div class="calc-row">
               <label class="calc-label">
                 <input type="checkbox" id="chk-chipper" checked onchange="calcUpdate()">
-                <span>12&quot; Chipper</span>
+                <span>12&quot; Drum Chipper</span>
               </label>
               <span class="calc-price" id="pr-chipper">$350</span>
             </div>
@@ -470,7 +399,7 @@
           document.getElementById('pr-ground').innerHTML = gCount > 0 ? '$' + gv.toLocaleString() : '&mdash;';
           document.getElementById('pr-ground').style.color = gCount > 0 ? '' : 'var(--text-light)';
 
-          item('chk-chipper', 'pr-chipper', '12&quot; Chipper',       'chipper');
+          item('chk-chipper', 'pr-chipper', '12&quot; Drum Chipper',       'chipper');
           item('chk-bucket',  'pr-bucket',  '75ft Bucket Truck',   'bucket');
           item('chk-loader',  'pr-loader',  'Loader',               'loader');
 

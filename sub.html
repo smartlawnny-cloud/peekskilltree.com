@@ -310,8 +310,42 @@
 
         </div>
 
+        <!-- Travel Time -->
+        <div style="padding-top:1.75rem;margin-top:1.75rem;border-top:2px dashed var(--border);">
+          <div style="font-weight:700;margin-bottom:.25rem;">Travel Time
+            <span style="font-size:.82rem;font-weight:400;color:var(--text-light);"> &mdash; yard to yard from Peekskill, NY</span>
+          </div>
+          <p style="font-size:.85rem;color:var(--text-light);margin-bottom:.9rem;">Drive time is calculated round trip and added to your estimate at the crew hourly rate.</p>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+            <input type="text" id="job-address"
+              placeholder="Job address or city, NY"
+              style="flex:1;min-width:200px;padding:.5rem .8rem;border:2px solid var(--border);border-radius:8px;font-size:.95rem;"
+              onkeydown="if(event.key===&apos;Enter&apos;)calcTravel()">
+            <button id="travel-btn" onclick="calcTravel()"
+              style="padding:.5rem 1.2rem;background:var(--green-dark);color:white;border:none;border-radius:8px;cursor:pointer;font-size:.95rem;font-weight:600;white-space:nowrap;">
+              Calculate
+            </button>
+          </div>
+          <div id="travel-error" style="color:#c0392b;font-size:.87rem;margin-top:.5rem;display:none;"></div>
+          <div id="travel-map"
+            style="height:240px;border-radius:8px;margin-top:1rem;display:none;border:1px solid var(--border);overflow:hidden;"></div>
+          <div id="travel-result"
+            style="display:none;margin-top:.9rem;padding:.85rem 1rem;background:var(--white);border:1px solid var(--border);border-radius:8px;display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;">
+              <div>
+                <div id="travel-summary" style="font-weight:700;font-size:.97rem;"></div>
+                <div id="travel-detail"  style="font-size:.83rem;color:var(--text-light);margin-top:.2rem;"></div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:.78rem;color:var(--text-light);">Travel added to total</div>
+                <div id="travel-cost" style="font-size:1.25rem;font-weight:800;color:var(--green-dark);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Total panel -->
-        <div style="background:var(--green-dark);border-radius:10px;padding:1.25rem 1.5rem;color:var(--white);">
+        <div style="background:var(--green-dark);border-radius:10px;padding:1.25rem 1.5rem;color:var(--white);margin-top:1.75rem;">
           <div id="calc-breakdown" style="font-size:.9rem;opacity:.8;line-height:1.9;margin-bottom:.85rem;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:.75rem;"></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem;">
             <div>
@@ -339,17 +373,24 @@
       </style>
 
       <script>
-        var gCount = 2;
-        var durHours = 8;
+        /* ── State ───────────────────────────────────────────────── */
+        var gCount    = 2;
+        var durHours  = 8;
+        var travelMins = 0;       /* one-way minutes; 0 = no travel added */
+        var leafletReady = false;
+        var travelMap = null;
+        var routeLayer = null;
 
-        /* half_day, full_day, hourly */
+        var BASE_LAT = 41.2953, BASE_LNG = -73.9196; /* Peekskill yard */
+
+        /* ── Rates: [half_day, full_day, hourly] ─────────────────── */
         var RATES = {
           climber: [225,  450,  56],
           ground:  [160,  320,  40],
           chipper: [175,  350,  44],
           bucket:  [475,  950, 119],
           loader:  [200,  350,  40],
-          trailer: [ 50,  100,  13]  /* flat daily fee */
+          trailer: [ 50,  100,  13]
         };
 
         function rate(key, h) {
@@ -359,8 +400,18 @@
           return Math.round(r[2] * h);
         }
 
-        function $f(n) { return n === 0 ? '&mdash;' : '$' + n.toLocaleString(); }
+        /* Hourly rate for all active crew — used for travel billing */
+        function crewHourly() {
+          var hr = 0;
+          if (document.getElementById('chk-climber').checked) hr += RATES.climber[2];
+          hr += gCount * RATES.ground[2];
+          if (document.getElementById('chk-chipper').checked) hr += RATES.chipper[2];
+          if (document.getElementById('chk-bucket').checked)  hr += RATES.bucket[2];
+          if (document.getElementById('chk-loader').checked)  hr += RATES.loader[2];
+          return hr;
+        }
 
+        /* ── Duration buttons ────────────────────────────────────── */
         function setDur(v) {
           durHours = (v === 'custom') ? (parseInt(document.getElementById('custom-hrs').value)||6) : v;
           var custom = (v === 'custom');
@@ -368,34 +419,35 @@
           document.getElementById('custom-hr-label').style.display = custom ? 'inline' : 'none';
           document.querySelectorAll('.dur-btn').forEach(function(b){
             var active = (b.dataset.val == String(v));
-            b.style.border      = active ? '2px solid var(--green-dark)' : '2px solid var(--border)';
-            b.style.background  = active ? 'var(--green-dark)' : 'var(--white)';
-            b.style.color       = active ? 'var(--white)' : '';
-            b.style.fontWeight  = active ? '600' : '';
+            b.style.border     = active ? '2px solid var(--green-dark)' : '2px solid var(--border)';
+            b.style.background = active ? 'var(--green-dark)' : 'var(--white)';
+            b.style.color      = active ? 'var(--white)' : '';
+            b.style.fontWeight = active ? '600' : '';
           });
           calcUpdate();
         }
 
+        /* ── Loader / Trailer link ───────────────────────────────── */
         function onLoaderChange() {
-          var loaderOn = document.getElementById('chk-loader').checked;
-          var trailer  = document.getElementById('chk-trailer');
-          trailer.checked  = loaderOn;
-          trailer.disabled = !loaderOn;
-          trailer.style.opacity = loaderOn ? '1' : '.45';
+          var on = document.getElementById('chk-loader').checked;
+          var t  = document.getElementById('chk-trailer');
+          t.checked = on; t.disabled = !on;
+          t.style.opacity = on ? '1' : '.45';
           calcUpdate();
         }
 
+        /* ── Groundsman counter ──────────────────────────────────── */
         function adjGround(d) {
           gCount = Math.max(0, Math.min(6, gCount + d));
           document.getElementById('ground-ct').textContent = gCount;
           calcUpdate();
         }
 
+        /* ── Main calculator ─────────────────────────────────────── */
         function calcUpdate() {
-          var h = durHours;
-          if (durHours === 'custom') {
-            h = parseInt(document.getElementById('custom-hrs').value) || 6;
-          }
+          var h = (durHours === 'custom')
+            ? (parseInt(document.getElementById('custom-hrs').value) || 6)
+            : durHours;
 
           var lines = [], total = 0;
 
@@ -408,34 +460,146 @@
             if (on && v > 0) {
               total += v;
               var lbl = qty > 1 ? qty + '&times; ' + label : label;
-              lines.push('<span style="opacity:.75">' + lbl + '</span><span style="float:right;font-weight:600">$' + v.toLocaleString() + '</span>');
+              lines.push('<span style="opacity:.75">' + lbl + '</span>'
+                + '<span style="float:right;font-weight:600">$' + v.toLocaleString() + '</span>');
             }
             document.getElementById(prId).innerHTML = on ? '$' + v.toLocaleString() : '&mdash;';
             document.getElementById(prId).style.color = on ? '' : 'var(--text-light)';
           }
 
-          item('chk-climber', 'pr-climber', 'Lead Climber',      'climber');
-          /* groundsman: no checkbox, uses counter */
+          item('chk-climber', 'pr-climber', 'Lead Climber',        'climber');
           var gv = rate('ground', h) * gCount;
           if (gCount > 0) {
             total += gv;
-            lines.push('<span style="opacity:.75">' + gCount + '&times; Groundsman</span><span style="float:right;font-weight:600">$' + gv.toLocaleString() + '</span>');
+            lines.push('<span style="opacity:.75">' + gCount + '&times; Groundsman</span>'
+              + '<span style="float:right;font-weight:600">$' + gv.toLocaleString() + '</span>');
           }
           document.getElementById('pr-ground').innerHTML = gCount > 0 ? '$' + gv.toLocaleString() : '&mdash;';
           document.getElementById('pr-ground').style.color = gCount > 0 ? '' : 'var(--text-light)';
 
-          item('chk-chipper',  'pr-chipper',  'Brush Bandit Chipper', 'chipper');
-          item('chk-bucket',   'pr-bucket',   '75ft Bucket Truck',   'bucket');
-          item('chk-loader',   'pr-loader',   'Giant Loader',        'loader');
-          item('chk-trailer',  'pr-trailer',  'Trailer',             'trailer');
+          item('chk-chipper',  'pr-chipper', 'Brush Bandit Chipper', 'chipper');
+          item('chk-bucket',   'pr-bucket',  '75ft Bucket Truck',    'bucket');
+          item('chk-loader',   'pr-loader',  'Giant Loader',         'loader');
+          item('chk-trailer',  'pr-trailer', 'Trailer',              'trailer');
+
+          /* Travel line */
+          if (travelMins > 0) {
+            var rtHrs   = (travelMins * 2) / 60;
+            var tCost   = Math.round(crewHourly() * rtHrs);
+            total += tCost;
+            var rtLabel = formatMins(travelMins * 2);
+            lines.push('<span style="opacity:.75">Travel (' + rtLabel + ' round trip)</span>'
+              + '<span style="float:right;font-weight:600">$' + tCost.toLocaleString() + '</span>');
+            document.getElementById('travel-cost').textContent = '+$' + tCost.toLocaleString();
+          }
 
           var durLabel = h === 4 ? 'Half Day (4 hr)' : h === 8 ? 'Full Day (8 hr)' : 'Custom (' + h + ' hr)';
           document.getElementById('calc-breakdown').innerHTML = lines.join('<br>');
-          document.getElementById('calc-total').textContent = '$' + total.toLocaleString();
+          document.getElementById('calc-total').textContent   = '$' + total.toLocaleString();
           document.getElementById('calc-dur-note').textContent = durLabel;
         }
 
-        /* custom hours input updates live */
+        function formatMins(m) {
+          if (m < 60) return m + ' min';
+          var h = Math.floor(m / 60), rm = m % 60;
+          return h + 'h ' + (rm > 0 ? rm + 'm' : '');
+        }
+
+        /* ── Leaflet lazy loader ─────────────────────────────────── */
+        function loadLeaflet(cb) {
+          if (leafletReady) { cb(); return; }
+          var css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+          document.head.appendChild(css);
+          var js = document.createElement('script');
+          js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          js.onload = function() { leafletReady = true; cb(); };
+          document.head.appendChild(js);
+        }
+
+        /* ── Travel calculator ───────────────────────────────────── */
+        function calcTravel() {
+          var addr = document.getElementById('job-address').value.trim();
+          if (!addr) return;
+
+          var btn = document.getElementById('travel-btn');
+          btn.textContent = 'Calculating…';
+          btn.disabled = true;
+          document.getElementById('travel-error').style.display  = 'none';
+          document.getElementById('travel-result').style.display = 'none';
+
+          /* Step 1: Geocode with Nominatim */
+          fetch('https://nominatim.openstreetmap.org/search?q='
+            + encodeURIComponent(addr) + '&format=json&limit=1&countrycodes=us',
+            { headers: { 'Accept-Language': 'en' } })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (!data.length) throw new Error('Address not found. Try a city name or full address.');
+            var jLat = parseFloat(data[0].lat), jLng = parseFloat(data[0].lon);
+
+            /* Step 2: Route via OSRM (free, no key) */
+            return fetch('https://router.project-osrm.org/route/v1/driving/'
+              + BASE_LNG + ',' + BASE_LAT + ';'
+              + jLng + ',' + jLat
+              + '?overview=full&geometries=geojson')
+            .then(function(r) { return r.json(); })
+            .then(function(rd) {
+              return { lat: jLat, lng: jLng, route: rd.routes[0] };
+            });
+          })
+          .then(function(res) {
+            travelMins = Math.ceil(res.route.duration / 60);
+            var miles  = Math.round(res.route.distance * 0.000621371);
+
+            /* Step 3: Draw map with Leaflet */
+            loadLeaflet(function() {
+              var mapEl = document.getElementById('travel-map');
+              mapEl.style.display = 'block';
+
+              if (!travelMap) {
+                travelMap = L.map('travel-map', { scrollWheelZoom: false });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  { attribution: '&copy; OpenStreetMap' }).addTo(travelMap);
+              }
+              if (routeLayer) travelMap.removeLayer(routeLayer);
+
+              var coords = res.route.geometry.coordinates.map(function(c){ return [c[1],c[0]]; });
+              var greenIcon = { radius:9, fillColor:'#2d6a2d', color:'#fff', weight:2, fillOpacity:1 };
+              var redIcon   = { radius:9, fillColor:'#c0392b', color:'#fff', weight:2, fillOpacity:1 };
+
+              routeLayer = L.layerGroup([
+                L.polyline(coords, { color:'#2d6a2d', weight:5, opacity:.8 }),
+                L.circleMarker([BASE_LAT, BASE_LNG], greenIcon)
+                  .bindPopup('<strong>Second Nature</strong><br>Peekskill, NY'),
+                L.circleMarker([res.lat, res.lng], redIcon)
+                  .bindPopup('<strong>Job Site</strong>')
+              ]).addTo(travelMap);
+              travelMap.fitBounds(L.polyline(coords).getBounds(), { padding:[24,24] });
+            });
+
+            /* Step 4: Show summary */
+            var rtMins = travelMins * 2;
+            document.getElementById('travel-summary').textContent =
+              travelMins + ' min each way  ·  ' + formatMins(rtMins) + ' round trip  ·  ' + miles + ' mi';
+            document.getElementById('travel-detail').textContent =
+              'Travel billed at crew hourly rate · updates with crew selection';
+            document.getElementById('travel-result').style.display = 'block';
+
+            calcUpdate();
+          })
+          .catch(function(e) {
+            travelMins = 0;
+            document.getElementById('travel-error').textContent = e.message || 'Could not calculate route. Check the address and try again.';
+            document.getElementById('travel-error').style.display = 'block';
+          })
+          .finally(function() {
+            btn.textContent = 'Calculate';
+            btn.disabled = false;
+          });
+        }
+
+        /* custom hours live update */
         document.getElementById('custom-hrs').addEventListener('input', function() {
           if (durHours === 'custom') calcUpdate();
         });

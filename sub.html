@@ -204,11 +204,18 @@
               <td style="padding:.75rem 1rem;text-align:center;">$475</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:.75rem 1rem;"><strong>Loader</strong></td>
+              <td style="padding:.75rem 1rem;"><strong>Giant Loader</strong></td>
               <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">By crew</td>
               <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">$40</td>
               <td style="padding:.75rem 1rem;text-align:center;">$350</td>
               <td style="padding:.75rem 1rem;text-align:center;">$200</td>
+            </tr>
+            <tr style="background:var(--bg-light);">
+              <td style="padding:.75rem 1rem;"><strong>Trailer</strong> <span style="font-size:.82rem;color:var(--text-light);font-weight:400;">(required with Giant Loader)</span></td>
+              <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">&mdash;</td>
+              <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">flat</td>
+              <td style="padding:.75rem 1rem;text-align:center;">$100</td>
+              <td style="padding:.75rem 1rem;text-align:center;">$50</td>
             </tr>
           </tbody>
         </table>
@@ -286,10 +293,18 @@
 
             <div class="calc-row">
               <label class="calc-label">
-                <input type="checkbox" id="chk-loader" onchange="calcUpdate()">
-                <span>Loader</span>
+                <input type="checkbox" id="chk-loader" onchange="onLoaderChange()">
+                <span>Giant Loader</span>
               </label>
               <span class="calc-price" id="pr-loader" style="color:var(--text-light);">&mdash;</span>
+            </div>
+
+            <div class="calc-row" style="padding-left:1.25rem;background:rgba(0,0,0,.03);border-radius:0 0 6px 6px;">
+              <label class="calc-label" style="color:var(--text-light);">
+                <input type="checkbox" id="chk-trailer" onchange="calcUpdate()" disabled style="opacity:.45;">
+                <span style="font-size:.9rem;">Trailer <span style="font-size:.8rem;">(req. w/ Loader)</span></span>
+              </label>
+              <span class="calc-price" id="pr-trailer" style="color:var(--text-light);">&mdash;</span>
             </div>
           </div>
 
@@ -333,7 +348,8 @@
           ground:  [160,  320,  40],
           chipper: [175,  350,  44],
           bucket:  [475,  950, 119],
-          loader:  [200,  350,  40]
+          loader:  [200,  350,  40],
+          trailer: [ 50,  100,  13]  /* flat daily fee */
         };
 
         function rate(key, h) {
@@ -357,6 +373,15 @@
             b.style.color       = active ? 'var(--white)' : '';
             b.style.fontWeight  = active ? '600' : '';
           });
+          calcUpdate();
+        }
+
+        function onLoaderChange() {
+          var loaderOn = document.getElementById('chk-loader').checked;
+          var trailer  = document.getElementById('chk-trailer');
+          trailer.checked  = loaderOn;
+          trailer.disabled = !loaderOn;
+          trailer.style.opacity = loaderOn ? '1' : '.45';
           calcUpdate();
         }
 
@@ -399,9 +424,10 @@
           document.getElementById('pr-ground').innerHTML = gCount > 0 ? '$' + gv.toLocaleString() : '&mdash;';
           document.getElementById('pr-ground').style.color = gCount > 0 ? '' : 'var(--text-light)';
 
-          item('chk-chipper', 'pr-chipper', 'Brush Bandit Chipper',       'chipper');
-          item('chk-bucket',  'pr-bucket',  '75ft Bucket Truck',   'bucket');
-          item('chk-loader',  'pr-loader',  'Loader',               'loader');
+          item('chk-chipper',  'pr-chipper',  'Brush Bandit Chipper', 'chipper');
+          item('chk-bucket',   'pr-bucket',   '75ft Bucket Truck',   'bucket');
+          item('chk-loader',   'pr-loader',   'Giant Loader',        'loader');
+          item('chk-trailer',  'pr-trailer',  'Trailer',             'trailer');
 
           var durLabel = h === 4 ? 'Half Day (4 hr)' : h === 8 ? 'Full Day (8 hr)' : 'Custom (' + h + ' hr)';
           document.getElementById('calc-breakdown').innerHTML = lines.join('<br>');

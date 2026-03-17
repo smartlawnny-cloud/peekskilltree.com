@@ -291,23 +291,53 @@
         .calc-row {display:flex;justify-content:space-between;align-items:center;padding:.55rem 0;border-bottom:1px solid var(--border);}
         .calc-row:last-child {border-bottom:none;}
         .calc-label {display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.96rem;}
-        .calc-label input[type="checkbox"] {width:20px;height:20px;margin:0;}
+        .calc-label input[type="checkbox"] {width:22px;height:22px;margin:0;cursor:pointer;}
         .calc-price {font-weight:600;font-size:.95rem;white-space:nowrap;margin-left:.5rem;}
-        .calc-adj-btn {width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--white);cursor:pointer;font-size:1.3rem;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+        .calc-adj-btn {width:40px;height:40px;border:1px solid var(--border);border-radius:8px;background:var(--white);cursor:pointer;font-size:1.4rem;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none;}
         .calc-adj-btn:active {background:var(--bg-light);}
-        .dur-btn {transition:all .15s;-webkit-tap-highlight-color:transparent;}
+        .dur-btn {transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
+
+        /* ── Mobile: field-ready sizing ── */
         @media(max-width:600px){
-          #calc-wrap {padding:1rem !important;}
-          .dur-btn {padding:.55rem .9rem !important;font-size:.9rem !important;}
-          .calc-row {padding:.65rem .75rem !important;}
-          .calc-label {font-size:.93rem;gap:.45rem;}
-          .calc-price {font-size:.93rem;}
-          #calc-total {font-size:2rem !important;}
-          #travel-map {height:200px !important;}
-          #job-address {font-size:16px !important;min-width:0 !important;} /* 16px prevents iOS zoom */
-          #travel-btn {padding:.55rem 1rem !important;font-size:.9rem !important;}
-          #disc-pct {font-size:16px !important;} /* prevent iOS zoom */
-          #custom-hrs {font-size:16px !important;}
+          #calc-wrap {padding:.85rem !important;border-radius:10px !important;}
+
+          /* Duration buttons: full width, big tap targets */
+          #dur-btns {gap:.5rem !important;}
+          .dur-btn {padding:.7rem 1rem !important;font-size:1rem !important;flex:1;min-width:0;text-align:center;}
+
+          /* Rows: generous padding for fat-finger taps */
+          .calc-row {padding:.85rem .75rem !important;min-height:48px;}
+          .calc-label {font-size:1rem;gap:.55rem;}
+          .calc-label input[type="checkbox"] {width:26px;height:26px;min-width:26px;}
+          .calc-price {font-size:1rem;}
+
+          /* +/- buttons: bigger on mobile */
+          .calc-adj-btn {width:44px;height:44px;font-size:1.5rem;border-radius:10px;}
+          #ground-ct {font-size:1.1rem;min-width:28px !important;}
+
+          /* Total panel */
+          #calc-total {font-size:2.2rem !important;}
+
+          /* Travel section */
+          #travel-map {height:180px !important;}
+          #job-address {font-size:16px !important;min-width:0 !important;padding:.65rem .8rem !important;} /* 16px prevents iOS zoom */
+          #travel-btn {padding:.65rem 1.2rem !important;font-size:1rem !important;min-height:48px;}
+
+          /* Discount row */
+          #disc-pct {font-size:16px !important;width:72px !important;padding:.5rem .6rem !important;} /* prevent iOS zoom */
+
+          /* Custom hours */
+          #custom-hrs {font-size:16px !important;width:68px !important;padding:.5rem !important;}
+
+          /* Section headers */
+          .calc-row + .calc-row {border-top:none;}
+        }
+
+        /* ── Extra-small phones (iPhone SE etc) ── */
+        @media(max-width:375px){
+          .dur-btn {padding:.6rem .5rem !important;font-size:.9rem !important;}
+          .calc-label {font-size:.93rem;}
+          #calc-total {font-size:1.9rem !important;}
         }
       </style>
 

@@ -127,14 +127,14 @@
         <div style="flex:1;min-width:180px;"><strong>&#10003; Reliable</strong><br><span style="font-size:.9rem;color:var(--text-light);">Show up on time, clean up completely, no drama.</span></div>
       </div>
 
-      <!-- Crew Rates -->
-      <h2>Crew Rates</h2>
-      <p style="color:var(--text-light);margin-bottom:1.25rem;">Time billed yard to yard. Full day = 8 hours. Half-day minimum 4 hours. Equipment billed separately.</p>
+      <!-- Labor Rates -->
+      <h2>Labor Rates</h2>
+      <p style="color:var(--text-light);margin-bottom:1.25rem;">Time billed yard to yard. Full day = 8 hours. Half-day minimum 4 hours.</p>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:.97rem;">
           <thead>
             <tr style="background:var(--green-dark);color:var(--white);">
-              <th style="padding:.75rem 1rem;text-align:left;">Crew Configuration</th>
+              <th style="padding:.75rem 1rem;text-align:left;">Role</th>
               <th style="padding:.75rem 1rem;text-align:center;">Hourly</th>
               <th style="padding:.75rem 1rem;text-align:center;">Full Day (8 hr)</th>
               <th style="padding:.75rem 1rem;text-align:center;">Half Day (4 hr)</th>
@@ -143,28 +143,14 @@
           </thead>
           <tbody>
             <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:.75rem 1rem;"><strong>Lead Climber only</strong></td>
+              <td style="padding:.75rem 1rem;"><strong>Climber / Bucket Operator</strong></td>
               <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">$75</td>
               <td style="padding:.75rem 1rem;text-align:center;">$600</td>
               <td style="padding:.75rem 1rem;text-align:center;">$300</td>
               <td style="padding:.75rem 1rem;color:var(--text-light);">Full climbing &amp; rigging kit included</td>
             </tr>
-            <tr style="border-bottom:1px solid var(--border);background:var(--bg-light);">
-              <td style="padding:.75rem 1rem;"><strong>Lead Climber + 1 Groundsman</strong></td>
-              <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">$115</td>
-              <td style="padding:.75rem 1rem;text-align:center;">$920</td>
-              <td style="padding:.75rem 1rem;text-align:center;">$460</td>
-              <td style="padding:.75rem 1rem;color:var(--text-light);">Pruning, light removal, tight-access jobs</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:.75rem 1rem;"><strong>Lead Climber + 2 Groundsmen</strong></td>
-              <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">$155</td>
-              <td style="padding:.75rem 1rem;text-align:center;">$1,240</td>
-              <td style="padding:.75rem 1rem;text-align:center;">$620</td>
-              <td style="padding:.75rem 1rem;color:var(--text-light);">Standard full removal crew</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--border);background:var(--bg-light);">
-              <td style="padding:.75rem 1rem;"><strong>Groundsman only</strong></td>
+            <tr style="background:var(--bg-light);">
+              <td style="padding:.75rem 1rem;"><strong>Groundsperson</strong></td>
               <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">$40</td>
               <td style="padding:.75rem 1rem;text-align:center;">$320</td>
               <td style="padding:.75rem 1rem;text-align:center;">$160</td>
@@ -176,7 +162,7 @@
 
       <!-- Equipment Rates -->
       <h2 style="margin-top:2.5rem;">Equipment Rates</h2>
-      <p style="color:var(--text-light);margin-bottom:1.25rem;">Time billed yard to yard. Fuel included. Bucket truck rate includes operator &mdash; chipper and loader do not (operated by crew).</p>
+      <p style="color:var(--text-light);margin-bottom:1.25rem;">Time billed yard to yard. Fuel included. Bucket truck includes operator &mdash; chipper and loader operated by crew.</p>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:.97rem;">
           <thead>
@@ -199,9 +185,9 @@
             <tr style="border-bottom:1px solid var(--border);background:var(--bg-light);">
               <td style="padding:.75rem 1rem;"><strong>Bucket Truck (75 ft)</strong></td>
               <td style="padding:.75rem 1rem;text-align:center;color:var(--green-dark);font-weight:600;">Included</td>
-              <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">$106</td>
-              <td style="padding:.75rem 1rem;text-align:center;">$850</td>
-              <td style="padding:.75rem 1rem;text-align:center;">$425</td>
+              <td style="padding:.75rem 1rem;text-align:center;color:var(--text-light);">$75</td>
+              <td style="padding:.75rem 1rem;text-align:center;">$600</td>
+              <td style="padding:.75rem 1rem;text-align:center;">$300</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:.75rem 1rem;"><strong>Giant Loader</strong></td>
@@ -243,71 +229,66 @@
           </div>
         </div>
 
-        <!-- Crew + Equipment side by side -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-bottom:1.75rem;">
+        <!-- Labor -->
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;">
+          <div style="background:var(--green-dark);color:var(--white);padding:.6rem 1rem;font-weight:700;font-size:.88rem;text-transform:uppercase;letter-spacing:.07em;">Labor</div>
 
-          <!-- Crew -->
-          <div>
-            <div style="font-weight:700;margin-bottom:.75rem; border-bottom:2px solid var(--green-dark);padding-bottom:.4rem;">Crew</div>
+          <div class="calc-row" style="padding:.7rem 1rem;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-climber" checked onchange="calcUpdate()">
+              <span>Climber / Bucket Op</span>
+            </label>
+            <span class="calc-price" id="pr-climber">$600</span>
+          </div>
 
-            <div class="calc-row">
-              <label class="calc-label">
-                <input type="checkbox" id="chk-climber" checked onchange="calcUpdate()">
-                <span>Lead Climber</span>
-              </label>
-              <span class="calc-price" id="pr-climber">$450</span>
-            </div>
-
-            <div class="calc-row" style="align-items:center;">
-              <div class="calc-label" style="align-items:center;">
-                <span style="margin-right:.6rem;">Groundsmen</span>
-                <div style="display:flex;align-items:center;gap:.3rem;">
-                  <button onclick="adjGround(-1)" class="calc-adj-btn">&#8722;</button>
-                  <span id="ground-ct" style="min-width:20px;text-align:center;font-weight:700;">2</span>
-                  <button onclick="adjGround(1)"  class="calc-adj-btn">&#43;</button>
-                </div>
+          <div class="calc-row" style="padding:.7rem 1rem;align-items:center;">
+            <div class="calc-label" style="align-items:center;">
+              <span style="margin-right:.6rem;">Groundspeople</span>
+              <div style="display:flex;align-items:center;gap:.3rem;">
+                <button onclick="adjGround(-1)" class="calc-adj-btn">&#8722;</button>
+                <span id="ground-ct" style="min-width:22px;text-align:center;font-weight:700;">2</span>
+                <button onclick="adjGround(1)"  class="calc-adj-btn">&#43;</button>
               </div>
-              <span class="calc-price" id="pr-ground">$640</span>
             </div>
+            <span class="calc-price" id="pr-ground">$640</span>
+          </div>
+        </div>
+
+        <!-- Equipment -->
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1.75rem;">
+          <div style="background:#4a7c59;color:var(--white);padding:.6rem 1rem;font-weight:700;font-size:.88rem;text-transform:uppercase;letter-spacing:.07em;">Equipment</div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-chipper" checked onchange="calcUpdate()">
+              <span>Brush Bandit Chipper</span>
+            </label>
+            <span class="calc-price" id="pr-chipper">$350</span>
           </div>
 
-          <!-- Equipment -->
-          <div>
-            <div style="font-weight:700;margin-bottom:.75rem;border-bottom:2px solid var(--green-dark);padding-bottom:.4rem;">Equipment</div>
-
-            <div class="calc-row">
-              <label class="calc-label">
-                <input type="checkbox" id="chk-chipper" checked onchange="calcUpdate()">
-                <span>Brush Bandit Chipper</span>
-              </label>
-              <span class="calc-price" id="pr-chipper">$350</span>
-            </div>
-
-            <div class="calc-row">
-              <label class="calc-label">
-                <input type="checkbox" id="chk-bucket" onchange="calcUpdate()">
-                <span>75ft Bucket Truck</span>
-              </label>
-              <span class="calc-price" id="pr-bucket" style="color:var(--text-light);">&mdash;</span>
-            </div>
-
-            <div class="calc-row">
-              <label class="calc-label">
-                <input type="checkbox" id="chk-loader" onchange="onLoaderChange()">
-                <span>Giant Loader</span>
-              </label>
-              <span class="calc-price" id="pr-loader" style="color:var(--text-light);">&mdash;</span>
-            </div>
-
-            <div class="calc-row" style="padding-left:1.25rem;background:rgba(0,0,0,.03);border-radius:0 0 6px 6px;">
-              <label class="calc-label" style="color:var(--text-light);">
-                <input type="checkbox" id="chk-trailer" onchange="calcUpdate()" disabled style="opacity:.45;">
-                <span style="font-size:.9rem;">Trailer <span style="font-size:.8rem;">(req. w/ Loader)</span></span>
-              </label>
-              <span class="calc-price" id="pr-trailer" style="color:var(--text-light);">&mdash;</span>
-            </div>
+          <div class="calc-row" style="padding:.7rem 1rem;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-bucket" onchange="calcUpdate()">
+              <span>75ft Bucket Truck</span>
+            </label>
+            <span class="calc-price" id="pr-bucket" style="color:var(--text-light);">&mdash;</span>
           </div>
 
+          <div class="calc-row" style="padding:.7rem 1rem;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-loader" onchange="onLoaderChange()">
+              <span>Giant Loader</span>
+            </label>
+            <span class="calc-price" id="pr-loader" style="color:var(--text-light);">&mdash;</span>
+          </div>
+
+          <div class="calc-row" style="padding:.55rem 1rem .55rem 2.25rem;background:rgba(0,0,0,.02);">
+            <label class="calc-label" style="color:var(--text-light);">
+              <input type="checkbox" id="chk-trailer" onchange="calcUpdate()" disabled style="opacity:.45;">
+              <span style="font-size:.9rem;">Trailer <span style="font-size:.8rem;opacity:.75;">(req. w/ Loader)</span></span>
+            </label>
+            <span class="calc-price" id="pr-trailer" style="color:var(--text-light);">&mdash;</span>
+          </div>
         </div>
 
         <!-- Travel Time -->
@@ -421,7 +402,7 @@
           climber: [300,  600,  75],
           ground:  [160,  320,  40],
           chipper: [175,  350,  44],
-          bucket:  [425,  850, 106],
+          bucket:  [300,  600,  75],
           loader:  [200,  400,  50],
           trailer: [ 50,  100,  13]
         };
@@ -482,9 +463,9 @@
             ? (parseInt(document.getElementById('custom-hrs').value) || 6)
             : durHours;
 
-          var lines = [], total = 0;
+          var laborLines = [], equipLines = [], total = 0;
 
-          function item(id, prId, label, key, qty) {
+          function grp(lines, id, prId, label, key, qty) {
             qty = (qty === undefined) ? 1 : qty;
             var chk = document.getElementById(id);
             var on  = chk ? chk.checked : (qty > 0);
@@ -492,7 +473,7 @@
             var v = on ? rate(key, h) * qty : 0;
             if (on && v > 0) {
               total += v;
-              var lbl = qty > 1 ? qty + '&times; ' + label : label;
+              var lbl = qty > 1 ? qty + '&times;&nbsp;' + label : label;
               lines.push('<span style="opacity:.75">' + lbl + '</span>'
                 + '<span style="float:right;font-weight:600">$' + v.toLocaleString() + '</span>');
             }
@@ -500,29 +481,39 @@
             document.getElementById(prId).style.color = on ? '' : 'var(--text-light)';
           }
 
-          item('chk-climber', 'pr-climber', 'Lead Climber',        'climber');
+          /* Labor */
+          grp(laborLines, 'chk-climber', 'pr-climber', 'Climber / Bucket Op', 'climber');
           var gv = rate('ground', h) * gCount;
           if (gCount > 0) {
             total += gv;
-            lines.push('<span style="opacity:.75">' + gCount + '&times; Groundsman</span>'
+            laborLines.push('<span style="opacity:.75">' + gCount + '&times;&nbsp;Groundsperson</span>'
               + '<span style="float:right;font-weight:600">$' + gv.toLocaleString() + '</span>');
           }
           document.getElementById('pr-ground').innerHTML = gCount > 0 ? '$' + gv.toLocaleString() : '&mdash;';
           document.getElementById('pr-ground').style.color = gCount > 0 ? '' : 'var(--text-light)';
 
-          item('chk-chipper',  'pr-chipper', 'Brush Bandit Chipper', 'chipper');
-          item('chk-bucket',   'pr-bucket',  '75ft Bucket Truck',    'bucket');
-          item('chk-loader',   'pr-loader',  'Giant Loader',         'loader');
-          item('chk-trailer',  'pr-trailer', 'Trailer',              'trailer');
+          /* Equipment */
+          grp(equipLines, 'chk-chipper',  'pr-chipper', 'Brush Bandit Chipper', 'chipper');
+          grp(equipLines, 'chk-bucket',   'pr-bucket',  '75ft Bucket Truck',    'bucket');
+          grp(equipLines, 'chk-loader',   'pr-loader',  'Giant Loader',         'loader');
+          grp(equipLines, 'chk-trailer',  'pr-trailer', 'Trailer',              'trailer');
+
+          /* Build grouped breakdown */
+          var sep = '<div style="height:1px;background:rgba(255,255,255,.15);margin:.5rem 0;clear:both;"></div>';
+          var hdr = function(t){ return '<div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;'
+            + 'text-transform:uppercase;opacity:.55;margin-bottom:.3rem;clear:both;">' + t + '</div>'; };
+          var allLines = [];
+          if (laborLines.length)  allLines.push(hdr('Labor')     + laborLines.join('<br>'));
+          if (equipLines.length)  allLines.push(hdr('Equipment') + equipLines.join('<br>'));
 
           /* Travel line */
           if (travelMins > 0) {
             var rtHrs   = (travelMins * 2) / 60;
             var tCost   = Math.round(crewHourly() * rtHrs);
             total += tCost;
-            var rtLabel = formatMins(travelMins * 2);
-            lines.push('<span style="opacity:.75">Travel (' + rtLabel + ' round trip)</span>'
-              + '<span style="float:right;font-weight:600">$' + tCost.toLocaleString() + '</span>');
+            var tLine = '<span style="opacity:.75">Travel (' + formatMins(travelMins * 2) + ' round trip)</span>'
+              + '<span style="float:right;font-weight:600">$' + tCost.toLocaleString() + '</span>';
+            allLines.push(hdr('Travel') + tLine);
             document.getElementById('travel-cost').textContent = '+$' + tCost.toLocaleString();
           }
 
@@ -533,7 +524,7 @@
           var finalTotal = subtotal - discAmt;
 
           var durLabel = h === 4 ? 'Half Day (4 hr)' : h === 8 ? 'Full Day (8 hr)' : 'Custom (' + h + ' hr)';
-          document.getElementById('calc-breakdown').innerHTML = lines.join('<br>');
+          document.getElementById('calc-breakdown').innerHTML = allLines.join(sep);
           document.getElementById('calc-dur-note').textContent = durLabel;
 
           /* Show/hide subtotal + discount rows */

@@ -10,8 +10,8 @@
   --brown-dark: #3d2b1f;
   --brown-primary: #5c3d2e;
   --brown-light: #8b6914;
-  --orange-accent: #d4740e;
-  --orange-hover: #b8620a;
+  --orange-accent: #b5610a;
+  --orange-hover: #9a5208;
   --cream: #faf8f4;
   --white: #ffffff;
   --gray-100: #f5f5f5;
@@ -1063,7 +1063,7 @@ section, .section { padding: 5rem 0; }
 /* ============ FOOTER ============ */
 .site-footer {
   background: var(--green-dark);
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.88);
   padding: 4rem 0 0;
 }
 .footer-grid {
@@ -1078,7 +1078,7 @@ section, .section { padding: 5rem 0; }
 .footer-about p,
 .footer-brand p { font-size: 0.9rem; line-height: 1.6; }
 .footer-heading,
-.site-footer h4 {
+.site-footer h3 {
   font-family: Georgia, serif;
   font-size: 1rem;
   font-weight: 700;
@@ -1120,9 +1120,9 @@ section, .section { padding: 5rem 0; }
   padding: 1.5rem 0;
   text-align: center;
   font-size: 0.85rem;
-  opacity: 0.7;
+  opacity: 0.85;
 }
-.footer-bottom a { color: rgba(255,255,255,0.7); }
+.footer-bottom a { color: rgba(255,255,255,0.85); }
 
 /* ============ ANIMATIONS ============ */
 .fade-in {

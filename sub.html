@@ -156,7 +156,7 @@
           <div class="calc-row" style="padding:.7rem 1rem;">
             <label class="calc-label">
               <input type="checkbox" id="chk-climber" checked onchange="calcUpdate()">
-              <span>Climber / Bucket Op</span>
+              <span>Climber</span>
             </label>
             <span class="calc-price" id="pr-climber">$600</span>
           </div>
@@ -196,10 +196,18 @@
 
           <div class="calc-row" style="padding:.7rem 1rem;">
             <label class="calc-label">
-              <input type="checkbox" id="chk-bucket" onchange="calcUpdate()">
+              <input type="checkbox" id="chk-bucket" onchange="onBucketChange()">
               <span>75ft Bucket Truck</span>
             </label>
             <span class="calc-price" id="pr-bucket" style="color:var(--text-light);">&mdash;</span>
+          </div>
+
+          <div class="calc-row" style="padding:.55rem 1rem .55rem 2.25rem;background:rgba(0,0,0,.02);">
+            <label class="calc-label" style="color:var(--text-light);">
+              <input type="checkbox" id="chk-operator" onchange="calcUpdate()" disabled style="opacity:.45;">
+              <span style="font-size:.9rem;">Operator <span style="font-size:.8rem;opacity:.75;">(req. w/ Bucket)</span></span>
+            </label>
+            <span class="calc-price" id="pr-operator" style="color:var(--text-light);">&mdash;</span>
           </div>
 
           <div class="calc-row" style="padding:.7rem 1rem;">
@@ -263,8 +271,8 @@
             <p style="margin:0 0 .6rem;color:var(--text);font-weight:600;">Why is insurance charged separately?</p>
             <p style="margin:0 0 .5rem;">Tree work is one of the most dangerous trades in the country. Our insurance premiums reflect that risk and <strong>must be passed through</strong> on every job:</p>
             <ul style="margin:.4rem 0 .6rem;padding-left:1.25rem;">
-              <li><strong>Workers&rsquo; Compensation</strong> &mdash; Required by law. Tree service rates run 12&ndash;18% of payroll due to the high injury and fatality risk of aerial tree work. One of the highest-rated trades in the industry.</li>
-              <li><strong>General Liability</strong> &mdash; Covers property damage to the client&rsquo;s home, structures, vehicles, and landscaping. Rated on total job revenue &mdash; currently ~13% ($9,000+ annually on $68K payroll).</li>
+              <li><strong>Workers&rsquo; Compensation</strong> &mdash; Required by NY law. Class code 0106 (tree pruning/trimming) averages ~$9 per $100 of payroll. One of the highest-rated trades due to aerial work risk.</li>
+              <li><strong>General Liability</strong> &mdash; Covers property damage to the client&rsquo;s home, structures, vehicles, and landscaping. Typically $2,000&ndash;$4,000/year for tree companies (~3&ndash;5% of revenue).</li>
               <li><strong>Disability Insurance</strong> &mdash; NYS-required disability and paid family leave coverage for all employees.</li>
               <li><strong>Payroll Taxes</strong> &mdash; Employer&rsquo;s share of Social Security (6.2%), Medicare (1.45%), federal &amp; state unemployment (FUTA/SUTA). Mandatory on every dollar of labor.</li>
               <li><strong>Commercial Auto</strong> &mdash; Covers bucket truck, chip truck, and fleet. Avg $2,000&ndash;$5,000/year; bucket trucks require $1&ndash;2M liability limits adding $500&ndash;$1,000/vehicle.</li>
@@ -280,13 +288,13 @@
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem .6rem;font-size:.86rem;">
               <div style="display:flex;align-items:center;gap:.35rem;">
                 <span style="color:var(--text-light);white-space:nowrap;">Workers&rsquo; Comp:</span>
-                <input type="number" id="ins-wc-pct" min="0" max="30" value="17" step="1"
+                <input type="number" id="ins-wc-pct" min="0" max="30" value="9" step="1"
                   style="width:46px;padding:.25rem .35rem;border:2px solid var(--border);border-radius:6px;font-size:.88rem;font-weight:700;text-align:center;"
                   oninput="calcUpdate()"><span style="font-weight:700;">%</span>
               </div>
               <div style="display:flex;align-items:center;gap:.35rem;">
                 <span style="color:var(--text-light);white-space:nowrap;">Gen. Liability:</span>
-                <input type="number" id="ins-gl-pct" min="0" max="30" value="13" step="1"
+                <input type="number" id="ins-gl-pct" min="0" max="30" value="4" step="1"
                   style="width:46px;padding:.25rem .35rem;border:2px solid var(--border);border-radius:6px;font-size:.88rem;font-weight:700;text-align:center;"
                   oninput="calcUpdate()"><span style="font-weight:700;">%</span>
               </div>
@@ -455,13 +463,14 @@
 
         /* ── Rates: [half_day, full_day, hourly] ─────────────────── */
         var RATES = {
-          climber: [300,  600,  75],
-          ground:  [160,  320,  40],
+          climber:  [300,  600,  75],
+          operator: [250,  500,  63],
+          ground:   [160,  320,  40],
           chipper:  [175,  350,  44],
           chiptruck:[250,  500,  63],
-          bucket:   [300,  600,  75],
-          loader:  [200,  400,  50],
-          trailer: [ 50,  100,  13]
+          bucket:   [200,  400,  50],
+          loader:   [200,  400,  50],
+          trailer:  [ 50,  100,  13]
         };
 
         function rate(key, h) {
@@ -475,6 +484,7 @@
         function crewHourly() {
           var hr = 0;
           if (document.getElementById('chk-climber').checked) hr += RATES.climber[2];
+          if (document.getElementById('chk-operator').checked) hr += RATES.operator[2];
           hr += gCount * RATES.ground[2];
           if (document.getElementById('chk-chipper').checked)  hr += RATES.chipper[2];
           if (document.getElementById('chk-chiptruck').checked) hr += RATES.chiptruck[2];
@@ -496,6 +506,15 @@
             b.style.color      = active ? 'var(--white)' : '';
             b.style.fontWeight = active ? '600' : '';
           });
+          calcUpdate();
+        }
+
+        /* ── Bucket / Operator link ─────────────────────────────── */
+        function onBucketChange() {
+          var on = document.getElementById('chk-bucket').checked;
+          var o  = document.getElementById('chk-operator');
+          o.checked = on; o.disabled = !on;
+          o.style.opacity = on ? '1' : '.45';
           calcUpdate();
         }
 
@@ -540,7 +559,8 @@
           }
 
           /* Labor */
-          grp(laborLines, 'chk-climber', 'pr-climber', 'Climber / Bucket Op', 'climber');
+          grp(laborLines, 'chk-climber',  'pr-climber',  'Climber',         'climber');
+          grp(laborLines, 'chk-operator', 'pr-operator', 'Bucket Operator', 'operator');  /* labor cost, shown under bucket */
           var gv = rate('ground', h) * gCount;
           if (gCount > 0) {
             total += gv;
@@ -579,7 +599,8 @@
           /* Insurance & Payroll — each line applied to labor subtotal */
           var insOn  = document.getElementById('chk-insurance').checked;
           var lSub = 0;
-          if (document.getElementById('chk-climber').checked) lSub += rate('climber', h);
+          if (document.getElementById('chk-climber').checked)  lSub += rate('climber', h);
+          if (document.getElementById('chk-operator').checked) lSub += rate('operator', h);
           lSub += rate('ground', h) * gCount;
           var eSub = 0;
           if (document.getElementById('chk-chipper').checked)   eSub += rate('chipper', h);

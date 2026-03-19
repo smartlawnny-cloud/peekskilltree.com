@@ -1043,13 +1043,41 @@
           var total = document.getElementById('calc-total').textContent;
           var durNote = document.getElementById('calc-dur-note').textContent;
           var addr = document.getElementById('job-address').value || 'Not specified';
-          var body = 'JOB ESTIMATE - SUBMIT FOR APPROVAL'
-            + '%0A%0AAddress: ' + encodeURIComponent(addr)
-            + '%0ADuration: ' + encodeURIComponent(durNote)
-            + '%0A%0A--- BREAKDOWN ---%0A' + encodeURIComponent(breakdown)
-            + '%0A%0ATOTAL: ' + encodeURIComponent(total)
-            + '%0A%0A--- %0ASent from peekskilltree.com/sub calculator';
-          window.location.href = 'mailto:info@peekskilltree.com?subject=' + encodeURIComponent('Estimate for Approval - ' + addr) + '&body=' + body;
+          var clientTotal = document.getElementById('client-total') ? document.getElementById('client-total').textContent : '';
+          var profitEarned = document.getElementById('profit-earned') ? document.getElementById('profit-earned').textContent : '';
+
+          var message = 'JOB ESTIMATE - SUBMIT FOR APPROVAL'
+            + '\n\nAddress: ' + addr
+            + '\nDuration: ' + durNote
+            + '\n\n--- BREAKDOWN ---\n' + breakdown
+            + '\n\nOUR COST: ' + total;
+          if (clientTotal) message += '\nQUOTE TO CLIENT: ' + clientTotal;
+          if (profitEarned) message += '\nARBORIST PROFIT: ' + profitEarned;
+          message += '\n\n---\nSent from peekskilltree.com/sub calculator';
+
+          var btn = event.target;
+          btn.textContent = 'Sending...';
+          btn.disabled = true;
+
+          fetch('https://formsubmit.co/ajax/info@peekskilltree.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              _subject: 'Estimate for Approval - ' + addr,
+              message: message
+            })
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            btn.textContent = '\u2713 Sent!';
+            btn.style.background = '#2d6a2d';
+            setTimeout(function(){ btn.textContent = '\u2709 Submit for Approval'; btn.disabled = false; btn.style.background = '#2c5f3f'; }, 3000);
+          })
+          .catch(function() {
+            btn.textContent = 'Failed - try again';
+            btn.disabled = false;
+            setTimeout(function(){ btn.textContent = '\u2709 Submit for Approval'; btn.style.background = '#2c5f3f'; }, 3000);
+          });
         }
 
         function formatMins(m) {

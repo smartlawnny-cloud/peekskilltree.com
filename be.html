@@ -286,7 +286,16 @@
                   <th style="padding:.4rem .35rem;text-align:right;font-weight:700;font-size:.7rem;border-radius:0 6px 0 0;">P&amp;L</th>
                 </tr>
               </thead>
-              <tbody id="be-tbody"></tbody>
+              <tbody id="be-tbody">
+                <tr id="job-row-0" style="background:#fce4e4;border-bottom:2px solid #e8c0c0;">
+                  <td style="padding:.4rem .35rem;font-weight:700;font-size:.85rem;white-space:nowrap;">No work</td>
+                  <td style="padding:.4rem .2rem;text-align:center;color:#999;">$0</td>
+                  <td style="padding:.4rem .2rem;text-align:center;color:#999;">$0</td>
+                  <td style="padding:.4rem .2rem;text-align:center;color:#999;">$0</td>
+                  <td style="padding:.4rem .2rem;text-align:center;color:#999;">$0</td>
+                  <td style="padding:.4rem .35rem;text-align:right;font-weight:700;color:#c0392b;" id="job0-pl">-$4,912</td>
+                </tr>
+              </tbody>
             </table>
           </div>
           <div style="margin-top:.5rem;text-align:center;">
@@ -395,8 +404,11 @@
     function beCalc() {
       var fixedTotal = getFixed();
 
-      /* Row 0 (fixed costs header) is always shown in the summary */
-      var rows = document.querySelectorAll('#be-tbody tr');
+      /* Update Job 0 row */
+      document.getElementById('job0-pl').textContent = '-$' + fixedTotal.toLocaleString();
+
+      /* Skip row 0 (static), iterate job rows only */
+      var rows = document.querySelectorAll('#be-tbody tr:not(#job-row-0)');
       var running = -fixedTotal;
       var beJob = -1;
       var totalRev = 0, totalCost = 0;

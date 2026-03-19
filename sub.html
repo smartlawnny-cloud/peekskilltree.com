@@ -262,6 +262,14 @@
             </label>
             <span class="calc-price" id="pr-stump" style="color:var(--text-light);">&mdash;</span>
           </div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-ram" onchange="calcUpdate()">
+              <span>Ram 2500 Crew Truck</span>
+            </label>
+            <span class="calc-price" id="pr-ram" style="color:var(--text-light);">&mdash;</span>
+          </div>
         </div>
 
         <!-- Add-Ons -->
@@ -301,6 +309,14 @@
               <span>Permit Coordination</span>
             </label>
             <span class="calc-price" id="pr-permit" style="color:var(--text-light);">$75</span>
+          </div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-hic" checked onchange="calcUpdate()">
+              <span>HIC Licensing <span style="font-size:.8rem;color:var(--text-light);">(WC-32079 / PC-50644)</span></span>
+            </label>
+            <span class="calc-price" id="pr-hic">$25</span>
           </div>
         </div>
 
@@ -602,7 +618,8 @@
         var durHours  = 8;
         var travelMins = 30;
         var travelMiles = 20;
-        var MILEAGE_RATE = 0.70; /* 2025 IRS standard mileage rate */
+        var MILEAGE_LIGHT = 0.70; /* IRS rate - Ram 2500, pickups */
+        var MILEAGE_HEAVY = 1.75; /* heavy truck - bucket, chip truck (fuel + wear + insurance) */
         var leafletReady = false;
         var travelMap = null;
         var routeLayer = null;
@@ -631,7 +648,8 @@
           bucket:   [300,  600,  75],
           loader:   [200,  400,  50],
           trailer:  [ 50,  100,  13],
-          stump:    [175,  325,  41]
+          stump:    [175,  325,  41],
+          ram:      [100,  200,  25]
         };
 
         function rate(key, h) {
@@ -702,7 +720,7 @@
         /* ── Job Type Presets ──────────────────────────────────────── */
         function setPreset(type) {
           /* Reset all checkboxes */
-          ['chk-climber','chk-operator','chk-chipper','chk-chiptruck','chk-bucket','chk-loader','chk-trailer'].forEach(function(id){
+          ['chk-climber','chk-operator','chk-chipper','chk-chiptruck','chk-bucket','chk-loader','chk-trailer','chk-stump','chk-ram'].forEach(function(id){
             var el = document.getElementById(id);
             if (el) { el.checked = false; el.disabled = false; el.style.opacity = '1'; }
           });
@@ -710,6 +728,7 @@
           switch(type) {
             case 'removal':
               document.getElementById('chk-climber').checked = true;
+              document.getElementById('chk-ram').checked = true;
               gCount = 2;
               document.getElementById('chk-chipper').checked = true;
               document.getElementById('chk-chiptruck').checked = true;
@@ -717,12 +736,14 @@
               break;
             case 'pruning':
               document.getElementById('chk-climber').checked = true;
+              document.getElementById('chk-ram').checked = true;
               gCount = 1;
               document.getElementById('chk-chipper').checked = true;
               setDur(4);
               break;
             case 'clearing':
               document.getElementById('chk-climber').checked = false;
+              document.getElementById('chk-ram').checked = true;
               gCount = 2;
               document.getElementById('chk-chipper').checked = true;
               document.getElementById('chk-chiptruck').checked = true;
@@ -829,6 +850,7 @@
           grp(equipLines, 'chk-loader',   'pr-loader',  'Giant Loader',         'loader', 1, true);
           grp(equipLines, 'chk-trailer',  'pr-trailer', 'Trailer',              'trailer', 1, true);
           grp(equipLines, 'chk-stump',   'pr-stump',   'Stump Grinder',        'stump', 1, true);
+          grp(equipLines, 'chk-ram',     'pr-ram',     'Ram 2500 Crew Truck',  'ram', 1, true);
 
           /* Add-ons */
           var addonLines = [];
@@ -859,6 +881,13 @@
           }
           document.getElementById('pr-permit').style.color = document.getElementById('chk-permit').checked ? '' : 'var(--text-light)';
 
+          /* HIC Licensing */
+          if (document.getElementById('chk-hic').checked) {
+            total += 25;
+            addonLines.push('<span style="opacity:.75">HIC licensing fee</span><span style="float:right;font-weight:600">$25</span>');
+          }
+          document.getElementById('pr-hic').style.color = document.getElementById('chk-hic').checked ? '' : 'var(--text-light)';
+
           /* Build grouped breakdown */
           var sep = '<div style="height:1px;background:rgba(255,255,255,.15);margin:.5rem 0;clear:both;"></div>';
           var hdr = function(t){ return '<div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;'
@@ -879,13 +908,20 @@
 
             /* Mileage — count trucks dispatched × round trip miles × IRS rate */
             if (travelMiles > 0) {
-              var numTrucks = 0;
-              if (document.getElementById('chk-chiptruck').checked) numTrucks++;
-              if (document.getElementById('chk-bucket').checked)    numTrucks++;
-              if (numTrucks === 0) numTrucks = 1; /* minimum 1 truck to get crew there */
-              var mileageCost = Math.round(travelMiles * 2 * numTrucks * MILEAGE_RATE);
+              var rtMiles = travelMiles * 2;
+              var lightTrucks = 0, heavyTrucks = 0;
+              if (document.getElementById('chk-ram').checked)       lightTrucks++;
+              if (document.getElementById('chk-chiptruck').checked) heavyTrucks++;
+              if (document.getElementById('chk-bucket').checked)    heavyTrucks++;
+              if (lightTrucks === 0 && heavyTrucks === 0) lightTrucks = 1; /* min 1 truck */
+              var lightMileage = Math.round(rtMiles * lightTrucks * MILEAGE_LIGHT);
+              var heavyMileage = Math.round(rtMiles * heavyTrucks * MILEAGE_HEAVY);
+              var mileageCost = lightMileage + heavyMileage;
               total += mileageCost;
-              travelLines.push('<span style="opacity:.75">Mileage (' + (travelMiles*2) + ' mi RT &times; ' + numTrucks + ' truck' + (numTrucks>1?'s':'') + ' &times; $' + MILEAGE_RATE.toFixed(2) + '/mi)</span>'
+              var mileageDesc = '';
+              if (lightTrucks > 0) mileageDesc += lightTrucks + ' light @ $' + MILEAGE_LIGHT.toFixed(2) + '/mi';
+              if (heavyTrucks > 0) mileageDesc += (mileageDesc ? ' + ' : '') + heavyTrucks + ' heavy @ $' + MILEAGE_HEAVY.toFixed(2) + '/mi';
+              travelLines.push('<span style="opacity:.75">Mileage (' + rtMiles + ' mi RT &mdash; ' + mileageDesc + ')</span>'
                 + '<span style="float:right;font-weight:600">$' + mileageCost.toLocaleString() + '</span>');
             }
 
@@ -910,6 +946,7 @@
           if (document.getElementById('chk-loader').checked)    eSub += Math.round(rate('loader', h) * emergMult * eTierMult);
           if (document.getElementById('chk-trailer').checked)   eSub += Math.round(rate('trailer', h) * emergMult * eTierMult);
           if (document.getElementById('chk-stump').checked)     eSub += Math.round(rate('stump', h) * emergMult * eTierMult);
+          if (document.getElementById('chk-ram').checked)       eSub += Math.round(rate('ram', h) * emergMult * eTierMult);
 
           var wcPct  = Math.max(0, parseFloat(document.getElementById('ins-wc-pct').value) || 0);
           var glPct  = Math.max(0, parseFloat(document.getElementById('ins-gl-pct').value) || 0);

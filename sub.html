@@ -467,18 +467,9 @@
           </div>
         </div>
 
-        <!-- Discount row -->
-        <div style="display:flex;align-items:center;gap:1rem;margin-top:.75rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--border);border-radius:8px;flex-wrap:wrap;">
-          <label style="font-weight:700;white-space:nowrap;" for="disc-pct">Rate Discount</label>
-          <div style="display:flex;align-items:center;gap:.4rem;">
-            <input type="number" id="disc-pct" min="0" max="100" value="0" step="1"
-              style="width:68px;padding:.4rem .6rem;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:700;text-align:center;"
-              oninput="calcUpdate()">
-            <span style="font-size:1.1rem;font-weight:700;">%</span>
-          </div>
-          <span style="font-size:.87rem;color:var(--text-light);">Potential discount on rates &mdash; applied to the subtotal.</span>
-          <span id="disc-amount" style="margin-left:auto;font-size:1rem;font-weight:700;color:#c0392b;display:none;"></span>
-        </div>
+        <!-- Hidden discount field (value always 0) -->
+        <input type="hidden" id="disc-pct" value="0">
+        <span id="disc-amount" style="display:none;"></span>
 
         <!-- Total panel -->
         <div style="background:var(--green-dark);border-radius:10px;padding:1.25rem 1.5rem;color:var(--white);margin-top:.75rem;">
@@ -569,8 +560,6 @@
           #job-address {font-size:16px !important;min-width:0 !important;padding:.65rem .8rem !important;} /* 16px prevents iOS zoom */
           #travel-btn {padding:.65rem 1.2rem !important;font-size:1rem !important;min-height:48px;}
 
-          /* Discount row */
-          #disc-pct {font-size:16px !important;width:72px !important;padding:.5rem .6rem !important;} /* prevent iOS zoom */
 
           /* Custom hours */
           #custom-hrs {font-size:16px !important;width:68px !important;padding:.5rem !important;}

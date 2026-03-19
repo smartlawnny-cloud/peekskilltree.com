@@ -475,8 +475,31 @@
       }
     }
 
-    /* Start with the fixed costs row visible */
-    beCalc();
+    /* Pre-populate with default jobs: $2,500 rev, $880 labor (1 climber + 2 ground) */
+    function initJobs() {
+      var fixedTotal = getFixed();
+      /* Figure out how many jobs needed at default numbers */
+      var defRev = 2500, defLabor = 880;
+      var defVar = getVarCosts(defLabor);
+      var defNet = defRev - defLabor - defVar;
+      var needed = defNet > 0 ? Math.ceil(fixedTotal / defNet) : 10;
+      needed = Math.max(needed, 4); /* show at least 4 */
+      needed = Math.min(needed, 25);
+      /* Add 2 extra past break-even so they can see profit */
+      var total = needed + 2;
+      for (var i = 0; i < total; i++) {
+        addJobRow();
+      }
+      /* Fill them all with default values */
+      var revs = document.querySelectorAll('.job-rev');
+      var labors = document.querySelectorAll('.job-labor');
+      for (var i = 0; i < revs.length; i++) {
+        revs[i].value = defRev;
+        labors[i].value = defLabor;
+      }
+      beCalc();
+    }
+    initJobs();
   </script>
 
   </main>

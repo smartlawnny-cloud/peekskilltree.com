@@ -569,6 +569,10 @@
           /* Profit */
           #profit-pct {font-size:16px !important;}
 
+          /* Submit form */
+          #submit-form input, #submit-form textarea {font-size:16px !important;} /* prevent iOS zoom */
+          #submit-form > div > div:first-of-type {grid-template-columns:1fr !important;}
+
           /* Section headers */
           .calc-row + .calc-row {border-top:none;}
         }
@@ -1039,6 +1043,23 @@
 
         /* ── Submit for Approval ──────────────────────────────── */
         function submitEstimate() {
+          var name = document.getElementById('sub-name').value.trim();
+          var phone = document.getElementById('sub-phone').value.trim();
+          var email = document.getElementById('sub-email').value.trim();
+          var company = document.getElementById('sub-company').value.trim();
+          var jobDate = document.getElementById('sub-date').value;
+          var notes = document.getElementById('sub-notes').value.trim();
+          var errEl = document.getElementById('submit-error');
+          var successEl = document.getElementById('submit-success');
+
+          /* Validation */
+          if (!name || !phone || !email) {
+            errEl.textContent = 'Please fill in name, phone, and email.';
+            errEl.style.display = 'block';
+            return;
+          }
+          errEl.style.display = 'none';
+
           var breakdown = document.getElementById('calc-breakdown').innerText;
           var total = document.getElementById('calc-total').textContent;
           var durNote = document.getElementById('calc-dur-note').textContent;
@@ -1046,16 +1067,21 @@
           var clientTotal = document.getElementById('client-total') ? document.getElementById('client-total').textContent : '';
           var profitEarned = document.getElementById('profit-earned') ? document.getElementById('profit-earned').textContent : '';
 
-          var message = 'JOB ESTIMATE - SUBMIT FOR APPROVAL'
-            + '\n\nAddress: ' + addr
+          var message = 'ESTIMATE SUBMISSION'
+            + '\n\nFrom: ' + name
+            + (company ? ' (' + company + ')' : '')
+            + '\nPhone: ' + phone
+            + '\nEmail: ' + email
+            + (jobDate ? '\nRequested Date: ' + jobDate : '')
+            + '\nJob Address: ' + addr
             + '\nDuration: ' + durNote
+            + (notes ? '\n\nNotes: ' + notes : '')
             + '\n\n--- BREAKDOWN ---\n' + breakdown
             + '\n\nOUR COST: ' + total;
           if (clientTotal) message += '\nQUOTE TO CLIENT: ' + clientTotal;
           if (profitEarned) message += '\nARBORIST PROFIT: ' + profitEarned;
-          message += '\n\n---\nSent from peekskilltree.com/sub calculator';
 
-          var btn = event.target;
+          var btn = document.getElementById('submit-btn');
           btn.textContent = 'Sending...';
           btn.disabled = true;
 
@@ -1063,20 +1089,26 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
-              _subject: 'Estimate for Approval - ' + addr,
-              message: message
+              _subject: 'Estimate for Approval - ' + name + (company ? ' / ' + company : '') + ' - ' + addr,
+              _replyto: email,
+              name: name,
+              company: company,
+              phone: phone,
+              email: email,
+              job_date: jobDate,
+              job_address: addr,
+              notes: notes,
+              estimate: message
             })
           })
           .then(function(r) { return r.json(); })
           .then(function(data) {
-            btn.textContent = '\u2713 Sent!';
-            btn.style.background = '#2d6a2d';
-            setTimeout(function(){ btn.textContent = '\u2709 Submit for Approval'; btn.disabled = false; btn.style.background = '#2c5f3f'; }, 3000);
+            btn.style.display = 'none';
+            successEl.style.display = 'block';
           })
           .catch(function() {
             btn.textContent = 'Failed - try again';
             btn.disabled = false;
-            setTimeout(function(){ btn.textContent = '\u2709 Submit for Approval'; btn.style.background = '#2c5f3f'; }, 3000);
           });
         }
 
@@ -1193,8 +1225,51 @@
       <!-- Actions -->
       <div style="display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;justify-content:center;">
         <button onclick="window.print()" style="padding:.55rem 1.5rem;background:var(--white);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;">&#128424; Print Quote</button>
-        <button onclick="submitEstimate()" style="padding:.55rem 1.5rem;background:#2c5f3f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;">&#9993; Submit for Approval</button>
+        <button onclick="document.getElementById('submit-form').style.display=document.getElementById('submit-form').style.display==='none'?'block':'none'" style="padding:.55rem 1.5rem;background:#2c5f3f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;">&#9993; Submit for Approval</button>
         <a href="tel:914-391-5233" style="display:inline-block;background:var(--green-dark);color:var(--white);font-weight:700;font-size:1rem;padding:.55rem 1.5rem;border-radius:8px;text-decoration:none;">&#9742; (914) 391-5233</a>
+      </div>
+
+      <!-- Submit Form -->
+      <div id="submit-form" style="display:none;margin-top:1rem;background:var(--white);border:2px solid var(--green-dark);border-radius:10px;overflow:hidden;">
+        <div style="background:var(--green-dark);color:var(--white);padding:.7rem 1rem;font-weight:700;font-size:.92rem;">&#9993; Submit Estimate for Approval</div>
+        <div style="padding:1.25rem;">
+          <p style="font-size:.85rem;color:var(--text-light);margin-bottom:1rem;">Fill in your details below. The estimate breakdown will be sent to Second Nature for review.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+            <div>
+              <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Your Name *</label>
+              <input type="text" id="sub-name" required placeholder="Full name"
+                style="width:100%;padding:.5rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.95rem;">
+            </div>
+            <div>
+              <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Company</label>
+              <input type="text" id="sub-company" placeholder="Company name"
+                style="width:100%;padding:.5rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.95rem;">
+            </div>
+            <div>
+              <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Phone *</label>
+              <input type="tel" id="sub-phone" required placeholder="(914) 555-1234"
+                style="width:100%;padding:.5rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.95rem;">
+            </div>
+            <div>
+              <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Email *</label>
+              <input type="email" id="sub-email" required placeholder="you@company.com"
+                style="width:100%;padding:.5rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.95rem;">
+            </div>
+          </div>
+          <div style="margin-top:.75rem;">
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Job Date (if known)</label>
+            <input type="date" id="sub-date"
+              style="width:100%;max-width:220px;padding:.5rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.95rem;">
+          </div>
+          <div style="margin-top:.75rem;">
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Notes</label>
+            <textarea id="sub-notes" rows="3" placeholder="Job details, special requirements, access notes..."
+              style="width:100%;padding:.5rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.95rem;resize:vertical;font-family:inherit;"></textarea>
+          </div>
+          <div id="submit-error" style="display:none;color:#c0392b;font-size:.85rem;margin-top:.5rem;"></div>
+          <div id="submit-success" style="display:none;background:#e8f5e9;border:1px solid #4caf50;border-radius:8px;padding:.75rem 1rem;margin-top:.75rem;font-size:.9rem;color:#2e7d32;font-weight:600;">&#10003; Estimate submitted! We&rsquo;ll review and get back to you within 2 hours during business hours.</div>
+          <button id="submit-btn" onclick="submitEstimate()" style="margin-top:1rem;width:100%;padding:.7rem;background:var(--green-dark);color:var(--white);border:none;border-radius:8px;cursor:pointer;font-size:1rem;font-weight:700;">Send Estimate for Approval</button>
+        </div>
       </div>
 
       <!-- Rate date -->

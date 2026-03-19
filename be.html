@@ -153,107 +153,112 @@
           <div class="be-section-hdr" style="background:var(--green-dark);">Vehicle Payments</div>
           <div class="be-row">
             <label>Bucket Truck</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="1912" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="1912" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
             <label>Chip Truck</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="0" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="0" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
             <label>Pickup / Crew Truck</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="1000" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="1000" oninput="beCalc()"></div>
           </div>
           <div class="be-subtotal"><span id="sub-vehicles">$2,912</span></div>
         </div>
 
-        <!-- Insurance -->
+        <!-- Insurance (Fixed) -->
         <div class="be-section">
-          <div class="be-section-hdr" style="background:#c0392b;">Insurance &amp; Compliance</div>
-          <div class="be-row">
-            <label>Workers&rsquo; Comp</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="1300" oninput="beCalc()"></div>
-          </div>
+          <div class="be-section-hdr" style="background:#c0392b;">Insurance <span style="font-size:.7rem;opacity:.7;">(FIXED &mdash; owed regardless of work)</span></div>
           <div class="be-row">
             <label>General Liability</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="750" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="750" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
             <label>Commercial Auto</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="400" oninput="beCalc()"></div>
-          </div>
-          <div class="be-row">
-            <label>Disability / PFL</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="100" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="400" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
             <label>Equipment / Inland Marine</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="200" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="200" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
             <label>Umbrella / Excess</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="0" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="0" oninput="beCalc()"></div>
           </div>
-          <div class="be-subtotal"><span id="sub-insurance">$2,750</span></div>
+          <div class="be-subtotal"><span id="sub-insurance">$1,350</span></div>
         </div>
 
-        <!-- Operations -->
+        <!-- Fixed Overhead -->
         <div class="be-section">
-          <div class="be-section-hdr" style="background:#4a7c59;">Operations &amp; Overhead</div>
-          <div class="be-row">
-            <label>Repairs / Maintenance</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="1000" oninput="beCalc()"></div>
-          </div>
-          <div class="be-row">
-            <label>Fuel / Diesel</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="800" oninput="beCalc()"></div>
-          </div>
-          <div class="be-row">
-            <label>Consumables (chains, ropes, rigging)</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="300" oninput="beCalc()"></div>
-          </div>
+          <div class="be-section-hdr" style="background:#4a7c59;">Overhead <span style="font-size:.7rem;opacity:.7;">(FIXED &mdash; owed regardless of work)</span></div>
           <div class="be-row">
             <label>Phone / Software / Subscriptions</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="200" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="200" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
             <label>Yard / Storage Rent</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="0" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="0" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
             <label>Marketing / Advertising</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="200" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="200" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
             <label>Accounting / Legal</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="250" oninput="beCalc()"></div>
-          </div>
-          <div class="be-subtotal"><span id="sub-ops">$2,750</span></div>
-        </div>
-
-        <!-- Payroll -->
-        <div class="be-section">
-          <div class="be-section-hdr" style="background:#3d2b1f;">Payroll &amp; Taxes</div>
-          <div class="be-row">
-            <label>Owner Draw / Salary</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="5000" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="250" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
-            <label>Payroll Taxes (employer share)</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="400" oninput="beCalc()"></div>
+            <label>Other</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="0" oninput="beCalc()"></div>
           </div>
           <div class="be-row">
             <label>Health Insurance</label>
-            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="0" oninput="beCalc()"></div>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-fixed" value="0" oninput="beCalc()"></div>
           </div>
-          <div class="be-subtotal"><span id="sub-payroll">$5,400</span></div>
+          <div class="be-subtotal"><span id="sub-overhead">$5,650</span></div>
         </div>
 
-        <!-- TOTAL MONTHLY NUT -->
-        <div style="background:var(--green-dark);border-radius:10px;padding:1rem 1.25rem;color:var(--white);margin-top:.5rem;">
+        <!-- TOTAL FIXED -->
+        <div style="background:var(--green-dark);border-radius:10px;padding:.85rem 1.25rem;color:var(--white);margin-top:.5rem;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem;">
-            <span style="font-weight:700;font-size:1rem;">Total Monthly Costs</span>
-            <span id="be-monthly-total" style="font-size:2rem;font-weight:800;letter-spacing:-.02em;">$13,812</span>
+            <div>
+              <span style="font-weight:700;font-size:1rem;">Fixed Monthly Costs</span>
+              <div style="font-size:.75rem;opacity:.6;">Owed even with zero jobs</div>
+            </div>
+            <span id="be-fixed-total" style="font-size:1.8rem;font-weight:800;letter-spacing:-.02em;">$9,862</span>
           </div>
+        </div>
+
+        <!-- VARIABLE COSTS PER JOB -->
+        <div style="margin-top:1.25rem;">
+          <div class="be-section">
+            <div class="be-section-hdr" style="background:#b5610a;">Variable Costs <span style="font-size:.7rem;opacity:.7;">(PER JOB &mdash; only when working)</span></div>
+            <div class="be-row">
+              <label>Workers&rsquo; Comp <span style="font-size:.75rem;color:var(--text-light);">(% of labor)</span></label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><input type="number" class="be-input be-var-pct" id="be-wc-pct" value="9" style="width:55px;" oninput="beCalc()"><span>%</span></div>
+            </div>
+            <div class="be-row">
+              <label>Payroll Tax <span style="font-size:.75rem;color:var(--text-light);">(% of labor)</span></label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><input type="number" class="be-input be-var-pct" id="be-tax-pct" value="8" style="width:55px;" oninput="beCalc()"><span>%</span></div>
+            </div>
+            <div class="be-row">
+              <label>Disability / PFL <span style="font-size:.75rem;color:var(--text-light);">(% of labor)</span></label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><input type="number" class="be-input be-var-pct" id="be-dis-pct" value="2" style="width:55px;" oninput="beCalc()"><span>%</span></div>
+            </div>
+            <div class="be-row">
+              <label>Fuel / Diesel <span style="font-size:.75rem;color:var(--text-light);">(per job avg)</span></label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-var-flat" id="be-fuel" value="75" oninput="beCalc()"></div>
+            </div>
+            <div class="be-row">
+              <label>Consumables <span style="font-size:.75rem;color:var(--text-light);">(per job avg)</span></label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-var-flat" id="be-cons" value="25" oninput="beCalc()"></div>
+            </div>
+            <div class="be-row">
+              <label>Repairs / Wear <span style="font-size:.75rem;color:var(--text-light);">(per job avg)</span></label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-var-flat" id="be-repair" value="50" oninput="beCalc()"></div>
+            </div>
+          </div>
+          <div style="font-size:.8rem;color:var(--text-light);margin-top:.4rem;padding:0 .5rem;">These costs are <strong>$0 with no work</strong>. They get added automatically to each job&rsquo;s cost based on that job&rsquo;s labor amount.</div>
         </div>
 
         <!-- JOB-BY-JOB P&L TABLE -->
@@ -265,11 +270,12 @@
             <table id="be-table" style="width:100%;border-collapse:collapse;font-size:.82rem;min-width:520px;">
               <thead>
                 <tr style="background:var(--green-dark);color:white;">
-                  <th style="padding:.45rem .5rem;text-align:left;font-weight:700;border-radius:6px 0 0 0;width:60px;"></th>
-                  <th style="padding:.45rem .4rem;text-align:center;font-weight:700;font-size:.75rem;">Revenue</th>
-                  <th style="padding:.45rem .4rem;text-align:center;font-weight:700;font-size:.75rem;">Job Cost</th>
-                  <th style="padding:.45rem .4rem;text-align:center;font-weight:700;font-size:.75rem;">Net</th>
-                  <th style="padding:.45rem .5rem;text-align:right;font-weight:700;font-size:.75rem;border-radius:0 6px 0 0;">Running P&amp;L</th>
+                  <th style="padding:.4rem .35rem;text-align:left;font-weight:700;border-radius:6px 0 0 0;font-size:.7rem;width:50px;"></th>
+                  <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Revenue</th>
+                  <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Labor</th>
+                  <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Overhead</th>
+                  <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Net</th>
+                  <th style="padding:.4rem .35rem;text-align:right;font-weight:700;font-size:.7rem;border-radius:0 6px 0 0;">P&amp;L</th>
                 </tr>
               </thead>
               <tbody id="be-tbody"></tbody>
@@ -319,24 +325,38 @@
     var jobCount = 0;
 
     function getFixed() {
-      var inputs = document.querySelectorAll('.be-cost');
+      /* Vehicle payments */
+      var vInputs = document.querySelectorAll('.be-section:first-of-type .be-fixed');
+      /* Actually just sum all .be-fixed inputs */
+      var vehicleTotal = 0, insTotal = 0, overheadTotal = 0;
+      var allFixed = document.querySelectorAll('.be-fixed');
       var total = 0;
-      var sections = {vehicles:0, insurance:0, ops:0, payroll:0};
-      var sectionNames = ['vehicles','vehicles','vehicles',
-        'insurance','insurance','insurance','insurance','insurance','insurance',
-        'ops','ops','ops','ops','ops','ops','ops',
-        'payroll','payroll','payroll'];
-      inputs.forEach(function(inp, i) {
+      /* Count by section: vehicles(0-2), insurance(3-6), overhead(7-12) */
+      allFixed.forEach(function(inp, i) {
         var v = parseFloat(inp.value) || 0;
         total += v;
-        if (sectionNames[i]) sections[sectionNames[i]] += v;
+        if (i <= 2) vehicleTotal += v;
+        else if (i <= 6) insTotal += v;
+        else overheadTotal += v;
       });
-      document.getElementById('sub-vehicles').textContent = '$' + sections.vehicles.toLocaleString();
-      document.getElementById('sub-insurance').textContent = '$' + sections.insurance.toLocaleString();
-      document.getElementById('sub-ops').textContent = '$' + sections.ops.toLocaleString();
-      document.getElementById('sub-payroll').textContent = '$' + sections.payroll.toLocaleString();
-      document.getElementById('be-monthly-total').textContent = '$' + total.toLocaleString();
+      document.getElementById('sub-vehicles').textContent = '$' + vehicleTotal.toLocaleString();
+      document.getElementById('sub-insurance').textContent = '$' + insTotal.toLocaleString();
+      document.getElementById('sub-overhead').textContent = '$' + overheadTotal.toLocaleString();
+      document.getElementById('be-fixed-total').textContent = '$' + total.toLocaleString();
       return total;
+    }
+
+    function getVarCosts(laborAmt) {
+      /* % based on labor */
+      var wcPct  = parseFloat(document.getElementById('be-wc-pct').value) || 0;
+      var taxPct = parseFloat(document.getElementById('be-tax-pct').value) || 0;
+      var disPct = parseFloat(document.getElementById('be-dis-pct').value) || 0;
+      var pctCost = Math.round(laborAmt * (wcPct + taxPct + disPct) / 100);
+      /* Flat per-job */
+      var fuel   = parseFloat(document.getElementById('be-fuel').value) || 0;
+      var cons   = parseFloat(document.getElementById('be-cons').value) || 0;
+      var repair = parseFloat(document.getElementById('be-repair').value) || 0;
+      return pctCost + fuel + cons + repair;
     }
 
     function fmt(n) { return (n >= 0 ? '+$' : '-$') + Math.abs(n).toLocaleString(); }
@@ -346,11 +366,13 @@
       var tbody = document.getElementById('be-tbody');
       var tr = document.createElement('tr');
       tr.id = 'job-row-' + jobCount;
-      tr.innerHTML = '<td style="padding:.35rem .4rem;font-weight:700;white-space:nowrap;font-size:.85rem;">Job ' + jobCount + '</td>'
-        + '<td style="padding:.35rem .3rem;text-align:center;"><input type="number" class="be-input job-rev" value="0" style="width:78px;font-size:.9rem;text-align:right;color:#2d5a27;" oninput="beCalc()" placeholder="0"></td>'
-        + '<td style="padding:.35rem .3rem;text-align:center;"><input type="number" class="be-input job-cost" value="0" style="width:78px;font-size:.9rem;text-align:right;color:#c0392b;" oninput="beCalc()" placeholder="0"></td>'
-        + '<td style="padding:.35rem .3rem;text-align:center;font-weight:700;font-size:.85rem;" class="job-net">$0</td>'
-        + '<td style="padding:.35rem .5rem;text-align:right;font-weight:700;font-size:.9rem;" class="job-pl">-</td>';
+      tr.dataset.num = jobCount;
+      tr.innerHTML = '<td style="padding:.35rem .4rem;font-weight:700;white-space:nowrap;font-size:.82rem;" class="job-label">Job ' + jobCount + '</td>'
+        + '<td style="padding:.35rem .2rem;text-align:center;"><input type="number" class="be-input job-rev" value="0" style="width:72px;font-size:.88rem;text-align:right;color:#2d5a27;" oninput="beCalc()" placeholder="Rev"></td>'
+        + '<td style="padding:.35rem .2rem;text-align:center;"><input type="number" class="be-input job-labor" value="0" style="width:72px;font-size:.88rem;text-align:right;color:#333;" oninput="beCalc()" placeholder="Labor"></td>'
+        + '<td style="padding:.35rem .2rem;text-align:center;font-size:.78rem;color:var(--text-light);" class="job-var">$0</td>'
+        + '<td style="padding:.35rem .2rem;text-align:center;font-weight:700;font-size:.82rem;" class="job-net">$0</td>'
+        + '<td style="padding:.35rem .4rem;text-align:right;font-weight:700;font-size:.88rem;" class="job-pl">-</td>';
       tbody.appendChild(tr);
       beCalc();
       tr.querySelector('.job-rev').focus();
@@ -372,18 +394,24 @@
       var totalRev = 0, totalCost = 0;
 
       rows.forEach(function(tr, i) {
-        var revInput  = tr.querySelector('.job-rev');
-        var costInput = tr.querySelector('.job-cost');
-        var netCell   = tr.querySelector('.job-net');
-        var plCell    = tr.querySelector('.job-pl');
+        var revInput   = tr.querySelector('.job-rev');
+        var laborInput = tr.querySelector('.job-labor');
+        var varCell    = tr.querySelector('.job-var');
+        var netCell    = tr.querySelector('.job-net');
+        var plCell     = tr.querySelector('.job-pl');
         if (!revInput) return;
 
-        var rev  = parseFloat(revInput.value) || 0;
-        var cost = parseFloat(costInput.value) || 0;
-        var net  = rev - cost;
+        var rev   = parseFloat(revInput.value) || 0;
+        var labor = parseFloat(laborInput.value) || 0;
+        var varOH = getVarCosts(labor);
+        var cost  = labor + varOH;
+        var net   = rev - cost;
         totalRev += rev;
         totalCost += cost;
         running += net;
+
+        /* Variable overhead cell */
+        varCell.textContent = varOH > 0 ? '+$' + varOH.toLocaleString() : '$0';
 
         /* Net cell */
         netCell.textContent = (net >= 0 ? '+$' : '-$') + Math.abs(net).toLocaleString();
@@ -405,7 +433,7 @@
           tr.style.borderBottom = '3px solid #27ae60';
           plCell.style.fontSize = '1rem';
           /* Update label */
-          tr.querySelector('td').innerHTML = '&#9733; Job ' + (i+1) + ' <span style="font-size:.75rem;color:#27ae60;">BREAK EVEN</span>';
+          tr.querySelector('.job-label').innerHTML = '&#9733; ' + (i+1) + ' <span style="font-size:.7rem;color:#27ae60;">BE!</span>';
         } else if (running < 0) {
           tr.style.background = i % 2 === 0 ? '#fff5f5' : '#fce4e4';
           tr.style.borderBottom = '1px solid #f0d0d0';

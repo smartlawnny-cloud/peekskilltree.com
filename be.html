@@ -28,6 +28,9 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="css/style.min.css">
   
+  <!-- Google Analytics GA4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CTLGWXSQLX"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-CTLGWXSQLX');</script>
 </head>
 <body>
 
@@ -235,15 +238,15 @@
             <div class="be-section-hdr" style="background:#b5610a;">Variable Costs <span style="font-size:.7rem;opacity:.7;">(PER JOB &mdash; only when working)</span></div>
             <div class="be-row">
               <label>Workers&rsquo; Comp <span style="font-size:.75rem;color:var(--text-light);">(% of labor)</span></label>
-              <div style="display:flex;align-items:center;gap:.3rem;"><input type="number" class="be-input be-var-pct" id="be-wc-pct" value="9" style="width:55px;" oninput="beCalc()"><span>%</span></div>
+              <div style="display:flex;align-items:center;gap:.3rem;"><input type="number" class="be-input be-var-pct" id="be-wc-pct" value="15" style="width:55px;" oninput="beCalc()"><span>%</span></div>
             </div>
             <div class="be-row">
               <label>Payroll Tax <span style="font-size:.75rem;color:var(--text-light);">(% of labor)</span></label>
-              <div style="display:flex;align-items:center;gap:.3rem;"><input type="number" class="be-input be-var-pct" id="be-tax-pct" value="9" style="width:55px;" oninput="beCalc()"><span>%</span></div>
+              <div style="display:flex;align-items:center;gap:.3rem;"><input type="number" class="be-input be-var-pct" id="be-tax-pct" value="8" style="width:55px;" oninput="beCalc()"><span>%</span></div>
             </div>
             <div class="be-row">
               <label>Disability / PFL <span style="font-size:.75rem;color:var(--text-light);">(% of labor)</span></label>
-              <div style="display:flex;align-items:center;gap:.3rem;"><input type="number" class="be-input be-var-pct" id="be-dis-pct" value="9" style="width:55px;" oninput="beCalc()"><span>%</span></div>
+              <div style="display:flex;align-items:center;gap:.3rem;"><input type="number" class="be-input be-var-pct" id="be-dis-pct" value="2" style="width:55px;" oninput="beCalc()"><span>%</span></div>
             </div>
             <div class="be-row">
               <label>Fuel / Diesel <span style="font-size:.75rem;color:var(--text-light);">(per job avg)</span></label>

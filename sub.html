@@ -145,6 +145,17 @@
           </div>
         </div>
 
+        <!-- Rate Tier -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="font-weight:700;margin-bottom:.6rem;">Rate Tier</div>
+          <div style="display:flex;flex-wrap:wrap;gap:.5rem;" id="tier-btns">
+            <button class="tier-btn active-tier" data-tier="standard" onclick="setTier('standard')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--green-dark);background:var(--green-dark);color:var(--white);cursor:pointer;font-size:.85rem;font-weight:600;">Standard</button>
+            <button class="tier-btn" data-tier="preferred" onclick="setTier('preferred')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Preferred <span style="font-size:.75rem;opacity:.7;">(-15%)</span></button>
+            <button class="tier-btn" data-tier="coop" onclick="setTier('coop')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Co-op Member <span style="font-size:.75rem;opacity:.7;">(-25%)</span></button>
+          </div>
+          <p id="tier-desc" style="font-size:.8rem;color:var(--text-light);margin-top:.4rem;">Full rates &mdash; any company, no existing relationship.</p>
+        </div>
+
         <!-- Duration row -->
         <div style="margin-bottom:1.25rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
@@ -458,6 +469,7 @@
         .calc-adj-btn:active {background:var(--bg-light);}
         .dur-btn {transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
         .preset-btn {transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
+        .tier-btn {transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
 
         /* ── Mobile: field-ready sizing ── */
         @media(max-width:600px){
@@ -550,7 +562,7 @@
           operator: [125,  250,  32],
           ground:   [120,  240,  30],
           chipper:  [175,  350,  44],
-          chiptruck:[225,  450,  57],
+          chiptruck:[175,  350,  44],
           bucket:   [300,  600,  75],
           loader:   [200,  400,  50],
           trailer:  [ 50,  100,  13],
@@ -685,6 +697,26 @@
         }
 
         var MIN_CHARGE = 500;
+        var tierDiscount = 0; /* 0 = standard, 0.15 = preferred, 0.25 = co-op */
+
+        var TIER_DESCS = {
+          standard:  'Full rates — any company, no existing relationship.',
+          preferred: '15% off equipment rates — partners who sub 3+ jobs/month.',
+          coop:      '25% off equipment rates — full co-op members with buy-in.'
+        };
+
+        function setTier(tier) {
+          tierDiscount = tier === 'coop' ? 0.25 : tier === 'preferred' ? 0.15 : 0;
+          document.getElementById('tier-desc').textContent = TIER_DESCS[tier];
+          document.querySelectorAll('.tier-btn').forEach(function(b){
+            var active = b.dataset.tier === tier;
+            b.style.border = active ? '2px solid var(--green-dark)' : '2px solid var(--border)';
+            b.style.background = active ? 'var(--green-dark)' : 'var(--white)';
+            b.style.color = active ? 'var(--white)' : '';
+            b.style.fontWeight = active ? '600' : '';
+          });
+          calcUpdate();
+        }
 
         /* ── Main calculator ─────────────────────────────────────── */
         function calcUpdate() {
@@ -696,12 +728,13 @@
           var isEmergency = document.getElementById('chk-emergency').checked;
           var emergMult = isEmergency ? 1.5 : 1;
 
-          function grp(lines, id, prId, label, key, qty) {
+          function grp(lines, id, prId, label, key, qty, isEquip) {
             qty = (qty === undefined) ? 1 : qty;
             var chk = document.getElementById(id);
             var on  = chk ? chk.checked : (qty > 0);
             if (!chk && qty === 0) { document.getElementById(prId).innerHTML = '&mdash;'; return; }
-            var v = on ? Math.round(rate(key, h) * qty * emergMult) : 0;
+            var tierMult = (isEquip && tierDiscount > 0) ? (1 - tierDiscount) : 1;
+            var v = on ? Math.round(rate(key, h) * qty * emergMult * tierMult) : 0;
             if (on && v > 0) {
               total += v;
               var lbl = qty > 1 ? qty + '&times;&nbsp;' + label : label;
@@ -725,12 +758,12 @@
           document.getElementById('pr-ground').style.color = gCount > 0 ? '' : 'var(--text-light)';
 
           /* Equipment */
-          grp(equipLines, 'chk-chipper',   'pr-chipper',   'Brush Bandit Chipper', 'chipper');
-          grp(equipLines, 'chk-chiptruck', 'pr-chiptruck', 'Chip Truck',          'chiptruck');
-          grp(equipLines, 'chk-bucket',    'pr-bucket',    '75ft Bucket Truck',   'bucket');
-          grp(equipLines, 'chk-loader',   'pr-loader',  'Giant Loader',         'loader');
-          grp(equipLines, 'chk-trailer',  'pr-trailer', 'Trailer',              'trailer');
-          grp(equipLines, 'chk-stump',   'pr-stump',   'Stump Grinder',        'stump');
+          grp(equipLines, 'chk-chipper',   'pr-chipper',   'Brush Bandit Chipper', 'chipper', 1, true);
+          grp(equipLines, 'chk-chiptruck', 'pr-chiptruck', 'Chip Truck',          'chiptruck', 1, true);
+          grp(equipLines, 'chk-bucket',    'pr-bucket',    '75ft Bucket Truck',   'bucket', 1, true);
+          grp(equipLines, 'chk-loader',   'pr-loader',  'Giant Loader',         'loader', 1, true);
+          grp(equipLines, 'chk-trailer',  'pr-trailer', 'Trailer',              'trailer', 1, true);
+          grp(equipLines, 'chk-stump',   'pr-stump',   'Stump Grinder',        'stump', 1, true);
 
           /* Add-ons */
           var addonLines = [];
@@ -803,12 +836,13 @@
           if (document.getElementById('chk-operator').checked) lSub += Math.round(rate('operator', h) * emergMult);
           lSub += Math.round(rate('ground', h) * gCount * emergMult);
           var eSub = 0;
-          if (document.getElementById('chk-chipper').checked)   eSub += Math.round(rate('chipper', h) * emergMult);
-          if (document.getElementById('chk-chiptruck').checked) eSub += Math.round(rate('chiptruck', h) * emergMult);
-          if (document.getElementById('chk-bucket').checked)    eSub += Math.round(rate('bucket', h) * emergMult);
-          if (document.getElementById('chk-loader').checked)    eSub += Math.round(rate('loader', h) * emergMult);
-          if (document.getElementById('chk-trailer').checked)   eSub += Math.round(rate('trailer', h) * emergMult);
-          if (document.getElementById('chk-stump').checked)     eSub += Math.round(rate('stump', h) * emergMult);
+          var eTierMult = tierDiscount > 0 ? (1 - tierDiscount) : 1;
+          if (document.getElementById('chk-chipper').checked)   eSub += Math.round(rate('chipper', h) * emergMult * eTierMult);
+          if (document.getElementById('chk-chiptruck').checked) eSub += Math.round(rate('chiptruck', h) * emergMult * eTierMult);
+          if (document.getElementById('chk-bucket').checked)    eSub += Math.round(rate('bucket', h) * emergMult * eTierMult);
+          if (document.getElementById('chk-loader').checked)    eSub += Math.round(rate('loader', h) * emergMult * eTierMult);
+          if (document.getElementById('chk-trailer').checked)   eSub += Math.round(rate('trailer', h) * emergMult * eTierMult);
+          if (document.getElementById('chk-stump').checked)     eSub += Math.round(rate('stump', h) * emergMult * eTierMult);
 
           var wcPct  = Math.max(0, parseFloat(document.getElementById('ins-wc-pct').value) || 0);
           var glPct  = Math.max(0, parseFloat(document.getElementById('ins-gl-pct').value) || 0);

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Break-Even Calculator | Second Nature Tree Service</title>
+  <meta name="description" content="Monthly break-even calculator for tree service operations. See how many work days you need to cover your costs.">
+  <link rel="canonical" href="https://peekskilltree.com/be.html">
+  <meta property="og:title" content="Break-Even Calculator | Second Nature Tree Service">
+  <meta property="og:description" content="Monthly break-even calculator for tree service operations. See how many work days you need to cover your costs.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Second Nature Tree Service">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://peekskilltree.com/be.html">
+  <meta property="og:image" content="https://peekskilltree.com/images/hero-collage-background.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@SNTreeNY">
+  <meta name="twitter:title" content="Break-Even Calculator | Second Nature Tree Service">
+  <meta name="twitter:description" content="Monthly break-even calculator for tree service operations. See how many work days you need to cover your costs.">
+  <meta name="twitter:image" content="https://peekskilltree.com/images/hero-collage-background.jpg">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="author" content="Second Nature Tree Service">
+  <meta property="og:image:alt" content="Break-Even Calculator | Second Nature Tree Service">
+  <meta name="twitter:image:alt" content="Break-Even Calculator | Second Nature Tree Service">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.min.css">
+  
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="container">
+      <div class="top-bar-inner">
+        <div class="top-bar-left">
+          <a href="tel:914-391-5233">&#9742; (914) 391-5233</a>
+          <span>|</span>
+          <span>Free Estimates &mdash; Peekskill, NY</span>
+        </div>
+        <div class="top-bar-right">
+          <a href="https://facebook.com/peekskilltree" target="_blank" rel="noopener" class="social-link">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Facebook
+          </a>
+          <a href="https://instagram.com/secondnaturetree/" target="_blank" rel="noopener" class="social-link">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            Instagram
+          </a>
+          <a href="https://share.google/mLwSzzZXwc5fuFRU4" target="_blank" rel="noopener" class="social-link">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Google
+          </a>
+          <a href="https://x.com/SNTreeNY" target="_blank" rel="noopener" class="social-link">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            X
+          </a>
+          <a href="https://www.youtube.com/channel/UCZgv2VOA7-A__UQizOEkKZA" target="_blank" rel="noopener" class="social-link">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            YouTube
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-img-wrap">
+          <img src="images/logo.png" alt="Second Nature Tree Service" width="76" height="36">
+        </div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li class="nav-dropdown">
+          <a href="services.html">Services &#9662;</a>
+          <div class="dropdown-menu">
+            <a href="tree-removal.html">Tree Removal</a>
+            <a href="tree-pruning.html">Tree Pruning &amp; Trimming</a>
+            <a href="stump-grinding.html">Stump Grinding</a>
+            <a href="emergency-tree-service.html">Emergency Tree Service</a>
+            <a href="land-clearing.html">Land &amp; Lot Clearing</a>
+          </div>
+        </li>
+        <li><a href="service-areas.html">Service Areas</a></li>
+        <li><a href="our-work.html">Our Work</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="header-cta">
+        <a href="https://share.google/mLwSzzZXwc5fuFRU4" target="_blank" rel="noopener" class="header-rating">
+          <span class="header-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="header-rating-text">5.0 on Google</span>
+        </a>
+        <a href="tel:914-391-5233" class="header-phone">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          (914) 391-5233
+        </a>
+        <a href="contact.html" class="btn btn-primary btn-sm">Free Estimate</a>
+      </div>
+      <button class="mobile-menu-btn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a> <span>&raquo;</span> Break-Even</div>
+      <div class="page-hero-content">
+        <h1>Break-Even Calculator</h1>
+      </div>
+    </div>
+  </section>
+
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://peekskilltree.com/"},{"@type":"ListItem","position":2,"name":"Break-Even Calculator","item":"https://peekskilltree.com/be.html"}]}
+  </script>
+  <main>
+
+  <style>
+    .top-bar {display:none !important;}
+    .page-hero {padding:1rem 0 .5rem !important;min-height:0 !important;background:var(--green-dark) !important;}
+    .page-hero-content h1 {font-size:1.2rem !important;margin-bottom:0 !important;}
+    .breadcrumb {display:none !important;}
+    .section {padding-top:.75rem !important;padding-bottom:1rem !important;}
+    @media(max-width:600px){
+      .page-hero {padding:.6rem 0 .3rem !important;}
+      .page-hero-content h1 {font-size:1.05rem !important;}
+    }
+    .be-input {width:90px;padding:.4rem .5rem;border:2px solid var(--border);border-radius:8px;font-size:1rem;font-weight:700;text-align:right;font-family:inherit;}
+    .be-input:focus {border-color:var(--green-dark);outline:none;}
+    .be-row {display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;border-bottom:1px solid var(--border);}
+    .be-row:last-child {border-bottom:none;}
+    .be-row label {font-size:.95rem;display:flex;align-items:center;gap:.4rem;}
+    .be-section {background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;}
+    .be-section-hdr {padding:.55rem 1rem;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.07em;color:var(--white);}
+    .be-subtotal {text-align:right;font-weight:700;font-size:.95rem;padding:.5rem .75rem;background:rgba(0,0,0,.02);border-top:1px solid var(--border);}
+    @media(max-width:600px){
+      .be-input {font-size:16px !important;width:85px !important;}
+      .be-row {padding:.75rem .6rem !important;}
+      .be-row label {font-size:1rem;}
+    }
+  </style>
+  <section class="section">
+    <div class="container" style="max-width:800px;">
+
+      <p style="color:var(--text-light);margin-bottom:.75rem;font-size:.9rem;">Enter your monthly costs. See exactly how many work days it takes to break even. <a href="sub.html" style="font-weight:600;">Job Cost Calculator &rarr;</a></p>
+
+      <div id="be-wrap" style="background:var(--bg-light);border-radius:12px;padding:1.5rem 1.75rem;border:1px solid var(--border);">
+
+        <!-- Vehicle Payments -->
+        <div class="be-section">
+          <div class="be-section-hdr" style="background:var(--green-dark);">Vehicle Payments</div>
+          <div class="be-row">
+            <label>Bucket Truck</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="1912" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Chip Truck</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="0" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Pickup / Crew Truck</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="1000" oninput="beCalc()"></div>
+          </div>
+          <div class="be-subtotal"><span id="sub-vehicles">$2,912</span></div>
+        </div>
+
+        <!-- Insurance -->
+        <div class="be-section">
+          <div class="be-section-hdr" style="background:#c0392b;">Insurance &amp; Compliance</div>
+          <div class="be-row">
+            <label>Workers&rsquo; Comp</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="1300" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>General Liability</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="750" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Commercial Auto</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="400" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Disability / PFL</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="100" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Equipment / Inland Marine</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="200" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Umbrella / Excess</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="0" oninput="beCalc()"></div>
+          </div>
+          <div class="be-subtotal"><span id="sub-insurance">$2,750</span></div>
+        </div>
+
+        <!-- Operations -->
+        <div class="be-section">
+          <div class="be-section-hdr" style="background:#4a7c59;">Operations &amp; Overhead</div>
+          <div class="be-row">
+            <label>Repairs / Maintenance</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="1000" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Fuel / Diesel</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="800" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Consumables (chains, ropes, rigging)</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="300" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Phone / Software / Subscriptions</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="200" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Yard / Storage Rent</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="0" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Marketing / Advertising</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="200" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Accounting / Legal</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="250" oninput="beCalc()"></div>
+          </div>
+          <div class="be-subtotal"><span id="sub-ops">$2,750</span></div>
+        </div>
+
+        <!-- Payroll -->
+        <div class="be-section">
+          <div class="be-section-hdr" style="background:#3d2b1f;">Payroll &amp; Taxes</div>
+          <div class="be-row">
+            <label>Owner Draw / Salary</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="5000" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Payroll Taxes (employer share)</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="400" oninput="beCalc()"></div>
+          </div>
+          <div class="be-row">
+            <label>Health Insurance</label>
+            <div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="be-input be-cost" value="0" oninput="beCalc()"></div>
+          </div>
+          <div class="be-subtotal"><span id="sub-payroll">$5,400</span></div>
+        </div>
+
+        <!-- TOTAL MONTHLY NUT -->
+        <div style="background:var(--green-dark);border-radius:10px;padding:1rem 1.25rem;color:var(--white);margin-top:.5rem;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem;">
+            <span style="font-weight:700;font-size:1rem;">Total Monthly Costs</span>
+            <span id="be-monthly-total" style="font-size:2rem;font-weight:800;letter-spacing:-.02em;">$13,812</span>
+          </div>
+        </div>
+
+        <!-- Daily Revenue / Break-Even -->
+        <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:2px dashed var(--border);">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:.75rem;">Your Daily Revenue</div>
+          <p style="font-size:.88rem;color:var(--text-light);margin-bottom:.75rem;">What does your crew bring in on an average work day? Use the <a href="sub.html" style="font-weight:600;">Job Cost Calculator</a> to figure this out for different crew/equipment combos.</p>
+
+          <div style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-start;">
+            <div>
+              <label style="font-size:.85rem;color:var(--text-light);display:block;margin-bottom:.25rem;">Avg. daily revenue</label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span style="font-weight:700;font-size:1.1rem;">$</span><input type="number" id="be-daily-rev" class="be-input" value="2500" style="width:100px;font-size:1.1rem;" oninput="beCalc()"></div>
+            </div>
+            <div>
+              <label style="font-size:.85rem;color:var(--text-light);display:block;margin-bottom:.25rem;">Avg. daily cost (labor+equip)</label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span style="font-weight:700;font-size:1.1rem;">$</span><input type="number" id="be-daily-cost" class="be-input" value="1590" style="width:100px;font-size:1.1rem;" oninput="beCalc()"></div>
+            </div>
+            <div>
+              <label style="font-size:.85rem;color:var(--text-light);display:block;margin-bottom:.25rem;">Daily profit</label>
+              <div id="be-daily-profit" style="font-size:1.1rem;font-weight:800;color:var(--green-dark);padding-top:.4rem;">$910</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESULT -->
+        <div id="be-result" style="margin-top:1.25rem;background:linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%);border-radius:12px;padding:1.5rem;color:var(--white);text-align:center;">
+          <div style="font-size:.85rem;opacity:.7;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem;">Days to Break Even</div>
+          <div id="be-days" style="font-size:3.5rem;font-weight:900;line-height:1;">16</div>
+          <div id="be-days-label" style="font-size:.9rem;opacity:.75;margin-top:.25rem;">out of ~22 work days/month</div>
+          <div style="margin-top:1rem;display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:.75rem;opacity:.6;text-transform:uppercase;">Remaining days</div>
+              <div id="be-remaining" style="font-size:1.3rem;font-weight:700;">6</div>
+            </div>
+            <div>
+              <div style="font-size:.75rem;opacity:.6;text-transform:uppercase;">Extra profit/mo</div>
+              <div id="be-extra" style="font-size:1.3rem;font-weight:700;color:#4ade80;">$5,460</div>
+            </div>
+            <div>
+              <div style="font-size:.75rem;opacity:.6;text-transform:uppercase;">Annual extra</div>
+              <div id="be-annual" style="font-size:1.3rem;font-weight:700;color:#4ade80;">$65,520</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual bar -->
+        <div style="margin-top:1rem;">
+          <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--text-light);margin-bottom:.3rem;">
+            <span>Day 1</span>
+            <span id="be-bar-label">Break-even: Day 16</span>
+            <span>Day 22</span>
+          </div>
+          <div style="background:var(--border);border-radius:6px;height:28px;overflow:hidden;position:relative;">
+            <div id="be-bar-fill" style="background:linear-gradient(90deg,#c0392b 0%,#e67e22 60%,#27ae60 100%);height:100%;width:73%;border-radius:6px;transition:width .3s;"></div>
+            <div id="be-bar-marker" style="position:absolute;top:0;left:73%;width:3px;height:100%;background:var(--white);border-radius:2px;transition:left .3s;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-top:.3rem;">
+            <span style="color:#c0392b;font-weight:600;">Covering costs</span>
+            <span style="color:#27ae60;font-weight:700;">Pure profit &rarr;</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Link back -->
+      <div style="margin-top:1.25rem;text-align:center;">
+        <a href="sub.html" style="display:inline-block;background:var(--green-dark);color:var(--white);font-weight:700;font-size:1rem;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">Open Job Cost Calculator &rarr;</a>
+      </div>
+
+    </div>
+  </section>
+
+  <script>
+    function beCalc() {
+      var inputs = document.querySelectorAll('.be-cost');
+      var total = 0;
+      var sections = {vehicles:0, insurance:0, ops:0, payroll:0};
+      var sectionNames = ['vehicles','vehicles','vehicles',
+        'insurance','insurance','insurance','insurance','insurance','insurance',
+        'ops','ops','ops','ops','ops','ops','ops',
+        'payroll','payroll','payroll'];
+      inputs.forEach(function(inp, i) {
+        var v = parseFloat(inp.value) || 0;
+        total += v;
+        if (sectionNames[i]) sections[sectionNames[i]] += v;
+      });
+      document.getElementById('sub-vehicles').textContent = '$' + sections.vehicles.toLocaleString();
+      document.getElementById('sub-insurance').textContent = '$' + sections.insurance.toLocaleString();
+      document.getElementById('sub-ops').textContent = '$' + sections.ops.toLocaleString();
+      document.getElementById('sub-payroll').textContent = '$' + sections.payroll.toLocaleString();
+      document.getElementById('be-monthly-total').textContent = '$' + total.toLocaleString();
+
+      var dailyRev  = parseFloat(document.getElementById('be-daily-rev').value) || 0;
+      var dailyCost = parseFloat(document.getElementById('be-daily-cost').value) || 0;
+      var dailyProfit = dailyRev - dailyCost;
+      document.getElementById('be-daily-profit').textContent = '$' + dailyProfit.toLocaleString();
+      document.getElementById('be-daily-profit').style.color = dailyProfit > 0 ? 'var(--green-dark)' : '#c0392b';
+
+      var workDays = 22;
+      var days = dailyProfit > 0 ? Math.ceil(total / dailyProfit) : 999;
+      var remaining = Math.max(0, workDays - days);
+      var extra = remaining * dailyProfit;
+
+      document.getElementById('be-days').textContent = days > workDays ? '22+' : days;
+      document.getElementById('be-days').style.color = days > workDays ? '#ef4444' : '#ffffff';
+      document.getElementById('be-days-label').textContent = days > workDays
+        ? 'Not enough — need more revenue or fewer costs'
+        : 'out of ~' + workDays + ' work days/month';
+      document.getElementById('be-remaining').textContent = remaining;
+      document.getElementById('be-extra').textContent = extra > 0 ? '$' + extra.toLocaleString() : '$0';
+      document.getElementById('be-annual').textContent = extra > 0 ? '$' + (extra * 12).toLocaleString() : '$0';
+      document.getElementById('be-bar-label').textContent = days > workDays ? 'Break-even: Not reached' : 'Break-even: Day ' + days;
+
+      var pct = Math.min(100, Math.max(5, (days / workDays) * 100));
+      document.getElementById('be-bar-fill').style.width = pct + '%';
+      document.getElementById('be-bar-marker').style.left = pct + '%';
+
+      // Color the result panel
+      var panel = document.getElementById('be-result');
+      if (days > workDays) {
+        panel.style.background = 'linear-gradient(135deg,#7f1d1d 0%,#c0392b 100%)';
+      } else if (days > 18) {
+        panel.style.background = 'linear-gradient(135deg,#7c4a00 0%,#b5610a 100%)';
+      } else {
+        panel.style.background = 'linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%)';
+      }
+    }
+    beCalc();
+  </script>
+
+  </main>
+
+  <section class="cta-banner">
+    <div class="container">
+      <h2>Ready to Get Started? Call for Your Free Estimate</h2>
+      <p>Professional tree services for homeowners across Westchester, Putnam, and Southern Dutchess Counties. Locally owned, licensed, and fully insured.</p>
+      <div class="cta-btns">
+        <a href="contact.html" class="btn btn-primary btn-lg">Get Free Estimate</a>
+        <a href="tel:914-391-5233" class="btn btn-outline btn-lg">&#9742; (914) 391-5233</a>
+      </div>
+      <p style="margin-top:1rem;font-size:.92rem;opacity:.85;">&#10003; We respond to all inquiries within 2 hours during business hours</p>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-about">
+          <img src="images/logo.png" alt="Second Nature Tree Service" class="footer-logo" width="55" height="26">
+          <p>Locally owned tree service proudly based in Peekskill, NY. Serving Westchester, Putnam, and Southern Dutchess Counties with professional tree removal, pruning, stump grinding, and emergency services for over 10 years.</p>
+          <div class="footer-social">
+            <a href="https://facebook.com/peekskilltree" target="_blank" rel="noopener" aria-label="Facebook"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+            <a href="https://instagram.com/secondnaturetree/" target="_blank" rel="noopener" aria-label="Instagram"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+            <a href="https://share.google/mLwSzzZXwc5fuFRU4" target="_blank" rel="noopener" aria-label="Google"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg></a>
+            <a href="https://x.com/SNTreeNY" target="_blank" rel="noopener" aria-label="X"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+            <a href="https://www.youtube.com/channel/UCZgv2VOA7-A__UQizOEkKZA" target="_blank" rel="noopener" aria-label="YouTube"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+          </div>
+        </div>
+        <div>
+          <h4>Services</h4>
+          <ul class="footer-links">
+            <li><a href="tree-removal.html">Tree Removal</a></li>
+            <li><a href="tree-pruning.html">Pruning &amp; Trimming</a></li>
+            <li><a href="stump-grinding.html">Stump Grinding</a></li>
+            <li><a href="emergency-tree-service.html">Emergency Service</a></li>
+            <li><a href="land-clearing.html">Land Clearing</a></li>
+            <li><a href="services.html">All Services</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Service Areas</h4>
+          <ul class="footer-links">
+            <li><a href="tree-service-yorktown-ny.html">Yorktown</a></li>
+            <li><a href="tree-service-cortlandt-ny.html">Cortlandt Manor</a></li>
+            <li><a href="tree-service-briarcliff-manor-ny.html">Briarcliff Manor</a></li>
+            <li><a href="tree-service-chappaqua-ny.html">Chappaqua</a></li>
+            <li><a href="tree-service-garrison-ny.html">Garrison</a></li>
+            <li><a href="tree-service-croton-on-hudson-ny.html">Croton-on-Hudson</a></li>
+            <li><a href="tree-service-beacon-ny.html">Beacon</a></li>
+            <li><a href="tree-service-fishkill-ny.html">Fishkill</a></li>
+            <li><a href="tree-service-wappingers-falls-ny.html">Wappingers Falls</a></li>
+            <li><a href="service-areas.html">All Areas &rarr;</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <ul class="footer-links">
+            <li><strong>Phone:</strong> <a href="tel:914-391-5233">(914) 391-5233</a></li>
+            <li><strong>Based in:</strong> Peekskill, NY</li>
+            <li><strong>Westchester:</strong> WC-32079</li>
+            <li><strong>Putnam:</strong> PC-50644</li>
+            <li><a href="contact.html">Get a Free Estimate</a></li>
+          </ul>
+          <h4 style="margin-top:20px;">For Tree Companies</h4>
+          <ul class="footer-links">
+            <li><a href="sub.html">Subcontractor Rates</a></li>
+          </ul>
+          <h4 style="margin-top:20px;">Also Visit</h4>
+          <ul class="footer-links">
+            <li><a href="https://smartlawnny.com" target="_blank" rel="noopener">Smart Lawn NY</a> &mdash; Robotic Mowers</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Second Nature Tree Service. All rights reserved. Licensed &amp; Insured. Serving Westchester, Putnam &amp; Southern Dutchess Counties. <a href="privacy-policy.html" style="color:rgba(255,255,255,.85);text-decoration:underline;">Privacy Policy</a> &nbsp;|&nbsp; <a href="terms-of-service.html" style="color:rgba(255,255,255,.85);text-decoration:underline;">Terms of Service</a></p>
+      </div>
+    </div>
+  </footer>
+  <script src="js/main.min.js"></script>
+</body>
+</html>

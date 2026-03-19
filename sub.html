@@ -357,6 +357,39 @@
             </ul>
             <p style="margin:0;font-size:.84rem;font-style:italic;">These costs are real and unavoidable. We carry full coverage so you and your clients are protected.</p>
           </div>
+
+          <!-- Partner Insurance Explanation -->
+          <div style="border-bottom:1px solid var(--border);">
+            <div onclick="var el=document.getElementById('partner-ins-info');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.p-arrow').textContent=el.style.display==='none'?'\u25B6':'\u25BC';"
+              style="padding:.65rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:rgba(192,80,80,.06);">
+              <span style="font-size:.88rem;font-weight:600;color:#c0392b;">&#9888; Why partners must provide insurance or pay under our policy</span>
+              <span class="p-arrow" style="font-size:.7rem;color:#c0392b;">&#9654;</span>
+            </div>
+            <div id="partner-ins-info" style="display:none;padding:.85rem 1rem;font-size:.86rem;color:var(--text);line-height:1.7;background:rgba(192,80,80,.03);">
+              <p style="margin:0 0 .6rem;font-weight:600;">If you don&rsquo;t carry your own insurance, we are legally liable for you.</p>
+              <p style="margin:0 0 .6rem;">Under New York law, when you work on a job under our name or alongside our crew, <strong>we become the responsible party</strong> if something goes wrong. Here&rsquo;s what that means:</p>
+              <ul style="margin:.4rem 0 .75rem;padding-left:1.25rem;">
+                <li style="margin-bottom:.4rem;"><strong>Workers&rsquo; Comp liability:</strong> If you or your crew members get injured on the job and you don&rsquo;t have your own WC policy, <strong>NYSIF will charge the claim to our policy</strong>. Our carrier audits every year and retroactively bills us for any uninsured subcontractor payroll. A single injury claim can cost $50,000&ndash;$500,000+ and spike our experience modifier for 3 years.</li>
+                <li style="margin-bottom:.4rem;"><strong>General Liability exposure:</strong> If your crew damages a client&rsquo;s property &mdash; roof, driveway, fence, vehicle, power lines &mdash; and you don&rsquo;t carry GL, the homeowner&rsquo;s claim comes to us as the general contractor. One dropped limb on a car is $5,000&ndash;$30,000. A roof hit can be $20,000+.</li>
+                <li style="margin-bottom:.4rem;"><strong>NY Construction Fair Play Act:</strong> New York presumes all workers on a job are <strong>employees, not independent contractors</strong>, unless you meet strict criteria including carrying your own insurance. If you&rsquo;re working under our umbrella without your own policy, the state considers you our employee &mdash; and we owe WC, disability, unemployment, and payroll taxes on every dollar we pay you.</li>
+                <li style="margin-bottom:.4rem;"><strong>NYSIF subcontractor monitoring:</strong> NYSIF actively monitors subcontractor relationships. During annual audits, they request a list of every sub used. Any sub without a valid COI on file = their payroll gets added to our premium at class code 0106 rates (~$9/$100). On a $10,000 sub job, that&rsquo;s $900 in unexpected premium.</li>
+                <li style="margin-bottom:.4rem;"><strong>Criminal penalties:</strong> Knowingly allowing uninsured workers on a job site is a <strong>misdemeanor in NY</strong> (up to $50,000 fine for first offense). With 5+ uninsured workers, it becomes a <strong>felony</strong>.</li>
+              </ul>
+              <p style="margin:0 0 .6rem;font-weight:600;color:var(--text);">Bottom line: two options.</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
+                <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:.75rem;">
+                  <p style="margin:0 0 .3rem;font-weight:700;color:var(--green-dark);font-size:.9rem;">Option A: Bring your own</p>
+                  <p style="margin:0;font-size:.82rem;">Provide current COIs for GL, WC, and Commercial Auto <strong>before</strong> the job. We verify and file them. Equipment rates only &mdash; no insurance markup.</p>
+                </div>
+                <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:.75rem;">
+                  <p style="margin:0 0 .3rem;font-weight:700;color:var(--green-dark);font-size:.9rem;">Option B: Work under ours</p>
+                  <p style="margin:0;font-size:.82rem;">We cover you under our policies. Insurance costs are added to your rate (see toggles below). This protects both of us and keeps the job legal.</p>
+                </div>
+              </div>
+              <p style="margin:0;font-size:.82rem;color:var(--text-light);font-style:italic;">This isn&rsquo;t about making extra money &mdash; it&rsquo;s about not losing everything. One uninsured claim can shut down a tree company. We&rsquo;ve seen it happen.</p>
+            </div>
+          </div>
+
           <div style="padding:.75rem 1rem;">
 
             <!-- Labor Insurance -->

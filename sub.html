@@ -886,10 +886,10 @@
 
             /* Mileage — count trucks dispatched × round trip miles × IRS rate */
             if (travelMiles > 0) {
-              var numTrucks = 1; /* base truck always */
+              var numTrucks = 0;
               if (document.getElementById('chk-chiptruck').checked) numTrucks++;
               if (document.getElementById('chk-bucket').checked)    numTrucks++;
-              if (document.getElementById('chk-loader').checked)    numTrucks++;
+              if (numTrucks === 0) numTrucks = 1; /* minimum 1 truck to get crew there */
               var mileageCost = Math.round(travelMiles * 2 * numTrucks * MILEAGE_RATE);
               total += mileageCost;
               travelLines.push('<span style="opacity:.75">Mileage (' + (travelMiles*2) + ' mi RT &times; ' + numTrucks + ' truck' + (numTrucks>1?'s':'') + ' &times; $' + MILEAGE_RATE.toFixed(2) + '/mi)</span>'

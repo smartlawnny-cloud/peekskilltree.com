@@ -313,10 +313,45 @@
 
           <div class="calc-row" style="padding:.7rem 1rem;">
             <label class="calc-label">
-              <input type="checkbox" id="chk-hic" checked onchange="calcUpdate()">
-              <span>HIC Licensing <span style="font-size:.8rem;color:var(--text-light);">(WC-32079 / PC-50644)</span></span>
+              <input type="checkbox" id="chk-admin" checked onchange="calcUpdate()">
+              <span>Admin / Dispatch</span>
             </label>
-            <span class="calc-price" id="pr-hic">$25</span>
+            <span class="calc-price" id="pr-admin">$75</span>
+          </div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-consumables" checked onchange="calcUpdate()">
+              <span>Consumables <span style="font-size:.8rem;color:var(--text-light);">(chains, ropes, rigging)</span></span>
+            </label>
+            <span class="calc-price" id="pr-consumables">$50</span>
+          </div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;align-items:center;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-depreciation" checked onchange="calcUpdate()">
+              <span>Equip Wear / Depreciation</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:.3rem;">
+              <input type="number" id="deprec-pct" min="0" max="20" value="5" step="1"
+                style="width:46px;padding:.3rem .4rem;border:2px solid var(--border);border-radius:6px;font-size:.9rem;font-weight:700;text-align:center;"
+                oninput="calcUpdate()">
+              <span style="font-size:.82rem;color:var(--text-light);">% of equip</span>
+            </div>
+          </div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;align-items:center;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-fuel-sur" onchange="calcUpdate()">
+              <span>Fuel Surcharge</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:.3rem;">
+              <span style="font-size:.82rem;color:var(--text-light);">diesel $</span>
+              <input type="number" id="diesel-price" min="2" max="8" value="3.60" step="0.10"
+                style="width:60px;padding:.3rem .4rem;border:2px solid var(--border);border-radius:6px;font-size:.9rem;font-weight:700;text-align:center;"
+                oninput="calcUpdate()">
+              <span style="font-size:.78rem;color:var(--text-light);">/gal</span>
+            </div>
           </div>
         </div>
 
@@ -476,7 +511,16 @@
               </div>
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;padding-top:.5rem;border-top:1px solid var(--border);">
+            <!-- HIC Licensing -->
+            <div style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border);">
+              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.9rem;">
+                <input type="checkbox" id="chk-hic" checked onchange="calcUpdate()" style="width:18px;height:18px;">
+                <span style="font-weight:600;">HIC Licensing</span>
+                <span style="font-size:.8rem;color:var(--text-light);">(WC-32079 / PC-50644) &mdash; $25</span>
+              </label>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);">
               <span style="font-size:.8rem;color:var(--text-light);">Certificate of insurance provided upon request.</span>
               <span id="ins-amount" style="font-size:1rem;font-weight:700;color:var(--green-dark);"></span>
             </div>
@@ -852,6 +896,16 @@
           grp(equipLines, 'chk-stump',   'pr-stump',   'Stump Grinder',        'stump', 1, true);
           grp(equipLines, 'chk-ram',     'pr-ram',     'Ram 2500 Crew Truck',  'ram', 1, true);
 
+          /* Equipment base cost (for depreciation + insurance calcs) */
+          var eBase = 0;
+          if (document.getElementById('chk-chipper').checked)   eBase += rate('chipper', h);
+          if (document.getElementById('chk-chiptruck').checked) eBase += rate('chiptruck', h);
+          if (document.getElementById('chk-bucket').checked)    eBase += rate('bucket', h);
+          if (document.getElementById('chk-loader').checked)    eBase += rate('loader', h);
+          if (document.getElementById('chk-trailer').checked)   eBase += rate('trailer', h);
+          if (document.getElementById('chk-stump').checked)     eBase += rate('stump', h);
+          if (document.getElementById('chk-ram').checked)       eBase += rate('ram', h);
+
           /* Add-ons */
           var addonLines = [];
 
@@ -881,12 +935,49 @@
           }
           document.getElementById('pr-permit').style.color = document.getElementById('chk-permit').checked ? '' : 'var(--text-light)';
 
-          /* HIC Licensing */
-          if (document.getElementById('chk-hic').checked) {
-            total += 25;
-            addonLines.push('<span style="opacity:.75">HIC licensing fee</span><span style="float:right;font-weight:600">$25</span>');
+          /* HIC Licensing — counted with insurance */
+          var hicAmt = document.getElementById('chk-hic').checked ? 25 : 0;
+
+          /* Admin / Dispatch */
+          if (document.getElementById('chk-admin').checked) {
+            total += 75;
+            addonLines.push('<span style="opacity:.75">Admin / dispatch</span><span style="float:right;font-weight:600">$75</span>');
           }
-          document.getElementById('pr-hic').style.color = document.getElementById('chk-hic').checked ? '' : 'var(--text-light)';
+          document.getElementById('pr-admin').style.color = document.getElementById('chk-admin').checked ? '' : 'var(--text-light)';
+
+          /* Consumables */
+          if (document.getElementById('chk-consumables').checked) {
+            total += 50;
+            addonLines.push('<span style="opacity:.75">Consumables (chains, ropes, rigging)</span><span style="float:right;font-weight:600">$50</span>');
+          }
+          document.getElementById('pr-consumables').style.color = document.getElementById('chk-consumables').checked ? '' : 'var(--text-light)';
+
+          /* Equipment Wear / Depreciation — % of equipment base cost */
+          if (document.getElementById('chk-depreciation').checked) {
+            var depPct = Math.max(0, parseFloat(document.getElementById('deprec-pct').value) || 0);
+            var depAmt = Math.round(eBase * depPct / 100);
+            if (depAmt > 0) {
+              total += depAmt;
+              addonLines.push('<span style="opacity:.75">Equip wear/depreciation (' + depPct + '% of $' + eBase.toLocaleString() + ')</span><span style="float:right;font-weight:600">$' + depAmt.toLocaleString() + '</span>');
+            }
+          }
+
+          /* Fuel Surcharge — based on diesel price vs $3.00 baseline, applied to heavy truck mileage */
+          if (document.getElementById('chk-fuel-sur').checked) {
+            var dieselPrice = parseFloat(document.getElementById('diesel-price').value) || 3.60;
+            var baseline = 3.00; /* baseline diesel $/gal baked into heavy truck rate */
+            var surchargePerGal = Math.max(0, dieselPrice - baseline);
+            /* Heavy trucks ~6 MPG, light trucks ~12 MPG */
+            var heavyGals = 0, lightGals = 0;
+            if (document.getElementById('chk-chiptruck').checked) heavyGals += (travelMiles * 2) / 6;
+            if (document.getElementById('chk-bucket').checked)    heavyGals += (travelMiles * 2) / 6;
+            if (document.getElementById('chk-ram').checked)       lightGals += (travelMiles * 2) / 12;
+            var fuelSurcharge = Math.round((heavyGals + lightGals) * surchargePerGal);
+            if (fuelSurcharge > 0) {
+              total += fuelSurcharge;
+              addonLines.push('<span style="opacity:.75">Fuel surcharge ($' + dieselPrice.toFixed(2) + '/gal, +$' + surchargePerGal.toFixed(2) + ' over $' + baseline.toFixed(2) + ' base)</span><span style="float:right;font-weight:600">$' + fuelSurcharge.toLocaleString() + '</span>');
+            }
+          }
 
           /* Build grouped breakdown */
           var sep = '<div style="height:1px;background:rgba(255,255,255,.15);margin:.5rem 0;clear:both;"></div>';
@@ -962,13 +1053,7 @@
           if (document.getElementById('chk-climber').checked)  lBase += rate('climber', h);
           if (document.getElementById('chk-operator').checked) lBase += rate('operator', h);
           lBase += rate('ground', h) * gCount;
-          var eBase = 0;
-          if (document.getElementById('chk-chipper').checked)   eBase += rate('chipper', h);
-          if (document.getElementById('chk-chiptruck').checked) eBase += rate('chiptruck', h);
-          if (document.getElementById('chk-bucket').checked)    eBase += rate('bucket', h);
-          if (document.getElementById('chk-loader').checked)    eBase += rate('loader', h);
-          if (document.getElementById('chk-trailer').checked)   eBase += rate('trailer', h);
-          if (document.getElementById('chk-stump').checked)     eBase += rate('stump', h);
+          /* eBase already computed above */
 
           var wcAmt   = insLaborOn ? Math.round(lBase * wcPct / 100) : 0;
           var disAmt  = insLaborOn ? Math.round(lBase * disPct / 100) : 0;
@@ -980,7 +1065,8 @@
           var laborInsTotal = wcAmt + disAmt + taxAmt;
           var glTotal       = glAmt;
           var equipInsTotal = autoAmt + eqAmt;
-          var insAmt  = laborInsTotal + glTotal + equipInsTotal;
+          var insAmt  = laborInsTotal + glTotal + equipInsTotal + hicAmt;
+          if (hicAmt > 0) total += hicAmt;
 
           /* Show per-section totals */
           document.getElementById('ins-labor-amt').textContent = laborInsTotal > 0 ? '+$' + laborInsTotal.toLocaleString() : '';

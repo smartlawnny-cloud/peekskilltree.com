@@ -256,62 +256,79 @@
           </div>
         </div>
 
-        <!-- Daily Revenue / Break-Even -->
+        <!-- Per-Job Inputs -->
         <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:2px dashed var(--border);">
-          <div style="font-weight:700;font-size:1rem;margin-bottom:.75rem;">Your Daily Revenue</div>
-          <p style="font-size:.88rem;color:var(--text-light);margin-bottom:.75rem;">What does your crew bring in on an average work day? Use the <a href="sub.html" style="font-weight:600;">Job Cost Calculator</a> to figure this out for different crew/equipment combos.</p>
+          <div style="font-weight:700;font-size:1rem;margin-bottom:.25rem;">Per-Job Numbers</div>
+          <p style="font-size:.88rem;color:var(--text-light);margin-bottom:.75rem;">What does an average job look like? Revenue is what you charge the customer. Variable costs are what it costs you to do the job (labor, equipment, fuel, consumables). Use the <a href="sub.html" style="font-weight:600;">Job Cost Calculator</a> to figure these out.</p>
 
-          <div style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-start;">
+          <div style="display:flex;flex-wrap:wrap;gap:.6rem 1.25rem;align-items:flex-end;">
             <div>
-              <label style="font-size:.85rem;color:var(--text-light);display:block;margin-bottom:.25rem;">Avg. daily revenue</label>
-              <div style="display:flex;align-items:center;gap:.3rem;"><span style="font-weight:700;font-size:1.1rem;">$</span><input type="number" id="be-daily-rev" class="be-input" value="2500" style="width:100px;font-size:1.1rem;" oninput="beCalc()"></div>
+              <label style="font-size:.82rem;color:var(--text-light);display:block;margin-bottom:.2rem;">Revenue per job</label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span style="font-weight:700;">$</span><input type="number" id="be-job-rev" class="be-input" value="2500" style="width:95px;" oninput="beCalc()"></div>
             </div>
             <div>
-              <label style="font-size:.85rem;color:var(--text-light);display:block;margin-bottom:.25rem;">Avg. daily cost (labor+equip)</label>
-              <div style="display:flex;align-items:center;gap:.3rem;"><span style="font-weight:700;font-size:1.1rem;">$</span><input type="number" id="be-daily-cost" class="be-input" value="1590" style="width:100px;font-size:1.1rem;" oninput="beCalc()"></div>
+              <label style="font-size:.82rem;color:var(--text-light);display:block;margin-bottom:.2rem;">Labor cost per job</label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span style="font-weight:700;">$</span><input type="number" id="be-job-labor" class="be-input" value="1240" style="width:95px;" oninput="beCalc()"></div>
             </div>
             <div>
-              <label style="font-size:.85rem;color:var(--text-light);display:block;margin-bottom:.25rem;">Daily profit</label>
-              <div id="be-daily-profit" style="font-size:1.1rem;font-weight:800;color:var(--green-dark);padding-top:.4rem;">$910</div>
+              <label style="font-size:.82rem;color:var(--text-light);display:block;margin-bottom:.2rem;">Equipment cost</label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span style="font-weight:700;">$</span><input type="number" id="be-job-equip" class="be-input" value="350" style="width:95px;" oninput="beCalc()"></div>
             </div>
+            <div>
+              <label style="font-size:.82rem;color:var(--text-light);display:block;margin-bottom:.2rem;">Fuel &amp; mileage</label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span style="font-weight:700;">$</span><input type="number" id="be-job-fuel" class="be-input" value="75" style="width:95px;" oninput="beCalc()"></div>
+            </div>
+            <div>
+              <label style="font-size:.82rem;color:var(--text-light);display:block;margin-bottom:.2rem;">Consumables</label>
+              <div style="display:flex;align-items:center;gap:.3rem;"><span style="font-weight:700;">$</span><input type="number" id="be-job-cons" class="be-input" value="25" style="width:95px;" oninput="beCalc()"></div>
+            </div>
+          </div>
+          <div style="margin-top:.6rem;display:flex;gap:1.25rem;flex-wrap:wrap;font-size:.9rem;">
+            <span><strong>Total variable cost:</strong> <span id="be-job-varcost">$1,690</span></span>
+            <span><strong>Net per job:</strong> <span id="be-job-net" style="color:var(--green-dark);font-weight:700;">$810</span></span>
           </div>
         </div>
 
-        <!-- RESULT -->
-        <div id="be-result" style="margin-top:1.25rem;background:linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%);border-radius:12px;padding:1.5rem;color:var(--white);text-align:center;">
-          <div style="font-size:.85rem;opacity:.7;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem;">Days to Break Even</div>
-          <div id="be-days" style="font-size:3.5rem;font-weight:900;line-height:1;">16</div>
-          <div id="be-days-label" style="font-size:.9rem;opacity:.75;margin-top:.25rem;">out of ~22 work days/month</div>
-          <div style="margin-top:1rem;display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;">
-            <div>
-              <div style="font-size:.75rem;opacity:.6;text-transform:uppercase;">Remaining days</div>
-              <div id="be-remaining" style="font-size:1.3rem;font-weight:700;">6</div>
-            </div>
-            <div>
-              <div style="font-size:.75rem;opacity:.6;text-transform:uppercase;">Extra profit/mo</div>
-              <div id="be-extra" style="font-size:1.3rem;font-weight:700;color:#4ade80;">$5,460</div>
-            </div>
-            <div>
-              <div style="font-size:.75rem;opacity:.6;text-transform:uppercase;">Annual extra</div>
-              <div id="be-annual" style="font-size:1.3rem;font-weight:700;color:#4ade80;">$65,520</div>
-            </div>
+        <!-- JOB-BY-JOB P&L TABLE -->
+        <div style="margin-top:1.25rem;">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:.5rem;">Job-by-Job P&amp;L</div>
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+            <table id="be-table" style="width:100%;border-collapse:collapse;font-size:.85rem;min-width:500px;">
+              <thead>
+                <tr style="background:var(--green-dark);color:white;">
+                  <th style="padding:.5rem .6rem;text-align:left;font-weight:700;white-space:nowrap;border-radius:6px 0 0 0;"></th>
+                  <th style="padding:.5rem .6rem;text-align:right;font-weight:700;">Revenue</th>
+                  <th style="padding:.5rem .6rem;text-align:right;font-weight:700;">Job Costs</th>
+                  <th style="padding:.5rem .6rem;text-align:right;font-weight:700;">Cumulative</th>
+                  <th style="padding:.5rem .6rem;text-align:right;font-weight:700;border-radius:0 6px 0 0;">Running P&amp;L</th>
+                </tr>
+              </thead>
+              <tbody id="be-tbody"></tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Visual bar -->
-        <div style="margin-top:1rem;">
-          <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--text-light);margin-bottom:.3rem;">
-            <span>Day 1</span>
-            <span id="be-bar-label">Break-even: Day 16</span>
-            <span>Day 22</span>
+        <!-- RESULT SUMMARY -->
+        <div id="be-result" style="margin-top:1rem;background:linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%);border-radius:12px;padding:1.25rem;color:var(--white);text-align:center;">
+          <div style="font-size:.8rem;opacity:.7;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem;">Break-Even Job</div>
+          <div style="display:flex;justify-content:center;align-items:baseline;gap:.5rem;">
+            <span style="font-size:.9rem;opacity:.7;">Job</span>
+            <span id="be-days" style="font-size:3rem;font-weight:900;line-height:1;">#16</span>
           </div>
-          <div style="background:var(--border);border-radius:6px;height:28px;overflow:hidden;position:relative;">
-            <div id="be-bar-fill" style="background:linear-gradient(90deg,#c0392b 0%,#e67e22 60%,#27ae60 100%);height:100%;width:73%;border-radius:6px;transition:width .3s;"></div>
-            <div id="be-bar-marker" style="position:absolute;top:0;left:73%;width:3px;height:100%;background:var(--white);border-radius:2px;transition:left .3s;"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-top:.3rem;">
-            <span style="color:#c0392b;font-weight:600;">Covering costs</span>
-            <span style="color:#27ae60;font-weight:700;">Pure profit &rarr;</span>
+          <div id="be-days-label" style="font-size:.85rem;opacity:.7;margin-top:.2rem;">of ~22 jobs/month</div>
+          <div style="margin-top:.75rem;display:flex;justify-content:center;gap:1.25rem;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:.7rem;opacity:.6;text-transform:uppercase;">Jobs after BE</div>
+              <div id="be-remaining" style="font-size:1.2rem;font-weight:700;">6</div>
+            </div>
+            <div>
+              <div style="font-size:.7rem;opacity:.6;text-transform:uppercase;">Month-end profit</div>
+              <div id="be-extra" style="font-size:1.2rem;font-weight:700;color:#4ade80;">$5,460</div>
+            </div>
+            <div>
+              <div style="font-size:.7rem;opacity:.6;text-transform:uppercase;">Annual profit</div>
+              <div id="be-annual" style="font-size:1.2rem;font-weight:700;color:#4ade80;">$65,520</div>
+            </div>
           </div>
         </div>
 
@@ -327,8 +344,9 @@
 
   <script>
     function beCalc() {
+      /* Sum fixed costs by section */
       var inputs = document.querySelectorAll('.be-cost');
-      var total = 0;
+      var fixedTotal = 0;
       var sections = {vehicles:0, insurance:0, ops:0, payroll:0};
       var sectionNames = ['vehicles','vehicles','vehicles',
         'insurance','insurance','insurance','insurance','insurance','insurance',
@@ -336,45 +354,95 @@
         'payroll','payroll','payroll'];
       inputs.forEach(function(inp, i) {
         var v = parseFloat(inp.value) || 0;
-        total += v;
+        fixedTotal += v;
         if (sectionNames[i]) sections[sectionNames[i]] += v;
       });
       document.getElementById('sub-vehicles').textContent = '$' + sections.vehicles.toLocaleString();
       document.getElementById('sub-insurance').textContent = '$' + sections.insurance.toLocaleString();
       document.getElementById('sub-ops').textContent = '$' + sections.ops.toLocaleString();
       document.getElementById('sub-payroll').textContent = '$' + sections.payroll.toLocaleString();
-      document.getElementById('be-monthly-total').textContent = '$' + total.toLocaleString();
+      document.getElementById('be-monthly-total').textContent = '$' + fixedTotal.toLocaleString();
 
-      var dailyRev  = parseFloat(document.getElementById('be-daily-rev').value) || 0;
-      var dailyCost = parseFloat(document.getElementById('be-daily-cost').value) || 0;
-      var dailyProfit = dailyRev - dailyCost;
-      document.getElementById('be-daily-profit').textContent = '$' + dailyProfit.toLocaleString();
-      document.getElementById('be-daily-profit').style.color = dailyProfit > 0 ? 'var(--green-dark)' : '#c0392b';
+      /* Per-job numbers */
+      var jobRev   = parseFloat(document.getElementById('be-job-rev').value) || 0;
+      var jobLabor = parseFloat(document.getElementById('be-job-labor').value) || 0;
+      var jobEquip = parseFloat(document.getElementById('be-job-equip').value) || 0;
+      var jobFuel  = parseFloat(document.getElementById('be-job-fuel').value) || 0;
+      var jobCons  = parseFloat(document.getElementById('be-job-cons').value) || 0;
+      var jobCost  = jobLabor + jobEquip + jobFuel + jobCons;
+      var jobNet   = jobRev - jobCost;
 
-      var workDays = 22;
-      var days = dailyProfit > 0 ? Math.ceil(total / dailyProfit) : 999;
-      var remaining = Math.max(0, workDays - days);
-      var extra = remaining * dailyProfit;
+      document.getElementById('be-job-varcost').textContent = '$' + jobCost.toLocaleString();
+      var netEl = document.getElementById('be-job-net');
+      netEl.textContent = (jobNet >= 0 ? '$' : '-$') + Math.abs(jobNet).toLocaleString();
+      netEl.style.color = jobNet >= 0 ? 'var(--green-dark)' : '#c0392b';
 
-      document.getElementById('be-days').textContent = days > workDays ? '22+' : days;
-      document.getElementById('be-days').style.color = days > workDays ? '#ef4444' : '#ffffff';
-      document.getElementById('be-days-label').textContent = days > workDays
-        ? 'Not enough — need more revenue or fewer costs'
-        : 'out of ~' + workDays + ' work days/month';
+      /* Build job-by-job table */
+      var maxJobs = 25;
+      var tbody = document.getElementById('be-tbody');
+      var html = '';
+      var running = -fixedTotal;
+      var beJob = -1;
+      var prevRunning = running;
+
+      /* Row 0: No jobs — just fixed costs */
+      html += '<tr style="background:#fce4e4;border-bottom:1px solid #e8e8e8;">'
+        + '<td style="padding:.45rem .6rem;font-weight:700;white-space:nowrap;">No jobs yet</td>'
+        + '<td style="padding:.45rem .6rem;text-align:right;color:#999;">$0</td>'
+        + '<td style="padding:.45rem .6rem;text-align:right;color:#999;">$0</td>'
+        + '<td style="padding:.45rem .6rem;text-align:right;color:#999;">$0</td>'
+        + '<td style="padding:.45rem .6rem;text-align:right;font-weight:700;color:#c0392b;">-$' + fixedTotal.toLocaleString() + '</td>'
+        + '</tr>';
+
+      for (var j = 1; j <= maxJobs; j++) {
+        var cumRev = jobRev * j;
+        var cumCost = jobCost * j;
+        prevRunning = running;
+        running = cumRev - cumCost - fixedTotal;
+
+        var isBreakEven = (prevRunning < 0 && running >= 0);
+        if (isBreakEven && beJob < 0) beJob = j;
+
+        var inRed = running < 0;
+        var bg = isBreakEven ? '#d4edda' : (inRed ? (j % 2 === 0 ? '#fff5f5' : '#fce4e4') : (j % 2 === 0 ? '#f0faf0' : '#e8f5e9'));
+        var plColor = inRed ? '#c0392b' : '#2d5a27';
+        var plText = (running >= 0 ? '+$' : '-$') + Math.abs(running).toLocaleString();
+        var rowBorder = isBreakEven ? '3px solid #27ae60' : '1px solid #e8e8e8';
+        var label = 'Job ' + j;
+        if (isBreakEven) label = '&#9733; Job ' + j + ' — BREAK EVEN';
+
+        html += '<tr style="background:' + bg + ';border-bottom:' + rowBorder + ';">'
+          + '<td style="padding:.45rem .6rem;font-weight:' + (isBreakEven ? '800' : '600') + ';white-space:nowrap;font-size:' + (isBreakEven ? '.9rem' : '.85rem') + ';">' + label + '</td>'
+          + '<td style="padding:.45rem .6rem;text-align:right;color:#2d5a27;">+$' + jobRev.toLocaleString() + '</td>'
+          + '<td style="padding:.45rem .6rem;text-align:right;color:#c0392b;">-$' + jobCost.toLocaleString() + '</td>'
+          + '<td style="padding:.45rem .6rem;text-align:right;font-size:.8rem;color:#888;">$' + cumRev.toLocaleString() + ' / $' + (cumCost + fixedTotal).toLocaleString() + '</td>'
+          + '<td style="padding:.45rem .6rem;text-align:right;font-weight:700;color:' + plColor + ';font-size:' + (isBreakEven ? '1rem' : '.85rem') + ';">' + plText + '</td>'
+          + '</tr>';
+
+        /* Stop 4 rows after break-even */
+        if (beJob > 0 && j >= beJob + 4) break;
+      }
+      tbody.innerHTML = html;
+
+      /* Summary panel */
+      var workJobs = 22;
+      var remaining = beJob > 0 ? Math.max(0, workJobs - beJob) : 0;
+      var monthEnd = beJob > 0 ? (jobRev * workJobs) - (jobCost * workJobs) - fixedTotal : 0;
+
+      document.getElementById('be-days').textContent = beJob > 0 ? '#' + beJob : 'N/A';
+      document.getElementById('be-days').style.color = beJob < 0 ? '#ef4444' : (beJob > 20 ? '#fbbf24' : '#ffffff');
+      document.getElementById('be-days-label').textContent = beJob < 0
+        ? 'Not profitable at these rates'
+        : (beJob > workJobs ? 'Need ' + beJob + ' jobs — more than ' + workJobs + '/mo' : 'of ~' + workJobs + ' jobs/month');
       document.getElementById('be-remaining').textContent = remaining;
-      document.getElementById('be-extra').textContent = extra > 0 ? '$' + extra.toLocaleString() : '$0';
-      document.getElementById('be-annual').textContent = extra > 0 ? '$' + (extra * 12).toLocaleString() : '$0';
-      document.getElementById('be-bar-label').textContent = days > workDays ? 'Break-even: Not reached' : 'Break-even: Day ' + days;
+      document.getElementById('be-extra').textContent = monthEnd > 0 ? '+$' + monthEnd.toLocaleString() : (monthEnd < 0 ? '-$' + Math.abs(monthEnd).toLocaleString() : '$0');
+      document.getElementById('be-extra').style.color = monthEnd >= 0 ? '#4ade80' : '#ef4444';
+      document.getElementById('be-annual').textContent = monthEnd > 0 ? '+$' + (monthEnd * 12).toLocaleString() : '$0';
 
-      var pct = Math.min(100, Math.max(5, (days / workDays) * 100));
-      document.getElementById('be-bar-fill').style.width = pct + '%';
-      document.getElementById('be-bar-marker').style.left = pct + '%';
-
-      // Color the result panel
       var panel = document.getElementById('be-result');
-      if (days > workDays) {
+      if (beJob < 0 || beJob > workJobs) {
         panel.style.background = 'linear-gradient(135deg,#7f1d1d 0%,#c0392b 100%)';
-      } else if (days > 18) {
+      } else if (beJob > 18) {
         panel.style.background = 'linear-gradient(135deg,#7c4a00 0%,#b5610a 100%)';
       } else {
         panel.style.background = 'linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%)';

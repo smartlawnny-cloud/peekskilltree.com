@@ -133,9 +133,27 @@
 
       <div id="calc-wrap" style="background:var(--bg-light);border-radius:12px;padding:1.75rem 2rem;border:1px solid var(--border);">
 
+        <!-- Job Type Presets -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="font-weight:700;margin-bottom:.6rem;">Quick Select</div>
+          <div style="display:flex;flex-wrap:wrap;gap:.5rem;" id="preset-btns">
+            <button class="preset-btn" onclick="setPreset('removal')" style="padding:.4rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;white-space:nowrap;">&#127795; Tree Removal</button>
+            <button class="preset-btn" onclick="setPreset('pruning')" style="padding:.4rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;white-space:nowrap;">&#9986; Pruning</button>
+            <button class="preset-btn" onclick="setPreset('clearing')" style="padding:.4rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;white-space:nowrap;">&#127806; Land Clearing</button>
+            <button class="preset-btn" onclick="setPreset('bucket')" style="padding:.4rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;white-space:nowrap;">&#128678; Bucket Job</button>
+            <button class="preset-btn" onclick="setPreset('custom')" style="padding:.4rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;white-space:nowrap;">&#9881; Custom</button>
+          </div>
+        </div>
+
         <!-- Duration row -->
-        <div style="margin-bottom:1.75rem;">
-          <div style="font-weight:700;margin-bottom:.75rem;">Duration</div>
+        <div style="margin-bottom:1.25rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
+            <span style="font-weight:700;">Duration</span>
+            <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.88rem;background:#c0392b;color:white;padding:.3rem .7rem;border-radius:6px;font-weight:600;" id="emergency-label">
+              <input type="checkbox" id="chk-emergency" onchange="calcUpdate()" style="width:16px;height:16px;margin:0;">
+              <span>&#9889; Emergency / Storm</span>
+            </label>
+          </div>
           <div style="display:flex;flex-wrap:wrap;gap:.6rem;" id="dur-btns">
             <button class="dur-btn" data-val="4"  onclick="setDur(4)"  style="padding:.45rem 1.1rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.95rem;">Half Day (4 hr)</button>
             <button class="dur-btn active-dur" data-val="8" onclick="setDur(8)"  style="padding:.45rem 1.1rem;border-radius:8px;border:2px solid var(--green-dark);background:var(--green-dark);color:var(--white);cursor:pointer;font-size:.95rem;font-weight:600;">Full Day (8 hr)</button>
@@ -374,6 +392,7 @@
             </div>
             <span id="calc-total" style="font-size:2.4rem;font-weight:800;letter-spacing:-.02em;">$1,590</span>
           </div>
+          <div id="min-notice" style="display:none;margin-top:.6rem;padding:.5rem .75rem;background:rgba(255,255,255,.15);border-radius:6px;font-size:.82rem;color:#f9c74f;">&#9888; Minimum job charge of $500 applied.</div>
           <p style="font-size:.78rem;opacity:.55;margin-top:.75rem;margin-bottom:0;">Estimate only &mdash; call to confirm current rates and availability.</p>
         </div>
 
@@ -388,6 +407,7 @@
         .calc-adj-btn {width:40px;height:40px;border:1px solid var(--border);border-radius:8px;background:var(--white);cursor:pointer;font-size:1.4rem;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none;}
         .calc-adj-btn:active {background:var(--bg-light);}
         .dur-btn {transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
+        .preset-btn {transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
 
         /* ── Mobile: field-ready sizing ── */
         @media(max-width:600px){
@@ -463,12 +483,12 @@
 
         /* ── Rates: [half_day, full_day, hourly] ─────────────────── */
         var RATES = {
-          climber:  [300,  600,  75],
-          operator: [250,  500,  63],
-          ground:   [160,  320,  40],
+          climber:  [160,  320,  40],
+          operator: [125,  250,  32],
+          ground:   [100,  200,  25],
           chipper:  [175,  350,  44],
           chiptruck:[250,  500,  63],
-          bucket:   [200,  400,  50],
+          bucket:   [300,  600,  75],
           loader:   [200,  400,  50],
           trailer:  [ 50,  100,  13]
         };
@@ -534,6 +554,70 @@
           calcUpdate();
         }
 
+        /* ── Job Type Presets ──────────────────────────────────────── */
+        function setPreset(type) {
+          /* Reset all checkboxes */
+          ['chk-climber','chk-operator','chk-chipper','chk-chiptruck','chk-bucket','chk-loader','chk-trailer'].forEach(function(id){
+            var el = document.getElementById(id);
+            if (el) { el.checked = false; el.disabled = false; el.style.opacity = '1'; }
+          });
+
+          switch(type) {
+            case 'removal':
+              document.getElementById('chk-climber').checked = true;
+              gCount = 2;
+              document.getElementById('chk-chipper').checked = true;
+              document.getElementById('chk-chiptruck').checked = true;
+              setDur(8);
+              break;
+            case 'pruning':
+              document.getElementById('chk-climber').checked = true;
+              gCount = 1;
+              document.getElementById('chk-chipper').checked = true;
+              setDur(4);
+              break;
+            case 'clearing':
+              document.getElementById('chk-climber').checked = false;
+              gCount = 2;
+              document.getElementById('chk-chipper').checked = true;
+              document.getElementById('chk-chiptruck').checked = true;
+              document.getElementById('chk-loader').checked = true;
+              document.getElementById('chk-trailer').checked = true;
+              document.getElementById('chk-trailer').disabled = false;
+              document.getElementById('chk-trailer').style.opacity = '1';
+              setDur(8);
+              break;
+            case 'bucket':
+              document.getElementById('chk-climber').checked = true;
+              gCount = 2;
+              document.getElementById('chk-chipper').checked = true;
+              document.getElementById('chk-chiptruck').checked = true;
+              document.getElementById('chk-bucket').checked = true;
+              document.getElementById('chk-operator').checked = true;
+              document.getElementById('chk-operator').disabled = false;
+              document.getElementById('chk-operator').style.opacity = '1';
+              setDur(8);
+              break;
+            case 'custom':
+              gCount = 2;
+              document.getElementById('chk-climber').checked = true;
+              document.getElementById('chk-chipper').checked = true;
+              break;
+          }
+          document.getElementById('ground-ct').textContent = gCount;
+
+          /* Highlight active preset */
+          document.querySelectorAll('.preset-btn').forEach(function(b){ b.style.border='1px solid var(--border)'; b.style.background='var(--white)'; b.style.color=''; b.style.fontWeight=''; });
+          event.target.style.border = '2px solid var(--green-dark)';
+          event.target.style.background = 'var(--green-dark)';
+          event.target.style.color = 'white';
+          event.target.style.fontWeight = '600';
+
+          calcUpdate();
+        }
+
+        var MIN_CHARGE = 500;
+
         /* ── Main calculator ─────────────────────────────────────── */
         function calcUpdate() {
           var h = (durHours === 'custom')
@@ -541,13 +625,15 @@
             : durHours;
 
           var laborLines = [], equipLines = [], total = 0;
+          var isEmergency = document.getElementById('chk-emergency').checked;
+          var emergMult = isEmergency ? 1.5 : 1;
 
           function grp(lines, id, prId, label, key, qty) {
             qty = (qty === undefined) ? 1 : qty;
             var chk = document.getElementById(id);
             var on  = chk ? chk.checked : (qty > 0);
             if (!chk && qty === 0) { document.getElementById(prId).innerHTML = '&mdash;'; return; }
-            var v = on ? rate(key, h) * qty : 0;
+            var v = on ? Math.round(rate(key, h) * qty * emergMult) : 0;
             if (on && v > 0) {
               total += v;
               var lbl = qty > 1 ? qty + '&times;&nbsp;' + label : label;
@@ -561,7 +647,7 @@
           /* Labor */
           grp(laborLines, 'chk-climber',  'pr-climber',  'Climber',         'climber');
           grp(laborLines, 'chk-operator', 'pr-operator', 'Bucket Operator', 'operator');  /* labor cost, shown under bucket */
-          var gv = rate('ground', h) * gCount;
+          var gv = Math.round(rate('ground', h) * gCount * emergMult);
           if (gCount > 0) {
             total += gv;
             laborLines.push('<span style="opacity:.75">' + gCount + '&times;&nbsp;Groundsperson</span>'
@@ -599,15 +685,15 @@
           /* Insurance & Payroll — each line applied to labor subtotal */
           var insOn  = document.getElementById('chk-insurance').checked;
           var lSub = 0;
-          if (document.getElementById('chk-climber').checked)  lSub += rate('climber', h);
-          if (document.getElementById('chk-operator').checked) lSub += rate('operator', h);
-          lSub += rate('ground', h) * gCount;
+          if (document.getElementById('chk-climber').checked)  lSub += Math.round(rate('climber', h) * emergMult);
+          if (document.getElementById('chk-operator').checked) lSub += Math.round(rate('operator', h) * emergMult);
+          lSub += Math.round(rate('ground', h) * gCount * emergMult);
           var eSub = 0;
-          if (document.getElementById('chk-chipper').checked)   eSub += rate('chipper', h);
-          if (document.getElementById('chk-chiptruck').checked) eSub += rate('chiptruck', h);
-          if (document.getElementById('chk-bucket').checked)    eSub += rate('bucket', h);
-          if (document.getElementById('chk-loader').checked)    eSub += rate('loader', h);
-          if (document.getElementById('chk-trailer').checked)   eSub += rate('trailer', h);
+          if (document.getElementById('chk-chipper').checked)   eSub += Math.round(rate('chipper', h) * emergMult);
+          if (document.getElementById('chk-chiptruck').checked) eSub += Math.round(rate('chiptruck', h) * emergMult);
+          if (document.getElementById('chk-bucket').checked)    eSub += Math.round(rate('bucket', h) * emergMult);
+          if (document.getElementById('chk-loader').checked)    eSub += Math.round(rate('loader', h) * emergMult);
+          if (document.getElementById('chk-trailer').checked)   eSub += Math.round(rate('trailer', h) * emergMult);
 
           var wcPct  = Math.max(0, parseFloat(document.getElementById('ins-wc-pct').value) || 0);
           var glPct  = Math.max(0, parseFloat(document.getElementById('ins-gl-pct').value) || 0);
@@ -673,9 +759,7 @@
           var discAmt  = discPct > 0 ? Math.round(subtotal * discPct / 100) : 0;
           var finalTotal = subtotal - discAmt;
 
-          var durLabel = h === 4 ? 'Half Day (4 hr)' : h === 8 ? 'Full Day (8 hr)' : 'Custom (' + h + ' hr)';
           document.getElementById('calc-breakdown').innerHTML = allLines.join(sep);
-          document.getElementById('calc-dur-note').textContent = durLabel;
 
           /* Show/hide subtotal + discount rows */
           var subRow  = document.getElementById('subtotal-row');
@@ -697,7 +781,20 @@
             discAmtEl.style.display = 'none';
           }
 
+          /* Emergency label */
+          var durLabel = h === 4 ? 'Half Day (4 hr)' : h === 8 ? 'Full Day (8 hr)' : 'Custom (' + h + ' hr)';
+          if (isEmergency) durLabel += ' — EMERGENCY 1.5×';
+
+          /* Minimum charge */
+          var belowMin = finalTotal > 0 && finalTotal < MIN_CHARGE;
+          if (belowMin) finalTotal = MIN_CHARGE;
+
+          document.getElementById('calc-dur-note').textContent = durLabel;
           document.getElementById('calc-total').textContent = '$' + finalTotal.toLocaleString();
+
+          /* Min charge notice */
+          var minEl = document.getElementById('min-notice');
+          if (minEl) minEl.style.display = belowMin ? 'block' : 'none';
         }
 
         function formatMins(m) {

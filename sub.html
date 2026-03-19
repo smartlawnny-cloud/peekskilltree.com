@@ -397,16 +397,18 @@
         </div>
 
         <!-- Profit Margin -->
-        <div style="display:flex;align-items:center;gap:1rem;margin-top:.75rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--border);border-radius:8px;flex-wrap:wrap;">
-          <label style="font-weight:700;white-space:nowrap;" for="profit-pct">Profit Margin</label>
-          <div style="display:flex;align-items:center;gap:.4rem;">
-            <input type="number" id="profit-pct" min="0" max="200" value="0" step="5"
-              style="width:68px;padding:.4rem .6rem;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:700;text-align:center;"
-              oninput="calcUpdate()">
-            <span style="font-size:1.1rem;font-weight:700;">%</span>
+        <div style="margin-top:.75rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--border);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <label style="font-weight:700;white-space:nowrap;" for="profit-pct">Profit Margin</label>
+            <div style="display:flex;align-items:center;gap:.4rem;">
+              <input type="number" id="profit-pct" min="0" max="200" value="25" step="5"
+                style="width:68px;padding:.4rem .6rem;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:700;text-align:center;"
+                oninput="calcUpdate()">
+              <span style="font-size:1.1rem;font-weight:700;">%</span>
+            </div>
+            <span id="profit-amount" style="margin-left:auto;font-size:1rem;font-weight:700;color:var(--green-dark);"></span>
           </div>
-          <span style="font-size:.87rem;color:var(--text-light);">Markup on top of cost &mdash; what to charge the customer.</span>
-          <span id="profit-amount" style="margin-left:auto;font-size:1rem;font-weight:700;color:var(--green-dark);display:none;"></span>
+          <p style="font-size:.82rem;color:var(--text-light);margin-top:.5rem;line-height:1.55;">This is your take-home if the job runs on time. Markup is applied on top of all costs (labor, equipment, insurance, travel). Industry standard for tree work is 15&ndash;40% depending on job complexity. If the job finishes early, your effective margin goes up. If it runs over, it shrinks.</p>
         </div>
 
         <!-- Discount row -->
@@ -522,6 +524,8 @@
         var gCount    = 2;
         var durHours  = 8;
         var travelMins = 0;
+        var travelMiles = 0;
+        var MILEAGE_RATE = 0.70; /* 2025 IRS standard mileage rate */
         var leafletReady = false;
         var travelMap = null;
         var routeLayer = null;
@@ -542,11 +546,11 @@
 
         /* ── Rates: [half_day, full_day, hourly] ─────────────────── */
         var RATES = {
-          climber:  [160,  320,  40],
+          climber:  [200,  400,  50],
           operator: [125,  250,  32],
-          ground:   [100,  200,  25],
+          ground:   [120,  240,  30],
           chipper:  [175,  350,  44],
-          chiptruck:[250,  500,  63],
+          chiptruck:[225,  450,  57],
           bucket:   [300,  600,  75],
           loader:   [200,  400,  50],
           trailer:  [ 50,  100,  13],
@@ -771,10 +775,25 @@
             var rtHrs   = (travelMins * 2) / 60;
             var tCost   = Math.round(crewHourly() * rtHrs);
             total += tCost;
-            var tLine = '<span style="opacity:.75">Travel (' + formatMins(travelMins * 2) + ' round trip)</span>'
-              + '<span style="float:right;font-weight:600">$' + tCost.toLocaleString() + '</span>';
-            allLines.push(hdr('Travel') + tLine);
-            document.getElementById('travel-cost').textContent = '+$' + tCost.toLocaleString();
+            var travelLines = [];
+            travelLines.push('<span style="opacity:.75">Crew travel (' + formatMins(travelMins * 2) + ' round trip)</span>'
+              + '<span style="float:right;font-weight:600">$' + tCost.toLocaleString() + '</span>');
+
+            /* Mileage — count trucks dispatched × round trip miles × IRS rate */
+            if (travelMiles > 0) {
+              var numTrucks = 1; /* base truck always */
+              if (document.getElementById('chk-chiptruck').checked) numTrucks++;
+              if (document.getElementById('chk-bucket').checked)    numTrucks++;
+              if (document.getElementById('chk-loader').checked)    numTrucks++;
+              var mileageCost = Math.round(travelMiles * 2 * numTrucks * MILEAGE_RATE);
+              total += mileageCost;
+              travelLines.push('<span style="opacity:.75">Mileage (' + (travelMiles*2) + ' mi RT &times; ' + numTrucks + ' truck' + (numTrucks>1?'s':'') + ' &times; $' + MILEAGE_RATE.toFixed(2) + '/mi)</span>'
+                + '<span style="float:right;font-weight:600">$' + mileageCost.toLocaleString() + '</span>');
+            }
+
+            allLines.push(hdr('Travel') + travelLines.join('<br>'));
+            var totalTravel = tCost + (travelMiles > 0 ? mileageCost : 0);
+            document.getElementById('travel-cost').textContent = '+$' + totalTravel.toLocaleString();
           }
 
           /* Insurance & Payroll — each line applied to labor subtotal */
@@ -894,6 +913,21 @@
           if (minEl) minEl.style.display = belowMin ? 'block' : 'none';
         }
 
+        /* ── Submit for Approval ──────────────────────────────── */
+        function submitEstimate() {
+          var breakdown = document.getElementById('calc-breakdown').innerText;
+          var total = document.getElementById('calc-total').textContent;
+          var durNote = document.getElementById('calc-dur-note').textContent;
+          var addr = document.getElementById('job-address').value || 'Not specified';
+          var body = 'JOB ESTIMATE - SUBMIT FOR APPROVAL'
+            + '%0A%0AAddress: ' + encodeURIComponent(addr)
+            + '%0ADuration: ' + encodeURIComponent(durNote)
+            + '%0A%0A--- BREAKDOWN ---%0A' + encodeURIComponent(breakdown)
+            + '%0A%0ATOTAL: ' + encodeURIComponent(total)
+            + '%0A%0A--- %0ASent from peekskilltree.com/sub calculator';
+          window.location.href = 'mailto:info@peekskilltree.com?subject=' + encodeURIComponent('Estimate for Approval - ' + addr) + '&body=' + body;
+        }
+
         function formatMins(m) {
           if (m < 60) return m + ' min';
           var h = Math.floor(m / 60), rm = m % 60;
@@ -945,7 +979,8 @@
           })
           .then(function(res) {
             travelMins = Math.ceil(res.route.duration / 60);
-            var miles  = Math.round(res.route.distance * 0.000621371);
+            travelMiles = Math.round(res.route.distance * 0.000621371);
+            var miles = travelMiles;
 
             /* Step 3: Draw map with Leaflet */
             loadLeaflet(function() {
@@ -1006,6 +1041,7 @@
       <!-- Actions -->
       <div style="display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;justify-content:center;">
         <button onclick="window.print()" style="padding:.55rem 1.5rem;background:var(--white);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;">&#128424; Print Quote</button>
+        <button onclick="submitEstimate()" style="padding:.55rem 1.5rem;background:#2c5f3f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;">&#9993; Submit for Approval</button>
         <a href="tel:914-391-5233" style="display:inline-block;background:var(--green-dark);color:var(--white);font-weight:700;font-size:1rem;padding:.55rem 1.5rem;border-radius:8px;text-decoration:none;">&#9742; (914) 391-5233</a>
       </div>
 

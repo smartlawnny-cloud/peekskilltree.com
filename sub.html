@@ -275,7 +275,7 @@
             </label>
             <div style="display:flex;align-items:center;gap:.3rem;">
               <span style="font-size:.85rem;color:var(--text-light);">$</span>
-              <input type="number" id="crane-cost" min="0" value="1500" step="100"
+              <input type="number" id="crane-cost" min="0" value="2500" step="100"
                 style="width:80px;padding:.3rem .4rem;border:2px solid var(--border);border-radius:6px;font-size:.9rem;font-weight:700;text-align:center;"
                 oninput="calcUpdate()">
               <span style="font-size:.78rem;color:var(--text-light);">+15%</span>
@@ -607,8 +607,8 @@
         /* ── State ───────────────────────────────────────────────── */
         var gCount    = 2;
         var durHours  = 8;
-        var travelMins = 0;
-        var travelMiles = 0;
+        var travelMins = 30;
+        var travelMiles = 20;
         var MILEAGE_RATE = 0.70; /* 2025 IRS standard mileage rate */
         var leafletReady = false;
         var travelMap = null;

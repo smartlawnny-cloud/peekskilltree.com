@@ -408,19 +408,19 @@
             </div>
             <span id="profit-amount" style="margin-left:auto;font-size:1rem;font-weight:700;color:var(--green-dark);"></span>
           </div>
-          <p style="font-size:.82rem;color:var(--text-light);margin-top:.5rem;line-height:1.55;">This is your take-home if the job runs on time. Markup is applied on top of all costs (labor, equipment, insurance, travel). Industry standard for tree work is 15&ndash;40% depending on job complexity. If the job finishes early, your effective margin goes up. If it runs over, it shrinks.</p>
+          <p style="font-size:.82rem;color:var(--text-light);margin-top:.5rem;line-height:1.55;">Play with this to set what you charge the customer. This markup is applied on top of all costs. Industry standard is 15&ndash;40% for tree work. Finish early and your effective margin goes up. Run over and it shrinks. The total below is what you quote the customer.</p>
         </div>
 
         <!-- Discount row -->
         <div style="display:flex;align-items:center;gap:1rem;margin-top:.75rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--border);border-radius:8px;flex-wrap:wrap;">
-          <label style="font-weight:700;white-space:nowrap;" for="disc-pct">Client Discount</label>
+          <label style="font-weight:700;white-space:nowrap;" for="disc-pct">Rate Discount</label>
           <div style="display:flex;align-items:center;gap:.4rem;">
             <input type="number" id="disc-pct" min="0" max="100" value="0" step="1"
               style="width:68px;padding:.4rem .6rem;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:700;text-align:center;"
               oninput="calcUpdate()">
             <span style="font-size:1.1rem;font-weight:700;">%</span>
           </div>
-          <span style="font-size:.87rem;color:var(--text-light);">Set the discount % for this client &mdash; applied to the subtotal below.</span>
+          <span style="font-size:.87rem;color:var(--text-light);">Potential discount on rates &mdash; applied to the subtotal.</span>
           <span id="disc-amount" style="margin-left:auto;font-size:1rem;font-weight:700;color:#c0392b;display:none;"></span>
         </div>
 
@@ -884,9 +884,9 @@
             subRow.style.display  = 'block';
             discRow.style.display = 'block';
             document.getElementById('calc-subtotal').textContent = '$' + subtotal.toLocaleString();
-            document.getElementById('disc-label').textContent    = discPct + '% discount';
+            document.getElementById('disc-label').textContent    = discPct + '% rate discount';
             document.getElementById('disc-line').textContent     = '−$' + discAmt.toLocaleString();
-            document.getElementById('total-label').textContent   = 'Total After Discount';
+            document.getElementById('total-label').textContent   = 'Customer Price';
             discAmtEl.textContent  = '−$' + discAmt.toLocaleString() + ' (' + discPct + '% off)';
             discAmtEl.style.display = 'inline';
           } else {

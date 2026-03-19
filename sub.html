@@ -243,6 +243,54 @@
             </label>
             <span class="calc-price" id="pr-trailer" style="color:var(--text-light);">&mdash;</span>
           </div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-stump" onchange="calcUpdate()">
+              <span>Stump Grinder</span>
+            </label>
+            <span class="calc-price" id="pr-stump" style="color:var(--text-light);">&mdash;</span>
+          </div>
+        </div>
+
+        <!-- Add-Ons -->
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1.75rem;">
+          <div style="background:#5a7a5a;color:var(--white);padding:.6rem 1rem;font-weight:700;font-size:.88rem;text-transform:uppercase;letter-spacing:.07em;">Add-Ons</div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;align-items:center;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-crane" onchange="calcUpdate()">
+              <span>Crane <span style="font-size:.8rem;color:var(--text-light);">(passthrough)</span></span>
+            </label>
+            <div style="display:flex;align-items:center;gap:.3rem;">
+              <span style="font-size:.85rem;color:var(--text-light);">$</span>
+              <input type="number" id="crane-cost" min="0" value="1500" step="100"
+                style="width:80px;padding:.3rem .4rem;border:2px solid var(--border);border-radius:6px;font-size:.9rem;font-weight:700;text-align:center;"
+                oninput="calcUpdate()">
+              <span style="font-size:.78rem;color:var(--text-light);">+15%</span>
+            </div>
+          </div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;align-items:center;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-debris" onchange="calcUpdate()">
+              <span>Debris Disposal</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:.3rem;">
+              <input type="number" id="debris-loads" min="1" max="10" value="1" step="1"
+                style="width:50px;padding:.3rem .4rem;border:2px solid var(--border);border-radius:6px;font-size:.9rem;font-weight:700;text-align:center;"
+                oninput="calcUpdate()">
+              <span style="font-size:.82rem;color:var(--text-light);">loads &times; $125</span>
+            </div>
+          </div>
+
+          <div class="calc-row" style="padding:.7rem 1rem;">
+            <label class="calc-label">
+              <input type="checkbox" id="chk-permit" onchange="calcUpdate()">
+              <span>Permit Coordination</span>
+            </label>
+            <span class="calc-price" id="pr-permit" style="color:var(--text-light);">$75</span>
+          </div>
         </div>
 
         <!-- Travel Time -->
@@ -456,6 +504,17 @@
           .calc-label {font-size:.93rem;}
           #calc-total {font-size:1.9rem !important;}
         }
+
+        /* Print styles */
+        @media print {
+          .top-bar, .site-header, .page-hero, .cta-banner, .site-footer,
+          #dur-btns, #preset-btns, #emergency-label, #travel-map,
+          .calc-adj-btn, button, input[type="checkbox"], input[type="number"] { display:none !important; }
+          .section { padding:0 !important; }
+          #calc-wrap { border:none !important; padding:.5rem !important; }
+          body { background:white !important; color:black !important; }
+          * { color:black !important; background:white !important; border-color:#ccc !important; }
+        }
       </style>
 
       <script>
@@ -490,13 +549,18 @@
           chiptruck:[250,  500,  63],
           bucket:   [300,  600,  75],
           loader:   [200,  400,  50],
-          trailer:  [ 50,  100,  13]
+          trailer:  [ 50,  100,  13],
+          stump:    [175,  325,  41]
         };
 
         function rate(key, h) {
           var r = RATES[key];
           if (h === 4) return r[0];
           if (h === 8) return r[1];
+          /* Overtime: hours beyond 8 at 1.5x hourly */
+          if (h > 8) {
+            return Math.round(r[1] + (h - 8) * r[2] * 1.5);
+          }
           return Math.round(r[2] * h);
         }
 
@@ -662,6 +726,36 @@
           grp(equipLines, 'chk-bucket',    'pr-bucket',    '75ft Bucket Truck',   'bucket');
           grp(equipLines, 'chk-loader',   'pr-loader',  'Giant Loader',         'loader');
           grp(equipLines, 'chk-trailer',  'pr-trailer', 'Trailer',              'trailer');
+          grp(equipLines, 'chk-stump',   'pr-stump',   'Stump Grinder',        'stump');
+
+          /* Add-ons */
+          var addonLines = [];
+
+          /* Crane passthrough */
+          if (document.getElementById('chk-crane').checked) {
+            var craneCost = parseInt(document.getElementById('crane-cost').value) || 0;
+            var craneMarkup = Math.round(craneCost * 0.15);
+            var craneTotal = craneCost + craneMarkup;
+            if (craneTotal > 0) {
+              total += craneTotal;
+              addonLines.push('<span style="opacity:.75">Crane ($' + craneCost.toLocaleString() + ' + 15%)</span><span style="float:right;font-weight:600">$' + craneTotal.toLocaleString() + '</span>');
+            }
+          }
+
+          /* Debris disposal */
+          if (document.getElementById('chk-debris').checked) {
+            var loads = parseInt(document.getElementById('debris-loads').value) || 1;
+            var debrisCost = loads * 125;
+            total += debrisCost;
+            addonLines.push('<span style="opacity:.75">' + loads + ' load' + (loads>1?'s':'') + ' debris disposal</span><span style="float:right;font-weight:600">$' + debrisCost.toLocaleString() + '</span>');
+          }
+
+          /* Permit */
+          if (document.getElementById('chk-permit').checked) {
+            total += 75;
+            addonLines.push('<span style="opacity:.75">Permit coordination</span><span style="float:right;font-weight:600">$75</span>');
+          }
+          document.getElementById('pr-permit').style.color = document.getElementById('chk-permit').checked ? '' : 'var(--text-light)';
 
           /* Build grouped breakdown */
           var sep = '<div style="height:1px;background:rgba(255,255,255,.15);margin:.5rem 0;clear:both;"></div>';
@@ -670,6 +764,7 @@
           var allLines = [];
           if (laborLines.length)  allLines.push(hdr('Labor')     + laborLines.join('<br>'));
           if (equipLines.length)  allLines.push(hdr('Equipment') + equipLines.join('<br>'));
+          if (addonLines.length)  allLines.push(hdr('Add-Ons') + addonLines.join('<br>'));
 
           /* Travel line */
           if (travelMins > 0) {
@@ -694,6 +789,7 @@
           if (document.getElementById('chk-bucket').checked)    eSub += Math.round(rate('bucket', h) * emergMult);
           if (document.getElementById('chk-loader').checked)    eSub += Math.round(rate('loader', h) * emergMult);
           if (document.getElementById('chk-trailer').checked)   eSub += Math.round(rate('trailer', h) * emergMult);
+          if (document.getElementById('chk-stump').checked)     eSub += Math.round(rate('stump', h) * emergMult);
 
           var wcPct  = Math.max(0, parseFloat(document.getElementById('ins-wc-pct').value) || 0);
           var glPct  = Math.max(0, parseFloat(document.getElementById('ins-gl-pct').value) || 0);
@@ -784,6 +880,7 @@
           /* Emergency label */
           var durLabel = h === 4 ? 'Half Day (4 hr)' : h === 8 ? 'Full Day (8 hr)' : 'Custom (' + h + ' hr)';
           if (isEmergency) durLabel += ' — EMERGENCY 1.5×';
+          if (h > 8) durLabel += ' — OT after 8hrs @ 1.5×';
 
           /* Minimum charge */
           var belowMin = finalTotal > 0 && finalTotal < MIN_CHARGE;
@@ -906,14 +1003,58 @@
       </script>
       <!-- ── End Calculator ─────────────────────────────────────────── -->
 
-      <!-- Compact terms -->
-      <div style="margin-top:1.5rem;padding:.9rem 1.1rem;background:var(--bg-light);border-radius:8px;font-size:.84rem;color:var(--text-light);line-height:1.7;">
-        <strong style="color:var(--text);">Terms:</strong> 24-hr minimum call-out &bull; Mon&ndash;Sat (emergency Sun case-by-case) &bull; Westchester, Putnam &amp; Southern Dutchess &bull; Payment due on booking or within 48 hrs &bull; Our jobs come first; same/next-day when schedule permits &bull; <em>Rates subject to change &mdash; call to confirm.</em>
+      <!-- Actions -->
+      <div style="display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;justify-content:center;">
+        <button onclick="window.print()" style="padding:.55rem 1.5rem;background:var(--white);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;">&#128424; Print Quote</button>
+        <a href="tel:914-391-5233" style="display:inline-block;background:var(--green-dark);color:var(--white);font-weight:700;font-size:1rem;padding:.55rem 1.5rem;border-radius:8px;text-decoration:none;">&#9742; (914) 391-5233</a>
       </div>
 
-      <!-- CTA -->
-      <div style="margin-top:1.25rem;text-align:center;">
-        <a href="tel:914-391-5233" style="display:inline-block;background:var(--green-dark);color:var(--white);font-weight:700;font-size:1.15rem;padding:.65rem 2rem;border-radius:8px;text-decoration:none;">&#9742; (914) 391-5233</a>
+      <!-- Rate date -->
+      <p style="text-align:center;font-size:.78rem;color:var(--text-light);margin-top:.75rem;">Rates current as of March 2026. Subject to change &mdash; call to confirm.</p>
+
+      <!-- Compact terms -->
+      <div style="margin-top:.75rem;padding:.9rem 1.1rem;background:var(--bg-light);border-radius:8px;font-size:.84rem;color:var(--text-light);line-height:1.7;">
+        <strong style="color:var(--text);">Terms:</strong> $500 minimum call-out &bull; Mon&ndash;Sat (emergency Sun case-by-case) &bull; Hours beyond 8 billed at 1.5&times; &bull; Westchester, Putnam &amp; Southern Dutchess &bull; Payment due on booking or within 48 hrs &bull; Our jobs come first; same/next-day when schedule permits.
+      </div>
+
+      <!-- Insurance & Coverage Info (collapsible) -->
+      <div style="margin-top:1rem;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.arrow').textContent=this.nextElementSibling.style.display==='none'?'\u25B6':'\u25BC';"
+          style="background:var(--green-dark);color:var(--white);padding:.7rem 1rem;cursor:pointer;font-weight:700;font-size:.88rem;display:flex;justify-content:space-between;align-items:center;">
+          <span>&#128737; Insurance, Licensing &amp; Requirements</span>
+          <span class="arrow" style="font-size:.7rem;">&#9654;</span>
+        </div>
+        <div style="display:none;padding:1rem;font-size:.86rem;color:var(--text);line-height:1.7;">
+
+          <h3 style="font-size:.92rem;margin:0 0 .5rem;color:var(--green-dark);">Our Coverage</h3>
+          <table style="width:100%;font-size:.84rem;border-collapse:collapse;margin-bottom:1rem;">
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.4rem .5rem;font-weight:600;">General Liability</td><td style="padding:.4rem .5rem;">$1M per occurrence / $2M aggregate</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.4rem .5rem;font-weight:600;">Workers&rsquo; Comp</td><td style="padding:.4rem .5rem;">NY State compliant &mdash; NYSIF Class 0106</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.4rem .5rem;font-weight:600;">Commercial Auto</td><td style="padding:.4rem .5rem;">All fleet vehicles covered, $1M CSL</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.4rem .5rem;font-weight:600;">Disability / PFL</td><td style="padding:.4rem .5rem;">NY State compliant</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.4rem .5rem;font-weight:600;">Westchester License</td><td style="padding:.4rem .5rem;">WC-32079</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.4rem .5rem;font-weight:600;">Putnam License</td><td style="padding:.4rem .5rem;">PC-50644</td></tr>
+            <tr><td style="padding:.4rem .5rem;font-weight:600;">COI Request</td><td style="padding:.4rem .5rem;">Available within 1 business day &mdash; call <a href="tel:914-391-5233">(914) 391-5233</a></td></tr>
+          </table>
+          <p style="font-size:.82rem;color:var(--text-light);margin-bottom:1rem;">We can provide Additional Insured endorsement for qualifying contracts.</p>
+
+          <h3 style="font-size:.92rem;margin:0 0 .5rem;color:var(--green-dark);">What We Require Before Dispatch</h3>
+          <ul style="padding-left:1.25rem;margin-bottom:1rem;font-size:.84rem;">
+            <li style="margin-bottom:.3rem;"><strong>General Liability COI</strong> &mdash; min $1M per occurrence, Second Nature listed as Additional Insured</li>
+            <li style="margin-bottom:.3rem;"><strong>Workers&rsquo; Comp COI</strong> &mdash; current NY State certificate, NY listed in 3A</li>
+            <li style="margin-bottom:.3rem;"><strong>Commercial Auto</strong> &mdash; min $500K CSL for any vehicles on site</li>
+            <li style="margin-bottom:.3rem;"><strong>Project address + scope</strong> &mdash; required before crew dispatch</li>
+          </ul>
+          <p style="font-size:.82rem;color:#c0392b;font-weight:600;margin-bottom:1rem;">All certificates due 24 hours before job start. No cert = no crew.</p>
+
+          <h3 style="font-size:.92rem;margin:0 0 .5rem;color:var(--green-dark);">NY Legal Notes</h3>
+          <ul style="padding-left:1.25rem;font-size:.82rem;color:var(--text-light);">
+            <li style="margin-bottom:.3rem;"><strong>NY Construction Fair Play Act</strong> &mdash; all workers presumed employees unless properly documented as independent contractors</li>
+            <li style="margin-bottom:.3rem;"><strong>NYSIF Monitoring</strong> &mdash; subcontractors without WC coverage will be charged back to your policy in audit</li>
+            <li style="margin-bottom:.3rem;"><strong>WC Class Code 0106</strong> &mdash; Tree Pruning, Spraying, Repairing. ~$9/$100 payroll avg. Hazard Group F.</li>
+            <li style="margin-bottom:.3rem;"><strong>HIC License</strong> &mdash; required for residential tree work in Westchester &amp; Putnam counties</li>
+          </ul>
+        </div>
       </div>
 
     </div>

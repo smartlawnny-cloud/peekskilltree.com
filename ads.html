@@ -345,6 +345,45 @@
           <p id="ad-whatif" style="font-size:.9rem;color:var(--text-light);margin:0;"></p>
         </div>
 
+        <!-- GA4 Quick Access -->
+        <div style="margin-top:1.25rem;background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          <div style="background:#4285f4;color:white;padding:.55rem 1rem;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.07em;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="document.getElementById('ga-help').style.display=document.getElementById('ga-help').style.display==='none'?'block':'none';">
+            <span>Google Analytics &mdash; Get Your Real Numbers</span>
+            <span style="font-size:.7rem;">&#9660;</span>
+          </div>
+          <div id="ga-help" style="padding:1rem;font-size:.88rem;line-height:1.6;display:none;">
+            <p style="margin:0 0 .75rem;"><strong>Open your GA4 dashboard to get real traffic source data:</strong></p>
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+              <a href="https://analytics.google.com/analytics/web/#/report/acquisition-traffic-acquisition/a128398559p393249583/" target="_blank" rel="noopener" style="display:inline-block;background:#4285f4;color:white;padding:.4rem .8rem;border-radius:6px;font-size:.82rem;font-weight:600;text-decoration:none;">Open Traffic Report &rarr;</a>
+              <a href="https://analytics.google.com/analytics/web/" target="_blank" rel="noopener" style="display:inline-block;background:var(--white);color:#4285f4;padding:.4rem .8rem;border-radius:6px;font-size:.82rem;font-weight:600;text-decoration:none;border:1px solid #4285f4;">GA4 Home &rarr;</a>
+            </div>
+            <p style="margin:0 0 .5rem;font-weight:700;">How to get the numbers:</p>
+            <ol style="margin:0 0 .75rem;padding-left:1.25rem;font-size:.85rem;">
+              <li>In GA4, go to <strong>Reports &rarr; Acquisition &rarr; Traffic acquisition</strong></li>
+              <li>Set date range to <strong>last 30 days</strong></li>
+              <li>Look at the <strong>Session source</strong> column &mdash; it shows google, facebook, instagram, yelp, direct, etc.</li>
+              <li>The <strong>Sessions</strong> column = your leads from each source</li>
+              <li>Check <strong>Events &rarr; click_to_call</strong> for phone call conversions by source</li>
+              <li>Plug those numbers into the calculator above</li>
+            </ol>
+            <p style="margin:0 0 .5rem;font-weight:700;">UTM links for your ad campaigns:</p>
+            <p style="margin:0 0 .3rem;font-size:.82rem;color:var(--text-light);">Use these URLs in your ads/posts so GA4 tracks each channel separately:</p>
+            <div style="background:#f5f5f5;border-radius:6px;padding:.6rem .8rem;font-family:monospace;font-size:.75rem;line-height:1.8;margin-top:.4rem;overflow-x:auto;">
+              <strong>Google Ads:</strong><br>
+              peekskilltree.com/?utm_source=google&amp;utm_medium=cpc&amp;utm_campaign=tree_removal<br><br>
+              <strong>Facebook/Instagram:</strong><br>
+              peekskilltree.com/?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=spring2026<br><br>
+              <strong>Yelp:</strong><br>
+              peekskilltree.com/?utm_source=yelp&amp;utm_medium=referral&amp;utm_campaign=listing<br><br>
+              <strong>Yard Signs / Print:</strong><br>
+              peekskilltree.com/?utm_source=yard_sign&amp;utm_medium=offline&amp;utm_campaign=peekskill<br><br>
+              <strong>Nextdoor:</strong><br>
+              peekskilltree.com/?utm_source=nextdoor&amp;utm_medium=social&amp;utm_campaign=post
+            </div>
+            <p style="margin:.5rem 0 0;font-size:.8rem;color:var(--text-light);">Tip: GA4 data takes 24-48 hours to appear. Real-time data is available immediately under Reports &rarr; Realtime.</p>
+          </div>
+        </div>
+
       </div>
 
       <!-- Links -->

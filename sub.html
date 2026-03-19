@@ -253,8 +253,90 @@
           </div>
         </div>
 
+        <!-- Insurance -->
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:1.5rem;">
+          <div style="background:#2c5f3f;color:var(--white);padding:.6rem 1rem;font-weight:700;font-size:.88rem;text-transform:uppercase;letter-spacing:.07em;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="document.getElementById('ins-details').style.display=document.getElementById('ins-details').style.display==='none'?'block':'none';this.querySelector('.ins-arrow').textContent=document.getElementById('ins-details').style.display==='none'?'\u25B6':'\u25BC';">
+            <span>Insurance &amp; Compliance</span>
+            <span class="ins-arrow" style="font-size:.7rem;">&#9654;</span>
+          </div>
+          <div id="ins-details" style="padding:.85rem 1rem;font-size:.88rem;color:var(--text-light);line-height:1.65;border-bottom:1px solid var(--border);display:none;">
+            <p style="margin:0 0 .6rem;color:var(--text);font-weight:600;">Why is insurance charged separately?</p>
+            <p style="margin:0 0 .5rem;">Tree work is one of the most dangerous trades in the country. Our insurance premiums reflect that risk and <strong>must be passed through</strong> on every job:</p>
+            <ul style="margin:.4rem 0 .6rem;padding-left:1.25rem;">
+              <li><strong>Workers&rsquo; Compensation</strong> &mdash; Required by law. Tree service rates run 12&ndash;18% of payroll due to the high injury and fatality risk of aerial tree work. One of the highest-rated trades in the industry.</li>
+              <li><strong>General Liability</strong> &mdash; Covers property damage to the client&rsquo;s home, structures, vehicles, and landscaping. Rated on total job revenue &mdash; currently ~13% ($9,000+ annually on $68K payroll).</li>
+              <li><strong>Disability Insurance</strong> &mdash; NYS-required disability and paid family leave coverage for all employees.</li>
+              <li><strong>Payroll Taxes</strong> &mdash; Employer&rsquo;s share of Social Security (6.2%), Medicare (1.45%), federal &amp; state unemployment (FUTA/SUTA). Mandatory on every dollar of labor.</li>
+              <li><strong>Commercial Auto</strong> &mdash; Covers bucket truck, chip truck, and fleet. Avg $2,000&ndash;$5,000/year; bucket trucks require $1&ndash;2M liability limits adding $500&ndash;$1,000/vehicle.</li>
+              <li><strong>Equipment / Inland Marine</strong> &mdash; Covers chainsaws, rigging gear, chipper, stump grinder &mdash; typically 2&ndash;5% of equipment value annually. Most tree companies have $50K&ndash;$250K in equipment.</li>
+            </ul>
+            <p style="margin:0;font-size:.84rem;font-style:italic;">These costs are real and unavoidable. We carry full coverage so you and your clients are protected.</p>
+          </div>
+          <div style="padding:.75rem 1rem;">
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:600;font-size:.95rem;margin-bottom:.6rem;">
+              <input type="checkbox" id="chk-insurance" checked onchange="calcUpdate()" style="width:22px;height:22px;">
+              <span>Add Insurance</span>
+            </label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem .6rem;font-size:.86rem;">
+              <div style="display:flex;align-items:center;gap:.35rem;">
+                <span style="color:var(--text-light);white-space:nowrap;">Workers&rsquo; Comp:</span>
+                <input type="number" id="ins-wc-pct" min="0" max="30" value="17" step="1"
+                  style="width:46px;padding:.25rem .35rem;border:2px solid var(--border);border-radius:6px;font-size:.88rem;font-weight:700;text-align:center;"
+                  oninput="calcUpdate()"><span style="font-weight:700;">%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:.35rem;">
+                <span style="color:var(--text-light);white-space:nowrap;">Gen. Liability:</span>
+                <input type="number" id="ins-gl-pct" min="0" max="30" value="13" step="1"
+                  style="width:46px;padding:.25rem .35rem;border:2px solid var(--border);border-radius:6px;font-size:.88rem;font-weight:700;text-align:center;"
+                  oninput="calcUpdate()"><span style="font-weight:700;">%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:.35rem;">
+                <span style="color:var(--text-light);white-space:nowrap;">Disability:</span>
+                <input type="number" id="ins-dis-pct" min="0" max="15" value="2" step="0.5"
+                  style="width:46px;padding:.25rem .35rem;border:2px solid var(--border);border-radius:6px;font-size:.88rem;font-weight:700;text-align:center;"
+                  oninput="calcUpdate()"><span style="font-weight:700;">%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:.35rem;">
+                <span style="color:var(--text-light);white-space:nowrap;">Payroll Tax:</span>
+                <input type="number" id="ins-tax-pct" min="0" max="20" value="8" step="0.5"
+                  style="width:46px;padding:.25rem .35rem;border:2px solid var(--border);border-radius:6px;font-size:.88rem;font-weight:700;text-align:center;"
+                  oninput="calcUpdate()"><span style="font-weight:700;">%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:.35rem;">
+                <span style="color:var(--text-light);white-space:nowrap;">Comm. Auto:</span>
+                <input type="number" id="ins-auto-pct" min="0" max="20" value="3" step="0.5"
+                  style="width:46px;padding:.25rem .35rem;border:2px solid var(--border);border-radius:6px;font-size:.88rem;font-weight:700;text-align:center;"
+                  oninput="calcUpdate()"><span style="font-weight:700;">%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:.35rem;">
+                <span style="color:var(--text-light);white-space:nowrap;">Equip/Inland:</span>
+                <input type="number" id="ins-equip-pct" min="0" max="20" value="3" step="0.5"
+                  style="width:46px;padding:.25rem .35rem;border:2px solid var(--border);border-radius:6px;font-size:.88rem;font-weight:700;text-align:center;"
+                  oninput="calcUpdate()"><span style="font-weight:700;">%</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;">
+              <span style="font-size:.8rem;color:var(--text-light);">Certificate of insurance provided upon request.</span>
+              <span id="ins-amount" style="font-size:1rem;font-weight:700;color:var(--green-dark);"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profit Margin -->
+        <div style="display:flex;align-items:center;gap:1rem;margin-top:.75rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--border);border-radius:8px;flex-wrap:wrap;">
+          <label style="font-weight:700;white-space:nowrap;" for="profit-pct">Profit Margin</label>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <input type="number" id="profit-pct" min="0" max="200" value="0" step="5"
+              style="width:68px;padding:.4rem .6rem;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:700;text-align:center;"
+              oninput="calcUpdate()">
+            <span style="font-size:1.1rem;font-weight:700;">%</span>
+          </div>
+          <span style="font-size:.87rem;color:var(--text-light);">Markup on top of cost &mdash; what to charge the customer.</span>
+          <span id="profit-amount" style="margin-left:auto;font-size:1rem;font-weight:700;color:var(--green-dark);display:none;"></span>
+        </div>
+
         <!-- Discount row -->
-        <div style="display:flex;align-items:center;gap:1rem;margin-top:1.5rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--border);border-radius:8px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:1rem;margin-top:.75rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--border);border-radius:8px;flex-wrap:wrap;">
           <label style="font-weight:700;white-space:nowrap;" for="disc-pct">Client Discount</label>
           <div style="display:flex;align-items:center;gap:.4rem;">
             <input type="number" id="disc-pct" min="0" max="100" value="0" step="1"
@@ -330,6 +412,11 @@
 
           /* Custom hours */
           #custom-hrs {font-size:16px !important;width:68px !important;padding:.5rem !important;}
+
+          /* Insurance */
+          #ins-wc-pct, #ins-gl-pct, #ins-dis-pct, #ins-tax-pct, #ins-auto-pct, #ins-equip-pct {font-size:16px !important;width:52px !important;padding:.4rem !important;}
+          /* Profit */
+          #profit-pct {font-size:16px !important;}
 
           /* Section headers */
           .calc-row + .calc-row {border-top:none;}
@@ -487,6 +574,76 @@
               + '<span style="float:right;font-weight:600">$' + tCost.toLocaleString() + '</span>';
             allLines.push(hdr('Travel') + tLine);
             document.getElementById('travel-cost').textContent = '+$' + tCost.toLocaleString();
+          }
+
+          /* Insurance & Payroll — each line applied to labor subtotal */
+          var insOn  = document.getElementById('chk-insurance').checked;
+          var lSub = 0;
+          if (document.getElementById('chk-climber').checked) lSub += rate('climber', h);
+          lSub += rate('ground', h) * gCount;
+          var eSub = 0;
+          if (document.getElementById('chk-chipper').checked)   eSub += rate('chipper', h);
+          if (document.getElementById('chk-chiptruck').checked) eSub += rate('chiptruck', h);
+          if (document.getElementById('chk-bucket').checked)    eSub += rate('bucket', h);
+          if (document.getElementById('chk-loader').checked)    eSub += rate('loader', h);
+          if (document.getElementById('chk-trailer').checked)   eSub += rate('trailer', h);
+
+          var wcPct  = Math.max(0, parseFloat(document.getElementById('ins-wc-pct').value) || 0);
+          var glPct  = Math.max(0, parseFloat(document.getElementById('ins-gl-pct').value) || 0);
+          var disPct = Math.max(0, parseFloat(document.getElementById('ins-dis-pct').value) || 0);
+          var taxPct = Math.max(0, parseFloat(document.getElementById('ins-tax-pct').value) || 0);
+
+          var autoPct = Math.max(0, parseFloat(document.getElementById('ins-auto-pct').value) || 0);
+          var eqPct  = Math.max(0, parseFloat(document.getElementById('ins-equip-pct').value) || 0);
+
+          var wcAmt   = insOn ? Math.round(lSub * wcPct / 100) : 0;
+          var glAmt   = insOn ? Math.round((lSub + eSub) * glPct / 100) : 0;
+          var disAmt  = insOn ? Math.round(lSub * disPct / 100) : 0;
+          var taxAmt  = insOn ? Math.round(lSub * taxPct / 100) : 0;
+          var autoAmt = insOn ? Math.round(eSub * autoPct / 100) : 0;
+          var eqAmt   = insOn ? Math.round(eSub * eqPct / 100) : 0;
+          var insAmt  = wcAmt + glAmt + disAmt + taxAmt + autoAmt + eqAmt;
+
+          /* Append labor insurance/payroll as sub-items under labor */
+          var laborInsTotal = wcAmt + disAmt + taxAmt;
+          if (laborInsTotal > 0) {
+            var lIns = '<div style="font-size:.78rem;opacity:.55;margin-top:.3rem;padding-left:.5rem;border-left:2px solid rgba(255,255,255,.2);">';
+            if (wcAmt > 0) lIns += 'Workers’ Comp ' + wcPct + '% <span style="float:right">$' + wcAmt.toLocaleString() + '</span><br>';
+            if (disAmt > 0) lIns += 'Disability ' + disPct + '% <span style="float:right">$' + disAmt.toLocaleString() + '</span><br>';
+            if (taxAmt > 0) lIns += 'Payroll Tax ' + taxPct + '% <span style="float:right">$' + taxAmt.toLocaleString() + '</span><br>';
+            lIns += '</div>';
+            if (laborLines.length) allLines[0] += lIns;
+            total += laborInsTotal;
+          }
+
+          /* GL applied to full job, append under equipment */
+          var equipInsTotal = glAmt + autoAmt + eqAmt;
+          if (equipInsTotal > 0) {
+            var eIns = '<div style="font-size:.78rem;opacity:.55;margin-top:.3rem;padding-left:.5rem;border-left:2px solid rgba(255,255,255,.2);">';
+            if (glAmt > 0) eIns += 'Gen. Liability ' + glPct + '% <span style="float:right">$' + glAmt.toLocaleString() + '</span><br>';
+            if (autoAmt > 0) eIns += 'Comm. Auto ' + autoPct + '% <span style="float:right">$' + autoAmt.toLocaleString() + '</span><br>';
+            if (eqAmt > 0) eIns += 'Equip/Inland ' + eqPct + '% <span style="float:right">$' + eqAmt.toLocaleString() + '</span><br>';
+            eIns += '</div>';
+            if (equipLines.length && allLines.length > 1) allLines[1] += eIns;
+            else if (allLines.length) allLines[allLines.length - 1] += eIns;
+            total += equipInsTotal;
+          }
+          document.getElementById('ins-amount').textContent = insAmt > 0 ? '+$' + insAmt.toLocaleString() : '';
+
+          /* Profit Margin */
+          var profitPct = Math.max(0, parseFloat(document.getElementById('profit-pct').value) || 0);
+          var profitAmt = profitPct > 0 ? Math.round(total * profitPct / 100) : 0;
+          if (profitAmt > 0) {
+            allLines.push(hdr('Profit') + '<span style="opacity:.75">Markup (' + profitPct + '%)</span>'
+              + '<span style="float:right;font-weight:600">+$' + profitAmt.toLocaleString() + '</span>');
+            total += profitAmt;
+          }
+          var profitAmtEl = document.getElementById('profit-amount');
+          if (profitAmt > 0) {
+            profitAmtEl.textContent = '+$' + profitAmt.toLocaleString();
+            profitAmtEl.style.display = 'inline';
+          } else {
+            profitAmtEl.style.display = 'none';
           }
 
           /* Discount */

@@ -483,10 +483,8 @@
       var defVar = getVarCosts(defLabor);
       var defNet = defRev - defLabor - defVar;
       var needed = defNet > 0 ? Math.ceil(fixedTotal / defNet) : 10;
-      needed = Math.max(needed, 4); /* show at least 4 */
-      needed = Math.min(needed, 25);
-      /* Add 2 extra past break-even so they can see profit */
-      var total = needed + 2;
+      /* Always show 15 jobs */
+      var total = 15;
       for (var i = 0; i < total; i++) {
         addJobRow();
       }

@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================================
+  2nd Nature Skatepark — Customer Product Preference Survey
+  ============================================================
+
+  GOOGLE SHEETS SETUP INSTRUCTIONS:
+
+  1. Go to https://sheets.google.com and create a new spreadsheet
+  2. In Row 1, add these column headers (in this exact order):
+     Timestamp | First Name | Email | Deck Size | Favorite Deck Brands |
+     Truck Size | Favorite Truck Brand | Wheel Size | Wheel Durometer |
+     Favorite Wheel Brand | Favorite Bearing Brand | Favorite Shoe Brands
+
+  3. Go to Extensions > Apps Script
+  4. Delete any code in the editor and paste this:
+
+     function doPost(e) {
+       var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+       var data = JSON.parse(e.postData.contents);
+       sheet.appendRow([
+         new Date(),
+         data.firstName,
+         data.email,
+         data.deckSize,
+         data.deckBrands,
+         data.truckSize,
+         data.truckBrand,
+         data.wheelSize,
+         data.wheelDurometer,
+         data.wheelBrand,
+         data.bearingBrand,
+         data.shoeBrands
+       ]);
+       return ContentService.createTextOutput(
+         JSON.stringify({ result: "success" })
+       ).setMimeType(ContentService.MimeType.JSON);
+     }
+
+  5. Click "Deploy" > "New deployment"
+  6. Click the gear icon, select "Web app"
+  7. Set "Execute as" to "Me" and "Who has access" to "Anyone"
+  8. Click "Deploy" and authorize when prompted
+  9. Copy the Web App URL and paste it in the GOOGLE_SCRIPT_URL below
+
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2nd Nature — Gear Survey</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: #000;
+    color: #fff;
+    padding: 24px 20px;
+    text-align: center;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    font-size: 16px;
+    color: #4a9b4a;
+    font-weight: 600;
+  }
+
+  .promo-banner {
+    background: #4a9b4a;
+    color: #fff;
+    text-align: center;
+    padding: 14px 20px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  .form-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .form-section h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+  }
+
+  .form-section .section-hint {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 14px;
+  }
+
+  label.field-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  select {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    color: #1a1a1a;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  select:focus {
+    outline: none;
+    border-color: #4a9b4a;
+    background: #fff;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .checkbox-item {
+    position: relative;
+  }
+
+  .checkbox-item input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .checkbox-item label {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+    min-height: 48px;
+    background: #fafafa;
+  }
+
+  .checkbox-item input[type="checkbox"]:checked + label {
+    border-color: #4a9b4a;
+    background: #edf7ed;
+    color: #2d6e2d;
+    font-weight: 600;
+  }
+
+  .checkbox-item label::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+
+  .checkbox-item input[type="checkbox"]:checked + label::before {
+    background: #4a9b4a;
+    border-color: #4a9b4a;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='11'%3E%3Cpath d='M1 5l4 4L13 1' stroke='white' stroke-width='2.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .other-input {
+    margin-top: 8px;
+  }
+
+  .other-input input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    display: none;
+  }
+
+  .other-input input.visible {
+    display: block;
+  }
+
+  .other-input input:focus {
+    outline: none;
+    border-color: #4a9b4a;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .input-row > div {
+    flex: 1;
+  }
+
+  .submit-btn {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    font-size: 20px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 8px;
+  }
+
+  .submit-btn:active {
+    background: #333;
+  }
+
+  .submit-btn:disabled {
+    background: #999;
+    cursor: not-allowed;
+  }
+
+  /* Thank You Screen */
+  .thank-you-screen {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #fff;
+    z-index: 1000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .thank-you-screen.active {
+    display: flex;
+  }
+
+  .checkmark-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #4a9b4a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 32px;
+    animation: scaleIn 0.4s ease-out;
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .checkmark-circle svg {
+    width: 60px;
+    height: 60px;
+  }
+
+  .thank-you-screen h2 {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: #1a1a1a;
+  }
+
+  .thank-you-screen .discount-msg {
+    font-size: 24px;
+    font-weight: 700;
+    color: #4a9b4a;
+    margin-bottom: 16px;
+    padding: 16px 32px;
+    background: #edf7ed;
+    border-radius: 12px;
+    border: 3px solid #4a9b4a;
+  }
+
+  .thank-you-screen .reset-info {
+    font-size: 14px;
+    color: #999;
+    margin-top: 24px;
+  }
+
+  .reset-btn {
+    margin-top: 16px;
+    padding: 14px 32px;
+    font-size: 16px;
+    font-weight: 700;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .error-msg {
+    color: #d32f2f;
+    font-size: 13px;
+    margin-top: 4px;
+    display: none;
+  }
+
+  .field-error input,
+  .field-error select {
+    border-color: #d32f2f;
+  }
+
+  .field-error .error-msg {
+    display: block;
+  }
+
+  /* Limit warning */
+  .limit-warning {
+    font-size: 12px;
+    color: #d32f2f;
+    margin-top: 4px;
+    display: none;
+  }
+
+  .limit-warning.visible {
+    display: block;
+  }
+
+  @media (max-width: 500px) {
+    .checkbox-grid {
+      grid-template-columns: 1fr;
+    }
+    .input-row {
+      flex-direction: column;
+      gap: 16px;
+    }
+    .header h1 {
+      font-size: 22px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>2nd Nature Skatepark</h1>
+  <p>Skate Shop Product Survey</p>
+</div>
+<div class="promo-banner">
+  Fill out this quick survey and get $5 off your session today!
+</div>
+
+<div class="container">
+  <form id="surveyForm" novalidate>
+
+    <!-- Name & Email -->
+    <div class="form-section">
+      <h2>Your Info</h2>
+      <p class="section-hint">So we can thank you properly</p>
+      <div class="input-row" style="margin-bottom:0">
+        <div>
+          <label class="field-label" for="firstName">First Name *</label>
+          <input type="text" id="firstName" name="firstName" placeholder="Your first name" required autocomplete="off">
+          <div class="error-msg">Please enter your first name</div>
+        </div>
+        <div>
+          <label class="field-label" for="email">Email *</label>
+          <input type="email" id="email" name="email" placeholder="you@email.com" required autocomplete="off">
+          <div class="error-msg">Please enter a valid email</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deck -->
+    <div class="form-section">
+      <h2>Decks</h2>
+      <p class="section-hint">What do you ride?</p>
+      <div style="margin-bottom: 16px;">
+        <label class="field-label" for="deckSize">Deck Size</label>
+        <select id="deckSize" name="deckSize">
+          <option value="" disabled selected>Select your deck size</option>
+          <option value="7.5&quot;">7.5"</option>
+          <option value="7.75&quot;">7.75"</option>
+          <option value="8.0&quot;">8.0"</option>
+          <option value="8.125&quot;">8.125"</option>
+          <option value="8.25&quot;">8.25"</option>
+          <option value="8.5&quot;">8.5"</option>
+          <option value="8.75&quot;">8.75"</option>
+          <option value="9.0&quot;+">9.0"+</option>
+          <option value="Not Sure">Not Sure</option>
+        </select>
+      </div>
+      <label class="field-label">Favorite Deck Brands <span style="font-weight:400;color:#888">(pick up to 3)</span></label>
+      <div class="checkbox-grid" data-max="3" data-group="deckBrands">
+        <div class="checkbox-item"><input type="checkbox" id="deck_baker" name="deckBrands" value="Baker"><label for="deck_baker">Baker</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_element" name="deckBrands" value="Element"><label for="deck_element">Element</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_santacruz" name="deckBrands" value="Santa Cruz"><label for="deck_santacruz">Santa Cruz</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_girl" name="deckBrands" value="Girl"><label for="deck_girl">Girl</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_chocolate" name="deckBrands" value="Chocolate"><label for="deck_chocolate">Chocolate</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_primitive" name="deckBrands" value="Primitive"><label for="deck_primitive">Primitive</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_real" name="deckBrands" value="Real"><label for="deck_real">Real</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_deathwish" name="deckBrands" value="Deathwish"><label for="deck_deathwish">Deathwish</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_zero" name="deckBrands" value="Zero"><label for="deck_zero">Zero</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_enjoi" name="deckBrands" value="Enjoi"><label for="deck_enjoi">Enjoi</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_creature" name="deckBrands" value="Creature"><label for="deck_creature">Creature</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_powell" name="deckBrands" value="Powell Peralta"><label for="deck_powell">Powell Peralta</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_april" name="deckBrands" value="April"><label for="deck_april">April</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="deck_other" name="deckBrands" value="Other"><label for="deck_other">Other</label></div>
+      </div>
+      <div class="limit-warning" id="deckBrandsLimit">You've selected the maximum of 3</div>
+      <div class="other-input"><input type="text" id="deckBrandsOther" placeholder="Other deck brand(s)..." autocomplete="off"></div>
+    </div>
+
+    <!-- Trucks -->
+    <div class="form-section">
+      <h2>Trucks</h2>
+      <p class="section-hint">What keeps you grinding?</p>
+      <div style="margin-bottom: 16px;">
+        <label class="field-label" for="truckSize">Truck Size</label>
+        <select id="truckSize" name="truckSize">
+          <option value="" disabled selected>Select your truck size</option>
+          <option value="129mm">129mm (7.6" axle)</option>
+          <option value="139mm">139mm (8.0" axle)</option>
+          <option value="144mm">144mm (8.25" axle)</option>
+          <option value="149mm">149mm (8.5" axle)</option>
+          <option value="159mm">159mm (8.75" axle)</option>
+          <option value="169mm">169mm (9.0" axle)</option>
+          <option value="Not Sure">Not Sure</option>
+        </select>
+      </div>
+      <label class="field-label">Favorite Truck Brand</label>
+      <div class="checkbox-grid" data-group="truckBrand">
+        <div class="checkbox-item"><input type="checkbox" id="truck_indy" name="truckBrand" value="Independent"><label for="truck_indy">Independent</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="truck_thunder" name="truckBrand" value="Thunder"><label for="truck_thunder">Thunder</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="truck_venture" name="truckBrand" value="Venture"><label for="truck_venture">Venture</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="truck_ace" name="truckBrand" value="Ace"><label for="truck_ace">Ace</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="truck_krux" name="truckBrand" value="Krux"><label for="truck_krux">Krux</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="truck_tensor" name="truckBrand" value="Tensor"><label for="truck_tensor">Tensor</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="truck_other" name="truckBrand" value="Other"><label for="truck_other">Other</label></div>
+      </div>
+      <div class="other-input"><input type="text" id="truckBrandOther" placeholder="Other truck brand(s)..." autocomplete="off"></div>
+    </div>
+
+    <!-- Wheels -->
+    <div class="form-section">
+      <h2>Wheels</h2>
+      <p class="section-hint">What are you rolling on?</p>
+      <div class="input-row" style="margin-bottom: 16px;">
+        <div>
+          <label class="field-label" for="wheelSize">Wheel Size</label>
+          <select id="wheelSize" name="wheelSize">
+            <option value="" disabled selected>Select size</option>
+            <option value="50mm">50mm</option>
+            <option value="51mm">51mm</option>
+            <option value="52mm">52mm</option>
+            <option value="53mm">53mm</option>
+            <option value="54mm">54mm</option>
+            <option value="55mm">55mm</option>
+            <option value="56mm">56mm</option>
+            <option value="58mm">58mm</option>
+            <option value="60mm+">60mm+</option>
+            <option value="Not Sure">Not Sure</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="wheelDurometer">Durometer</label>
+          <select id="wheelDurometer" name="wheelDurometer">
+            <option value="" disabled selected>Select hardness</option>
+            <option value="78a (Soft/Cruiser)">78a (Soft / Cruiser)</option>
+            <option value="86a">86a</option>
+            <option value="95a">95a</option>
+            <option value="99a">99a</option>
+            <option value="100a">100a</option>
+            <option value="101a (Hard/Street)">101a (Hard / Street)</option>
+            <option value="Not Sure">Not Sure</option>
+          </select>
+        </div>
+      </div>
+      <label class="field-label">Favorite Wheel Brand</label>
+      <div class="checkbox-grid" data-group="wheelBrand">
+        <div class="checkbox-item"><input type="checkbox" id="wheel_spitfire" name="wheelBrand" value="Spitfire"><label for="wheel_spitfire">Spitfire</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="wheel_bones" name="wheelBrand" value="Bones"><label for="wheel_bones">Bones</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="wheel_ricta" name="wheelBrand" value="Ricta"><label for="wheel_ricta">Ricta</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="wheel_oj" name="wheelBrand" value="OJ Wheels"><label for="wheel_oj">OJ Wheels</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="wheel_minilogo" name="wheelBrand" value="Mini Logo"><label for="wheel_minilogo">Mini Logo</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="wheel_wayward" name="wheelBrand" value="Wayward"><label for="wheel_wayward">Wayward</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="wheel_other" name="wheelBrand" value="Other"><label for="wheel_other">Other</label></div>
+      </div>
+      <div class="other-input"><input type="text" id="wheelBrandOther" placeholder="Other wheel brand(s)..." autocomplete="off"></div>
+    </div>
+
+    <!-- Bearings -->
+    <div class="form-section">
+      <h2>Bearings</h2>
+      <p class="section-hint">What keeps you spinning?</p>
+      <label class="field-label">Favorite Bearing Brand</label>
+      <div class="checkbox-grid" data-group="bearingBrand">
+        <div class="checkbox-item"><input type="checkbox" id="bearing_reds" name="bearingBrand" value="Bones Reds"><label for="bearing_reds">Bones Reds</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="bearing_swiss" name="bearingBrand" value="Bones Swiss"><label for="bearing_swiss">Bones Swiss</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="bearing_bronson" name="bearingBrand" value="Bronson"><label for="bearing_bronson">Bronson</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="bearing_andale" name="bearingBrand" value="Andale"><label for="bearing_andale">Andale</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="bearing_shakejunt" name="bearingBrand" value="Shake Junt"><label for="bearing_shakejunt">Shake Junt</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="bearing_other" name="bearingBrand" value="Other"><label for="bearing_other">Other</label></div>
+      </div>
+      <div class="other-input"><input type="text" id="bearingBrandOther" placeholder="Other bearing brand(s)..." autocomplete="off"></div>
+    </div>
+
+    <!-- Shoes -->
+    <div class="form-section">
+      <h2>Shoes</h2>
+      <p class="section-hint">What's on your feet? (pick up to 3)</p>
+      <div class="checkbox-grid" data-max="3" data-group="shoeBrands">
+        <div class="checkbox-item"><input type="checkbox" id="shoe_vans" name="shoeBrands" value="Vans"><label for="shoe_vans">Vans</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="shoe_nikesb" name="shoeBrands" value="Nike SB"><label for="shoe_nikesb">Nike SB</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="shoe_adidas" name="shoeBrands" value="Adidas"><label for="shoe_adidas">Adidas</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="shoe_nb" name="shoeBrands" value="New Balance Numeric"><label for="shoe_nb">New Balance Numeric</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="shoe_emerica" name="shoeBrands" value="Emerica"><label for="shoe_emerica">Emerica</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="shoe_es" name="shoeBrands" value="eS"><label for="shoe_es">éS</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="shoe_lakai" name="shoeBrands" value="Lakai"><label for="shoe_lakai">Lakai</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="shoe_converse" name="shoeBrands" value="Converse"><label for="shoe_converse">Converse</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="shoe_other" name="shoeBrands" value="Other"><label for="shoe_other">Other</label></div>
+      </div>
+      <div class="limit-warning" id="shoeBrandsLimit">You've selected the maximum of 3</div>
+      <div class="other-input"><input type="text" id="shoeBrandsOther" placeholder="Other shoe brand(s)..." autocomplete="off"></div>
+    </div>
+
+    <!-- Submit -->
+    <div class="form-section" style="text-align:center;">
+      <button type="submit" class="submit-btn" id="submitBtn">Submit & Get $5 Off</button>
+    </div>
+
+  </form>
+</div>
+
+<!-- Thank You Screen -->
+<div class="thank-you-screen" id="thankYouScreen">
+  <div class="checkmark-circle">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+  </div>
+  <h2>Thanks, <span id="thankYouName"></span>!</h2>
+  <div class="discount-msg">Show this screen for $5 OFF your session</div>
+  <p style="font-size:16px; color:#666; max-width:400px;">Your preferences help us stock the brands and gear you actually want. We appreciate it!</p>
+  <p class="reset-info">This screen will reset in <span id="countdown">15</span> seconds</p>
+  <button class="reset-btn" onclick="resetForm()">Next Customer</button>
+</div>
+
+<script>
+  // ============================================================
+  // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
+  const GOOGLE_SCRIPT_URL = '';
+  // ============================================================
+
+  // --- Checkbox max limit enforcement ---
+  document.querySelectorAll('.checkbox-grid[data-max]').forEach(grid => {
+    const max = parseInt(grid.dataset.max);
+    const group = grid.dataset.group;
+    const limitWarning = document.getElementById(group + 'Limit');
+
+    grid.addEventListener('change', () => {
+      const checked = grid.querySelectorAll('input:checked');
+      const unchecked = grid.querySelectorAll('input:not(:checked)');
+
+      if (checked.length >= max) {
+        unchecked.forEach(cb => {
+          cb.disabled = true;
+          cb.parentElement.querySelector('label').style.opacity = '0.4';
+        });
+        if (limitWarning) limitWarning.classList.add('visible');
+      } else {
+        grid.querySelectorAll('input').forEach(cb => {
+          cb.disabled = false;
+          cb.parentElement.querySelector('label').style.opacity = '1';
+        });
+        if (limitWarning) limitWarning.classList.remove('visible');
+      }
+    });
+  });
+
+  // --- "Other" text field toggle ---
+  document.querySelectorAll('.checkbox-grid').forEach(grid => {
+    const group = grid.dataset.group;
+    const otherInput = document.getElementById(group + 'Other');
+    if (!otherInput) return;
+
+    const otherCheckbox = grid.querySelector('input[value="Other"]');
+    if (!otherCheckbox) return;
+
+    otherCheckbox.addEventListener('change', () => {
+      if (otherCheckbox.checked) {
+        otherInput.classList.add('visible');
+        otherInput.focus();
+      } else {
+        otherInput.classList.remove('visible');
+        otherInput.value = '';
+      }
+    });
+  });
+
+  // --- Collect checked values for a group ---
+  function getCheckedValues(name, otherInputId) {
+    const checked = Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+      .map(cb => cb.value);
+
+    const otherInput = document.getElementById(otherInputId);
+    if (otherInput && otherInput.value.trim()) {
+      const idx = checked.indexOf('Other');
+      if (idx > -1) checked[idx] = otherInput.value.trim();
+    }
+
+    return checked.join(', ');
+  }
+
+  // --- Form submission ---
+  document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Validate required fields
+    let valid = true;
+    const firstName = document.getElementById('firstName');
+    const email = document.getElementById('email');
+
+    // Clear previous errors
+    document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+
+    if (!firstName.value.trim()) {
+      firstName.parentElement.classList.add('field-error');
+      valid = false;
+    }
+
+    if (!email.value.trim() || !email.value.includes('@')) {
+      email.parentElement.classList.add('field-error');
+      valid = false;
+    }
+
+    if (!valid) {
+      document.querySelector('.field-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    const data = {
+      firstName: firstName.value.trim(),
+      email: email.value.trim(),
+      deckSize: document.getElementById('deckSize').value || '',
+      deckBrands: getCheckedValues('deckBrands', 'deckBrandsOther'),
+      truckSize: document.getElementById('truckSize').value || '',
+      truckBrand: getCheckedValues('truckBrand', 'truckBrandOther'),
+      wheelSize: document.getElementById('wheelSize').value || '',
+      wheelDurometer: document.getElementById('wheelDurometer').value || '',
+      wheelBrand: getCheckedValues('wheelBrand', 'wheelBrandOther'),
+      bearingBrand: getCheckedValues('bearingBrand', 'bearingBrandOther'),
+      shoeBrands: getCheckedValues('shoeBrands', 'shoeBrandsOther'),
+    };
+
+    // Send to Google Sheets
+    if (GOOGLE_SCRIPT_URL) {
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } catch (err) {
+        console.log('Sheet submission note:', err);
+        // Still show thank you — data can be re-collected
+      }
+    } else {
+      console.log('Survey data (no Google Sheet URL configured):', data);
+    }
+
+    // Show thank you
+    document.getElementById('thankYouName').textContent = data.firstName;
+    document.getElementById('thankYouScreen').classList.add('active');
+
+    // Countdown
+    let seconds = 15;
+    const countdownEl = document.getElementById('countdown');
+    countdownEl.textContent = seconds;
+
+    window._resetTimer = setInterval(() => {
+      seconds--;
+      countdownEl.textContent = seconds;
+      if (seconds <= 0) {
+        resetForm();
+      }
+    }, 1000);
+  });
+
+  // --- Reset form for next customer ---
+  function resetForm() {
+    if (window._resetTimer) clearInterval(window._resetTimer);
+
+    document.getElementById('thankYouScreen').classList.remove('active');
+    document.getElementById('surveyForm').reset();
+
+    // Reset all checkbox states
+    document.querySelectorAll('.checkbox-grid input[type="checkbox"]').forEach(cb => {
+      cb.disabled = false;
+      cb.parentElement.querySelector('label').style.opacity = '1';
+    });
+
+    // Hide Other inputs
+    document.querySelectorAll('.other-input input').forEach(inp => {
+      inp.classList.remove('visible');
+      inp.value = '';
+    });
+
+    // Hide limit warnings
+    document.querySelectorAll('.limit-warning').forEach(w => w.classList.remove('visible'));
+
+    // Clear errors
+    document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+
+    // Reset button
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = false;
+    btn.textContent = 'Submit & Get $5 Off';
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>

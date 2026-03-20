@@ -1,0 +1,111 @@
+═══════════════════════════════════════════════════════════
+  UTM LINKS FOR SECOND NATURE TREE SERVICE
+  Paste these as your website link on each platform
+═══════════════════════════════════════════════════════════
+
+SOCIAL MEDIA PROFILE BIOS (paste as your website URL):
+───────────────────────────────────────────────────────
+Facebook Page → Website field:
+https://peekskilltree.com/?utm_source=facebook&utm_medium=social&utm_campaign=profile
+
+Instagram Bio → Link:
+https://peekskilltree.com/?utm_source=instagram&utm_medium=social&utm_campaign=profile
+
+Yelp Listing → Website field:
+https://peekskilltree.com/?utm_source=yelp&utm_medium=referral&utm_campaign=listing
+
+YouTube Channel → About → Links:
+https://peekskilltree.com/?utm_source=youtube&utm_medium=social&utm_campaign=channel
+
+X/Twitter Bio → Website:
+https://peekskilltree.com/?utm_source=twitter&utm_medium=social&utm_campaign=profile
+
+Nextdoor Page → Website:
+https://peekskilltree.com/?utm_source=nextdoor&utm_medium=social&utm_campaign=profile
+
+Alignable Profile → Website:
+https://peekskilltree.com/?utm_source=alignable&utm_medium=referral&utm_campaign=profile
+
+Yellow Pages → Website:
+https://peekskilltree.com/?utm_source=yellowpages&utm_medium=referral&utm_campaign=listing
+
+Angi/HomeAdvisor → Website:
+https://peekskilltree.com/?utm_source=angi&utm_medium=referral&utm_campaign=listing
+
+Thumbtack → Website (when claimed):
+https://peekskilltree.com/?utm_source=thumbtack&utm_medium=referral&utm_campaign=listing
+
+Porch → Website (when claimed):
+https://peekskilltree.com/?utm_source=porch&utm_medium=referral&utm_campaign=listing
+
+Manta → Website (when claimed):
+https://peekskilltree.com/?utm_source=manta&utm_medium=referral&utm_campaign=listing
+
+Google Business Profile → Website:
+https://peekskilltree.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp
+
+
+AD CAMPAIGNS (use in your paid ads):
+───────────────────────────────────────────────────────
+Google Ads - Tree Removal:
+https://peekskilltree.com/?utm_source=google&utm_medium=cpc&utm_campaign=tree_removal
+
+Google Ads - Emergency:
+https://peekskilltree.com/?utm_source=google&utm_medium=cpc&utm_campaign=emergency
+
+Google Ads - Stump Grinding:
+https://peekskilltree.com/?utm_source=google&utm_medium=cpc&utm_campaign=stump_grinding
+
+Facebook Ad - Spring:
+https://peekskilltree.com/?utm_source=facebook&utm_medium=paid_social&utm_campaign=spring2026
+
+Facebook Ad - Storm:
+https://peekskilltree.com/?utm_source=facebook&utm_medium=paid_social&utm_campaign=storm_season
+
+Instagram Ad:
+https://peekskilltree.com/?utm_source=instagram&utm_medium=paid_social&utm_campaign=spring2026
+
+
+SOCIAL MEDIA POSTS (use in post captions):
+───────────────────────────────────────────────────────
+Facebook Post:
+https://peekskilltree.com/?utm_source=facebook&utm_medium=social&utm_campaign=post
+
+Instagram Post:
+https://peekskilltree.com/?utm_source=instagram&utm_medium=social&utm_campaign=post
+
+Google Business Post:
+https://peekskilltree.com/?utm_source=google&utm_medium=social&utm_campaign=gbp_post
+
+Nextdoor Post:
+https://peekskilltree.com/?utm_source=nextdoor&utm_medium=social&utm_campaign=post
+
+
+OFFLINE / PRINT (for tracking offline marketing):
+───────────────────────────────────────────────────────
+Yard Signs:
+https://peekskilltree.com/?utm_source=yard_sign&utm_medium=offline&utm_campaign=peekskill
+
+Truck Wrap QR Code:
+https://peekskilltree.com/?utm_source=truck_wrap&utm_medium=offline&utm_campaign=fleet
+
+Door Hanger / Flyer:
+https://peekskilltree.com/?utm_source=flyer&utm_medium=offline&utm_campaign=neighborhood
+
+Business Card:
+https://peekskilltree.com/?utm_source=business_card&utm_medium=offline&utm_campaign=networking
+
+
+═══════════════════════════════════════════════════════════
+  HOW IT WORKS
+═══════════════════════════════════════════════════════════
+
+When someone clicks any of these links, GA4 automatically records:
+- utm_source = WHERE they came from (facebook, yelp, yard_sign)
+- utm_medium = HOW (social, referral, cpc, offline)
+- utm_campaign = WHY (profile, listing, spring2026, post)
+
+Check results in GA4:
+Reports → Acquisition → Traffic acquisition → filter by Source/Medium
+
+All of this feeds into your /ads.html ROI calculator.

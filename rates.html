@@ -171,6 +171,25 @@
             <button class="tier-btn" data-tier="coop" onclick="setTier('coop')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Co-op Member <span style="font-size:.75rem;opacity:.7;">(-25%)</span></button>
           </div>
           <p id="tier-desc" style="font-size:.8rem;color:var(--text-light);margin-top:.4rem;">Full rates &mdash; any company, no existing relationship. <a href="#industry-rates" style="color:var(--green-dark);font-weight:600;">Industry rate sources &rarr;</a></p>
+          <div style="margin-top:.5rem;">
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--text-light);">
+              <input type="checkbox" id="chk-discount-labor" checked onchange="calcUpdate()" style="width:16px;height:16px;">
+              Apply tier discount to labor (not just equipment)
+            </label>
+          </div>
+        </div>
+
+        <!-- Rate Scale -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+            <span style="font-weight:700;">Rate Scale</span>
+            <span id="rate-scale-label" style="font-size:.85rem;font-weight:600;color:var(--green-dark);">Market Low</span>
+          </div>
+          <input type="range" id="rate-scale" min="0" max="4" step="1" value="1" oninput="setRateScale(this.value)"
+            style="width:100%;accent-color:var(--green-dark);cursor:pointer;">
+          <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-light);margin-top:.15rem;">
+            <span>Co-op Cost</span><span>Market Low</span><span>Market Mid</span><span>Market High</span><span>Premium</span>
+          </div>
         </div>
 
         <!-- Duration row -->
@@ -594,6 +613,9 @@
             <div style="margin-top:.5rem;font-size:.82rem;opacity:.6;">
               Your profit on this job: <span id="profit-earned" style="font-weight:700;opacity:1;color:#f9c74f;"></span>
             </div>
+            <div style="margin-top:.4rem;font-size:.82rem;opacity:.6;">
+              Profit margin: <span id="profit-margin-pct" style="font-weight:700;opacity:1;color:#f9c74f;"></span>
+            </div>
           </div>
         </div>
 
@@ -713,18 +735,31 @@
         }).catch(function(){});
 
         /* ── Rates: [half_day, full_day, hourly] ─────────────────── */
-        var RATES = {
-          climber:  [200,  400,  50],
-          operator: [200,  400,  50],
-          ground:   [120,  240,  30],
-          chipper:  [175,  350,  44],
-          chiptruck:[175,  350,  44],
-          bucket:   [300,  600,  75],
-          loader:   [200,  400,  50],
-          trailer:  [ 50,  100,  13],
-          stump:    [175,  325,  41],
-          ram:      [100,  200,  25]
+        /* Rate scales: [half, full, hourly] for each level */
+        var RATE_SCALES = {
+          /* 0=Co-op Cost, 1=Market Low, 2=Market Mid, 3=Market High, 4=Premium */
+          climber:  [[200,400,50],[300,600,75],[400,800,100],[525,1050,131],[700,1400,175]],
+          operator: [[200,400,50],[300,600,75],[400,800,100],[525,1050,131],[700,1400,175]],
+          ground:   [[120,240,30],[180,360,45],[200,400,50],[220,440,55],[260,520,65]],
+          chipper:  [[163,325,41],[175,350,44],[200,400,50],[225,450,56],[250,500,63]],
+          chiptruck:[[163,325,41],[175,350,44],[200,400,50],[225,450,56],[250,500,63]],
+          bucket:   [[300,600,75],[325,650,81],[400,800,100],[475,950,119],[500,1000,125]],
+          loader:   [[150,300,38],[200,400,50],[250,500,63],[300,600,75],[350,700,88]],
+          trailer:  [[ 50,100,13],[ 50,100,13],[ 63,125,16],[ 75,150,19],[ 88,175,22]],
+          stump:    [[125,250,31],[163,325,41],[175,350,44],[200,400,50],[225,450,56]],
+          ram:      [[100,200,25],[100,200,25],[125,250,31],[150,300,38],[175,350,44]]
         };
+        var rateLevel = 1; /* default Market Low */
+        var RATE_LABELS = ['Co-op Cost','Market Low','Market Mid','Market High','Premium'];
+        var RATES = {};
+        function setRateScale(level) {
+          rateLevel = parseInt(level);
+          document.getElementById('rate-scale-label').textContent = RATE_LABELS[rateLevel];
+          for (var k in RATE_SCALES) RATES[k] = RATE_SCALES[k][rateLevel];
+          calcUpdate();
+        }
+        /* Initialize at default level */
+        for (var k in RATE_SCALES) RATES[k] = RATE_SCALES[k][1];
 
         function rate(key, h) {
           var r = RATES[key];
@@ -863,8 +898,8 @@
 
         var TIER_DESCS = {
           standard:  'Full rates — any company, no existing relationship. <a href="#industry-rates" style="color:var(--green-dark);font-weight:600;">Industry rate sources →</a>',
-          preferred: '15% off equipment rates — partners who sub 3+ jobs/month.',
-          coop:      '25% off equipment rates — full co-op members with buy-in.'
+          preferred: '15% off — partners who sub 3+ jobs/month.',
+          coop:      '25% off — full co-op members with buy-in.'
         };
 
         function setTier(tier) {
@@ -895,7 +930,8 @@
             var chk = document.getElementById(id);
             var on  = chk ? chk.checked : (qty > 0);
             if (!chk && qty === 0) { document.getElementById(prId).innerHTML = '&mdash;'; return; }
-            var tierMult = (isEquip && tierDiscount > 0) ? (1 - tierDiscount) : 1;
+            var discountLabor = document.getElementById('chk-discount-labor').checked;
+            var tierMult = (tierDiscount > 0 && (isEquip || discountLabor)) ? (1 - tierDiscount) : 1;
             var v = on ? Math.round(rate(key, h) * qty * emergMult * tierMult) : 0;
             if (on && v > 0) {
               total += v;
@@ -1191,6 +1227,8 @@
             clientQuoteEl.style.display = 'block';
             document.getElementById('client-total').textContent = '$' + clientTotal.toLocaleString();
             document.getElementById('profit-earned').textContent = '$' + profitAmt.toLocaleString();
+            var marginPct = clientTotal > 0 ? Math.round((profitAmt / clientTotal) * 100) : 0;
+            document.getElementById('profit-margin-pct').textContent = marginPct + '%';
           } else {
             profitAmtEl.style.display = 'none';
             clientQuoteEl.style.display = 'none';

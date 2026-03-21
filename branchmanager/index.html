@@ -289,6 +289,7 @@
 <script src="src/pages/insights.js"></script>
 <script src="src/pages/settings.js"></script>
 <script src="src/pages/propertymap.js"></script>
+<script src="src/pages/estimator.js"></script>
 <script src="src/pdf.js"></script>
 <script src="src/pages/reviews.js"></script>
 <script src="src/pages/timetrack.js"></script>
@@ -342,14 +343,14 @@ var pageRenderers = {
   settings: function() { return SettingsPage.render(); },
   calculators: function() {
     return '<div class="stat-grid">'
+      + '<div class="stat-card" style="cursor:pointer;" onclick="Estimator.show()">'
+      + '<div class="stat-label">🧮 Job Estimator</div><div class="stat-value" style="font-size:18px;">Price a Job</div><div class="stat-sub">Crew + equipment + insurance + markup → instant quote</div></div>'
       + '<a href="https://peekskilltree.com/sub.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
-      + '<div class="stat-label">Job Cost Calculator</div><div class="stat-value" style="font-size:18px;">Rates & Pricing</div><div class="stat-sub">Equipment, labor, insurance, profit</div></a>'
+      + '<div class="stat-label">💰 Full Rate Sheet</div><div class="stat-value" style="font-size:18px;">Detailed Rates</div><div class="stat-sub">All rates, tiers, industry comparison</div></a>'
       + '<a href="https://peekskilltree.com/be.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
-      + '<div class="stat-label">Break-Even</div><div class="stat-value" style="font-size:18px;">Monthly P&L</div><div class="stat-sub">Fixed costs, job-by-job tracking</div></a>'
-      + '<a href="https://peekskilltree.com/estimate.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
-      + '<div class="stat-label">Field Estimate</div><div class="stat-value" style="font-size:18px;">Quick Pricing</div><div class="stat-sub">DBH, complexity, crew size</div></a>'
+      + '<div class="stat-label">📈 Break-Even</div><div class="stat-value" style="font-size:18px;">Monthly P&L</div><div class="stat-sub">Fixed costs, job-by-job tracking</div></a>'
       + '<a href="https://peekskilltree.com/ads.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
-      + '<div class="stat-label">Ad ROI</div><div class="stat-value" style="font-size:18px;">Ad Performance</div><div class="stat-sub">Per-channel spend & returns</div></a>'
+      + '<div class="stat-label">📊 Ad ROI</div><div class="stat-value" style="font-size:18px;">Ad Performance</div><div class="stat-sub">Per-channel spend & returns</div></a>'
       + '</div>';
   }
 };

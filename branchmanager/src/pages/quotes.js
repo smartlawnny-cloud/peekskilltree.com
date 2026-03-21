@@ -59,6 +59,12 @@ var QuotesPage = {
     html += UI.formField('Property Address', 'text', 'q-property', q.property || (client ? client.address : ''), { placeholder: 'Job site address' })
       + UI.formField('Description', 'text', 'q-description', q.description, { placeholder: 'e.g., Tree removal - 2 oaks' });
 
+    // Estimator button
+    html += '<div style="margin:16px 0 12px;display:flex;gap:8px;align-items:center;">'
+      + '<button type="button" class="btn btn-primary" onclick="Estimator.show(function(items, total) { QuotesPage._fillFromEstimator(items, total); })">🧮 Price with Estimator</button>'
+      + '<span style="font-size:12px;color:var(--text-light);">Calculate crew, equipment, insurance → auto-fill line items</span>'
+      + '</div>';
+
     // Line items
     html += '<div style="margin:16px 0 8px;font-weight:700;">Line Items</div>'
       + '<div id="q-items">';
@@ -218,6 +224,27 @@ var QuotesPage = {
     UI.toast('Quote status: ' + status);
     UI.closeModal();
     loadPage('quotes');
+  },
+
+  _fillFromEstimator: function(items, total) {
+    // Clear existing line items
+    var container = document.getElementById('q-items');
+    if (!container) return;
+    container.innerHTML = '';
+    var services = DB.services.getAll();
+
+    // Add each item from estimator
+    items.forEach(function(item) {
+      var div = document.createElement('div');
+      div.innerHTML = QuotesPage._itemRow(container.children.length, item, services);
+      container.appendChild(div.firstChild);
+    });
+
+    // Update total display
+    var totalEl = document.getElementById('q-total-display');
+    if (totalEl) totalEl.textContent = UI.money(total);
+
+    UI.toast('Estimate applied — ' + items.length + ' line items, ' + UI.money(total));
   },
 
   convertToJob: function(quoteId) {

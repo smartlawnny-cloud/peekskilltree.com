@@ -303,6 +303,14 @@
 <script src="src/pages/automations.js"></script>
 <script src="src/pages/pipeline.js"></script>
 <script src="src/sendjim.js"></script>
+<script src="src/supabase.js"></script>
+<script>
+// Auto-configure Supabase connection
+if (!localStorage.getItem('bm-supabase-url')) {
+  localStorage.setItem('bm-supabase-url', 'https://ltpivkqahvplapyagljt.supabase.co');
+  localStorage.setItem('bm-supabase-key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI');
+}
+</script>
 <script src="src/pdf.js"></script>
 <script src="src/pages/reviews.js"></script>
 <script src="src/pages/timetrack.js"></script>

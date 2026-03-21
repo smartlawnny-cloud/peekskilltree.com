@@ -162,7 +162,7 @@
             <button class="tier-btn" data-tier="preferred" onclick="setTier('preferred')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Preferred <span style="font-size:.75rem;opacity:.7;">(-15%)</span></button>
             <button class="tier-btn" data-tier="coop" onclick="setTier('coop')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Co-op Member <span style="font-size:.75rem;opacity:.7;">(-25%)</span></button>
           </div>
-          <p id="tier-desc" style="font-size:.8rem;color:var(--text-light);margin-top:.4rem;">Full rates &mdash; any company, no existing relationship. <a href="https://www.tcia.org/resources/tree-care-business" target="_blank" rel="noopener" style="color:var(--green-dark);font-weight:600;">Industry rate sources &rarr;</a></p>
+          <p id="tier-desc" style="font-size:.8rem;color:var(--text-light);margin-top:.4rem;">Full rates &mdash; any company, no existing relationship. <a href="#industry-rates" style="color:var(--green-dark);font-weight:600;">Industry rate sources &rarr;</a></p>
         </div>
 
         <!-- Duration row -->
@@ -854,7 +854,7 @@
         var tierDiscount = 0; /* 0 = standard, 0.15 = preferred, 0.25 = co-op */
 
         var TIER_DESCS = {
-          standard:  'Full rates — any company, no existing relationship. <a href="https://www.tcia.org/resources/tree-care-business" target="_blank" rel="noopener" style="color:var(--green-dark);font-weight:600;">Industry rate sources →</a>',
+          standard:  'Full rates — any company, no existing relationship. <a href="#industry-rates" style="color:var(--green-dark);font-weight:600;">Industry rate sources →</a>',
           preferred: '15% off equipment rates — partners who sub 3+ jobs/month.',
           coop:      '25% off equipment rates — full co-op members with buy-in.'
         };
@@ -1477,6 +1477,66 @@
         </div>
       </div>
 
+    </div>
+  </section>
+
+  <!-- Industry Rate Sources -->
+  <section id="industry-rates" style="background:var(--bg-light);padding:2.5rem 0;">
+    <div class="container" style="max-width:800px;">
+      <h2 style="font-size:1.4rem;text-align:center;margin-bottom:.4rem;">Industry Rate Sources</h2>
+      <p style="text-align:center;font-size:.85rem;color:var(--text-light);margin-bottom:1.5rem;">Our rates are benchmarked against national industry data. Here are the sources.</p>
+
+      <div style="display:grid;gap:1rem;">
+
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Labor Rates</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">NY tree trimmers avg <strong>$29.90/hr</strong> (national median $24.25/hr) &mdash; <a href="https://www.bls.gov/oes/current/oes373013.htm" target="_blank" rel="noopener" style="color:var(--green-dark);">BLS Occupational Employment Stats</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Arborist avg <strong>$29.17/hr</strong>, range $22&ndash;$33/hr &mdash; <a href="https://www.ziprecruiter.com/Salaries/Arborist-Salary" target="_blank" rel="noopener" style="color:var(--green-dark);">ZipRecruiter 2026</a></li>
+            <li style="padding:.35rem 0;">Tree service contractor billing rates <strong>$75&ndash;$175/hr</strong> &mdash; <a href="https://homeguide.com/costs/tree-trimming-cost" target="_blank" rel="noopener" style="color:var(--green-dark);">HomeGuide</a></li>
+          </ul>
+        </div>
+
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Job Pricing</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Tree removal avg <strong>$400&ndash;$1,200</strong> per tree, up to $3,500+ for large/difficult &mdash; <a href="https://www.angi.com/articles/how-much-does-tree-removal-cost.htm" target="_blank" rel="noopener" style="color:var(--green-dark);">Angi</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Tree trimming avg <strong>$430&ndash;$640</strong> per tree &mdash; <a href="https://www.lawnstarter.com/blog/cost/tree-trimming-price/" target="_blank" rel="noopener" style="color:var(--green-dark);">LawnStarter</a></li>
+            <li style="padding:.35rem 0;">Stump removal avg <strong>$195&ndash;$609</strong> &mdash; <a href="https://www.homeadvisor.com/cost/lawn-and-garden/tree-removal/" target="_blank" rel="noopener" style="color:var(--green-dark);">HomeAdvisor</a></li>
+          </ul>
+        </div>
+
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Equipment Rental</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Bucket truck <strong>$650&ndash;$950/day</strong> &mdash; <a href="https://quipli.com/resources/the-most-rented-pieces-of-construction-equipment/" target="_blank" rel="noopener" style="color:var(--green-dark);">Quipli</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">12&quot; chipper <strong>~$325/day</strong> &mdash; <a href="https://quipli.com/resources/the-most-rented-pieces-of-construction-equipment/" target="_blank" rel="noopener" style="color:var(--green-dark);">Quipli</a></li>
+            <li style="padding:.35rem 0;">Stump grinder <strong>$145&ndash;$225/day</strong> (commercial) &mdash; <a href="https://homeguide.com/costs/stump-grinder-rental-cost" target="_blank" rel="noopener" style="color:var(--green-dark);">HomeGuide</a></li>
+          </ul>
+        </div>
+
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Insurance Costs</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">WC Class Code 0106: <strong>~$7.63 per $100 payroll</strong> (NY) &mdash; <a href="https://www.kickstandinsurance.com/blog/workers-comp-rate-for-landscaping" target="_blank" rel="noopener" style="color:var(--green-dark);">Kickstand Insurance</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">GL median <strong>$138/mo ($1,651/yr)</strong> at $1M/$2M limits &mdash; <a href="https://www.insureon.com/landscaping-business-insurance/tree-service/cost" target="_blank" rel="noopener" style="color:var(--green-dark);">Insureon</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Full bundle (WC + GL + Auto): <strong>$489/mo ($5,869/yr)</strong> &mdash; <a href="https://www.moneygeek.com/insurance/business/contractor/tree-service/cost/" target="_blank" rel="noopener" style="color:var(--green-dark);">MoneyGeek</a></li>
+            <li style="padding:.35rem 0;">Commercial auto avg <strong>$204/mo ($2,452/yr)</strong> &mdash; <a href="https://www.insureon.com/landscaping-business-insurance/tree-service/cost" target="_blank" rel="noopener" style="color:var(--green-dark);">Insureon</a></li>
+          </ul>
+        </div>
+
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Industry Margins</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Net profit margins <strong>10&ndash;20%</strong> (well-run companies 20%+) &mdash; <a href="https://www.arbornote.com/how-to-price-your-tree-service-right-expert-guide-to-profitable-margins/" target="_blank" rel="noopener" style="color:var(--green-dark);">ArborNote</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Removal margins <strong>10&ndash;20%</strong>, pruning <strong>15&ndash;25%</strong>, emergency/storm <strong>25&ndash;40%</strong> &mdash; <a href="https://www.arbornote.com/how-to-price-your-tree-service-right-expert-guide-to-profitable-margins/" target="_blank" rel="noopener" style="color:var(--green-dark);">ArborNote</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">U.S. tree services market <strong>$35.6 billion</strong> (2024), growing 5.8%/yr &mdash; <a href="https://turfmagazine.com/the-profitability-of-tree-care-services" target="_blank" rel="noopener" style="color:var(--green-dark);">Turf Magazine</a></li>
+            <li style="padding:.35rem 0;">TCIA estimating: total expenses + target profit / crew hours = hourly rate &mdash; <a href="https://tcimag.tcia.org/sales-marketing/estimating-simplified/" target="_blank" rel="noopener" style="color:var(--green-dark);">TCIA Magazine</a></li>
+          </ul>
+        </div>
+
+      </div>
+      <p style="text-align:center;font-size:.78rem;color:var(--text-light);margin-top:1rem;">Sources current as of March 2026. Rates vary by region, company size, and job complexity.</p>
     </div>
   </section>
 

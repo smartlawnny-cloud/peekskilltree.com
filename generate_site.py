@@ -1769,7 +1769,6 @@ sub_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
       <div id="calc-wrap" style="background:var(--bg-light);border-radius:12px;padding:1.75rem 2rem;border:1px solid var(--border);">
@@ -1803,19 +1802,6 @@ sub_page += '''
           </div>
         </div>
 
-        <!-- Rate Scale -->
-        <div style="margin-bottom:1.25rem;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
-            <span style="font-weight:700;">Rate Scale</span>
-            <span id="rate-scale-label" style="font-size:.85rem;font-weight:600;color:var(--green-dark);">Market Low</span>
-          </div>
-          <input type="range" id="rate-scale" min="0" max="4" step="1" value="1" oninput="setRateScale(this.value)"
-            style="width:100%;accent-color:var(--green-dark);cursor:pointer;">
-          <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-light);margin-top:.15rem;">
-            <span>Co-op Cost</span><span>Market Low</span><span>Market Mid</span><span>Market High</span><span>Premium</span>
-          </div>
-        </div>
-
         <!-- Duration row -->
         <div style="margin-bottom:1.25rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
@@ -1845,6 +1831,13 @@ sub_page += '''
               <span>Climber</span>
             </label>
             <span class="calc-price" id="pr-climber">$600</span>
+          </div>
+          <div style="padding:.2rem 1rem .6rem;display:flex;align-items:center;gap:.5rem;">
+            <span style="font-size:.72rem;color:var(--text-light);white-space:nowrap;">$50</span>
+            <input type="range" id="climber-rate" min="50" max="175" step="5" value="75" oninput="setClimberRate(this.value)"
+              style="flex:1;accent-color:var(--green-dark);cursor:pointer;">
+            <span style="font-size:.72rem;color:var(--text-light);white-space:nowrap;">$175</span>
+            <span id="climber-rate-label" style="font-size:.78rem;font-weight:700;color:var(--green-dark);min-width:42px;text-align:right;">$75/hr</span>
           </div>
 
           <div class="calc-row" style="padding:.7rem 1rem;align-items:center;">
@@ -2354,32 +2347,28 @@ sub_page += '''
           if (d.length) { BASE_LAT = parseFloat(d[0].lat); BASE_LNG = parseFloat(d[0].lon); }
         }).catch(function(){});
 
-        /* ── Rates: [half_day, full_day, hourly] ─────────────────── */
-        /* Rate scales: [half, full, hourly] for each level */
-        var RATE_SCALES = {
-          /* 0=Co-op Cost, 1=Market Low, 2=Market Mid, 3=Market High, 4=Premium */
-          climber:  [[200,400,50],[300,600,75],[400,800,100],[525,1050,131],[700,1400,175]],
-          operator: [[200,400,50],[300,600,75],[400,800,100],[525,1050,131],[700,1400,175]],
-          ground:   [[120,240,30],[180,360,45],[200,400,50],[220,440,55],[260,520,65]],
-          chipper:  [[163,325,41],[175,350,44],[200,400,50],[225,450,56],[250,500,63]],
-          chiptruck:[[163,325,41],[175,350,44],[200,400,50],[225,450,56],[250,500,63]],
-          bucket:   [[300,600,75],[325,650,81],[400,800,100],[475,950,119],[500,1000,125]],
-          loader:   [[150,300,38],[200,400,50],[250,500,63],[300,600,75],[350,700,88]],
-          trailer:  [[ 50,100,13],[ 50,100,13],[ 63,125,16],[ 75,150,19],[ 88,175,22]],
-          stump:    [[125,250,31],[163,325,41],[175,350,44],[200,400,50],[225,450,56]],
-          ram:      [[100,200,25],[100,200,25],[125,250,31],[150,300,38],[175,350,44]]
-        };
-        var rateLevel = 1; /* default Market Low */
-        var RATE_LABELS = ['Co-op Cost','Market Low','Market Mid','Market High','Premium'];
-        var RATES = {};
-        function setRateScale(level) {
-          rateLevel = parseInt(level);
-          document.getElementById('rate-scale-label').textContent = RATE_LABELS[rateLevel];
-          for (var k in RATE_SCALES) RATES[k] = RATE_SCALES[k][rateLevel];
+        /* ── Climber rate slider ──────────────────────────────── */
+        function setClimberRate(val) {
+          var hr = parseInt(val);
+          RATES.climber = [hr * 4, hr * 8, hr];
+          RATES.operator = [hr * 4, hr * 8, hr];
+          document.getElementById('climber-rate-label').textContent = '$' + hr + '/hr';
           calcUpdate();
         }
-        /* Initialize at default level */
-        for (var k in RATE_SCALES) RATES[k] = RATE_SCALES[k][1];
+
+        /* ── Rates: [half_day, full_day, hourly] ─────────────────── */
+        var RATES = {
+          climber:  [300,  600,  75],
+          operator: [300,  600,  75],
+          ground:   [180,  360,  45],
+          chipper:  [175,  350,  44],
+          chiptruck:[175,  350,  44],
+          bucket:   [325,  650,  81],
+          loader:   [200,  400,  50],
+          trailer:  [ 50,  100,  13],
+          stump:    [163,  325,  41],
+          ram:      [ 75,  150,  19]
+        };
 
         function rate(key, h) {
           var r = RATES[key];
@@ -2819,7 +2808,6 @@ sub_page += '''
 
           /* Emergency label */
           var durLabel = h === 4 ? 'Half Day (4 hr)' : h === 8 ? 'Full Day (8 hr)' : 'Custom (' + h + ' hr)';
-          if (isEmergency) durLabel += ' \u2014 EMERGENCY 1.5\u00D7';
           if (h > 8) durLabel += ' \u2014 OT after 8hrs @ 1.5\u00D7';
 
           /* Minimum charge */
@@ -3092,7 +3080,6 @@ sub_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
       <!-- Rate date -->
@@ -3284,7 +3271,6 @@ costs_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
       <p style="color:var(--text-light);margin-bottom:.75rem;font-size:.9rem;">Full picture of what it costs to run the business. Enter your real numbers &mdash; see monthly, annual, and per-job costs.</p>
@@ -3377,10 +3363,9 @@ costs_page += '''
           </div>
           <div id="sec-office">
           <div class="cost-row"><label>Accounting / Bookkeeping</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="400" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Phone Plans (crew)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="200" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Software (Jobber, QuickBooks, GPS)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="250" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Internet / Cloud Storage</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="75" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Office Supplies / Printing</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="50" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Phone Plans</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="200" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Software / Internet <span style="font-size:.78rem;color:var(--text-light);">(Jobber, QB, GPS)</span></label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="300" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Licenses / Legal / Memberships</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="100" oninput="costCalc()"></div></div>
           </div>
         </div>
 
@@ -3394,11 +3379,8 @@ costs_page += '''
             </div>
           </div>
           <div id="sec-marketing">
-          <div class="cost-row"><label>Google Ads</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="0" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Angi / HomeAdvisor Leads</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="0" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Social Media / SocialPilot</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="30" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Website / Hosting</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="15" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Yard Signs / Wraps / Print</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="50" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Paid Ads <span style="font-size:.78rem;color:var(--text-light);">(Google, Angi, etc.)</span></label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="0" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Marketing <span style="font-size:.78rem;color:var(--text-light);">(signs, wraps, social)</span></label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="100" oninput="costCalc()"></div></div>
           </div>
         </div>
 
@@ -3412,44 +3394,9 @@ costs_page += '''
             </div>
           </div>
           <div id="sec-maint">
-          <div class="cost-row"><label>Truck Maintenance / Oil / Tires</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="500" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Chipper / Equipment Repairs</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="300" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Hydraulic Fluid / Fluids</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="150" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>DOT Inspections / Registrations</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="100" oninput="costCalc()"></div></div>
-          </div>
-        </div>
-
-        <!-- Crew Costs (non-wage) -->
-        <div class="cost-section">
-          <div class="cost-hdr" style="background:#5a7a5a;" onclick="toggleSection(\'sec-crew\',this)">
-            <span>Crew Costs (non-wage)</span>
-            <div style="display:flex;align-items:center;gap:.75rem;">
-              <span id="sub-crew" style="font-size:.85rem;opacity:.8;"></span>
-              <span class="sec-arrow">&#9660;</span>
-            </div>
-          </div>
-          <div id="sec-crew">
-          <div class="cost-row"><label>PPE / Safety Gear (hard hats, chaps, harnesses)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="150" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Uniforms / Boots</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="75" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Training / Certifications / CEUs</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="100" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Drug Testing / Physicals</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="25" oninput="costCalc()"></div></div>
-          </div>
-        </div>
-
-        <!-- Licenses & Compliance -->
-        <div class="cost-section">
-          <div class="cost-hdr" style="background:#3d6b4f;" onclick="toggleSection(\'sec-licenses\',this)">
-            <span>Licenses &amp; Compliance</span>
-            <div style="display:flex;align-items:center;gap:.75rem;">
-              <span id="sub-licenses" style="font-size:.85rem;opacity:.8;"></span>
-              <span class="sec-arrow">&#9660;</span>
-            </div>
-          </div>
-          <div id="sec-licenses">
-          <div class="cost-row"><label>Westchester HIC (WC-32079)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="25" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Putnam HIC (PC-50644)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="25" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>ISA / TCIA Memberships</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="50" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>LLC / Legal / Registered Agent</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="30" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Truck Maintenance / Tires</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="500" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Equipment Repairs / Parts</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="400" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>PPE / Safety Gear</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="150" oninput="costCalc()"></div></div>
           </div>
         </div>
 
@@ -3514,7 +3461,6 @@ costs_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
     </div>
@@ -3542,8 +3488,6 @@ costs_page += '''
         office:    { id: 'sec-office',    label: 'Office & Admin' },
         marketing: { id: 'sec-marketing', label: 'Marketing' },
         maint:     { id: 'sec-maint',     label: 'Maintenance' },
-        crew:      { id: 'sec-crew',      label: 'Crew Costs' },
-        licenses:  { id: 'sec-licenses',  label: 'Licenses' },
         hidden:    { id: 'sec-hidden',    label: 'Hidden / Missed' }
       };
 
@@ -3594,6 +3538,265 @@ costs_page += '''
     /* Run on load */
     costCalc();
   </script>
+
+  <!-- Ad ROI Section (collapsible) -->
+  <section style="padding:0 0 1.5rem;">
+    <div class="container" style="max-width:800px;">
+      <div onclick="var el=document.getElementById('roi-content');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.roi-arrow').textContent=el.style.display==='none'?'\\u25B6':'\\u25BC';"
+        style="background:#b5610a;color:var(--white);padding:.7rem 1rem;font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-radius:10px;">
+        <span>Advertising ROI Calculator</span>
+        <span class="roi-arrow" style="font-size:.7rem;">&#9654;</span>
+      </div>
+      <div id="roi-content" style="display:none;margin-top:1rem;">
+
+      <style>
+        .ad-input {width:90px;padding:.4rem .5rem;border:2px solid var(--border);border-radius:8px;font-size:1rem;font-weight:700;text-align:right;font-family:inherit;}
+        .ad-input:focus {border-color:var(--green-dark);outline:none;}
+        .ad-row {display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;border-bottom:1px solid var(--border);}
+        .ad-row:last-child {border-bottom:none;}
+        .ad-section {background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;}
+        .ad-section-hdr {padding:.55rem 1rem;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.07em;color:var(--white);}
+        .ad-metric {text-align:center;padding:1rem .5rem;flex:1;min-width:120px;}
+        .ad-metric-val {font-size:1.6rem;font-weight:800;line-height:1.2;}
+        .ad-metric-label {font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-top:.2rem;}
+        @media(max-width:600px){
+          .ad-input {font-size:16px !important;width:85px !important;}
+          .ad-row {padding:.75rem .6rem !important;}
+          .ad-metric-val {font-size:1.3rem !important;}
+          .ad-metric {min-width:90px;padding:.75rem .3rem;}
+        }
+      </style>
+
+      <div style="background:var(--bg-light);border-radius:12px;padding:1.5rem 1.75rem;border:1px solid var(--border);">
+
+        <!-- Ad Channels -->
+        <div class="ad-section">
+          <div class="ad-section-hdr" style="background:#2c5f3f;">
+            <span>Monthly Ad Spend by Channel</span>
+          </div>
+          <div class="ad-row">
+            <label style="font-size:.95rem;display:flex;align-items:center;gap:.4rem;">
+              <span style="font-size:1.1rem;">&#x1F50D;</span> Google Ads
+            </label>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <div style="display:flex;align-items:center;gap:.2rem;"><span>$</span><input type="number" class="ad-input ad-spend" id="ad-google" value="500" oninput="adCalc()"></div>
+              <input type="number" class="ad-input" id="leads-google" value="15" style="width:55px;" oninput="adCalc()" title="Leads">
+              <span style="font-size:.75rem;color:var(--text-light);">leads</span>
+            </div>
+          </div>
+          <div class="ad-row">
+            <label style="font-size:.95rem;display:flex;align-items:center;gap:.4rem;">
+              <span style="font-size:1.1rem;">&#x1F4F1;</span> Facebook / Instagram
+            </label>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <div style="display:flex;align-items:center;gap:.2rem;"><span>$</span><input type="number" class="ad-input ad-spend" id="ad-fb" value="300" oninput="adCalc()"></div>
+              <input type="number" class="ad-input" id="leads-fb" value="8" style="width:55px;" oninput="adCalc()" title="Leads">
+              <span style="font-size:.75rem;color:var(--text-light);">leads</span>
+            </div>
+          </div>
+          <div class="ad-row">
+            <label style="font-size:.95rem;display:flex;align-items:center;gap:.4rem;">
+              <span style="font-size:1.1rem;">&#x1F3E0;</span> Angi / HomeAdvisor
+            </label>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <div style="display:flex;align-items:center;gap:.2rem;"><span>$</span><input type="number" class="ad-input ad-spend" id="ad-angi" value="200" oninput="adCalc()"></div>
+              <input type="number" class="ad-input" id="leads-angi" value="5" style="width:55px;" oninput="adCalc()" title="Leads">
+              <span style="font-size:.75rem;color:var(--text-light);">leads</span>
+            </div>
+          </div>
+          <div class="ad-row">
+            <label style="font-size:.95rem;display:flex;align-items:center;gap:.4rem;">
+              <span style="font-size:1.1rem;">&#x1F4E3;</span> Yard Signs / Wraps / Print
+            </label>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <div style="display:flex;align-items:center;gap:.2rem;"><span>$</span><input type="number" class="ad-input ad-spend" id="ad-print" value="100" oninput="adCalc()"></div>
+              <input type="number" class="ad-input" id="leads-print" value="3" style="width:55px;" oninput="adCalc()" title="Leads">
+              <span style="font-size:.75rem;color:var(--text-light);">leads</span>
+            </div>
+          </div>
+          <div class="ad-row">
+            <label style="font-size:.95rem;display:flex;align-items:center;gap:.4rem;">
+              <span style="font-size:1.1rem;">&#x1F4AC;</span> Nextdoor / Thumbtack / Other
+            </label>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <div style="display:flex;align-items:center;gap:.2rem;"><span>$</span><input type="number" class="ad-input ad-spend" id="ad-other" value="0" oninput="adCalc()"></div>
+              <input type="number" class="ad-input" id="leads-other" value="0" style="width:55px;" oninput="adCalc()" title="Leads">
+              <span style="font-size:.75rem;color:var(--text-light);">leads</span>
+            </div>
+          </div>
+          <div style="padding:.5rem .75rem;background:rgba(0,0,0,.02);border-top:1px solid var(--border);display:flex;justify-content:space-between;font-weight:700;font-size:.9rem;">
+            <span>Total: <span id="ad-total-spend">$1,100</span></span>
+            <span><span id="ad-total-leads">31</span> leads</span>
+          </div>
+        </div>
+
+        <!-- Conversion & Job Value -->
+        <div class="ad-section">
+          <div class="ad-section-hdr" style="background:#b5610a;">Conversion &amp; Job Value</div>
+          <div class="ad-row">
+            <label style="font-size:.95rem;">Close rate <span style="font-size:.8rem;color:var(--text-light);">(% of leads that become jobs)</span></label>
+            <div style="display:flex;align-items:center;gap:.3rem;">
+              <input type="number" class="ad-input" id="ad-close-rate" value="35" style="width:65px;" oninput="adCalc()">
+              <span style="font-weight:700;">%</span>
+            </div>
+          </div>
+          <div class="ad-row">
+            <label style="font-size:.95rem;">Average job revenue</label>
+            <div style="display:flex;align-items:center;gap:.2rem;"><span>$</span><input type="number" class="ad-input" id="ad-avg-rev" value="2500" oninput="adCalc()"></div>
+          </div>
+          <div class="ad-row">
+            <label style="font-size:.95rem;">Average job cost <span style="font-size:.8rem;color:var(--text-light);">(labor + equip + overhead)</span></label>
+            <div style="display:flex;align-items:center;gap:.2rem;"><span>$</span><input type="number" class="ad-input" id="ad-avg-cost" value="1200" oninput="adCalc()"></div>
+          </div>
+        </div>
+
+        <!-- Free Leads -->
+        <div class="ad-section">
+          <div class="ad-section-hdr" style="background:#4a7c59;">Free Leads <span style="font-size:.7rem;opacity:.7;">(no ad cost)</span></div>
+          <div class="ad-row"><label style="font-size:.95rem;">Google organic / SEO</label><input type="number" class="ad-input ad-free" id="leads-seo" value="10" style="width:55px;" oninput="adCalc()"></div>
+          <div class="ad-row"><label style="font-size:.95rem;">Referrals / word of mouth</label><input type="number" class="ad-input ad-free" id="leads-ref" value="5" style="width:55px;" oninput="adCalc()"></div>
+          <div class="ad-row"><label style="font-size:.95rem;">Repeat customers</label><input type="number" class="ad-input ad-free" id="leads-repeat" value="3" style="width:55px;" oninput="adCalc()"></div>
+          <div class="ad-row"><label style="font-size:.95rem;">Google Business Profile</label><input type="number" class="ad-input ad-free" id="leads-gbp" value="8" style="width:55px;" oninput="adCalc()"></div>
+          <div style="padding:.5rem .75rem;background:rgba(0,0,0,.02);border-top:1px solid var(--border);font-weight:700;font-size:.9rem;">
+            <span id="ad-free-total">26</span> free leads/month <span style="font-weight:400;color:var(--text-light);font-size:.82rem;">&mdash; $0 ad cost</span>
+          </div>
+        </div>
+
+        <!-- Results Dashboard -->
+        <div style="background:linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%);border-radius:12px;padding:1.25rem;color:var(--white);margin-top:.5rem;">
+          <div style="font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;opacity:.6;margin-bottom:.75rem;text-align:center;">Monthly Ad Performance</div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:0;margin-bottom:.75rem;">
+            <div class="ad-metric"><div class="ad-metric-val" id="r-cpl">$35</div><div class="ad-metric-label">Cost per Lead</div></div>
+            <div class="ad-metric"><div class="ad-metric-val" id="r-cpj">$101</div><div class="ad-metric-label">Cost per Job</div></div>
+            <div class="ad-metric"><div class="ad-metric-val" id="r-jobs">11</div><div class="ad-metric-label">Jobs from Ads</div></div>
+          </div>
+          <div style="height:1px;background:rgba(255,255,255,.15);margin:.5rem 0;"></div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:0;">
+            <div class="ad-metric"><div class="ad-metric-val" id="r-rev" style="color:#4ade80;">$27,500</div><div class="ad-metric-label">Ad Revenue</div></div>
+            <div class="ad-metric"><div class="ad-metric-val" id="r-profit" style="color:#4ade80;">$13,200</div><div class="ad-metric-label">Ad Profit</div></div>
+            <div class="ad-metric"><div class="ad-metric-val" id="r-roas" style="color:#fbbf24;">12.5x</div><div class="ad-metric-label">ROAS</div></div>
+          </div>
+          <div style="height:1px;background:rgba(255,255,255,.15);margin:.5rem 0;"></div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:0;">
+            <div class="ad-metric"><div class="ad-metric-val" id="r-total-leads">57</div><div class="ad-metric-label">Total Leads (all)</div></div>
+            <div class="ad-metric"><div class="ad-metric-val" id="r-total-jobs">20</div><div class="ad-metric-label">Total Jobs (all)</div></div>
+            <div class="ad-metric"><div class="ad-metric-val" id="r-total-profit" style="color:#4ade80;">$24,900</div><div class="ad-metric-label">Total Profit (all)</div></div>
+          </div>
+        </div>
+
+        <!-- Channel Table -->
+        <div style="margin-top:1rem;">
+          <div style="font-weight:700;font-size:.95rem;margin-bottom:.5rem;">Channel Breakdown</div>
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+            <table id="ad-channel-table" style="width:100%;border-collapse:collapse;font-size:.8rem;min-width:480px;">
+              <thead>
+                <tr style="background:var(--green-dark);color:white;">
+                  <th style="padding:.4rem .5rem;text-align:left;font-size:.72rem;">Channel</th>
+                  <th style="padding:.4rem .4rem;text-align:right;font-size:.72rem;">Spend</th>
+                  <th style="padding:.4rem .4rem;text-align:right;font-size:.72rem;">Leads</th>
+                  <th style="padding:.4rem .4rem;text-align:right;font-size:.72rem;">CPL</th>
+                  <th style="padding:.4rem .4rem;text-align:right;font-size:.72rem;">Jobs</th>
+                  <th style="padding:.4rem .4rem;text-align:right;font-size:.72rem;">Revenue</th>
+                  <th style="padding:.4rem .4rem;text-align:right;font-size:.72rem;">Profit</th>
+                  <th style="padding:.4rem .5rem;text-align:right;font-size:.72rem;">ROAS</th>
+                </tr>
+              </thead>
+              <tbody id="ad-channel-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- What-If -->
+        <div style="margin-top:1.25rem;padding:1rem;background:var(--white);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-weight:700;font-size:.95rem;margin-bottom:.5rem;">What If I Doubled My Best Channel?</div>
+          <p id="ad-whatif" style="font-size:.9rem;color:var(--text-light);margin:0;"></p>
+        </div>
+
+      </div>
+
+      <script>
+        var channels = [
+          {name:'Google Ads', spendId:'ad-google', leadsId:'leads-google'},
+          {name:'Facebook / IG', spendId:'ad-fb', leadsId:'leads-fb'},
+          {name:'Angi / HomeAdvisor', spendId:'ad-angi', leadsId:'leads-angi'},
+          {name:'Signs / Print', spendId:'ad-print', leadsId:'leads-print'},
+          {name:'Other', spendId:'ad-other', leadsId:'leads-other'}
+        ];
+        var freeChannels = [
+          {name:'Google Organic', id:'leads-seo'},
+          {name:'Referrals', id:'leads-ref'},
+          {name:'Repeat Customers', id:'leads-repeat'},
+          {name:'Google Business', id:'leads-gbp'}
+        ];
+        function adCalc() {
+          var closeRate = (parseFloat(document.getElementById('ad-close-rate').value) || 0) / 100;
+          var avgRev = parseFloat(document.getElementById('ad-avg-rev').value) || 0;
+          var avgCost = parseFloat(document.getElementById('ad-avg-cost').value) || 0;
+          var avgProfit = avgRev - avgCost;
+          var totalSpend = 0, totalPaidLeads = 0, channelData = [], bestChannel = null, bestROAS = 0;
+          channels.forEach(function(ch) {
+            var spend = parseFloat(document.getElementById(ch.spendId).value) || 0;
+            var leads = parseFloat(document.getElementById(ch.leadsId).value) || 0;
+            totalSpend += spend; totalPaidLeads += leads;
+            var jobs = Math.round(leads * closeRate * 10) / 10;
+            var rev = Math.round(jobs * avgRev), cost = Math.round(jobs * avgCost);
+            var profit = rev - cost - spend, cpl = leads > 0 ? Math.round(spend / leads) : 0;
+            var roas = spend > 0 ? Math.round((rev / spend) * 10) / 10 : 0;
+            channelData.push({name:ch.name, spend:spend, leads:leads, jobs:jobs, rev:rev, profit:profit, cpl:cpl, roas:roas});
+            if (spend > 0 && roas > bestROAS) { bestROAS = roas; bestChannel = ch.name; }
+          });
+          var totalFreeLeads = 0;
+          freeChannels.forEach(function(ch) { totalFreeLeads += parseFloat(document.getElementById(ch.id).value) || 0; });
+          var totalLeads = totalPaidLeads + totalFreeLeads;
+          var paidJobs = Math.round(totalPaidLeads * closeRate * 10) / 10;
+          var freeJobs = Math.round(totalFreeLeads * closeRate * 10) / 10;
+          var totalJobs = Math.round(totalLeads * closeRate * 10) / 10;
+          var paidRev = Math.round(paidJobs * avgRev), paidProfit = Math.round(paidJobs * avgProfit) - totalSpend;
+          var totalProfit = Math.round(totalJobs * avgProfit) - totalSpend;
+          var cpl = totalPaidLeads > 0 ? Math.round(totalSpend / totalPaidLeads) : 0;
+          var cpj = paidJobs > 0 ? Math.round(totalSpend / paidJobs) : 0;
+          var roas = totalSpend > 0 ? Math.round((paidRev / totalSpend) * 10) / 10 : 0;
+          document.getElementById('ad-total-spend').textContent = '$' + totalSpend.toLocaleString();
+          document.getElementById('ad-total-leads').textContent = totalPaidLeads;
+          document.getElementById('ad-free-total').textContent = totalFreeLeads;
+          document.getElementById('r-cpl').textContent = '$' + cpl.toLocaleString();
+          document.getElementById('r-cpj').textContent = '$' + cpj.toLocaleString();
+          document.getElementById('r-jobs').textContent = Math.round(paidJobs);
+          document.getElementById('r-rev').textContent = '$' + paidRev.toLocaleString();
+          document.getElementById('r-profit').textContent = (paidProfit >= 0 ? '+$' : '-$') + Math.abs(paidProfit).toLocaleString();
+          document.getElementById('r-profit').style.color = paidProfit >= 0 ? '#4ade80' : '#ef4444';
+          document.getElementById('r-roas').textContent = roas + 'x';
+          document.getElementById('r-roas').style.color = roas >= 3 ? '#4ade80' : (roas >= 1 ? '#fbbf24' : '#ef4444');
+          document.getElementById('r-total-leads').textContent = Math.round(totalLeads);
+          document.getElementById('r-total-jobs').textContent = Math.round(totalJobs);
+          document.getElementById('r-total-profit').textContent = (totalProfit >= 0 ? '+$' : '-$') + Math.abs(totalProfit).toLocaleString();
+          document.getElementById('r-total-profit').style.color = totalProfit >= 0 ? '#4ade80' : '#ef4444';
+          var tbody = document.getElementById('ad-channel-tbody'), html = '';
+          channelData.forEach(function(ch, i) {
+            if (ch.spend === 0 && ch.leads === 0) return;
+            var bg = i % 2 === 0 ? '#fff' : '#f9f9f9';
+            var pc = ch.profit >= 0 ? '#2d5a27' : '#c0392b';
+            html += '<tr style="background:'+bg+';border-bottom:1px solid #eee;"><td style="padding:.4rem .5rem;font-weight:600;">'+ch.name+'</td><td style="padding:.4rem;text-align:right;">$'+ch.spend.toLocaleString()+'</td><td style="padding:.4rem;text-align:right;">'+ch.leads+'</td><td style="padding:.4rem;text-align:right;">$'+ch.cpl+'</td><td style="padding:.4rem;text-align:right;">'+Math.round(ch.jobs)+'</td><td style="padding:.4rem;text-align:right;">$'+ch.rev.toLocaleString()+'</td><td style="padding:.4rem;text-align:right;color:'+pc+';font-weight:700;">'+(ch.profit>=0?'+$':'-$')+Math.abs(ch.profit).toLocaleString()+'</td><td style="padding:.4rem .5rem;text-align:right;font-weight:700;">'+ch.roas+'x</td></tr>';
+          });
+          if (totalFreeLeads > 0) {
+            html += '<tr style="background:#e8f5e9;"><td style="padding:.4rem .5rem;font-weight:600;color:#2d5a27;">Free (organic/referral)</td><td style="padding:.4rem;text-align:right;color:#2d5a27;">$0</td><td style="padding:.4rem;text-align:right;">'+totalFreeLeads+'</td><td style="padding:.4rem;text-align:right;color:#2d5a27;">$0</td><td style="padding:.4rem;text-align:right;">'+Math.round(freeJobs)+'</td><td style="padding:.4rem;text-align:right;">$'+Math.round(freeJobs*avgRev).toLocaleString()+'</td><td style="padding:.4rem;text-align:right;color:#2d5a27;font-weight:700;">+$'+Math.round(freeJobs*avgProfit).toLocaleString()+'</td><td style="padding:.4rem .5rem;text-align:right;font-weight:700;color:#2d5a27;">\\u221E</td></tr>';
+          }
+          tbody.innerHTML = html;
+          var whatif = document.getElementById('ad-whatif');
+          if (bestChannel && bestROAS > 0) {
+            var bd = channelData.find(function(c){return c.name===bestChannel;});
+            if (bd) {
+              var ds=bd.spend*2, dj=bd.jobs*2, dr=Math.round(dj*avgRev), dp=dr-Math.round(dj*avgCost)-ds;
+              whatif.innerHTML='<strong>'+bestChannel+'</strong> is your best at <strong>'+bestROAS+'x ROAS</strong>. Double spend from $'+bd.spend.toLocaleString()+' to $'+ds.toLocaleString()+' for ~<strong>'+Math.round(dj)+' jobs</strong>, $'+dr.toLocaleString()+' revenue, <strong style="color:var(--green-dark);">+$'+dp.toLocaleString()+' profit</strong>.';
+            }
+          } else { whatif.textContent='Enter ad spend above to see which channel delivers the best return.'; }
+        }
+        adCalc();
+      </script>
+
+      </div>
+    </div>
+  </section>
 ''' + FOOTER
 
 write_page("costs.html", costs_page)
@@ -3650,7 +3853,6 @@ be_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
       <p style="color:var(--text-light);margin-bottom:.75rem;font-size:.9rem;">Enter your monthly costs. See exactly how many work days it takes to break even. <a href="rates.html" style="font-weight:600;">Job Cost Calculator &rarr;</a></p>
@@ -3837,7 +4039,6 @@ be_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
     </div>
@@ -4086,7 +4287,6 @@ ads_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
       <p style="color:var(--text-light);margin-bottom:.75rem;font-size:.9rem;">Enter your ad spend, leads, and jobs. See exactly what each lead and job costs you &mdash; and whether your ads are profitable.</p>
@@ -4474,7 +4674,6 @@ ads_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 ''' + FOOTER
 
@@ -4537,7 +4736,6 @@ est_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
       <p style="color:var(--text-light);margin-bottom:.75rem;font-size:.9rem;">Quick field pricing. Enter tree details, select conditions, get an estimate. <a href="rates.html" style="font-weight:600;">Full Job Cost Calculator &rarr;</a></p>
@@ -4729,7 +4927,6 @@ est_page += '''
       <div style="margin-top:1rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
         <a href="rates.html" style="display:inline-block;background:var(--green-dark);color:var(--white);font-weight:700;font-size:.9rem;padding:.5rem 1.25rem;border-radius:8px;text-decoration:none;">Rates</a>
         <a href="breakeven.html" style="display:inline-block;background:var(--white);color:var(--green-dark);font-weight:700;font-size:.9rem;padding:.5rem 1.25rem;border-radius:8px;text-decoration:none;border:2px solid var(--green-dark);">Break-Even</a>
-        <a href="roi.html" style="display:inline-block;background:var(--white);color:var(--green-dark);font-weight:700;font-size:.9rem;padding:.5rem 1.25rem;border-radius:8px;text-decoration:none;border:2px solid var(--green-dark);">Ad ROI</a>
       </div>
 
     </div>
@@ -4878,7 +5075,6 @@ est_page += '''
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
         <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
-        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 ''' + FOOTER
 

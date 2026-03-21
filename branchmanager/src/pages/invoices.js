@@ -62,8 +62,20 @@ var InvoicesPage = {
       html += '</tbody></table>';
     }
 
+    // Stripe payment button
+    html += Stripe.paymentButton(id);
+
+    // Fee calculator
+    if (inv.status !== 'paid' && inv.balance > 0) {
+      var fees = Stripe.calcFees(inv.balance);
+      html += '<div style="margin-top:8px;font-size:12px;color:var(--text-light);display:flex;gap:16px;">'
+        + '<span>Card fee: $' + fees.card.toFixed(2) + ' (you receive $' + fees.cardNet.toFixed(2) + ')</span>'
+        + '<span>ACH fee: $' + fees.ach.toFixed(2) + ' (you receive $' + fees.achNet.toFixed(2) + ')</span>'
+        + '</div>';
+    }
+
     // Status buttons
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">';
     ['draft', 'sent', 'paid', 'overdue'].forEach(function(s) {
       html += '<button class="btn ' + (inv.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="InvoicesPage.setStatus(\'' + id + '\',\'' + s + '\')">' + s + '</button>';
     });

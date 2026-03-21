@@ -30,6 +30,9 @@ var SettingsPage = {
       + '<div class="stat-card"><div class="stat-label">Quotes</div><div class="stat-value">' + DB.quotes.count() + '</div></div>'
       + '</div></div>';
 
+    // Stripe Payments
+    html += Stripe.renderSettings();
+
     // Supabase Connection
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
       + '<h3 style="margin-bottom:8px;">Database Connection</h3>'

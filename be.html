@@ -149,6 +149,15 @@
       .be-row label {font-size:1rem;}
       .job-rev, .job-labor {font-size:16px !important;}
     }
+    /* Period switcher */
+    .period-switcher {display:flex;gap:0;background:var(--bg-light);border:2px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;}
+    .period-btn {padding:.3rem .65rem;font-size:.75rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text);transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent;user-select:none;}
+    .period-btn.active-period {background:var(--green-dark);color:var(--white);}
+    .period-btn:not(:last-child) {border-right:1px solid var(--border);}
+    .period-label {font-size:.72rem;color:var(--text-light);margin-top:.2rem;}
+    @media(max-width:600px){
+      .period-btn {padding:.35rem .55rem;font-size:.78rem;}
+    }
   </style>
   <section class="section">
     <div class="container" style="max-width:800px;">
@@ -227,6 +236,18 @@
           <div class="be-subtotal"><span id="sub-overhead">$650</span></div>
         </div>
 
+        <!-- Period Switcher -->
+        <div style="margin-top:.5rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+          <span style="font-size:.8rem;font-weight:600;color:var(--text-light);">View as:</span>
+          <div class="period-switcher" id="period-switcher">
+            <button class="period-btn" data-mult="1" onclick="setBePeriod(this)">Day</button>
+            <button class="period-btn" data-mult="5" onclick="setBePeriod(this)">Week</button>
+            <button class="period-btn active-period" data-mult="22" onclick="setBePeriod(this)">Month</button>
+            <button class="period-btn" data-mult="264" onclick="setBePeriod(this)">Year</button>
+          </div>
+          <span class="period-label" id="period-label"></span>
+        </div>
+
         <!-- TOTAL FIXED -->
         <div style="background:var(--green-dark);border-radius:10px;padding:.85rem 1.25rem;color:var(--white);margin-top:.5rem;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem;">
@@ -270,10 +291,25 @@
           <div style="font-size:.8rem;color:var(--text-light);margin-top:.4rem;padding:0 .5rem;">These costs are <strong>$0 with no work</strong>. They get added automatically to each job&rsquo;s cost based on that job&rsquo;s labor amount.</div>
         </div>
 
+        <!-- TARGET PROFIT MARGIN -->
+        <div style="margin-top:1.25rem;padding:.85rem 1rem;background:var(--white);border:2px solid var(--green-dark);border-radius:10px;">
+          <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+            <label style="font-weight:700;font-size:.95rem;white-space:nowrap;" for="be-target-margin">Target Profit Margin</label>
+            <div style="display:flex;align-items:center;gap:.3rem;">
+              <input type="number" id="be-target-margin" min="0" max="80" value="40" step="5"
+                style="width:60px;padding:.35rem .5rem;border:2px solid var(--border);border-radius:8px;font-size:1rem;font-weight:700;text-align:center;"
+                oninput="beCalc()">
+              <span style="font-size:1rem;font-weight:700;">%</span>
+            </div>
+            <span id="be-target-price" style="font-size:.95rem;font-weight:700;color:var(--green-dark);"></span>
+          </div>
+          <p style="font-size:.78rem;color:var(--text-light);margin-top:.3rem;margin-bottom:0;">To hit this margin with current costs, you need to charge at least <strong id="be-min-price">$0</strong> per job. Jobs below this threshold show in <span style="color:#c0392b;font-weight:700;">red</span>.</p>
+        </div>
+
         <!-- JOB-BY-JOB P&L TABLE -->
         <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:2px dashed var(--border);">
           <div style="font-weight:700;font-size:1rem;margin-bottom:.25rem;">Job-by-Job P&amp;L</div>
-          <p style="font-size:.88rem;color:var(--text-light);margin-bottom:.5rem;">Enter each job&rsquo;s revenue and costs as you book them. Watch the running total climb from red to green. Use the <a href="sub.html" style="font-weight:600;">Job Cost Calculator</a> to price each job.</p>
+          <p style="font-size:.88rem;color:var(--text-light);margin-bottom:.5rem;">Enter each job&rsquo;s revenue and costs as you book them. Watch the running total climb from red to green. Use the <a href="rates.html" style="font-weight:600;">Job Cost Calculator</a> to price each job.</p>
 
           <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
             <table id="be-table" style="width:100%;border-collapse:collapse;font-size:.82rem;min-width:520px;">
@@ -284,6 +320,7 @@
                   <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Labor</th>
                   <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Overhead</th>
                   <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Net</th>
+                  <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Margin</th>
                   <th style="padding:.4rem .35rem;text-align:right;font-weight:700;font-size:.7rem;border-radius:0 6px 0 0;">P&amp;L</th>
                 </tr>
               </thead>
@@ -294,6 +331,7 @@
                   <td style="padding:.4rem .2rem;text-align:center;color:#666;">$0</td>
                   <td style="padding:.4rem .2rem;text-align:center;color:#666;">$0</td>
                   <td style="padding:.4rem .2rem;text-align:center;color:#666;">$0</td>
+                  <td style="padding:.4rem .2rem;text-align:center;color:#666;">—</td>
                   <td style="padding:.4rem .35rem;text-align:right;font-weight:700;color:#c0392b;" id="job0-pl">-$4,912</td>
                 </tr>
               </tbody>
@@ -325,6 +363,10 @@
             <div>
               <div style="font-size:.7rem;opacity:.7;text-transform:uppercase;">Total Costs</div>
               <div id="be-annual" style="font-size:1.2rem;font-weight:700;color:#ef4444;">$0</div>
+            </div>
+            <div>
+              <div style="font-size:.7rem;opacity:.7;text-transform:uppercase;">Avg Margin</div>
+              <div id="be-margin" style="font-size:1.2rem;font-weight:700;">—</div>
             </div>
           </div>
         </div>
@@ -392,6 +434,7 @@
         + '<td style="padding:.35rem .2rem;text-align:center;"><input type="number" class="be-input job-labor" value="0" style="width:72px;font-size:16px;text-align:right;color:#333;" oninput="beCalc()" placeholder="Labor"></td>'
         + '<td style="padding:.35rem .2rem;text-align:center;font-size:.78rem;color:var(--text-light);" class="job-var">$0</td>'
         + '<td style="padding:.35rem .2rem;text-align:center;font-weight:700;font-size:.82rem;" class="job-net">$0</td>'
+        + '<td style="padding:.35rem .2rem;text-align:center;font-size:.78rem;" class="job-margin">—</td>'
         + '<td style="padding:.35rem .4rem;text-align:right;font-weight:700;font-size:.88rem;" class="job-pl">-</td>';
       tbody.appendChild(tr);
       beCalc();
@@ -421,6 +464,7 @@
         var laborInput = tr.querySelector('.job-labor');
         var varCell    = tr.querySelector('.job-var');
         var netCell    = tr.querySelector('.job-net');
+        var marginCell = tr.querySelector('.job-margin');
         var plCell     = tr.querySelector('.job-pl');
         if (!revInput) return;
 
@@ -439,6 +483,18 @@
         /* Net cell */
         netCell.textContent = (net >= 0 ? '+$' : '-$') + Math.abs(net).toLocaleString();
         netCell.style.color = net >= 0 ? '#2d5a27' : '#c0392b';
+
+        /* Margin cell */
+        if (rev > 0) {
+          var marginPct = Math.round((net / rev) * 100);
+          marginCell.textContent = marginPct + '%';
+          marginCell.style.color = marginPct >= 40 ? '#2d5a27' : marginPct >= 20 ? '#e67e22' : '#c0392b';
+          marginCell.style.fontWeight = '700';
+        } else {
+          marginCell.textContent = '—';
+          marginCell.style.color = '#666';
+          marginCell.style.fontWeight = '400';
+        }
 
         /* Running P&L */
         plCell.textContent = fmt(running);
@@ -488,6 +544,17 @@
       document.getElementById('be-annual').textContent = '$' + (totalCost + fixedTotal).toLocaleString();
       document.getElementById('be-annual').style.color = '#ef4444';
 
+      /* Overall margin */
+      var marginEl = document.getElementById('be-margin');
+      if (totalRev > 0) {
+        var overallMargin = Math.round(((totalRev - totalCost - fixedTotal) / totalRev) * 100);
+        marginEl.textContent = overallMargin + '%';
+        marginEl.style.color = overallMargin >= 40 ? '#4ade80' : overallMargin >= 20 ? '#fbbf24' : '#ef4444';
+      } else {
+        marginEl.textContent = '—';
+        marginEl.style.color = '#ffffff';
+      }
+
       var panel = document.getElementById('be-result');
       if (activeJobs === 0) {
         panel.style.background = 'linear-gradient(135deg,#333 0%,#555 100%)';
@@ -496,6 +563,35 @@
       } else {
         panel.style.background = 'linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%)';
       }
+
+      /* Target margin — calculate min price per job */
+      var targetMargin = parseFloat(document.getElementById('be-target-margin').value) || 0;
+      var avgLabor = activeJobs > 0 ? (totalCost / activeJobs) : 880;
+      var fixedPerJob = activeJobs > 0 ? (fixedTotal / Math.max(activeJobs, 15)) : (fixedTotal / 15);
+      var minPrice = targetMargin > 0 ? Math.round((avgLabor + fixedPerJob) / (1 - targetMargin / 100)) : 0;
+      minPrice = Math.round(minPrice / 50) * 50;
+
+      var minPriceEl = document.getElementById('be-min-price');
+      if (minPriceEl) minPriceEl.textContent = '$' + minPrice.toLocaleString();
+
+      var targetPriceEl = document.getElementById('be-target-price');
+      if (targetPriceEl) targetPriceEl.textContent = minPrice > 0 ? ('Min $' + minPrice.toLocaleString() + '/job') : '';
+
+      /* Highlight jobs below target margin */
+      rows.forEach(function(tr) {
+        var rev = parseFloat(tr.querySelector('.job-rev')?.value) || 0;
+        var labor = parseFloat(tr.querySelector('.job-labor')?.value) || 0;
+        if (rev > 0 && targetMargin > 0) {
+          var jobMargin = Math.round(((rev - labor - getVarCosts(labor)) / rev) * 100);
+          var marginCell = tr.querySelector('.job-margin');
+          if (jobMargin < targetMargin) {
+            marginCell.style.background = 'rgba(192,57,43,.1)';
+            marginCell.style.borderRadius = '4px';
+          } else {
+            marginCell.style.background = 'none';
+          }
+        }
+      });
     }
 
     /* Pre-populate with default jobs: $2,500 rev, $880 labor (1 climber + 2 ground) */
@@ -520,7 +616,195 @@
       }
       beCalc();
     }
-    initJobs();
+    /* ── localStorage persistence ─────────────────────────── */
+    var BE_KEY = 'snt-breakeven-v1';
+    function beSave() {
+      var data = {};
+      /* Save inputs with IDs */
+      document.querySelectorAll('input[id]').forEach(function(el) {
+        if (el.type === 'checkbox') data[el.id] = el.checked;
+        else data[el.id] = el.value;
+      });
+      /* Save fixed cost inputs by index */
+      var fixed = [];
+      document.querySelectorAll('.be-fixed').forEach(function(el) { fixed.push(el.value); });
+      data._fixed = fixed;
+      /* Save variable cost inputs */
+      var varInputs = document.querySelectorAll('.be-section input.be-input:not(.be-fixed)');
+      var vars = [];
+      varInputs.forEach(function(el) { vars.push(el.value); });
+      data._vars = vars;
+      /* Save job rows */
+      var jobs = [];
+      document.querySelectorAll('#be-tbody tr:not(#job-row-0)').forEach(function(tr) {
+        var r = tr.querySelector('.job-rev');
+        var l = tr.querySelector('.job-labor');
+        if (r && l) jobs.push({ rev: r.value, labor: l.value });
+      });
+      data._jobs = jobs;
+      try { localStorage.setItem(BE_KEY, JSON.stringify(data)); } catch(e) {}
+    }
+    function beLoad() {
+      try {
+        var raw = localStorage.getItem(BE_KEY);
+        if (!raw) return false;
+        var data = JSON.parse(raw);
+        /* Restore inputs with IDs */
+        Object.keys(data).forEach(function(id) {
+          if (id.charAt(0) === '_') return;
+          var el = document.getElementById(id);
+          if (!el) return;
+          if (el.type === 'checkbox') el.checked = data[id];
+          else el.value = data[id];
+        });
+        /* Restore fixed costs by index */
+        if (data._fixed) {
+          var fixedEls = document.querySelectorAll('.be-fixed');
+          data._fixed.forEach(function(v, i) { if (fixedEls[i]) fixedEls[i].value = v; });
+        }
+        /* Restore variable costs */
+        if (data._vars) {
+          var varEls = document.querySelectorAll('.be-section input.be-input:not(.be-fixed)');
+          data._vars.forEach(function(v, i) { if (varEls[i]) varEls[i].value = v; });
+        }
+        /* Restore job rows */
+        if (data._jobs && data._jobs.length > 0) {
+          /* Remove existing job rows (keep row-0) */
+          jobCount = 0;
+          document.querySelectorAll('#be-tbody tr:not(#job-row-0)').forEach(function(tr) { tr.remove(); });
+          data._jobs.forEach(function(j) {
+            jobCount++;
+            var tbody = document.getElementById('be-tbody');
+            var tr = document.createElement('tr');
+            tr.id = 'job-row-' + jobCount;
+            tr.dataset.num = jobCount;
+            tr.innerHTML = '<td style="padding:.35rem .4rem;font-weight:700;white-space:nowrap;font-size:.82rem;" class="job-label">Job ' + jobCount + '</td>'
+              + '<td style="padding:.35rem .2rem;text-align:center;"><input type="number" class="be-input job-rev" value="' + (j.rev || 0) + '" style="width:72px;font-size:16px;text-align:right;color:#2d5a27;" oninput="beCalc()" placeholder="Rev"></td>'
+              + '<td style="padding:.35rem .2rem;text-align:center;"><input type="number" class="be-input job-labor" value="' + (j.labor || 0) + '" style="width:72px;font-size:16px;text-align:right;color:#333;" oninput="beCalc()" placeholder="Labor"></td>'
+              + '<td style="padding:.35rem .2rem;text-align:center;font-size:.78rem;color:var(--text-light);" class="job-var">$0</td>'
+              + '<td style="padding:.35rem .2rem;text-align:center;font-weight:700;font-size:.82rem;" class="job-net">$0</td>'
+              + '<td style="padding:.35rem .2rem;text-align:center;font-size:.78rem;" class="job-margin">—</td>'
+              + '<td style="padding:.35rem .4rem;text-align:right;font-weight:700;font-size:.88rem;" class="job-pl">-</td>';
+            tbody.appendChild(tr);
+          });
+        }
+        beCalc();
+        return true;
+      } catch(e) { return false; }
+    }
+    var _origBeCalc = beCalc;
+    beCalc = function() { _origBeCalc(); beSave(); };
+
+    if (!beLoad()) { initJobs(); }
+
+    /* ── Period Switcher ────────────────────────────────── */
+    /* be.html inputs are MONTHLY. Multipliers relative to month: Day=1/22, Week=5/22, Month=1, Year=12 */
+    var bePeriodMult = 1; /* 1 = month (base) */
+    var BE_PERIOD_FACTORS = {'1':1/22, '5':5/22, '22':1, '264':12};
+    var BE_PERIOD_LABELS = {'1':'Per Day', '5':'Per Week (5 days)', '22':'Per Month (default)', '264':'Per Year'};
+
+    function setBePeriod(btn) {
+      var key = btn.dataset.mult;
+      bePeriodMult = BE_PERIOD_FACTORS[key] || 1;
+      document.querySelectorAll('#period-switcher .period-btn').forEach(function(b) {
+        b.classList.toggle('active-period', b === btn);
+      });
+      document.getElementById('period-label').textContent = key !== '22' ? BE_PERIOD_LABELS[key] : '';
+      applyBePeriod();
+      beSave();
+    }
+
+    function applyBePeriod() {
+      var m = bePeriodMult;
+      /* Fixed costs total */
+      var fixedEl = document.getElementById('be-fixed-total');
+      var baseFixed = parseBeDollar(fixedEl.dataset.base || fixedEl.textContent);
+      if (!fixedEl.dataset.base) fixedEl.dataset.base = fixedEl.textContent;
+      fixedEl.textContent = '$' + Math.round(baseFixed * m).toLocaleString();
+
+      /* Section subtotals */
+      ['sub-vehicles','sub-insurance','sub-overhead'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var base = parseBeDollar(el.dataset.base || el.textContent);
+        if (!el.dataset.base) el.dataset.base = el.textContent;
+        el.textContent = '$' + Math.round(base * m).toLocaleString();
+      });
+
+      /* Fixed costs label */
+      var fixedLabel = document.querySelector('#be-fixed-total').parentElement.parentElement.querySelector('div > span:first-child');
+
+      /* Job 0 P&L (negative of fixed) */
+      var job0El = document.getElementById('job0-pl');
+      var baseJ0 = parseBeDollar(job0El.dataset.base || job0El.textContent);
+      if (!job0El.dataset.base) job0El.dataset.base = job0El.textContent;
+      job0El.textContent = '-$' + Math.round(baseJ0 * m).toLocaleString();
+
+      /* Summary panel: Running P&L, Total Revenue, Total Costs */
+      ['be-remaining','be-extra','be-annual'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el || el.textContent === '\u2014') return;
+        var base = parseBeDollarSigned(el.dataset.base || el.textContent);
+        if (!el.dataset.base) el.dataset.base = el.textContent;
+        var val = Math.round(base * m);
+        el.textContent = (val >= 0 ? '+$' : '-$') + Math.abs(val).toLocaleString();
+        if (id === 'be-extra') el.textContent = '$' + Math.round(Math.abs(base) * m).toLocaleString();
+        if (id === 'be-annual') el.textContent = '$' + Math.round(Math.abs(base) * m).toLocaleString();
+      });
+    }
+
+    function parseBeDollar(str) {
+      if (!str) return 0;
+      return parseInt(str.replace(/[^0-9]/g, '')) || 0;
+    }
+
+    function parseBeDollarSigned(str) {
+      if (!str) return 0;
+      var neg = str.indexOf('-') >= 0;
+      var val = parseInt(str.replace(/[^0-9]/g, '')) || 0;
+      return neg ? -val : val;
+    }
+
+    /* Clear base caches when calc updates */
+    var _origBeCalcForPeriod = beCalc;
+    beCalc = function() {
+      ['be-fixed-total','sub-vehicles','sub-insurance','sub-overhead','job0-pl','be-remaining','be-extra','be-annual'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) delete el.dataset.base;
+      });
+      _origBeCalcForPeriod();
+      applyBePeriod();
+    };
+
+    /* Save period to localStorage */
+    var _origBeSave = beSave;
+    beSave = function() {
+      _origBeSave();
+      try {
+        var raw = localStorage.getItem(BE_KEY);
+        if (raw) {
+          var data = JSON.parse(raw);
+          /* Store the button data-mult value */
+          var activeBtn = document.querySelector('#period-switcher .period-btn.active-period');
+          data._periodMult = activeBtn ? activeBtn.dataset.mult : '22';
+          localStorage.setItem(BE_KEY, JSON.stringify(data));
+        }
+      } catch(e) {}
+    };
+
+    /* Restore period from localStorage */
+    (function() {
+      try {
+        var raw = localStorage.getItem(BE_KEY);
+        if (raw) {
+          var data = JSON.parse(raw);
+          if (data._periodMult) {
+            var btn = document.querySelector('#period-switcher .period-btn[data-mult="' + data._periodMult + '"]');
+            if (btn) setBePeriod(btn);
+          }
+        }
+      } catch(e) {}
+    })();
   </script>
 
   </main>

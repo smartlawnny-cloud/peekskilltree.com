@@ -539,6 +539,18 @@
         <input type="hidden" id="disc-pct" value="0">
         <span id="disc-amount" style="display:none;"></span>
 
+        <!-- Period Switcher -->
+        <div style="margin-top:.75rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+          <span style="font-size:.8rem;font-weight:600;color:var(--text-light);">View as:</span>
+          <div class="period-switcher" id="period-switcher">
+            <button class="period-btn active-period" data-mult="1" onclick="setPeriod(this)">Day</button>
+            <button class="period-btn" data-mult="5" onclick="setPeriod(this)">Week</button>
+            <button class="period-btn" data-mult="22" onclick="setPeriod(this)">Month</button>
+            <button class="period-btn" data-mult="264" onclick="setPeriod(this)">Year</button>
+          </div>
+          <span class="period-label" id="period-label"></span>
+        </div>
+
         <!-- Total panel -->
         <div style="background:var(--green-dark);border-radius:10px;padding:1.25rem 1.5rem;color:var(--white);margin-top:.75rem;">
           <div id="calc-breakdown" style="font-size:.9rem;opacity:.8;line-height:1.9;margin-bottom:.85rem;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:.75rem;"></div>
@@ -651,6 +663,16 @@
           .dur-btn {padding:.6rem .5rem !important;font-size:.9rem !important;}
           .calc-label {font-size:.93rem;}
           #calc-total {font-size:1.9rem !important;}
+        }
+
+        /* Period switcher */
+        .period-switcher {display:flex;gap:0;background:var(--bg-light);border:2px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;}
+        .period-btn {padding:.3rem .65rem;font-size:.75rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text);transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent;user-select:none;}
+        .period-btn.active-period {background:var(--green-dark);color:var(--white);}
+        .period-btn:not(:last-child) {border-right:1px solid var(--border);}
+        .period-label {font-size:.72rem;color:var(--text-light);margin-top:.2rem;}
+        @media(max-width:600px){
+          .period-btn {padding:.35rem .55rem;font-size:.78rem;}
         }
 
         /* Print styles */
@@ -1389,8 +1411,180 @@
           if (durHours === 'custom') calcUpdate();
         });
 
-        /* Auto-select Tree Removal preset on load */
-        document.querySelector('.preset-btn').click();
+        /* ── localStorage persistence ─────────────────────────── */
+        var STORE_KEY = 'snt-rates-v1';
+        function saveAll() {
+          var data = {};
+          document.querySelectorAll('input[id], select[id]').forEach(function(el) {
+            if (el.type === 'checkbox') data[el.id] = el.checked;
+            else if (el.type === 'radio') { if (el.checked) data[el.id] = el.value; }
+            else data[el.id] = el.value;
+          });
+          data._durHours = durHours;
+          data._groundQty = document.getElementById('ground-qty') ? document.getElementById('ground-qty').value : '2';
+          data._periodMult = periodMult;
+          try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
+        }
+        function loadSaved() {
+          try {
+            var raw = localStorage.getItem(STORE_KEY);
+            if (!raw) return false;
+            var data = JSON.parse(raw);
+            Object.keys(data).forEach(function(id) {
+              if (id.charAt(0) === '_') return;
+              var el = document.getElementById(id);
+              if (!el) return;
+              if (el.type === 'checkbox') el.checked = data[id];
+              else if (el.type === 'radio') el.checked = (el.value === data[id]);
+              else el.value = data[id];
+            });
+            if (data._durHours !== undefined) {
+              durHours = data._durHours;
+              document.querySelectorAll('.dur-btn').forEach(function(b) {
+                var v = b.getAttribute('onclick').match(/'([^']+)'/);
+                if (v) {
+                  var active = (v[1] === String(durHours));
+                  b.style.background = active ? 'var(--green-dark)' : 'var(--white)';
+                  b.style.color = active ? 'var(--white)' : '';
+                  b.style.fontWeight = active ? '600' : '';
+                }
+              });
+            }
+            if (data._groundQty && document.getElementById('ground-qty')) {
+              document.getElementById('ground-qty').value = data._groundQty;
+            }
+            return true;
+          } catch(e) { return false; }
+        }
+        /* Hook save to all inputs */
+        var _origCalcUpdate = calcUpdate;
+        calcUpdate = function() { _origCalcUpdate(); saveAll(); };
+        document.querySelectorAll('input[id], select[id]').forEach(function(el) {
+          el.addEventListener('change', saveAll);
+        });
+
+        /* ── Period Switcher ────────────────────────────────── */
+        var periodMult = 1;
+        var PERIOD_LABELS = {1:'Per Day', 5:'Per Week (5 days)', 22:'Per Month (22 days)', 264:'Per Year (264 days)'};
+
+        function setPeriod(btn) {
+          periodMult = parseInt(btn.dataset.mult) || 1;
+          document.querySelectorAll('#period-switcher .period-btn').forEach(function(b) {
+            b.classList.toggle('active-period', b === btn);
+          });
+          document.getElementById('period-label').textContent = periodMult > 1 ? PERIOD_LABELS[periodMult] : '';
+          applyPeriodMultiplier();
+          saveAll();
+        }
+
+        function applyPeriodMultiplier() {
+          var m = periodMult;
+          /* Multiply all dollar amounts in the results/totals */
+          var totalEl = document.getElementById('calc-total');
+          var baseTotal = parseDollar(totalEl.dataset.base || totalEl.textContent);
+          if (!totalEl.dataset.base) totalEl.dataset.base = totalEl.textContent;
+          totalEl.textContent = '$' + Math.round(baseTotal * m).toLocaleString();
+
+          /* Client quote */
+          var clientEl = document.getElementById('client-total');
+          if (clientEl && clientEl.textContent) {
+            var baseClient = parseDollar(clientEl.dataset.base || clientEl.textContent);
+            if (!clientEl.dataset.base) clientEl.dataset.base = clientEl.textContent;
+            clientEl.textContent = '$' + Math.round(baseClient * m).toLocaleString();
+          }
+
+          /* Profit earned */
+          var profitEl = document.getElementById('profit-earned');
+          if (profitEl && profitEl.textContent) {
+            var baseProfit = parseDollar(profitEl.dataset.base || profitEl.textContent);
+            if (!profitEl.dataset.base) profitEl.dataset.base = profitEl.textContent;
+            profitEl.textContent = '$' + Math.round(baseProfit * m).toLocaleString();
+          }
+
+          /* Profit dollar */
+          var profitDollar = document.getElementById('profit-dollar');
+          if (profitDollar && profitDollar.textContent) {
+            var basePD = parseDollar(profitDollar.dataset.base || profitDollar.textContent);
+            if (!profitDollar.dataset.base) profitDollar.dataset.base = profitDollar.textContent;
+            if (basePD > 0) profitDollar.textContent = '= $' + Math.round(basePD * m).toLocaleString();
+          }
+
+          /* Profit amount */
+          var profitAmt = document.getElementById('profit-amount');
+          if (profitAmt && profitAmt.textContent) {
+            var basePA = parseDollar(profitAmt.dataset.base || profitAmt.textContent);
+            if (!profitAmt.dataset.base) profitAmt.dataset.base = profitAmt.textContent;
+            if (basePA > 0) profitAmt.textContent = '+$' + Math.round(basePA * m).toLocaleString();
+          }
+
+          /* Breakdown lines — multiply dollar amounts in the breakdown HTML */
+          var breakdownEl = document.getElementById('calc-breakdown');
+          if (breakdownEl && m > 1) {
+            if (!breakdownEl.dataset.baseHtml) breakdownEl.dataset.baseHtml = breakdownEl.innerHTML;
+            breakdownEl.innerHTML = breakdownEl.dataset.baseHtml.replace(/\$([0-9,]+)/g, function(match, num) {
+              var val = parseInt(num.replace(/,/g, '')) || 0;
+              return '$' + Math.round(val * m).toLocaleString();
+            });
+          } else if (breakdownEl && breakdownEl.dataset.baseHtml) {
+            breakdownEl.innerHTML = breakdownEl.dataset.baseHtml;
+          }
+
+          /* Insurance amount */
+          var insEl = document.getElementById('ins-amount');
+          if (insEl && insEl.textContent) {
+            var baseIns = parseDollar(insEl.dataset.base || insEl.textContent);
+            if (!insEl.dataset.base) insEl.dataset.base = insEl.textContent;
+            if (baseIns > 0) insEl.textContent = '+$' + Math.round(baseIns * m).toLocaleString();
+          }
+
+          /* Travel cost */
+          var travelEl = document.getElementById('travel-cost');
+          if (travelEl && travelEl.textContent) {
+            var baseTravel = parseDollar(travelEl.dataset.base || travelEl.textContent);
+            if (!travelEl.dataset.base) travelEl.dataset.base = travelEl.textContent;
+            if (baseTravel > 0) travelEl.textContent = '+$' + Math.round(baseTravel * m).toLocaleString();
+          }
+        }
+
+        function parseDollar(str) {
+          if (!str) return 0;
+          return parseInt(str.replace(/[^0-9]/g, '')) || 0;
+        }
+
+        /* Clear base caches when calc updates so period multiplier re-applies fresh */
+        var _origCalcUpdateForPeriod = calcUpdate;
+        calcUpdate = function() {
+          /* Clear cached base values */
+          ['calc-total','client-total','profit-earned','profit-dollar','profit-amount','ins-amount','travel-cost'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) delete el.dataset.base;
+          });
+          var bkd = document.getElementById('calc-breakdown');
+          if (bkd) delete bkd.dataset.baseHtml;
+          _origCalcUpdateForPeriod();
+          applyPeriodMultiplier();
+        };
+
+        /* Load saved or default to Tree Removal preset */
+        if (!loadSaved()) {
+          document.querySelector('.preset-btn').click();
+        } else {
+          calcUpdate();
+        }
+
+        /* Restore period from localStorage */
+        (function() {
+          try {
+            var raw = localStorage.getItem(STORE_KEY);
+            if (raw) {
+              var data = JSON.parse(raw);
+              if (data._periodMult) {
+                var btn = document.querySelector('#period-switcher .period-btn[data-mult="' + data._periodMult + '"]');
+                if (btn) setPeriod(btn);
+              }
+            }
+          } catch(e) {}
+        })();
       </script>
       <!-- ── End Calculator ─────────────────────────────────────────── -->
 

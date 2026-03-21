@@ -226,6 +226,9 @@
       <h1>🌳 Branch Manager <span>Second Nature Tree Service</span></h1>
     </div>
     <div class="sidebar-user">Doug Brown &bull; Owner</div>
+    <div style="padding:8px 16px;">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="QuickCreate.show()">+ Create New</button>
+    </div>
 
     <div class="sidebar-nav">
       <div class="nav-section">Main</div>
@@ -291,6 +294,7 @@
 <script src="src/pages/propertymap.js"></script>
 <script src="src/pages/estimator.js"></script>
 <script src="src/stripe.js"></script>
+<script src="src/pages/search.js"></script>
 <script src="src/pdf.js"></script>
 <script src="src/pages/reviews.js"></script>
 <script src="src/pages/timetrack.js"></script>
@@ -383,18 +387,40 @@ function loadPage(page) {
 }
 
 // ── Global Search ──
+var searchTimeout;
 document.getElementById('globalSearch').addEventListener('input', function() {
-  var q = this.value.trim().toLowerCase();
-  if (!q || q.length < 2) return;
-  // Quick search across clients
-  var results = DB.clients.search(q).slice(0, 5);
-  if (results.length && currentPage !== 'clients') {
-    loadPage('clients');
-    document.querySelectorAll('.nav-item').forEach(function(b) {
-      b.classList.toggle('active', b.dataset.page === 'clients');
-    });
+  var q = this.value.trim();
+  clearTimeout(searchTimeout);
+  if (!q || q.length < 2) {
+    if (currentPage === 'search') loadPage('dashboard');
+    return;
   }
+  searchTimeout = setTimeout(function() {
+    currentPage = 'search';
+    document.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('pageTitle').textContent = 'Search';
+    document.getElementById('pageAction').style.display = 'none';
+    document.getElementById('pageContent').innerHTML = SearchPage.render(q);
+  }, 300);
 });
+document.getElementById('globalSearch').addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { this.value = ''; loadPage('dashboard'); }
+});
+
+// ── Quick Create ──
+var QuickCreate = {
+  show: function() {
+    var html = '<div style="display:grid;gap:8px;">'
+      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();ClientsPage.showForm()"><span style="font-size:20px;">👥</span> New Client</button>'
+      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();RequestsPage.showForm()"><span style="font-size:20px;">📥</span> New Request</button>'
+      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();QuotesPage.showForm()"><span style="font-size:20px;">📋</span> New Quote</button>'
+      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();JobsPage.showForm()"><span style="font-size:20px;">🔧</span> New Job</button>'
+      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();Estimator.show()"><span style="font-size:20px;">🧮</span> Quick Estimate</button>'
+      + '</div>';
+    UI.showModal('Create New', html);
+    if (window.innerWidth <= 768) toggleSidebar();
+  }
+};
 
 // ── Init ──
 loadPage('dashboard');

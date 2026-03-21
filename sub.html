@@ -406,56 +406,11 @@
 
         <!-- Insurance -->
         <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:1rem;">
-          <div style="background:#2c5f3f;color:var(--white);padding:.6rem 1rem;font-weight:700;font-size:.88rem;text-transform:uppercase;letter-spacing:.07em;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="document.getElementById('ins-details').style.display=document.getElementById('ins-details').style.display==='none'?'block':'none';this.querySelector('.ins-arrow').textContent=document.getElementById('ins-details').style.display==='none'?'\u25B6':'\u25BC';">
+          <div onclick="toggleSection('sec-insurance',this)" style="background:#2c5f3f;color:var(--white);padding:.6rem 1rem;font-weight:700;font-size:.88rem;text-transform:uppercase;letter-spacing:.07em;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
             <span>Insurance &amp; Compliance</span>
-            <span class="ins-arrow" style="font-size:.7rem;">&#9654;</span>
+            <span class="sec-arrow" style="font-size:.7rem;">&#9660;</span>
           </div>
-          <div id="ins-details" style="padding:.85rem 1rem;font-size:.88rem;color:var(--text-light);line-height:1.65;border-bottom:1px solid var(--border);display:none;">
-            <p style="margin:0 0 .6rem;color:var(--text);font-weight:600;">Why is insurance charged separately?</p>
-            <p style="margin:0 0 .5rem;">Tree work is one of the most dangerous trades in the country. Our insurance premiums reflect that risk and <strong>must be passed through</strong> on every job:</p>
-            <ul style="margin:.4rem 0 .6rem;padding-left:1.25rem;">
-              <li><strong>Workers&rsquo; Compensation</strong> &mdash; Required by NY law. Class code 0106 (tree pruning/trimming) averages ~$9 per $100 of payroll. One of the highest-rated trades due to aerial work risk.</li>
-              <li><strong>General Liability</strong> &mdash; Covers property damage to the client&rsquo;s home, structures, vehicles, and landscaping. Typically $2,000&ndash;$4,000/year for tree companies (~3&ndash;5% of revenue).</li>
-              <li><strong>Disability Insurance</strong> &mdash; NYS-required disability and paid family leave coverage for all employees.</li>
-              <li><strong>Payroll Taxes</strong> &mdash; Employer&rsquo;s share of Social Security (6.2%), Medicare (1.45%), federal &amp; state unemployment (FUTA/SUTA). Mandatory on every dollar of labor.</li>
-              <li><strong>Commercial Auto</strong> &mdash; Covers bucket truck, chip truck, and fleet. Avg $2,000&ndash;$5,000/year; bucket trucks require $1&ndash;2M liability limits adding $500&ndash;$1,000/vehicle.</li>
-              <li><strong>Equipment / Inland Marine</strong> &mdash; Covers chainsaws, rigging gear, chipper, stump grinder &mdash; typically 2&ndash;5% of equipment value annually. Most tree companies have $50K&ndash;$250K in equipment.</li>
-            </ul>
-            <p style="margin:0;font-size:.84rem;font-style:italic;">These costs are real and unavoidable. We carry full coverage so you and your clients are protected.</p>
-          </div>
-
-          <!-- Partner Insurance Explanation -->
-          <div style="border-bottom:1px solid var(--border);">
-            <div onclick="var el=document.getElementById('partner-ins-info');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.p-arrow').textContent=el.style.display==='none'?'\u25B6':'\u25BC';"
-              style="padding:.65rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:rgba(192,80,80,.06);">
-              <span style="font-size:.88rem;font-weight:600;color:#c0392b;">&#9888; Why partners must provide insurance or pay under our policy</span>
-              <span class="p-arrow" style="font-size:.7rem;color:#c0392b;">&#9654;</span>
-            </div>
-            <div id="partner-ins-info" style="display:none;padding:.85rem 1rem;font-size:.86rem;color:var(--text);line-height:1.7;background:rgba(192,80,80,.03);">
-              <p style="margin:0 0 .6rem;font-weight:600;">If you don&rsquo;t carry your own insurance, we are legally liable for you.</p>
-              <p style="margin:0 0 .6rem;">Under New York law, when you work on a job under our name or alongside our crew, <strong>we become the responsible party</strong> if something goes wrong. Here&rsquo;s what that means:</p>
-              <ul style="margin:.4rem 0 .75rem;padding-left:1.25rem;">
-                <li style="margin-bottom:.4rem;"><strong>Workers&rsquo; Comp liability:</strong> If you or your crew members get injured on the job and you don&rsquo;t have your own WC policy, <strong>NYSIF will charge the claim to our policy</strong>. Our carrier audits every year and retroactively bills us for any uninsured subcontractor payroll. A single injury claim can cost $50,000&ndash;$500,000+ and spike our experience modifier for 3 years.</li>
-                <li style="margin-bottom:.4rem;"><strong>General Liability exposure:</strong> If your crew damages a client&rsquo;s property &mdash; roof, driveway, fence, vehicle, power lines &mdash; and you don&rsquo;t carry GL, the homeowner&rsquo;s claim comes to us as the general contractor. One dropped limb on a car is $5,000&ndash;$30,000. A roof hit can be $20,000+.</li>
-                <li style="margin-bottom:.4rem;"><strong>NY Construction Fair Play Act:</strong> New York presumes all workers on a job are <strong>employees, not independent contractors</strong>, unless you meet strict criteria including carrying your own insurance. If you&rsquo;re working under our umbrella without your own policy, the state considers you our employee &mdash; and we owe WC, disability, unemployment, and payroll taxes on every dollar we pay you.</li>
-                <li style="margin-bottom:.4rem;"><strong>NYSIF subcontractor monitoring:</strong> NYSIF actively monitors subcontractor relationships. During annual audits, they request a list of every sub used. Any sub without a valid COI on file = their payroll gets added to our premium at class code 0106 rates (~$9/$100). On a $10,000 sub job, that&rsquo;s $900 in unexpected premium.</li>
-                <li style="margin-bottom:.4rem;"><strong>Criminal penalties:</strong> Knowingly allowing uninsured workers on a job site is a <strong>misdemeanor in NY</strong> (up to $50,000 fine for first offense). With 5+ uninsured workers, it becomes a <strong>felony</strong>.</li>
-              </ul>
-              <p style="margin:0 0 .6rem;font-weight:600;color:var(--text);">Bottom line: two options.</p>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
-                <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:.75rem;">
-                  <p style="margin:0 0 .3rem;font-weight:700;color:var(--green-dark);font-size:.9rem;">Option A: Bring your own</p>
-                  <p style="margin:0;font-size:.82rem;">Provide current COIs for GL, WC, and Commercial Auto <strong>before</strong> the job. We verify and file them. Equipment rates only &mdash; no insurance markup.</p>
-                </div>
-                <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:.75rem;">
-                  <p style="margin:0 0 .3rem;font-weight:700;color:var(--green-dark);font-size:.9rem;">Option B: Work under ours</p>
-                  <p style="margin:0;font-size:.82rem;">We cover you under our policies. Insurance costs are added to your rate (see toggles below). This protects both of us and keeps the job legal.</p>
-                </div>
-              </div>
-              <p style="margin:0;font-size:.82rem;color:var(--text-light);font-style:italic;">This isn&rsquo;t about making extra money &mdash; it&rsquo;s about not losing everything. One uninsured claim can shut down a tree company. We&rsquo;ve seen it happen.</p>
-            </div>
-          </div>
-
+          <div id="sec-insurance">
           <div style="padding:.75rem 1rem;">
 
             <!-- Labor Insurance -->
@@ -532,6 +487,51 @@
             <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);">
               <span id="ins-amount" style="font-size:1rem;font-weight:700;color:var(--green-dark);"></span>
             </div>
+          </div>
+
+          <!-- Insurance Info — combined (collapsible, bottom of section) -->
+          <div style="border-top:1px solid var(--border);">
+            <div onclick="var el=document.getElementById('partner-ins-info');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.p-arrow').textContent=el.style.display==='none'?'\u25B6':'\u25BC';"
+              style="padding:.65rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:rgba(192,80,80,.06);">
+              <span style="font-size:.88rem;font-weight:600;color:#c0392b;">&#9888; Why partners must provide insurance or pay under our policy</span>
+              <span class="p-arrow" style="font-size:.7rem;color:#c0392b;">&#9654;</span>
+            </div>
+            <div id="partner-ins-info" style="display:none;padding:.85rem 1rem;font-size:.86rem;color:var(--text);line-height:1.7;background:rgba(192,80,80,.03);">
+              <p style="margin:0 0 .6rem;font-weight:600;">Why is insurance charged separately?</p>
+              <p style="margin:0 0 .5rem;">Tree work is one of the most dangerous trades in the country. Our insurance premiums reflect that risk and <strong>must be passed through</strong> on every job:</p>
+              <ul style="margin:.4rem 0 .6rem;padding-left:1.25rem;">
+                <li><strong>Workers&rsquo; Compensation</strong> &mdash; Required by NY law. Class code 0106 (tree pruning/trimming) averages ~$9 per $100 of payroll. One of the highest-rated trades due to aerial work risk.</li>
+                <li><strong>General Liability</strong> &mdash; Covers property damage to the client&rsquo;s home, structures, vehicles, and landscaping. Typically $2,000&ndash;$4,000/year for tree companies (~3&ndash;5% of revenue).</li>
+                <li><strong>Disability Insurance</strong> &mdash; NYS-required disability and paid family leave coverage for all employees.</li>
+                <li><strong>Payroll Taxes</strong> &mdash; Employer&rsquo;s share of Social Security (6.2%), Medicare (1.45%), federal &amp; state unemployment (FUTA/SUTA). Mandatory on every dollar of labor.</li>
+                <li><strong>Commercial Auto</strong> &mdash; Covers bucket truck, chip truck, and fleet. Avg $2,000&ndash;$5,000/year; bucket trucks require $1&ndash;2M liability limits adding $500&ndash;$1,000/vehicle.</li>
+                <li><strong>Equipment / Inland Marine</strong> &mdash; Covers chainsaws, rigging gear, chipper, stump grinder &mdash; typically 2&ndash;5% of equipment value annually. Most tree companies have $50K&ndash;$250K in equipment.</li>
+              </ul>
+              <p style="margin:0 0 1rem;font-size:.84rem;font-style:italic;">These costs are real and unavoidable. We carry full coverage so you and your clients are protected.</p>
+              <hr style="border:none;border-top:1px solid var(--border);margin:0 0 1rem;">
+              <p style="margin:0 0 .6rem;font-weight:600;">If you don&rsquo;t carry your own insurance, we are legally liable for you.</p>
+              <p style="margin:0 0 .6rem;">Under New York law, when you work on a job under our name or alongside our crew, <strong>we become the responsible party</strong> if something goes wrong. Here&rsquo;s what that means:</p>
+              <ul style="margin:.4rem 0 .75rem;padding-left:1.25rem;">
+                <li style="margin-bottom:.4rem;"><strong>Workers&rsquo; Comp liability:</strong> If you or your crew members get injured on the job and you don&rsquo;t have your own WC policy, <strong>NYSIF will charge the claim to our policy</strong>. Our carrier audits every year and retroactively bills us for any uninsured subcontractor payroll. A single injury claim can cost $50,000&ndash;$500,000+ and spike our experience modifier for 3 years.</li>
+                <li style="margin-bottom:.4rem;"><strong>General Liability exposure:</strong> If your crew damages a client&rsquo;s property &mdash; roof, driveway, fence, vehicle, power lines &mdash; and you don&rsquo;t carry GL, the homeowner&rsquo;s claim comes to us as the general contractor. One dropped limb on a car is $5,000&ndash;$30,000. A roof hit can be $20,000+.</li>
+                <li style="margin-bottom:.4rem;"><strong>NY Construction Fair Play Act:</strong> New York presumes all workers on a job are <strong>employees, not independent contractors</strong>, unless you meet strict criteria including carrying your own insurance. If you&rsquo;re working under our umbrella without your own policy, the state considers you our employee &mdash; and we owe WC, disability, unemployment, and payroll taxes on every dollar we pay you.</li>
+                <li style="margin-bottom:.4rem;"><strong>NYSIF subcontractor monitoring:</strong> NYSIF actively monitors subcontractor relationships. During annual audits, they request a list of every sub used. Any sub without a valid COI on file = their payroll gets added to our premium at class code 0106 rates (~$9/$100). On a $10,000 sub job, that&rsquo;s $900 in unexpected premium.</li>
+                <li style="margin-bottom:.4rem;"><strong>Criminal penalties:</strong> Knowingly allowing uninsured workers on a job site is a <strong>misdemeanor in NY</strong> (up to $50,000 fine for first offense). With 5+ uninsured workers, it becomes a <strong>felony</strong>.</li>
+              </ul>
+              <p style="margin:0 0 .6rem;font-weight:600;color:var(--text);">Bottom line: two options.</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
+                <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:.75rem;">
+                  <p style="margin:0 0 .3rem;font-weight:700;color:var(--green-dark);font-size:.9rem;">Option A: Bring your own</p>
+                  <p style="margin:0;font-size:.82rem;">Provide current COIs for GL, WC, and Commercial Auto <strong>before</strong> the job. We verify and file them. Equipment rates only &mdash; no insurance markup.</p>
+                </div>
+                <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:.75rem;">
+                  <p style="margin:0 0 .3rem;font-weight:700;color:var(--green-dark);font-size:.9rem;">Option B: Work under ours</p>
+                  <p style="margin:0;font-size:.82rem;">We cover you under our policies. Insurance costs are added to your rate (see toggles above). This protects both of us and keeps the job legal.</p>
+                </div>
+              </div>
+              <p style="margin:0;font-size:.82rem;color:var(--text-light);font-style:italic;">This isn&rsquo;t about making extra money &mdash; it&rsquo;s about not losing everything. One uninsured claim can shut down a tree company. We&rsquo;ve seen it happen.</p>
+            </div>
+          </div>
           </div>
         </div>
 
@@ -1208,14 +1208,31 @@
           }
           errEl.style.display = 'none';
 
-          var breakdown = document.getElementById('calc-breakdown').innerText;
           var total = document.getElementById('calc-total').textContent;
           var durNote = document.getElementById('calc-dur-note').textContent;
           var addr = document.getElementById('job-address').value || 'Not specified';
           var clientTotal = document.getElementById('client-total') ? document.getElementById('client-total').textContent : '';
           var profitEarned = document.getElementById('profit-earned') ? document.getElementById('profit-earned').textContent : '';
+          var insTotal = document.getElementById('ins-amount') ? document.getElementById('ins-amount').textContent : '';
+
+          /* Build clean line-item breakdown from selected checkboxes */
+          var lines = [];
+          /* Labor */
+          var laborItems = [];
+          document.querySelectorAll('#sec-labor .chk-item').forEach(function(chk) {
+            if (chk.checked) {
+              var row = chk.closest('[style]');
+              var lbl = row ? row.querySelector('.item-label') : null;
+              var amt = row ? row.querySelector('.item-amt') : null;
+              if (lbl && amt) laborItems.push('  ' + lbl.textContent.trim() + ' — ' + amt.textContent.trim());
+            }
+          });
+          /* Fallback: parse from breakdown panel if class-based approach fails */
+          var breakdownText = document.getElementById('calc-breakdown').innerText;
+          var breakdownClean = breakdownText.replace(/\n{3,}/g, '\n\n').replace(/\n([A-Z])/g, '\n\n$1');
 
           var message = 'ESTIMATE SUBMISSION'
+            + '\n================================'
             + '\n\nFrom: ' + name
             + (company ? ' (' + company + ')' : '')
             + '\nPhone: ' + phone
@@ -1224,10 +1241,14 @@
             + '\nJob Address: ' + addr
             + '\nDuration: ' + durNote
             + (notes ? '\n\nNotes: ' + notes : '')
-            + '\n\n--- BREAKDOWN ---\n' + breakdown
-            + '\n\nOUR COST: ' + total;
+            + '\n\n--- COST BREAKDOWN ---\n\n' + breakdownClean
+            + '\n\n--- INSURANCE ---'
+            + '\nInsurance Total: ' + (insTotal || '$0')
+            + '\n\n================================'
+            + '\nOUR COST: ' + total;
           if (clientTotal) message += '\nQUOTE TO CLIENT: ' + clientTotal;
           if (profitEarned) message += '\nARBORIST PROFIT: ' + profitEarned;
+          message += '\n================================';
 
           var btn = document.getElementById('submit-btn');
           btn.textContent = 'Sending...';

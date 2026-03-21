@@ -798,17 +798,17 @@
               gCount = 2;
               document.getElementById('chk-chipper').checked = true;
               document.getElementById('chk-chiptruck').checked = true;
+              document.getElementById('chk-loader').checked = true;
               setDur(8);
               break;
             case 'pruning':
               document.getElementById('chk-climber').checked = true;
-              document.getElementById('chk-ram').checked = true;
               gCount = 1;
               document.getElementById('chk-chipper').checked = true;
               setDur(4);
               break;
             case 'clearing':
-              document.getElementById('chk-climber').checked = false;
+              document.getElementById('chk-climber').checked = true;
               document.getElementById('chk-ram').checked = true;
               gCount = 2;
               document.getElementById('chk-chipper').checked = true;
@@ -829,13 +829,14 @@
               document.getElementById('chk-operator').checked = true;
               document.getElementById('chk-operator').disabled = false;
               document.getElementById('chk-operator').style.opacity = '1';
+              document.getElementById('chk-loader').checked = true;
+              document.getElementById('chk-trailer').checked = true;
+              document.getElementById('chk-trailer').disabled = false;
+              document.getElementById('chk-trailer').style.opacity = '1';
               setDur(8);
               break;
             case 'custom':
-              gCount = 2;
-              document.getElementById('chk-climber').checked = true;
-              document.getElementById('chk-ram').checked = true;
-              document.getElementById('chk-chipper').checked = true;
+              gCount = 0;
               break;
           }
           document.getElementById('ground-ct').textContent = gCount;

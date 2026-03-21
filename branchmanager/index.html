@@ -233,6 +233,7 @@
     <div class="sidebar-nav">
       <div class="nav-section">Main</div>
       <button class="nav-item active" data-page="dashboard"><span class="icon">🏠</span> Dashboard</button>
+      <button class="nav-item" data-page="pipeline"><span class="icon">📊</span> Pipeline</button>
       <button class="nav-item" data-page="schedule"><span class="icon">📅</span> Schedule</button>
 
       <div class="nav-section">Work</div>
@@ -300,6 +301,8 @@
 <script src="src/pages/clienthub.js"></script>
 <script src="src/pages/team.js"></script>
 <script src="src/pages/automations.js"></script>
+<script src="src/pages/pipeline.js"></script>
+<script src="src/sendjim.js"></script>
 <script src="src/pdf.js"></script>
 <script src="src/pages/reviews.js"></script>
 <script src="src/pages/timetrack.js"></script>
@@ -326,6 +329,7 @@ function toggleSidebar() {
 // ── Page Config ──
 var pageConfigs = {
   dashboard: { title: 'Dashboard', action: null },
+  pipeline: { title: 'Pipeline', action: '+ Add Deal', actionFn: 'PipelinePage.addDeal("new_lead")' },
   schedule: { title: 'Schedule', action: '+ New Job', actionFn: 'JobsPage.showForm()' },
   clients: { title: 'Clients', action: '+ New Client', actionFn: 'ClientsPage.showForm()' },
   requests: { title: 'Requests', action: '+ New Request', actionFn: 'RequestsPage.showForm()' },
@@ -343,6 +347,7 @@ var pageConfigs = {
 
 var pageRenderers = {
   dashboard: function() { return DashboardPage.render(); },
+  pipeline: function() { return PipelinePage.render(); },
   schedule: function() { return SchedulePage.render(); },
   clients: function() { return ClientsPage.render(); },
   requests: function() { return RequestsPage.render(); },

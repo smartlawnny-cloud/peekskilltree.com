@@ -33,6 +33,9 @@ var SettingsPage = {
     // Stripe Payments
     html += Stripe.renderSettings();
 
+    // SendJim Direct Mail
+    html += SendJim.renderSettings();
+
     // Supabase Connection
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
       + '<h3 style="margin-bottom:8px;">Database Connection</h3>'

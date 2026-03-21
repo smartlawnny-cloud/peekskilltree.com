@@ -155,6 +155,7 @@ var ClientsPage = {
     UI.showModal(c.name, html, {
       wide: true,
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
+        + ' <button class="btn btn-outline" onclick="UI.closeModal();ClientHub.showForClient(\'' + id + '\')">🔗 Client Portal</button>'
         + ' <button class="btn btn-primary" onclick="UI.closeModal();ClientsPage.showForm(\'' + id + '\')">Edit Client</button>'
         + ' <button class="btn btn-primary" onclick="UI.closeModal();QuotesPage.showForm(null, \'' + id + '\')">Create Quote</button>'
     });

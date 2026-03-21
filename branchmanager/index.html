@@ -247,7 +247,9 @@
       <button class="nav-item" data-page="reviews"><span class="icon">⭐</span> Reviews</button>
 
       <div class="nav-section">Team</div>
+      <button class="nav-item" data-page="team"><span class="icon">👷</span> Team</button>
       <button class="nav-item" data-page="timesheet"><span class="icon">⏱️</span> Timesheet</button>
+      <button class="nav-item" data-page="automations"><span class="icon">🤖</span> Automations</button>
 
       <div class="nav-section">Tools</div>
       <button class="nav-item" data-page="calculators"><span class="icon">🧮</span> Calculators</button>
@@ -295,6 +297,9 @@
 <script src="src/pages/estimator.js"></script>
 <script src="src/stripe.js"></script>
 <script src="src/pages/search.js"></script>
+<script src="src/pages/clienthub.js"></script>
+<script src="src/pages/team.js"></script>
+<script src="src/pages/automations.js"></script>
 <script src="src/pdf.js"></script>
 <script src="src/pages/reviews.js"></script>
 <script src="src/pages/timetrack.js"></script>
@@ -329,7 +334,9 @@ var pageConfigs = {
   invoices: { title: 'Invoices', action: null },
   insights: { title: 'Insights', action: null },
   reviews: { title: 'Reviews', action: null },
+  team: { title: 'Team', action: '+ Add Member', actionFn: 'TeamPage.showForm()' },
   timesheet: { title: 'Timesheet', action: null },
+  automations: { title: 'Automations', action: null },
   calculators: { title: 'Calculators', action: null },
   settings: { title: 'Settings', action: null }
 };
@@ -344,7 +351,9 @@ var pageRenderers = {
   invoices: function() { return InvoicesPage.render(); },
   insights: function() { return InsightsPage.render(); },
   reviews: function() { return ReviewsPage.render(); },
+  team: function() { return TeamPage.render(); },
   timesheet: function() { return TimeTrackPage.renderClockWidget() + TimeTrackPage.renderTimesheet(); },
+  automations: function() { return AutomationsPage.render(); },
   settings: function() { return SettingsPage.render(); },
   calculators: function() {
     return '<div class="stat-grid">'

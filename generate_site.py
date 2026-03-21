@@ -1768,6 +1768,7 @@ sub_page += '''
         <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);">Rates</a>
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
         <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
@@ -3090,6 +3091,7 @@ sub_page += '''
         <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);">Rates</a>
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
         <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
@@ -3234,6 +3236,370 @@ write_page("rates.html", sub_page)
 print("Created rates.html")
 
 # ============================================================
+# BUSINESS COSTS PAGE
+# ============================================================
+costs_page = header(
+    "Business Costs | Second Nature Tree Service",
+    "Full business cost breakdown for tree service operations. Track fixed, variable, and hidden costs monthly and annually.",
+    "costs.html", None,
+    "Business Costs",
+    '<a href="index.html">Home</a> <span>&raquo;</span> Business Costs',
+    "",
+    breadcrumbs=[{"name": "Home", "url": ""}, {"name": "Business Costs", "url": "costs.html"}]
+)
+costs_page = costs_page.replace(
+    '<meta name="robots" content="index, follow, max-image-preview:large">',
+    '<meta name="robots" content="noindex, nofollow">'
+)
+costs_page += '''
+  <style>
+    .top-bar {display:none !important;}
+    .page-hero {padding:1rem 0 .5rem !important;min-height:0 !important;background:var(--green-dark) !important;}
+    .page-hero-content h1 {font-size:1.2rem !important;margin-bottom:0 !important;}
+    .breadcrumb {display:none !important;}
+    .section {padding-top:.75rem !important;padding-bottom:1rem !important;}
+    @media(max-width:600px){
+      .page-hero {padding:.6rem 0 .3rem !important;}
+      .page-hero-content h1 {font-size:1.05rem !important;}
+    }
+    .cost-input {width:90px;padding:.4rem .5rem;border:2px solid var(--border);border-radius:8px;font-size:1rem;font-weight:700;text-align:right;font-family:inherit;}
+    .cost-input:focus {border-color:var(--green-dark);outline:none;}
+    .cost-row {display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;border-bottom:1px solid var(--border);}
+    .cost-row:last-child {border-bottom:none;}
+    .cost-section {background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;}
+    .cost-hdr {padding:.55rem 1rem;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.07em;color:var(--white);cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+    .cost-hdr .sec-arrow {font-size:.7rem;}
+    .cost-subtotal {text-align:right;font-weight:700;font-size:.95rem;padding:.5rem .75rem;background:rgba(0,0,0,.02);border-top:1px solid var(--border);}
+    @media(max-width:600px){
+      .cost-input {font-size:16px !important;width:85px !important;}
+      .cost-row {padding:.75rem .6rem !important;}
+    }
+  </style>
+  <section class="section">
+    <div class="container" style="max-width:800px;">
+
+      <!-- Calculator Nav (top) -->
+      <div style="display:flex;gap:0;background:var(--bg-light);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;">
+        <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
+        <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
+        <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Costs</a>
+        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
+      </div>
+
+      <p style="color:var(--text-light);margin-bottom:.75rem;font-size:.9rem;">Full picture of what it costs to run the business. Enter your real numbers &mdash; see monthly, annual, and per-job costs.</p>
+
+      <div style="background:var(--bg-light);border-radius:12px;padding:1.5rem 1.75rem;border:1px solid var(--border);">
+
+        <!-- Working Days -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding:.5rem .75rem;background:var(--white);border:1px solid var(--border);border-radius:8px;">
+          <label style="font-weight:600;font-size:.9rem;">Working days per month</label>
+          <input type="number" id="work-days" class="cost-input" value="20" min="1" max="30" oninput="costCalc()" style="width:60px;text-align:center;">
+        </div>
+
+        <!-- Vehicle Payments -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:var(--green-dark);" onclick="toggleSection(\'sec-vehicles\',this)">
+            <span>Vehicle Payments</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-vehicles" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-vehicles">
+          <div class="cost-row"><label>Bucket Truck</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="1912" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Chip Truck</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="800" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Ram 2500</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="1000" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Loader</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="1000" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Trailer</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="200" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+        <!-- Equipment Payments -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:#4a7c59;" onclick="toggleSection(\'sec-equipment\',this)">
+            <span>Equipment Payments &amp; Leases</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-equipment" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-equipment">
+          <div class="cost-row"><label>Chipper</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="500" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Stump Grinder</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="400" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Chainsaws / Small Equipment</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="150" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+        <!-- Insurance Premiums -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:#2c5f3f;" onclick="toggleSection(\'sec-ins-costs\',this)">
+            <span>Insurance Premiums</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-ins-costs" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-ins-costs">
+          <div class="cost-row"><label>Workers\\' Comp (NYSIF)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="450" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>General Liability</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="138" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Commercial Auto</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="204" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Disability / PFL</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="75" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Umbrella / Excess</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="100" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Equipment / Inland Marine</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="57" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+        <!-- Facility & Yard -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:#5a7a5a;" onclick="toggleSection(\'sec-facility\',this)">
+            <span>Facility &amp; Yard</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-facility" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-facility">
+          <div class="cost-row"><label>Yard / Shop Rent</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="1500" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Utilities (electric, water)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="200" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Dumpster / Waste Removal</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="250" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+        <!-- Office & Admin -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:#3d6b4f;" onclick="toggleSection(\'sec-office\',this)">
+            <span>Office &amp; Admin</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-office" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-office">
+          <div class="cost-row"><label>Accounting / Bookkeeping</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="400" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Phone Plans (crew)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="200" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Software (Jobber, QuickBooks, GPS)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="250" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Internet / Cloud Storage</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="75" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Office Supplies / Printing</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="50" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+        <!-- Marketing -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:#4a7c59;" onclick="toggleSection(\'sec-marketing\',this)">
+            <span>Marketing &amp; Advertising</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-marketing" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-marketing">
+          <div class="cost-row"><label>Google Ads</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="0" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Angi / HomeAdvisor Leads</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="0" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Social Media / SocialPilot</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="30" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Website / Hosting</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="15" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Yard Signs / Wraps / Print</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="50" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+        <!-- Maintenance & Repairs -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:#2c5f3f;" onclick="toggleSection(\'sec-maint\',this)">
+            <span>Maintenance &amp; Repairs</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-maint" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-maint">
+          <div class="cost-row"><label>Truck Maintenance / Oil / Tires</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="500" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Chipper / Equipment Repairs</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="300" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Hydraulic Fluid / Fluids</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="150" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>DOT Inspections / Registrations</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="100" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+        <!-- Crew Costs (non-wage) -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:#5a7a5a;" onclick="toggleSection(\'sec-crew\',this)">
+            <span>Crew Costs (non-wage)</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-crew" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-crew">
+          <div class="cost-row"><label>PPE / Safety Gear (hard hats, chaps, harnesses)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="150" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Uniforms / Boots</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="75" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Training / Certifications / CEUs</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="100" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Drug Testing / Physicals</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="25" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+        <!-- Licenses & Compliance -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:#3d6b4f;" onclick="toggleSection(\'sec-licenses\',this)">
+            <span>Licenses &amp; Compliance</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-licenses" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-licenses">
+          <div class="cost-row"><label>Westchester HIC (WC-32079)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="25" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Putnam HIC (PC-50644)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="25" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>ISA / TCIA Memberships</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="50" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>LLC / Legal / Registered Agent</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="30" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+        <!-- Hidden Costs -->
+        <div class="cost-section">
+          <div class="cost-hdr" style="background:#c0392b;" onclick="toggleSection(\'sec-hidden\',this)">
+            <span>Hidden / Often Missed</span>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <span id="sub-hidden" style="font-size:.85rem;opacity:.8;"></span>
+              <span class="sec-arrow">&#9660;</span>
+            </div>
+          </div>
+          <div id="sec-hidden">
+          <div class="cost-row"><label>Bad Debt / No-Shows <span style="font-size:.78rem;color:var(--text-light);">(3-5% of revenue)</span></label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="200" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Callbacks / Warranty Work</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="100" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Rain Days / Weather Loss</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="150" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Non-Billable Time <span style="font-size:.78rem;color:var(--text-light);">(setup, cleanup, yard)</span></label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="200" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Owner\\' s Salary / Draw</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="4000" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Fuel (diesel + gas)</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="800" oninput="costCalc()"></div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Totals Panel -->
+      <div style="background:var(--green-dark);border-radius:10px;padding:1.25rem 1.5rem;color:var(--white);margin-top:1rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;text-align:center;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.2);">
+          <div>
+            <div style="font-size:.78rem;opacity:.65;text-transform:uppercase;letter-spacing:.05em;">Monthly</div>
+            <div id="cost-monthly" style="font-size:1.8rem;font-weight:800;">$0</div>
+          </div>
+          <div>
+            <div style="font-size:.78rem;opacity:.65;text-transform:uppercase;letter-spacing:.05em;">Annual</div>
+            <div id="cost-annual" style="font-size:1.8rem;font-weight:800;">$0</div>
+          </div>
+          <div>
+            <div style="font-size:.78rem;opacity:.65;text-transform:uppercase;letter-spacing:.05em;">Per Job Day</div>
+            <div id="cost-perday" style="font-size:1.8rem;font-weight:800;">$0</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;text-align:center;">
+          <div>
+            <div style="font-size:.78rem;opacity:.65;">Min. daily revenue to break even</div>
+            <div id="cost-breakeven" style="font-size:1.3rem;font-weight:700;color:#f9c74f;">$0</div>
+          </div>
+          <div>
+            <div style="font-size:.78rem;opacity:.65;">Min. revenue per job (at 1 job/day)</div>
+            <div id="cost-perjob" style="font-size:1.3rem;font-weight:700;color:#f9c74f;">$0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      <div style="margin-top:1rem;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+        <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .75rem;">Where the Money Goes</h3>
+        <div id="cost-breakdown" style="font-size:.85rem;"></div>
+      </div>
+
+      <!-- Calculator Nav (bottom) -->
+      <div style="display:flex;gap:0;background:var(--bg-light);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:1.25rem;">
+        <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
+        <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
+        <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Costs</a>
+        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
+      </div>
+
+    </div>
+  </section>
+
+  <script>
+    function toggleSection(id, hdr) {
+      var el = document.getElementById(id);
+      var arrow = hdr.querySelector('.sec-arrow');
+      if (el.style.display === 'none') {
+        el.style.display = '';
+        if (arrow) arrow.innerHTML = '&#9660;';
+      } else {
+        el.style.display = 'none';
+        if (arrow) arrow.innerHTML = '&#9654;';
+      }
+    }
+
+    function costCalc() {
+      var sections = {
+        vehicles:  { id: 'sec-vehicles',  label: 'Vehicle Payments' },
+        equipment: { id: 'sec-equipment', label: 'Equipment' },
+        'ins-costs':{ id: 'sec-ins-costs', label: 'Insurance' },
+        facility:  { id: 'sec-facility',  label: 'Facility & Yard' },
+        office:    { id: 'sec-office',    label: 'Office & Admin' },
+        marketing: { id: 'sec-marketing', label: 'Marketing' },
+        maint:     { id: 'sec-maint',     label: 'Maintenance' },
+        crew:      { id: 'sec-crew',      label: 'Crew Costs' },
+        licenses:  { id: 'sec-licenses',  label: 'Licenses' },
+        hidden:    { id: 'sec-hidden',    label: 'Hidden / Missed' }
+      };
+
+      var grandTotal = 0;
+      var breakdown = [];
+
+      for (var key in sections) {
+        var sec = document.getElementById(sections[key].id);
+        if (!sec) continue;
+        var inputs = sec.querySelectorAll('.cost-input');
+        var secTotal = 0;
+        inputs.forEach(function(inp) { secTotal += parseFloat(inp.value) || 0; });
+        grandTotal += secTotal;
+        var subEl = document.getElementById('sub-' + key);
+        if (subEl) subEl.textContent = '$' + secTotal.toLocaleString() + '/mo';
+        if (secTotal > 0) {
+          breakdown.push({ label: sections[key].label, amount: secTotal });
+        }
+      }
+
+      var days = parseInt(document.getElementById('work-days').value) || 20;
+      var annual = grandTotal * 12;
+      var perDay = days > 0 ? Math.round(grandTotal / days) : 0;
+
+      document.getElementById('cost-monthly').textContent = '$' + grandTotal.toLocaleString();
+      document.getElementById('cost-annual').textContent = '$' + annual.toLocaleString();
+      document.getElementById('cost-perday').textContent = '$' + perDay.toLocaleString();
+      document.getElementById('cost-breakeven').textContent = '$' + perDay.toLocaleString();
+      document.getElementById('cost-perjob').textContent = '$' + perDay.toLocaleString();
+
+      /* Breakdown bars */
+      var html = '';
+      breakdown.sort(function(a, b) { return b.amount - a.amount; });
+      breakdown.forEach(function(item) {
+        var pct = grandTotal > 0 ? Math.round((item.amount / grandTotal) * 100) : 0;
+        html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">'
+          + '<span style="width:120px;font-size:.82rem;white-space:nowrap;">' + item.label + '</span>'
+          + '<div style="flex:1;background:var(--bg-light);border-radius:4px;height:18px;overflow:hidden;">'
+          + '<div style="width:' + pct + '%;background:var(--green-dark);height:100%;border-radius:4px;min-width:2px;"></div>'
+          + '</div>'
+          + '<span style="width:80px;text-align:right;font-weight:600;font-size:.82rem;">$' + item.amount.toLocaleString() + '</span>'
+          + '<span style="width:35px;text-align:right;font-size:.75rem;color:var(--text-light);">' + pct + '%</span>'
+          + '</div>';
+      });
+      document.getElementById('cost-breakdown').innerHTML = html;
+    }
+
+    /* Run on load */
+    costCalc();
+  </script>
+''' + FOOTER
+
+write_page("costs.html", costs_page)
+print("Created costs.html")
+
+# ============================================================
 # BREAK-EVEN CALCULATOR PAGE
 # ============================================================
 be_page = header(
@@ -3283,6 +3649,7 @@ be_page += '''
         <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
         <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
@@ -3469,6 +3836,7 @@ be_page += '''
         <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
         <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
@@ -3717,6 +4085,7 @@ ads_page += '''
         <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
         <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
@@ -4104,6 +4473,7 @@ ads_page += '''
         <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
         <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 ''' + FOOTER
@@ -4166,6 +4536,7 @@ est_page += '''
         <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
         <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 
@@ -4506,6 +4877,7 @@ est_page += '''
         <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
         <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Field Estimate</a>
         <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="costs.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Costs</a>
         <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
       </div>
 ''' + FOOTER

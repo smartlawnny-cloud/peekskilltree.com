@@ -1763,6 +1763,14 @@ sub_page += '''
   <section class="section">
     <div class="container" style="max-width:900px;">
 
+      <!-- Calculator Nav (top) -->
+      <div style="display:flex;gap:0;background:var(--bg-light);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;">
+        <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);">Rates</a>
+        <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
+        <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
+      </div>
+
       <div id="calc-wrap" style="background:var(--bg-light);border-radius:12px;padding:1.75rem 2rem;border:1px solid var(--border);">
 
         <!-- Job Type Presets -->
@@ -1785,7 +1793,7 @@ sub_page += '''
             <button class="tier-btn" data-tier="preferred" onclick="setTier('preferred')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Preferred <span style="font-size:.75rem;opacity:.7;">(-15%)</span></button>
             <button class="tier-btn" data-tier="coop" onclick="setTier('coop')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Co-op Member <span style="font-size:.75rem;opacity:.7;">(-25%)</span></button>
           </div>
-          <p id="tier-desc" style="font-size:.8rem;color:var(--text-light);margin-top:.4rem;">Full rates &mdash; any company, no existing relationship. <a href="https://www.tcia.org/resources/tree-care-business" target="_blank" rel="noopener" style="color:var(--green-dark);font-weight:600;">Industry rate sources &rarr;</a></p>
+          <p id="tier-desc" style="font-size:.8rem;color:var(--text-light);margin-top:.4rem;">Full rates &mdash; any company, no existing relationship. <a href="#industry-rates" style="color:var(--green-dark);font-weight:600;">Industry rate sources &rarr;</a></p>
         </div>
 
         <!-- Duration row -->
@@ -2477,7 +2485,7 @@ sub_page += '''
         var tierDiscount = 0; /* 0 = standard, 0.15 = preferred, 0.25 = co-op */
 
         var TIER_DESCS = {
-          standard:  'Full rates \u2014 any company, no existing relationship. <a href="https://www.tcia.org/resources/tree-care-business" target="_blank" rel="noopener" style="color:var(--green-dark);font-weight:600;">Industry rate sources \u2192</a>',
+          standard:  'Full rates \u2014 any company, no existing relationship. <a href="#industry-rates" style="color:var(--green-dark);font-weight:600;">Industry rate sources \u2192</a>',
           preferred: '15% off equipment rates \u2014 partners who sub 3+ jobs/month.',
           coop:      '25% off equipment rates \u2014 full co-op members with buy-in.'
         };
@@ -3102,6 +3110,62 @@ sub_page += '''
 
     </div>
   </section>
+
+  <!-- Industry Rate Sources (collapsible) -->
+  <section style="background:var(--bg-light);padding:1.5rem 0;">
+    <div class="container" style="max-width:800px;">
+      <div onclick="var el=document.getElementById('industry-rates-content');el.style.display=el.style.display==='none'?'grid':'none';this.querySelector('.ir-arrow').textContent=el.style.display==='none'?'\\u25B6':'\\u25BC';"
+        style="background:var(--green-dark);color:var(--white);padding:.7rem 1rem;font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-radius:10px;">
+        <span>Industry Rate Sources</span>
+        <span class="ir-arrow" style="font-size:.7rem;">&#9654;</span>
+      </div>
+      <div id="industry-rates-content" style="display:none;gap:1rem;margin-top:1rem;">
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Labor Rates</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">NY tree trimmers avg <strong>$29.90/hr</strong> (national median $24.25/hr) &mdash; <a href="https://www.bls.gov/oes/current/oes373013.htm" target="_blank" rel="noopener" style="color:var(--green-dark);">BLS Occupational Employment Stats</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Arborist avg <strong>$29.17/hr</strong>, range $22&ndash;$33/hr &mdash; <a href="https://www.ziprecruiter.com/Salaries/Arborist-Salary" target="_blank" rel="noopener" style="color:var(--green-dark);">ZipRecruiter 2026</a></li>
+            <li style="padding:.35rem 0;">Tree service contractor billing rates <strong>$75&ndash;$175/hr</strong> &mdash; <a href="https://homeguide.com/costs/tree-trimming-cost" target="_blank" rel="noopener" style="color:var(--green-dark);">HomeGuide</a></li>
+          </ul>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Job Pricing</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Tree removal avg <strong>$400&ndash;$1,200</strong> per tree, up to $3,500+ for large/difficult &mdash; <a href="https://www.angi.com/articles/how-much-does-tree-removal-cost.htm" target="_blank" rel="noopener" style="color:var(--green-dark);">Angi</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Tree trimming avg <strong>$430&ndash;$640</strong> per tree &mdash; <a href="https://www.lawnstarter.com/blog/cost/tree-trimming-price/" target="_blank" rel="noopener" style="color:var(--green-dark);">LawnStarter</a></li>
+            <li style="padding:.35rem 0;">Stump removal avg <strong>$195&ndash;$609</strong> &mdash; <a href="https://www.homeadvisor.com/cost/lawn-and-garden/tree-removal/" target="_blank" rel="noopener" style="color:var(--green-dark);">HomeAdvisor</a></li>
+          </ul>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Equipment Rental</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Bucket truck <strong>$650&ndash;$950/day</strong> &mdash; <a href="https://quipli.com/resources/the-most-rented-pieces-of-construction-equipment/" target="_blank" rel="noopener" style="color:var(--green-dark);">Quipli</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">12" chipper <strong>~$325/day</strong> &mdash; <a href="https://quipli.com/resources/the-most-rented-pieces-of-construction-equipment/" target="_blank" rel="noopener" style="color:var(--green-dark);">Quipli</a></li>
+            <li style="padding:.35rem 0;">Stump grinder <strong>$145&ndash;$225/day</strong> (commercial) &mdash; <a href="https://homeguide.com/costs/stump-grinder-rental-cost" target="_blank" rel="noopener" style="color:var(--green-dark);">HomeGuide</a></li>
+          </ul>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Insurance Costs</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">WC Class Code 0106: <strong>~$7.63 per $100 payroll</strong> (NY) &mdash; <a href="https://www.kickstandinsurance.com/blog/workers-comp-rate-for-landscaping" target="_blank" rel="noopener" style="color:var(--green-dark);">Kickstand Insurance</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">GL median <strong>$138/mo ($1,651/yr)</strong> at $1M/$2M limits &mdash; <a href="https://www.insureon.com/landscaping-business-insurance/tree-service/cost" target="_blank" rel="noopener" style="color:var(--green-dark);">Insureon</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Full bundle (WC + GL + Auto): <strong>$489/mo ($5,869/yr)</strong> &mdash; <a href="https://www.moneygeek.com/insurance/business/contractor/tree-service/cost/" target="_blank" rel="noopener" style="color:var(--green-dark);">MoneyGeek</a></li>
+            <li style="padding:.35rem 0;">Commercial auto avg <strong>$204/mo ($2,452/yr)</strong> &mdash; <a href="https://www.insureon.com/landscaping-business-insurance/tree-service/cost" target="_blank" rel="noopener" style="color:var(--green-dark);">Insureon</a></li>
+          </ul>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Industry Margins</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Net profit margins <strong>10&ndash;20%</strong> (well-run companies 20%+) &mdash; <a href="https://www.arbornote.com/how-to-price-your-tree-service-right-expert-guide-to-profitable-margins/" target="_blank" rel="noopener" style="color:var(--green-dark);">ArborNote</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">Removal margins <strong>10&ndash;20%</strong>, pruning <strong>15&ndash;25%</strong>, emergency/storm <strong>25&ndash;40%</strong> &mdash; <a href="https://www.arbornote.com/how-to-price-your-tree-service-right-expert-guide-to-profitable-margins/" target="_blank" rel="noopener" style="color:var(--green-dark);">ArborNote</a></li>
+            <li style="padding:.35rem 0;border-bottom:1px solid var(--bg-light);">U.S. tree services market <strong>$35.6 billion</strong> (2024), growing 5.8%/yr &mdash; <a href="https://turfmagazine.com/the-profitability-of-tree-care-services" target="_blank" rel="noopener" style="color:var(--green-dark);">Turf Magazine</a></li>
+            <li style="padding:.35rem 0;">TCIA estimating: total expenses + target profit / crew hours = hourly rate &mdash; <a href="https://tcimag.tcia.org/sales-marketing/estimating-simplified/" target="_blank" rel="noopener" style="color:var(--green-dark);">TCIA Magazine</a></li>
+          </ul>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:.78rem;color:var(--text-light);margin-top:1rem;">Sources current as of March 2026. Rates vary by region, company size, and job complexity.</p>
+    </div>
+  </section>
 ''' + FOOTER
 
 write_page("rates.html", sub_page)
@@ -3151,6 +3215,14 @@ be_page += '''
   </style>
   <section class="section">
     <div class="container" style="max-width:800px;">
+
+      <!-- Calculator Nav (top) -->
+      <div style="display:flex;gap:0;background:var(--bg-light);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;">
+        <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
+        <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
+        <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
+      </div>
 
       <p style="color:var(--text-light);margin-bottom:.75rem;font-size:.9rem;">Enter your monthly costs. See exactly how many work days it takes to break even. <a href="rates.html" style="font-weight:600;">Job Cost Calculator &rarr;</a></p>
 
@@ -3577,6 +3649,14 @@ ads_page += '''
   </style>
   <section class="section">
     <div class="container" style="max-width:800px;">
+
+      <!-- Calculator Nav (top) -->
+      <div style="display:flex;gap:0;background:var(--bg-light);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;">
+        <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
+        <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Field Estimate</a>
+        <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Ad ROI</a>
+      </div>
 
       <p style="color:var(--text-light);margin-bottom:.75rem;font-size:.9rem;">Enter your ad spend, leads, and jobs. See exactly what each lead and job costs you &mdash; and whether your ads are profitable.</p>
 
@@ -4018,6 +4098,14 @@ est_page += '''
   </style>
   <section class="section">
     <div class="container" style="max-width:800px;">
+
+      <!-- Calculator Nav (top) -->
+      <div style="display:flex;gap:0;background:var(--bg-light);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;">
+        <a href="rates.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);">Rates</a>
+        <a href="estimate.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:700;text-decoration:none;color:var(--white);background:var(--green-dark);border-left:1px solid var(--border);">Field Estimate</a>
+        <a href="breakeven.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Break-Even</a>
+        <a href="roi.html" style="flex:1;padding:.6rem .5rem;text-align:center;font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text);border-left:1px solid var(--border);">Ad ROI</a>
+      </div>
 
       <p style="color:var(--text-light);margin-bottom:.75rem;font-size:.9rem;">Quick field pricing. Enter tree details, select conditions, get an estimate. <a href="rates.html" style="font-weight:600;">Full Job Cost Calculator &rarr;</a></p>
 

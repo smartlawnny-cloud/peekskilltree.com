@@ -2054,7 +2054,7 @@ sub_page += '''
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.3rem .5rem;font-size:.84rem;padding-left:1.75rem;">
                 <div style="display:flex;align-items:center;gap:.3rem;">
                   <span style="color:var(--text-light);white-space:nowrap;">WC:</span>
-                  <input type="number" id="ins-wc-pct" min="0" max="30" value="15" step="1"
+                  <input type="number" id="ins-wc-pct" min="0" max="30" value="9" step="1"
                     style="width:42px;padding:.2rem .25rem;border:2px solid var(--border);border-radius:6px;font-size:.85rem;font-weight:700;text-align:center;"
                     oninput="calcUpdate()"><span style="font-weight:700;">%</span>
                 </div>
@@ -2066,7 +2066,7 @@ sub_page += '''
                 </div>
                 <div style="display:flex;align-items:center;gap:.3rem;">
                   <span style="color:var(--text-light);white-space:nowrap;">Payroll:</span>
-                  <input type="number" id="ins-tax-pct" min="0" max="20" value="8" step="0.5"
+                  <input type="number" id="ins-tax-pct" min="0" max="20" value="10" step="0.5"
                     style="width:42px;padding:.2rem .25rem;border:2px solid var(--border);border-radius:6px;font-size:.85rem;font-weight:700;text-align:center;"
                     oninput="calcUpdate()"><span style="font-weight:700;">%</span>
                 </div>
@@ -2511,7 +2511,7 @@ sub_page += '''
 
           var laborLines = [], equipLines = [], total = 0;
           var isEmergency = document.getElementById('chk-emergency').checked;
-          var emergMult = isEmergency ? 1.5 : 1;
+          var emergMult = isEmergency ? 1.3 : 1;
 
           function grp(lines, id, prId, label, key, qty, isEquip) {
             qty = (qty === undefined) ? 1 : qty;
@@ -3065,7 +3065,7 @@ sub_page += '''
 
       <!-- Compact terms -->
       <div style="margin-top:.75rem;padding:.9rem 1.1rem;background:var(--bg-light);border-radius:8px;font-size:.84rem;color:var(--text-light);line-height:1.7;">
-        <strong style="color:var(--text);">Terms:</strong> $500 minimum call-out &bull; Mon&ndash;Sat (emergency Sun case-by-case) &bull; Hours beyond 8 billed at 1.5&times; &bull; Westchester, Putnam &amp; Southern Dutchess &bull; Payment due on booking or within 48 hrs &bull; Our jobs come first; same/next-day when schedule permits.
+        <strong style="color:var(--text);">Terms:</strong> $500 minimum call-out &bull; Mon&ndash;Sat (emergency Sun case-by-case) &bull; Hours beyond 8 billed at 1.3&times; &bull; Westchester, Putnam &amp; Southern Dutchess &bull; Payment due on booking or within 48 hrs &bull; Our jobs come first; same/next-day when schedule permits.
       </div>
 
       <!-- Insurance & Coverage Info (collapsible) -->
@@ -3120,6 +3120,36 @@ sub_page += '''
         <span class="ir-arrow" style="font-size:.7rem;">&#9654;</span>
       </div>
       <div id="industry-rates-content" style="display:none;gap:1rem;margin-top:1rem;">
+
+        <!-- Rate Comparison Table -->
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;grid-column:1/-1;">
+          <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .75rem;">Our Rates vs. Industry Average</h3>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+              <thead>
+                <tr style="background:var(--green-dark);color:var(--white);">
+                  <th style="padding:.5rem .6rem;text-align:left;font-weight:600;">Item</th>
+                  <th style="padding:.5rem .6rem;text-align:right;font-weight:600;">Our Rate</th>
+                  <th style="padding:.5rem .6rem;text-align:right;font-weight:600;">Industry Avg</th>
+                  <th style="padding:.5rem .6rem;text-align:center;font-weight:600;">vs. Market</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--bg-light);"><td style="padding:.45rem .6rem;font-weight:600;">Climber</td><td style="padding:.45rem .6rem;text-align:right;">$50/hr</td><td style="padding:.45rem .6rem;text-align:right;">$75&ndash;$175/hr</td><td style="padding:.45rem .6rem;text-align:center;color:#c0392b;font-weight:600;">Below</td></tr>
+                <tr style="border-bottom:1px solid var(--bg-light);"><td style="padding:.45rem .6rem;font-weight:600;">Groundsperson</td><td style="padding:.45rem .6rem;text-align:right;">$30/hr</td><td style="padding:.45rem .6rem;text-align:right;">$45&ndash;$65/hr</td><td style="padding:.45rem .6rem;text-align:center;color:#c0392b;font-weight:600;">Below</td></tr>
+                <tr style="border-bottom:1px solid var(--bg-light);"><td style="padding:.45rem .6rem;font-weight:600;">Bucket Truck</td><td style="padding:.45rem .6rem;text-align:right;">$600/day</td><td style="padding:.45rem .6rem;text-align:right;">$650&ndash;$950/day</td><td style="padding:.45rem .6rem;text-align:center;color:#e67e22;font-weight:600;">Competitive</td></tr>
+                <tr style="border-bottom:1px solid var(--bg-light);"><td style="padding:.45rem .6rem;font-weight:600;">Chipper</td><td style="padding:.45rem .6rem;text-align:right;">$350/day</td><td style="padding:.45rem .6rem;text-align:right;">~$325/day</td><td style="padding:.45rem .6rem;text-align:center;color:var(--green-dark);font-weight:600;">At Market</td></tr>
+                <tr style="border-bottom:1px solid var(--bg-light);"><td style="padding:.45rem .6rem;font-weight:600;">Stump Grinder</td><td style="padding:.45rem .6rem;text-align:right;">$325/day</td><td style="padding:.45rem .6rem;text-align:right;">$145&ndash;$225/day</td><td style="padding:.45rem .6rem;text-align:center;color:var(--green-dark);font-weight:600;">Above</td></tr>
+                <tr style="border-bottom:1px solid var(--bg-light);"><td style="padding:.45rem .6rem;font-weight:600;">Loader</td><td style="padding:.45rem .6rem;text-align:right;">$400/day</td><td style="padding:.45rem .6rem;text-align:right;">$300&ndash;$500/day</td><td style="padding:.45rem .6rem;text-align:center;color:var(--green-dark);font-weight:600;">At Market</td></tr>
+                <tr style="border-bottom:1px solid var(--bg-light);background:var(--bg-light);"><td style="padding:.45rem .6rem;font-weight:600;">Workers&rsquo; Comp</td><td style="padding:.45rem .6rem;text-align:right;">9%</td><td style="padding:.45rem .6rem;text-align:right;">~7.6%</td><td style="padding:.45rem .6rem;text-align:center;color:#e67e22;font-weight:600;">+Buffer</td></tr>
+                <tr style="border-bottom:1px solid var(--bg-light);background:var(--bg-light);"><td style="padding:.45rem .6rem;font-weight:600;">Payroll Tax</td><td style="padding:.45rem .6rem;text-align:right;">10%</td><td style="padding:.45rem .6rem;text-align:right;">~10%</td><td style="padding:.45rem .6rem;text-align:center;color:var(--green-dark);font-weight:600;">Correct</td></tr>
+                <tr style="background:var(--bg-light);"><td style="padding:.45rem .6rem;font-weight:600;">Emergency Mult.</td><td style="padding:.45rem .6rem;text-align:right;">1.3&times; (30%)</td><td style="padding:.45rem .6rem;text-align:right;">25&ndash;40%</td><td style="padding:.45rem .6rem;text-align:center;color:var(--green-dark);font-weight:600;">In Range</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:.78rem;color:var(--text-light);margin-top:.5rem;margin-bottom:0;">Labor rates are co-op/sub rates (cost to partner), not retail billing rates. Equipment rates are ownership rates, not rental.</p>
+        </div>
+
         <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;">
           <h3 style="font-size:.95rem;color:var(--green-dark);margin:0 0 .5rem;">Labor Rates</h3>
           <ul style="list-style:none;padding:0;margin:0;font-size:.85rem;color:var(--text);">

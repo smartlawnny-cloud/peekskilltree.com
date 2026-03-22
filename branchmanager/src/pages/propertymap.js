@@ -60,10 +60,10 @@ var PropertyMap = {
       // Scale preview: 1ft = ~1px in panel preview
       var pw = Math.max(Math.round(eq.w * 0.8), 8);
       var ph = Math.max(Math.round(eq.h * 0.8), 6);
-      html += '<button class="btn btn-outline" style="width:100%;margin-bottom:6px;font-size:11px;padding:6px 8px;justify-content:flex-start;gap:8px;" '
+      html += '<button class="btn btn-outline" style="width:100%;margin-bottom:6px;font-size:11px;padding:6px 8px;display:flex;align-items:center;gap:8px;" '
         + 'onclick="PropertyMap.addEquipment(\'' + eq.id + '\')">'
-        + '<span style="display:inline-block;width:' + pw + 'px;height:' + ph + 'px;background:' + eq.color + ';border-radius:2px;flex-shrink:0;opacity:.8;"></span>'
-        + '<span style="font-size:16px;">' + eq.icon + '</span> ' + eq.label + '</button>';
+        + '<span style="display:inline-block;width:' + pw + 'px;height:' + ph + 'px;background:' + eq.color + ';border-radius:2px;flex-shrink:0;opacity:.85;"></span>'
+        + eq.label + '</button>';
     });
 
     html += '<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'
@@ -218,8 +218,9 @@ var PropertyMap = {
     var html = '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:12px;">'
       + '<h4 style="font-size:13px;margin-bottom:8px;">Placed Equipment (' + self.markers.length + ')</h4>';
     self.markers.forEach(function(m, i) {
+      var mEq = PropertyMap.equipmentList.find(function(e){return e.id===m.id;}) || {};
       html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'
-        + '<span style="font-size:16px;">' + m.icon + '</span>'
+        + '<span style="display:inline-block;width:20px;height:10px;background:' + (mEq.color||'#999') + ';border-radius:2px;flex-shrink:0;"></span>'
         + '<span style="flex:1;">' + m.label + '</span>'
         + '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;" onclick="PropertyMap.removeMarker(' + i + ')">&times;</button>'
         + '</div>';

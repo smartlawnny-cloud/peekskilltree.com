@@ -26,6 +26,11 @@ var CrewView = {
       + '<div style="color:var(--text-light);font-size:14px;">' + today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + '</div>'
       + '</div>';
 
+    // GPS status
+    if (typeof Geofence !== 'undefined') {
+      html += Geofence.renderStatus();
+    }
+
     // Weather
     if (typeof Weather !== 'undefined') {
       html += Weather.renderWidget();

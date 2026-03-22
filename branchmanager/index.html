@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Branch Manager</title>
 <meta name="description" content="Second Nature Tree Service — Job Management">
-<meta name="theme-color" content="#1a3c12">
+<meta name="theme-color" content="#1a8a5c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Branch Manager">
@@ -13,20 +13,24 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
   :root {
-    --green-dark: #285a3a;
-    --green: #347a4a;
-    --green-light: #5cb176;
-    --green-bg: #edf7f0;
+    --green-dark: #1a8a5c;
+    --green: #22a96b;
+    --green-light: #7ac143;
+    --green-bg: #f0f9f4;
     --white: #ffffff;
-    --bg: #f3f4f6;
-    --text: #212529;
-    --text-light: #6b7280;
-    --border: #e5e7eb;
-    --red: #dc3545;
-    --orange: #f59e0b;
-    --blue: #3b82f6;
-    --sidebar-w: 220px;
-    --accent: #16a34a;
+    --bg: #f7f8fa;
+    --text: #2d3748;
+    --text-light: #8492a6;
+    --border: #e8ecf1;
+    --red: #e53e3e;
+    --orange: #ed8936;
+    --blue: #4299e1;
+    --sidebar-w: 240px;
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #e8ecf1;
+    --sidebar-hover: #f0f9f4;
+    --sidebar-active: #e6f6ee;
+    --accent: #1a8a5c;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; font-size:14px; }
@@ -35,50 +39,56 @@
   /* ── Layout ── */
   .app { display:flex; height:100vh; }
 
-  /* ── Sidebar (Jobber style) ── */
+  /* ── Sidebar (Jobber-style light) ── */
   .sidebar {
-    width:var(--sidebar-w); background:#1e293b; color:var(--white);
+    width:var(--sidebar-w); background:var(--sidebar-bg); color:var(--text);
     display:flex; flex-direction:column; flex-shrink:0;
     transition: transform 0.25s ease;
-    z-index:100;
+    z-index:100; border-right:1px solid var(--sidebar-border);
   }
   .sidebar-header {
-    padding:16px 14px 14px; border-bottom:1px solid rgba(255,255,255,.08);
+    padding:18px 16px 16px; border-bottom:1px solid var(--sidebar-border);
+    display:flex; align-items:center; gap:10px;
+  }
+  .sidebar-logo {
+    width:36px; height:36px; background:var(--accent); border-radius:8px;
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+    color:#fff; flex-shrink:0;
   }
   .sidebar-header h1 {
-    font-size:16px; font-weight:700;
+    font-size:15px; font-weight:700; color:var(--text); line-height:1.2;
   }
-  .sidebar-header h1 span { display:block; font-size:10px; font-weight:400; opacity:.5; margin-top:2px; }
+  .sidebar-header h1 span { display:block; font-size:10px; font-weight:500; color:var(--text-light); margin-top:1px; }
   .sidebar-user {
-    padding:10px 14px; font-size:12px; opacity:.7; border-bottom:1px solid rgba(255,255,255,.08);
+    padding:10px 16px; font-size:12px; color:var(--text-light); border-bottom:1px solid var(--sidebar-border);
   }
 
-  .sidebar-nav { flex:1; padding:6px 0; overflow-y:auto; }
-  .nav-section { padding:14px 14px 4px; font-size:10px; text-transform:uppercase; letter-spacing:.1em; opacity:.35; font-weight:700; }
+  .sidebar-nav { flex:1; padding:8px 8px; overflow-y:auto; }
+  .nav-section { padding:16px 8px 6px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-light); font-weight:700; }
   .nav-item {
-    display:flex; align-items:center; gap:10px; padding:8px 14px;
-    font-size:13px; color:rgba(255,255,255,.7); cursor:pointer;
+    display:flex; align-items:center; gap:10px; padding:8px 10px;
+    font-size:13px; color:var(--text-light); cursor:pointer;
     transition: all 0.12s; text-decoration:none; border:none; background:none; width:100%;
-    border-left:3px solid transparent;
+    border-radius:6px; margin-bottom:1px; border-left:none;
   }
-  .nav-item:hover { background:rgba(255,255,255,.06); color:#fff; }
-  .nav-item.active { background:rgba(255,255,255,.1); color:#fff; font-weight:600; border-left-color:#16a34a; }
+  .nav-item:hover { background:var(--sidebar-hover); color:var(--text); }
+  .nav-item.active { background:var(--sidebar-active); color:var(--accent); font-weight:600; }
   .nav-item .icon { width:18px; text-align:center; font-size:14px; }
-  .nav-item .badge { margin-left:auto; background:#dc3545; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; min-width:18px; text-align:center; }
+  .nav-item .badge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; min-width:18px; text-align:center; }
 
   .sidebar-footer {
-    padding:10px 14px; border-top:1px solid rgba(255,255,255,.08);
-    font-size:10px; opacity:.4;
+    padding:10px 16px; border-top:1px solid var(--sidebar-border);
+    font-size:10px; color:var(--text-light);
   }
 
   /* ── Main Content (Jobber style) ── */
   .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
   .topbar {
     display:flex; align-items:center; justify-content:space-between;
-    padding:10px 24px; background:var(--white); border-bottom:1px solid var(--border);
-    min-height:52px;
+    padding:12px 28px; background:var(--white); border-bottom:1px solid var(--border);
+    min-height:56px;
   }
-  .topbar h2 { font-size:22px; font-weight:700; letter-spacing:-.02em; }
+  .topbar h2 { font-size:20px; font-weight:700; color:var(--text); letter-spacing:-.01em; }
   .topbar-actions { display:flex; gap:8px; align-items:center; }
 
   .btn {
@@ -86,8 +96,8 @@
     padding:8px 16px; border-radius:6px; font-size:13px; font-weight:600;
     cursor:pointer; border:none; transition:all .12s; text-decoration:none;
   }
-  .btn-primary { background:#16a34a; color:var(--white); }
-  .btn-primary:hover { background:#15803d; }
+  .btn-primary { background:var(--accent); color:var(--white); }
+  .btn-primary:hover { background:#15775a; }
   .btn-outline { background:var(--white); color:var(--text); border:1px solid var(--border); }
   .btn-outline:hover { background:var(--bg); border-color:#9ca3af; }
   .btn-danger { background:#dc3545; color:#fff; }
@@ -130,20 +140,20 @@
     display:inline-block; padding:2px 10px; border-radius:12px;
     font-size:11px; font-weight:600; letter-spacing:.01em;
   }
-  .status-active { background:#dcfce7; color:#166534; }
-  .status-lead { background:#dbeafe; color:#1e40af; }
-  .status-late { background:#fee2e2; color:#991b1b; }
-  .status-paid { background:#dcfce7; color:#166534; }
-  .status-draft { background:#f3f4f6; color:#6b7280; }
-  .status-sent { background:#fef3c7; color:#92400e; }
-  .status-new { background:#dbeafe; color:#1e40af; }
-  .status-completed { background:#dcfce7; color:#166534; }
-  .status-scheduled { background:#e0e7ff; color:#3730a3; }
-  .status-in_progress, .status-in-progress { background:#fef3c7; color:#92400e; }
-  .status-awaiting, .status-awaiting_response, .status-awaiting_payment { background:#fef3c7; color:#92400e; }
-  .status-approved, .status-converted { background:#dcfce7; color:#166534; }
-  .status-declined, .status-cancelled, .status-past_due, .status-overdue { background:#fee2e2; color:#991b1b; }
-  .status-archived, .status-inactive { background:#f3f4f6; color:#6b7280; }
+  .status-active { background:#e6f6ee; color:#1a8a5c; }
+  .status-lead { background:#e8f0fe; color:#2b6cb0; }
+  .status-late { background:#fde8e8; color:#c53030; }
+  .status-paid { background:#e6f6ee; color:#1a8a5c; }
+  .status-draft { background:#edf2f7; color:#718096; }
+  .status-sent { background:#fefcbf; color:#975a16; }
+  .status-new { background:#e8f0fe; color:#2b6cb0; }
+  .status-completed { background:#e6f6ee; color:#1a8a5c; }
+  .status-scheduled { background:#ebf4ff; color:#3182ce; }
+  .status-in_progress, .status-in-progress { background:#fefcbf; color:#975a16; }
+  .status-awaiting, .status-awaiting_response, .status-awaiting_payment { background:#fefcbf; color:#975a16; }
+  .status-approved, .status-converted { background:#e6f6ee; color:#1a8a5c; }
+  .status-declined, .status-cancelled, .status-past_due, .status-overdue { background:#fde8e8; color:#c53030; }
+  .status-archived, .status-inactive { background:#edf2f7; color:#718096; }
 
   /* ── Filter Buttons ── */
   .filter-btn {
@@ -152,7 +162,7 @@
     cursor:pointer; transition:all .12s;
   }
   .filter-btn:hover { border-color:#9ca3af; color:var(--text); }
-  .filter-btn.active, .filter-btn[style*="background:var(--green-dark)"] { background:#16a34a !important; color:#fff !important; border-color:#16a34a !important; }
+  .filter-btn.active, .filter-btn[style*="background:var(--green-dark)"] { background:var(--accent) !important; color:#fff !important; border-color:var(--accent) !important; }
 
   /* ── Search (Jobber style) ── */
   .search-box {
@@ -160,7 +170,7 @@
     background:#f9fafb; border:1px solid var(--border); border-radius:6px;
     font-size:13px; min-width:240px;
   }
-  .search-box:focus-within { border-color:#16a34a; box-shadow:0 0 0 2px rgba(22,163,74,.15); }
+  .search-box:focus-within { border-color:var(--accent); box-shadow:0 0 0 2px rgba(26,138,92,.15); }
   .search-box input { border:none; background:none; outline:none; flex:1; font-size:13px; }
 
   /* ── Empty state ── */
@@ -185,7 +195,7 @@
     font-size:10px; color:var(--text-light); font-weight:600;
     transition:color .15s;
   }
-  .bottom-nav-btn.active { color:var(--green-dark); }
+  .bottom-nav-btn.active { color:var(--accent); }
   .bottom-nav-btn .bnav-icon { font-size:20px; }
 
   /* ── Responsive ── */
@@ -251,7 +261,7 @@
     z-index:300; transition:transform .3s; box-shadow:0 4px 20px rgba(0,0,0,.2);
   }
   .toast.show { transform:translateX(-50%) translateY(0); }
-  .toast-success { background:var(--green-dark); color:var(--white); }
+  .toast-success { background:var(--accent); color:var(--white); }
   .toast-error { background:var(--red); color:var(--white); }
 
   /* ── Filter buttons ── */
@@ -267,14 +277,15 @@
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h1>🌳 Branch Manager <span>Second Nature Tree Service</span></h1>
+      <div class="sidebar-logo">🌳</div>
+      <h1>Branch Manager <span>Second Nature Tree Service</span></h1>
     </div>
     <div class="sidebar-user" style="display:flex;justify-content:space-between;align-items:center;">
       <span>Doug Brown · Owner</span>
-      <button onclick="Auth.logout()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">Logout</button>
+      <button onclick="Auth.logout()" style="background:var(--bg);border:1px solid var(--border);color:var(--text-light);padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">Logout</button>
     </div>
-    <div style="padding:8px 16px;">
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;font-size:14px;border-radius:6px;" onclick="QuickCreate.show()">+ Create New</button>
+    <div style="padding:10px 12px 4px;">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;font-size:13px;font-weight:600;border-radius:6px;" onclick="QuickCreate.show()">+ Create New</button>
     </div>
 
     <div class="sidebar-nav">
@@ -321,7 +332,7 @@
       <button class="nav-item" data-page="import"><span class="icon">📦</span> Import Data</button>
       <button class="nav-item" data-page="backup"><span class="icon">💾</span> Backup</button>
       <button class="nav-item" data-page="settings"><span class="icon">⚙️</span> Settings</button>
-      <button class="nav-item" onclick="Auth.logout()" style="color:#ff6b6b;margin-top:8px;border-top:1px solid rgba(255,255,255,.1);padding-top:12px;"><span class="icon">🚪</span> Logout</button>
+      <button class="nav-item" onclick="Auth.logout()" style="color:var(--red);margin-top:8px;border-top:1px solid var(--border);padding-top:12px;"><span class="icon">🚪</span> Logout</button>
     </div>
 
     <div class="sidebar-footer">Branch Manager v1.0</div>

@@ -169,76 +169,155 @@ var JobsPage = {
     var j = DB.jobs.getById(id);
     if (!j) return;
 
-    var html = '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px;">'
-      + '<div><h2 style="margin-bottom:4px;">Job #' + j.jobNumber + '</h2>'
-      + '<div style="color:var(--text-light);font-size:14px;">' + (j.clientName || '') + '</div>'
-      + '<div style="font-size:13px;color:var(--text-light);">' + (j.property || '') + '</div>'
-      + '<div style="margin-top:8px;">' + UI.statusBadge(j.status) + '</div></div>'
-      + '<div style="text-align:right;"><div style="font-size:2rem;font-weight:800;color:var(--green-dark);">' + UI.money(j.total) + '</div>'
-      + '<div style="font-size:13px;color:var(--text-light);">Scheduled: ' + UI.dateShort(j.scheduledDate) + '</div></div>'
-      + '</div>';
-
-    // Description
-    if (j.description) html += '<div style="padding:12px;background:var(--bg);border-radius:8px;margin-bottom:16px;font-size:14px;">' + j.description + '</div>';
-
-    // Crew
-    if (j.crew && j.crew.length) {
-      html += '<h4 style="margin-bottom:8px;">Crew</h4><div style="display:flex;gap:8px;margin-bottom:16px;">';
-      j.crew.forEach(function(name) {
-        html += '<span style="padding:6px 12px;background:var(--green-bg);border-radius:20px;font-size:13px;font-weight:600;">👷 ' + name + '</span>';
-      });
-      html += '</div>';
-    }
-
-    // Line items
-    if (j.lineItems && j.lineItems.length) {
-      html += '<h4 style="margin-bottom:8px;">Line Items</h4>'
-        + '<table class="data-table" style="margin-bottom:16px;"><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
-      j.lineItems.forEach(function(item) {
-        html += '<tr><td>' + (item.service || 'Custom') + '</td><td>' + (item.description || '') + '</td><td>' + item.qty + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || item.qty * item.rate) + '</td></tr>';
-      });
-      html += '</tbody></table>';
-    }
-
-    // Property map button
-    html += '<div style="margin-bottom:16px;"><button class="btn btn-outline" onclick="UI.closeModal();PropertyMap.show(\'' + (j.property || '').replace(/'/g, "\\'") + '\')">🗺️ Property Map — Equipment Layout</button></div>';
-
-    // Workflow actions
-    if (typeof Workflow !== 'undefined') {
-      html += '<div style="margin-bottom:16px;">' + Workflow.jobActions(id) + '</div>';
-    } else {
-      // Fallback status buttons
-      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">';
-      ['scheduled', 'in_progress', 'completed', 'late', 'cancelled'].forEach(function(s) {
-        html += '<button class="btn ' + (j.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage.setStatus(\'' + id + '\',\'' + s + '\')">' + s.replace(/_/g, ' ') + '</button>';
-      });
-      html += '</div>';
-    }
-
-    // Photos
-    if (typeof Photos !== 'undefined') {
-      html += '<div id="job-photos-section">' + Photos.renderGallery('job', id) + '</div>';
-    }
-
-    // Time entries for this job
     var timeEntries = DB.timeEntries ? DB.timeEntries.getAll().filter(function(te) { return te.jobId === id; }) : [];
-    if (timeEntries.length) {
-      var totalHours = timeEntries.reduce(function(s, te) { return s + (te.hours || 0); }, 0);
-      html += '<div style="margin-top:16px;"><h4 style="margin-bottom:8px;">⏱ Time Tracked (' + totalHours.toFixed(1) + ' hrs)</h4>';
-      timeEntries.forEach(function(te) {
-        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid #f0f0f0;">'
-          + '<span>' + (te.user || 'Crew') + ' — ' + UI.dateShort(te.date) + '</span>'
-          + '<span style="font-weight:600;">' + (te.hours || 0).toFixed(1) + ' hrs</span></div>';
-      });
-      html += '</div>';
-    }
+    var totalHours = timeEntries.reduce(function(s, te) { return s + (te.hours || 0); }, 0);
 
-    UI.showModal('Job #' + j.jobNumber, html, {
-      wide: true,
+    // Full-page job detail (Jobber style)
+    var html = ''
+      // Back + header
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'jobs\')" style="padding:6px 12px;">← Back</button>'
+      + '<div style="flex:1;">'
+      + '<h2 style="font-size:22px;margin-bottom:2px;">Job #' + j.jobNumber + '</h2>'
+      + '<span style="font-size:14px;color:var(--text-light);">' + (j.clientName || '') + (j.property ? ' — ' + j.property : '') + '</span>'
+      + '</div>'
+      + '<div style="display:flex;gap:6px;">'
+      + '<button class="btn btn-outline" onclick="JobsPage.showForm(\'' + id + '\')">Edit</button>'
+      + '<button class="btn btn-outline" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>'
+      + '<button class="btn btn-outline" onclick="PropertyMap.show(\'' + (j.property || '').replace(/'/g, "\\'") + '\')">🗺 Map</button>'
+      + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');">Create Invoice</button>' : '')
+      + '</div></div>'
+
+      // Status + total bar
+      + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;">'
+      + UI.statCard('Status', '<span style="font-size:14px;">' + UI.statusBadge(j.status) + '</span>', '', '', '')
+      + UI.statCard('Total', UI.money(j.total), '', '', '')
+      + UI.statCard('Scheduled', UI.dateShort(j.scheduledDate), (j.startTime || 'Anytime'), '', '')
+      + UI.statCard('Time Tracked', totalHours.toFixed(1) + ' hrs', timeEntries.length + ' entries', '', '')
+      + UI.statCard('Crew', (j.crew ? j.crew.length : 0) + ' assigned', '', '', '')
+      + '</div>'
+
+      // Two column layout
+      + '<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">'
+
+      // Left — main content
+      + '<div>'
+
+      // Status workflow buttons
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Status</h4>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    ['scheduled', 'in_progress', 'completed', 'cancelled'].forEach(function(s) {
+      html += '<button class="btn ' + (j.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage.setStatus(\'' + id + '\',\'' + s + '\');JobsPage.showDetail(\'' + id + '\');" style="font-size:12px;padding:6px 14px;">' + s.replace(/_/g, ' ') + '</button>';
+    });
+    html += '</div></div>'
+
+      // Description
+      + (j.description ? '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+        + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Description</h4>'
+        + '<p style="font-size:14px;line-height:1.6;margin:0;">' + j.description + '</p></div>' : '')
+
+      // Line items
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">'
+      + '<div style="padding:12px 16px;border-bottom:1px solid var(--border);"><h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin:0;">Line Items</h4></div>';
+    if (j.lineItems && j.lineItems.length) {
+      html += '<table class="data-table" style="border:none;border-radius:0;"><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
+      j.lineItems.forEach(function(item) {
+        html += '<tr><td>' + (item.service || 'Custom') + '</td><td style="color:var(--text-light);">' + (item.description || '') + '</td><td>' + item.qty + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || item.qty * item.rate) + '</td></tr>';
+      });
+      html += '<tr style="background:var(--green-bg);"><td colspan="4" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:800;font-size:15px;color:var(--accent);">' + UI.money(j.total) + '</td></tr>';
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">No line items</div>';
+    }
+    html += '</div>'
+
+      // Photos
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Photos</h4>';
+    if (typeof Photos !== 'undefined') {
+      html += Photos.renderGallery('job', id);
+    } else {
+      html += '<div style="color:var(--text-light);font-size:13px;">No photos</div>';
+    }
+    html += '</div></div>'
+
+      // Right sidebar — crew, time, notes, actions
+      + '<div>'
+
+      // Crew
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Crew</h4>';
+    if (j.crew && j.crew.length) {
+      j.crew.forEach(function(name) {
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bg);">'
+          + '<div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">' + name.split(' ').map(function(n){return n[0];}).join('') + '</div>'
+          + '<span style="font-size:13px;font-weight:600;">' + name + '</span></div>';
+      });
+    } else {
+      html += '<div style="color:var(--text-light);font-size:13px;">No crew assigned</div>';
+    }
+    html += '</div>'
+
+      // Time tracking
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Time Tracked</h4>';
+    if (timeEntries.length) {
+      html += '<div style="font-size:24px;font-weight:800;color:var(--accent);margin-bottom:10px;">' + totalHours.toFixed(1) + ' hrs</div>';
+      timeEntries.forEach(function(te) {
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid var(--bg);">'
+          + '<span>' + (te.user || 'Crew') + '</span>'
+          + '<span style="font-weight:600;">' + (te.hours || 0).toFixed(1) + 'h</span></div>';
+      });
+    } else {
+      html += '<div style="color:var(--text-light);font-size:13px;">No time logged</div>';
+    }
+    html += '</div>'
+
+      // Quick actions
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Quick Actions</h4>'
+      + (j.clientPhone ? '<a href="tel:' + j.clientPhone + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 Call Client</a>' : '')
+      + (j.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">🗺 Navigate</a>' : '')
+      + '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="PropertyMap.show(\'' + (j.property || '').replace(/'/g, "\\'") + '\')">📐 Equipment Layout</button>'
+      + '</div>'
+
+      // Activity timeline
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Activity</h4>'
+      + '<div style="border-left:2px solid var(--border);padding-left:16px;margin-left:8px;">';
+    // Build timeline from available data
+    var timeline = [];
+    if (j.createdAt) timeline.push({ date: j.createdAt, text: 'Job created', icon: '📋' });
+    if (j.scheduledDate) timeline.push({ date: j.scheduledDate, text: 'Scheduled for ' + UI.dateShort(j.scheduledDate), icon: '📅' });
+    timeEntries.forEach(function(te) { timeline.push({ date: te.date, text: (te.user || 'Crew') + ' logged ' + (te.hours||0).toFixed(1) + 'h', icon: '⏱' }); });
+    if (j.status === 'completed') timeline.push({ date: j.completedAt || j.scheduledDate, text: 'Job completed', icon: '✅' });
+    if (j.invoiceId) timeline.push({ date: j.completedAt || '', text: 'Invoice created', icon: '💰' });
+    timeline.sort(function(a,b) { return (a.date||'').localeCompare(b.date||''); });
+    if (timeline.length) {
+      timeline.forEach(function(t) {
+        html += '<div style="position:relative;padding-bottom:14px;">'
+          + '<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;background:var(--accent);border-radius:50%;border:2px solid var(--white);"></div>'
+          + '<div style="font-size:12px;color:var(--text-light);">' + (t.date ? UI.dateShort(t.date) : '') + '</div>'
+          + '<div style="font-size:13px;">' + t.icon + ' ' + t.text + '</div></div>';
+      });
+    } else {
+      html += '<div style="font-size:13px;color:var(--text-light);">No activity yet</div>';
+    }
+    html += '</div></div></div></div>';
+
+    // Render as full page
+    document.getElementById('pageTitle').textContent = 'Job #' + j.jobNumber;
+    document.getElementById('pageContent').innerHTML = html;
+    document.getElementById('pageAction').style.display = 'none';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+  },
+
+  // Legacy modal (not used)
+  _showDetailModal: function(id) {
+    UI.showModal('Job', '<p>Use full-page view.</p>', {
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
-        + ' <button class="btn btn-outline" onclick="UI.closeModal();JobsPage.showForm(\'' + id + '\')">Edit</button>'
-        + ' <button class="btn btn-outline" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>'
-        + (j.status === 'completed' && !j.invoiceId ? ' <button class="btn btn-primary" onclick="Workflow.jobToInvoice(\'' + id + '\');UI.closeModal();loadPage(\'invoices\');">Create Invoice</button>' : '')
     });
   },
 

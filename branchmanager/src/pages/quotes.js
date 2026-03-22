@@ -203,19 +203,42 @@ var QuotesPage = {
       html += '</tbody></table>';
     }
 
-    // Status actions
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+    // Description
+    if (q.description) {
+      html += '<div style="padding:12px;background:var(--bg);border-radius:8px;margin-bottom:16px;font-size:14px;">' + q.description + '</div>';
+    }
+
+    // Workflow actions
+    if (typeof Workflow !== 'undefined') {
+      html += '<div style="margin-bottom:16px;">' + Workflow.quoteActions(id) + '</div>';
+    }
+
+    // Status buttons
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">';
     ['draft', 'sent', 'awaiting', 'approved', 'declined'].forEach(function(s) {
-      html += '<button class="btn ' + (q.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage.setStatus(\'' + id + '\',\'' + s + '\')">' + s + '</button>';
+      html += '<button class="btn ' + (q.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage.setStatus(\'' + id + '\',\'' + s + '\')" style="font-size:12px;padding:6px 12px;">' + s + '</button>';
     });
     html += '</div>';
+
+    // Contact info
+    if (q.clientPhone || q.clientEmail) {
+      html += '<div style="display:flex;gap:12px;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:16px;font-size:13px;">';
+      if (q.clientPhone) html += '<a href="tel:' + q.clientPhone + '" style="color:var(--green-dark);font-weight:600;">📞 ' + q.clientPhone + '</a>';
+      if (q.clientEmail) html += '<a href="mailto:' + q.clientEmail + '" style="color:var(--green-dark);font-weight:600;">✉️ ' + q.clientEmail + '</a>';
+      html += '</div>';
+    }
+
+    // Photos
+    if (typeof Photos !== 'undefined') {
+      html += Photos.renderGallery('quote', id);
+    }
 
     UI.showModal('Quote #' + q.quoteNumber, html, {
       wide: true,
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
         + ' <button class="btn btn-outline" onclick="PDF.generateQuote(\'' + id + '\')">📄 PDF</button>'
-        + ' <button class="btn btn-outline" onclick="UI.closeModal();QuotesPage.showForm(\'' + id + '\')">Edit</button>'
-        + (q.status === 'approved' ? ' <button class="btn btn-primary" onclick="QuotesPage.convertToJob(\'' + id + '\')">Convert to Job</button>' : '')
+        + ' <button class="btn btn-outline" onclick="UI.closeModal();QuotesPage.showForm(\'' + id + '\')">✏️ Edit</button>'
+        + (q.status !== 'converted' ? ' <button class="btn btn-primary" onclick="Workflow.quoteToJob(\'' + id + '\');UI.closeModal();loadPage(\'jobs\');">✅ Convert to Job</button>' : '')
     });
   },
 

@@ -184,9 +184,10 @@ var PhotoMap = {
 };
 
 // ── Enhanced Photo Upload with GPS ──
-// Override the Photos upload to capture GPS
-var _origUploadLocal = Photos._uploadLocal;
-Photos._uploadLocal = function(file, recordType, recordId) {
+// Override the Photos upload to capture GPS (only if Photos is loaded)
+if (typeof Photos === 'undefined') { console.warn('PhotoMap: Photos not loaded yet, GPS capture skipped'); }
+var _origUploadLocal = typeof Photos !== 'undefined' ? Photos._uploadLocal : null;
+if (typeof Photos !== 'undefined') Photos._uploadLocal = function(file, recordType, recordId) {
   // Get GPS position while processing photo
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(pos) {

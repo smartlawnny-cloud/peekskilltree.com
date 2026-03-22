@@ -49,52 +49,11 @@ var SupabaseDB = {
   },
 
   _overrideDB: function() {
-    if (!SupabaseDB.ready) return;
-    var sb = SupabaseDB.client;
-
-    // Map table names
-    var tableMap = {
-      'bm-clients': 'clients',
-      'bm-requests': 'requests',
-      'bm-quotes': 'quotes',
-      'bm-jobs': 'jobs',
-      'bm-invoices': 'invoices',
-      'bm-services': 'services',
-      'bm-time-entries': 'time_entries'
-    };
-
-    // Override DB.clients
-    var origClients = Object.assign({}, DB.clients);
-    DB.clients.getAll = async function() {
-      var { data } = await sb.from('clients').select('*').order('created_at', { ascending: false });
-      return data || [];
-    };
-    DB.clients.getById = async function(id) {
-      var { data } = await sb.from('clients').select('*').eq('id', id).single();
-      return data;
-    };
-    DB.clients.create = async function(record) {
-      record.created_at = new Date().toISOString();
-      record.updated_at = new Date().toISOString();
-      var { data } = await sb.from('clients').insert(record).select().single();
-      return data;
-    };
-    DB.clients.update = async function(id, changes) {
-      changes.updated_at = new Date().toISOString();
-      var { data } = await sb.from('clients').update(changes).eq('id', id).select().single();
-      return data;
-    };
-    DB.clients.remove = async function(id) {
-      await sb.from('clients').delete().eq('id', id);
-    };
-    DB.clients.search = async function(q) {
-      var { data } = await sb.from('clients').select('*').or('name.ilike.%' + q + '%,address.ilike.%' + q + '%,phone.ilike.%' + q + '%,email.ilike.%' + q + '%');
-      return data || [];
-    };
-    DB.clients.count = async function() {
-      var { count } = await sb.from('clients').select('*', { count: 'exact', head: true });
-      return count || 0;
-    };
+    // DO NOT override read methods — they must stay synchronous
+    // CloudSync handles pulling data from Supabase into localStorage
+    // CloudSync.wrapWrites() handles pushing writes to Supabase
+    // This keeps the entire app working with synchronous DB calls
+    console.log('SupabaseDB: reads stay local (sync), writes push to cloud (async)');
   },
 
   _initialSync: async function() {

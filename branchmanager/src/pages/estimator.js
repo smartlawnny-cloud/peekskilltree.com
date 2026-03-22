@@ -245,6 +245,71 @@ var Estimator = {
     el.innerHTML = html;
   },
 
+  // Render the estimator inline (no modal wrapper) for embedding in quote form
+  renderInline: function() {
+    var html = '';
+    // Job type presets
+    html += '<div style="margin-bottom:12px;">'
+      + '<div style="font-weight:600;margin-bottom:6px;font-size:13px;">Quick Select</div>'
+      + '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
+    Object.keys(Estimator.PRESETS).forEach(function(key) {
+      var p = Estimator.PRESETS[key];
+      html += '<button type="button" class="btn btn-outline est-preset" data-preset="' + key + '" onclick="Estimator.applyPreset(\'' + key + '\')" style="font-size:12px;padding:5px 10px;">' + p.label + '</button>';
+    });
+    html += '</div></div>';
+
+    // Duration
+    html += '<div style="margin-bottom:12px;">'
+      + '<div style="font-weight:600;margin-bottom:6px;font-size:13px;">Duration</div>'
+      + '<div style="display:flex;gap:4px;">'
+      + '<button type="button" class="btn btn-outline est-dur" data-dur="half" onclick="Estimator.setDuration(\'half\')" style="font-size:12px;padding:5px 10px;">Half Day</button>'
+      + '<button type="button" class="btn btn-primary est-dur" data-dur="full" onclick="Estimator.setDuration(\'full\')" style="font-size:12px;padding:5px 10px;">Full Day</button>'
+      + '<button type="button" class="btn btn-outline est-dur" data-dur="custom" onclick="Estimator.setDuration(\'custom\')" style="font-size:12px;padding:5px 10px;">Custom</button>'
+      + '</div>'
+      + '<div id="est-custom-hrs" style="display:none;margin-top:6px;">'
+      + '<input type="number" id="est-hrs" value="6" min="1" max="16" style="width:60px;padding:4px;border:2px solid var(--border);border-radius:6px;font-size:13px;" oninput="Estimator.calc()"> hours</div></div>';
+
+    // Crew + Equipment side by side
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+    // Crew
+    html += '<div style="padding:12px;background:#fff;border-radius:8px;border:1px solid var(--border);">'
+      + '<div style="font-weight:600;margin-bottom:6px;font-size:13px;">Crew</div>';
+    ['climber', 'bucketop', 'ground'].forEach(function(key) {
+      var r = Estimator.RATES[key];
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
+        + '<input type="number" class="est-crew" data-key="' + key + '" value="0" min="0" max="10" style="width:40px;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:13px;text-align:center;" oninput="Estimator.calc()">'
+        + '<span style="font-size:12px;">' + r.label + '</span></div>';
+    });
+    html += '</div>';
+    // Equipment
+    html += '<div style="padding:12px;background:#fff;border-radius:8px;border:1px solid var(--border);">'
+      + '<div style="font-weight:600;margin-bottom:6px;font-size:13px;">Equipment</div>';
+    ['chipper', 'chiptruck', 'bucket', 'ram', 'loader', 'stump', 'crane', 'trailer'].forEach(function(key) {
+      var r = Estimator.RATES[key];
+      html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin-bottom:2px;">'
+        + '<input type="checkbox" class="est-equip" data-key="' + key + '" onchange="Estimator.calc()" style="width:14px;height:14px;">'
+        + r.label + '</label>';
+    });
+    html += '</div></div>';
+
+    // Insurance (collapsed)
+    html += '<div style="margin-top:8px;"><div style="display:flex;gap:6px;font-size:11px;color:var(--text-light);">';
+    [['wc','WC',9],['gl','GL',5],['dis','Dis',2],['payroll','Tax',8],['auto','Auto',3]].forEach(function(ins) {
+      html += '<span>' + ins[1] + ':<input type="number" class="est-ins" data-key="' + ins[0] + '" value="' + ins[2] + '" min="0" max="30" style="width:30px;padding:1px;border:1px solid var(--border);border-radius:3px;font-size:11px;text-align:center;" oninput="Estimator.calc()">%</span>';
+    });
+    html += '</div></div>';
+
+    // Markup
+    html += '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;">'
+      + '<span style="font-weight:600;font-size:13px;">Markup:</span>'
+      + '<input type="number" id="est-markup" value="30" min="0" max="200" step="5" style="width:55px;padding:4px;border:2px solid var(--border);border-radius:6px;font-size:13px;text-align:center;" oninput="Estimator.calc()">%</div>';
+
+    // Results
+    html += '<div id="est-results" style="background:var(--green-dark);border-radius:8px;padding:14px;color:#fff;margin-top:10px;font-size:13px;"></div>';
+
+    return html;
+  },
+
   applyToQuote: function() {
     var calc = Estimator._lastCalc;
     if (!calc || !Estimator._callback) return;

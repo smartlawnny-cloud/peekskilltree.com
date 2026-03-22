@@ -45,6 +45,10 @@ var QuotesPage = {
     var items = q.lineItems || [{ service: '', description: '', qty: 1, rate: 0 }];
     var services = DB.services.getAll();
 
+    // Get clients synchronously from localStorage
+    var allClients = [];
+    try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
+
     var html = '<form id="quote-form" onsubmit="QuotesPage.save(event, \'' + (quoteId || '') + '\')">';
 
     // Client selector
@@ -52,18 +56,22 @@ var QuotesPage = {
       html += '<input type="hidden" id="q-clientId" value="' + client.id + '">'
         + '<div class="form-group"><label>Client</label><div style="padding:8px 12px;background:var(--bg);border-radius:8px;font-weight:600;">' + client.name + '<br><span style="font-weight:400;font-size:13px;color:var(--text-light);">' + (client.address || '') + '</span></div></div>';
     } else {
-      var clientOptions = DB.clients.getAll().map(function(c) { return { value: c.id, label: c.name + (c.address ? ' — ' + c.address : '') }; });
+      var clientOptions = allClients.map(function(c) { return { value: c.id, label: c.name + (c.address ? ' — ' + c.address : '') }; });
       html += UI.formField('Client *', 'select', 'q-clientId', '', { options: [{ value: '', label: 'Select a client...' }].concat(clientOptions) });
     }
 
     html += UI.formField('Property Address', 'text', 'q-property', q.property || (client ? client.address : ''), { placeholder: 'Job site address' })
       + UI.formField('Description', 'text', 'q-description', q.description, { placeholder: 'e.g., Tree removal - 2 oaks' });
 
-    // Estimator button
-    html += '<div style="margin:16px 0 12px;display:flex;gap:8px;align-items:center;">'
-      + '<button type="button" class="btn btn-primary" onclick="Estimator.show(function(items, total) { QuotesPage._fillFromEstimator(items, total); })">🧮 Price with Estimator</button>'
-      + '<span style="font-size:12px;color:var(--text-light);">Calculate crew, equipment, insurance → auto-fill line items</span>'
-      + '</div>';
+    // Inline Job Estimator (replaces popup)
+    html += '<div style="margin:16px 0;background:#f9fafb;border:2px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;" onclick="var el=document.getElementById(\'inline-estimator\');el.style.display=el.style.display===\'none\'?\'block\':\'none\';">'
+      + '<h4 style="font-size:15px;">🧮 Job Cost Calculator</h4><span style="color:var(--text-light);">▶</span></div>'
+      + '<div id="inline-estimator" style="' + (items.length <= 1 ? '' : 'display:none;') + '">'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Select crew and equipment → costs auto-calculate → fills line items below.</p>'
+      + Estimator.renderInline()
+      + '<button type="button" class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="QuotesPage._applyEstimator()">✅ Apply to Quote</button>'
+      + '</div></div>';
 
     // Line items
     html += '<div style="margin:16px 0 8px;font-weight:700;">Line Items</div>'
@@ -247,6 +255,28 @@ var QuotesPage = {
     UI.toast('Quote status: ' + status);
     UI.closeModal();
     loadPage('quotes');
+  },
+
+  _applyEstimator: function() {
+    var calc = Estimator._lastCalc;
+    if (!calc) { UI.toast('Calculate a price first', 'error'); return; }
+
+    var items = calc.lineItems.map(function(li) {
+      return { service: li.service, description: li.description, qty: li.qty, rate: li.rate, amount: li.amount };
+    });
+    if (calc.insurance > 0) {
+      items.push({ service: 'Insurance & Compliance', description: 'WC, GL, Disability, Payroll, Auto', qty: 1, rate: calc.insurance, amount: calc.insurance });
+    }
+    if (calc.markup > 0) {
+      items.push({ service: 'Service Fee', description: 'Coordination & management', qty: 1, rate: calc.markup, amount: calc.markup });
+    }
+    QuotesPage._fillFromEstimator(items, calc.total);
+
+    // Collapse the estimator
+    var estEl = document.getElementById('inline-estimator');
+    if (estEl) estEl.style.display = 'none';
+
+    UI.toast('Calculator applied — ' + items.length + ' line items, ' + UI.money(calc.total));
   },
 
   _fillFromEstimator: function(items, total) {

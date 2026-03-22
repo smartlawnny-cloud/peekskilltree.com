@@ -9,10 +9,17 @@ var SupabaseDB = {
   client: null,
   ready: false,
 
+  // Default credentials — auto-connect
+  DEFAULT_URL: 'https://ltpivkqahvplapyagljt.supabase.co',
+  DEFAULT_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI',
+
   init: function() {
-    var url = localStorage.getItem('bm-supabase-url');
-    var key = localStorage.getItem('bm-supabase-key');
+    var url = localStorage.getItem('bm-supabase-url') || SupabaseDB.DEFAULT_URL;
+    var key = localStorage.getItem('bm-supabase-key') || SupabaseDB.DEFAULT_KEY;
     if (!url || !key) return;
+    // Store so import page shows connected
+    localStorage.setItem('bm-supabase-url', url);
+    localStorage.setItem('bm-supabase-key', key);
 
     // Load Supabase JS if not present
     if (!window.supabase) {

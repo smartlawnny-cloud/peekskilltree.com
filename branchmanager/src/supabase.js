@@ -119,22 +119,45 @@ var SupabaseDB = {
       { local: 'bm-services', remote: 'services' }
     ];
 
+    // UUID generator for Supabase compatibility
+    function toUUID(localId) {
+      if (!localId) return SupabaseDB._uuid();
+      // Already a UUID
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(localId)) return localId;
+      // Convert local ID to deterministic UUID
+      var hex = '';
+      for (var c = 0; c < localId.length; c++) {
+        hex += localId.charCodeAt(c).toString(16);
+      }
+      hex = (hex + '00000000000000000000000000000000').substr(0, 32);
+      return hex.substr(0,8) + '-' + hex.substr(8,4) + '-4' + hex.substr(13,3) + '-a' + hex.substr(17,3) + '-' + hex.substr(20,12);
+    }
+
     for (var i = 0; i < tables.length; i++) {
       var t = tables[i];
       try {
         var localData = JSON.parse(localStorage.getItem(t.local) || '[]');
         if (localData.length > 0) {
-          // Convert field names from camelCase to snake_case
+          // Convert field names from camelCase to snake_case and fix IDs
           var converted = localData.map(function(row) {
             var newRow = {};
             Object.keys(row).forEach(function(key) {
               var snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-              newRow[snakeKey] = row[key];
+              // Convert ID fields to UUID format
+              if (snakeKey === 'id' || snakeKey.endsWith('_id')) {
+                newRow[snakeKey] = row[key] ? toUUID(row[key]) : null;
+              } else {
+                newRow[snakeKey] = row[key];
+              }
             });
+            // Remove updated_at for services table (doesn't have it)
+            if (t.remote === 'services') {
+              delete newRow.updated_at;
+            }
             return newRow;
           });
 
-          var { error } = await sb.from(t.remote).upsert(converted, { onConflict: 'id' });
+          var { error } = await sb.from(t.remote).upsert(converted, { onConflict: 'id', ignoreDuplicates: true });
           if (error) {
             console.warn('Sync error for ' + t.remote + ':', error.message);
           } else {
@@ -147,6 +170,13 @@ var SupabaseDB = {
     }
     console.log('Initial sync complete');
     UI.toast('Data synced to cloud!');
+  },
+
+  _uuid: function() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
   },
 
   // Test connection

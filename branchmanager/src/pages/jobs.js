@@ -128,18 +128,42 @@ var JobsPage = {
     // Property map button
     html += '<div style="margin-bottom:16px;"><button class="btn btn-outline" onclick="UI.closeModal();PropertyMap.show(\'' + (j.property || '').replace(/'/g, "\\'") + '\')">🗺️ Property Map — Equipment Layout</button></div>';
 
-    // Status buttons
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
-    ['scheduled', 'in_progress', 'completed', 'late', 'cancelled'].forEach(function(s) {
-      html += '<button class="btn ' + (j.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage.setStatus(\'' + id + '\',\'' + s + '\')">' + s.replace(/_/g, ' ') + '</button>';
-    });
-    html += '</div>';
+    // Workflow actions
+    if (typeof Workflow !== 'undefined') {
+      html += '<div style="margin-bottom:16px;">' + Workflow.jobActions(id) + '</div>';
+    } else {
+      // Fallback status buttons
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">';
+      ['scheduled', 'in_progress', 'completed', 'late', 'cancelled'].forEach(function(s) {
+        html += '<button class="btn ' + (j.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage.setStatus(\'' + id + '\',\'' + s + '\')">' + s.replace(/_/g, ' ') + '</button>';
+      });
+      html += '</div>';
+    }
+
+    // Photos
+    if (typeof Photos !== 'undefined') {
+      html += '<div id="job-photos-section">' + Photos.renderGallery('job', id) + '</div>';
+    }
+
+    // Time entries for this job
+    var timeEntries = DB.timeEntries ? DB.timeEntries.getAll().filter(function(te) { return te.jobId === id; }) : [];
+    if (timeEntries.length) {
+      var totalHours = timeEntries.reduce(function(s, te) { return s + (te.hours || 0); }, 0);
+      html += '<div style="margin-top:16px;"><h4 style="margin-bottom:8px;">⏱ Time Tracked (' + totalHours.toFixed(1) + ' hrs)</h4>';
+      timeEntries.forEach(function(te) {
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid #f0f0f0;">'
+          + '<span>' + (te.user || 'Crew') + ' — ' + UI.dateShort(te.date) + '</span>'
+          + '<span style="font-weight:600;">' + (te.hours || 0).toFixed(1) + ' hrs</span></div>';
+      });
+      html += '</div>';
+    }
 
     UI.showModal('Job #' + j.jobNumber, html, {
       wide: true,
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
         + ' <button class="btn btn-outline" onclick="UI.closeModal();JobsPage.showForm(\'' + id + '\')">Edit</button>'
-        + (j.status === 'completed' ? ' <button class="btn btn-primary" onclick="JobsPage.createInvoice(\'' + id + '\')">Create Invoice</button>' : '')
+        + ' <button class="btn btn-outline" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>'
+        + (j.status === 'completed' && !j.invoiceId ? ' <button class="btn btn-primary" onclick="Workflow.jobToInvoice(\'' + id + '\');UI.closeModal();loadPage(\'invoices\');">Create Invoice</button>' : '')
     });
   },
 

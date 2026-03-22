@@ -152,6 +152,26 @@ var ClientsPage = {
         }).join('') + '</div>' : '<div style="font-size:13px;color:var(--text-light);">No invoices</div>')
       + '</div></div>';
 
+    // Revenue summary
+    var totalRevenue = clientInvoices.filter(function(i) { return i.status === 'paid'; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+    var totalOutstanding = clientInvoices.filter(function(i) { return i.status !== 'paid'; }).reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0);
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px;">'
+      + '<div style="padding:10px;background:var(--green-bg);border-radius:8px;text-align:center;"><div style="font-size:11px;color:var(--text-light);">Revenue</div><div style="font-weight:700;color:var(--green-dark);">' + UI.moneyInt(totalRevenue) + '</div></div>'
+      + '<div style="padding:10px;background:#fff3e0;border-radius:8px;text-align:center;"><div style="font-size:11px;color:var(--text-light);">Outstanding</div><div style="font-weight:700;color:#e65100;">' + UI.moneyInt(totalOutstanding) + '</div></div>'
+      + '<div style="padding:10px;background:var(--bg);border-radius:8px;text-align:center;"><div style="font-size:11px;color:var(--text-light);">Jobs</div><div style="font-weight:700;">' + clientJobs.length + '</div></div>'
+      + '<div style="padding:10px;background:var(--bg);border-radius:8px;text-align:center;"><div style="font-size:11px;color:var(--text-light);">Quotes</div><div style="font-weight:700;">' + clientQuotes.length + '</div></div>'
+      + '</div>';
+
+    // Communication log
+    if (typeof CommsLog !== 'undefined') {
+      html += CommsLog.renderForClient(id);
+    }
+
+    // Photos
+    if (typeof Photos !== 'undefined') {
+      html += '<div id="job-photos-section">' + Photos.renderGallery('client', id) + '</div>';
+    }
+
     UI.showModal(c.name, html, {
       wide: true,
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'

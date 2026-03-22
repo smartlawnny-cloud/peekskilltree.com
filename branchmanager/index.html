@@ -254,6 +254,8 @@
 
       <div class="nav-section">Tools</div>
       <button class="nav-item" data-page="calculators"><span class="icon">🧮</span> Calculators</button>
+      <button class="nav-item" data-page="dispatch"><span class="icon">🚛</span> Dispatch</button>
+      <button class="nav-item" data-page="clientmap"><span class="icon">🗺</span> Client Map</button>
       <button class="nav-item" data-page="recurring"><span class="icon">🔄</span> Recurring</button>
       <button class="nav-item" data-page="notifications"><span class="icon">🔔</span> Activity</button>
       <button class="nav-item" data-page="expenses"><span class="icon">💸</span> Expenses</button>
@@ -301,6 +303,8 @@
 <script src="src/weather.js"></script>
 <script src="src/pages/comms.js"></script>
 <script src="src/pages/profitloss.js"></script>
+<script src="src/pages/clientmap.js"></script>
+<script src="src/pages/dispatch.js"></script>
 <script src="src/pages/recurring.js"></script>
 <script src="src/pages/notifications.js"></script>
 <script src="src/pages/expenses.js"></script>
@@ -363,6 +367,8 @@ var pageConfigs = {
   timesheet: { title: 'Timesheet', action: null },
   automations: { title: 'Automations', action: null },
   calculators: { title: 'Calculators', action: null },
+  dispatch: { title: 'Dispatch', action: '🗺 Open Route', actionFn: 'DispatchPage.openRoute()' },
+  clientmap: { title: 'Client Map', action: null },
   recurring: { title: 'Recurring Jobs', action: null },
   notifications: { title: 'Activity', action: null },
   expenses: { title: 'Expenses', action: '+ Add Expense', actionFn: 'loadPage("expenses")' },
@@ -385,6 +391,8 @@ var pageRenderers = {
   team: function() { return TeamPage.render(); },
   timesheet: function() { return TimeTrackPage.renderClockWidget() + TimeTrackPage.renderTimesheet(); },
   automations: function() { return AutomationsPage.render(); },
+  dispatch: function() { return DispatchPage.render(); },
+  clientmap: function() { return ClientMapPage.render(); },
   recurring: function() { return RecurringJobs.render(); },
   notifications: function() { return NotificationsPage.render(); },
   expenses: function() { return ExpensesPage.render(); },

@@ -8,6 +8,12 @@ var Auth = {
   role: null,
 
   init: function() {
+    // URL-based logout escape hatch: ?logout=1
+    if (window.location.search.includes('logout=1')) {
+      localStorage.removeItem('bm-session');
+      window.location.href = window.location.pathname;
+      return;
+    }
     // Check for existing session
     var session = localStorage.getItem('bm-session');
     if (session) {

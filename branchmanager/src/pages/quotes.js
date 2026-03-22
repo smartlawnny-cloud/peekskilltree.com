@@ -298,13 +298,63 @@ var QuotesPage = {
   _sendQuote: function(id) {
     var q = DB.quotes.getById(id);
     if (!q) return;
-    if (q.clientEmail) {
-      UI.toast('Quote sent to ' + q.clientEmail);
-      DB.quotes.update(id, { status: 'sent' });
-      QuotesPage.showDetail(id);
-    } else {
-      UI.toast('No client email on file', 'error');
-    }
+
+    // Get client email
+    var client = q.clientId ? DB.clients.getById(q.clientId) : null;
+    var email = (client && client.email) || q.clientEmail || '';
+    var firstName = (q.clientName || '').split(' ')[0] || 'there';
+
+    // Build email preview (Jobber style)
+    var subject = 'Quote #' + q.quoteNumber + ' from Second Nature Tree Service — ' + UI.money(q.total);
+    var body = 'Hi ' + firstName + ',\n\n'
+      + 'Thanks for reaching out to Second Nature Tree Service! Here\'s your quote for the work we discussed:\n\n'
+      + '📋 Quote #' + q.quoteNumber + '\n'
+      + '📍 ' + (q.property || 'Property on file') + '\n'
+      + '💰 Total: ' + UI.money(q.total) + '\n\n';
+    if (q.description) body += 'Scope: ' + q.description + '\n\n';
+    body += 'To approve this quote, simply reply to this email or call us at (914) 391-5233.\n\n'
+      + 'This quote is valid for 30 days.\n\n'
+      + 'Thanks,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com\nLicensed & Fully Insured — WC-32079 / PC-50644';
+
+    var html = '<div style="padding:16px;">'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">To</label>'
+      + '<input type="email" id="send-to" value="' + email + '" placeholder="client@email.com" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '</div>'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Subject</label>'
+      + '<input type="text" id="send-subject" value="' + subject + '" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '</div>'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Message</label>'
+      + '<textarea id="send-body" rows="12" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;font-family:inherit;resize:vertical;">' + body + '</textarea>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">📎 Quote PDF will be attached automatically</div>'
+      + '</div>';
+
+    UI.showModal('Send Quote #' + q.quoteNumber, html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-outline" onclick="PDF.generateQuote(\'' + id + '\')">👁 Preview PDF</button>'
+        + ' <button class="btn btn-primary" onclick="QuotesPage._confirmSend(\'' + id + '\')">📧 Send Quote</button>'
+    });
+  },
+
+  _confirmSend: function(id) {
+    var to = document.getElementById('send-to').value.trim();
+    if (!to) { UI.toast('Enter an email address', 'error'); return; }
+
+    var subject = document.getElementById('send-subject').value;
+    var body = document.getElementById('send-body').value;
+
+    // Try mailto as fallback (SendGrid will replace this when wired)
+    var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    window.open(mailto, '_blank');
+
+    // Mark as sent
+    DB.quotes.update(id, { status: 'sent', sentAt: new Date().toISOString(), sentTo: to });
+    UI.closeModal();
+    UI.toast('Quote marked as sent to ' + to);
+    QuotesPage.showDetail(id);
   },
 
   setStatus: function(id, status) {

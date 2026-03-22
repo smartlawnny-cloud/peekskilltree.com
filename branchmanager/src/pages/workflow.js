@@ -148,8 +148,60 @@ var Workflow = {
 
   sendInvoice: function(invoiceId) {
     var inv = DB.invoices.getById(invoiceId);
-    if (!inv || !inv.clientEmail) { UI.toast('No email on file', 'error'); return; }
-    DB.invoices.update(invoiceId, { status: 'awaiting_payment', sentAt: new Date().toISOString() });
-    UI.toast('Invoice sent to ' + inv.clientEmail);
+    if (!inv) { UI.toast('Invoice not found', 'error'); return; }
+
+    var client = inv.clientId ? DB.clients.getById(inv.clientId) : null;
+    var email = (client && client.email) || inv.clientEmail || '';
+    var firstName = (inv.clientName || '').split(' ')[0] || 'there';
+
+    var subject = 'Invoice #' + inv.invoiceNumber + ' from Second Nature Tree Service — ' + UI.money(inv.total);
+    var body = 'Hi ' + firstName + ',\n\n'
+      + 'Please find your invoice attached for the work completed at your property.\n\n'
+      + '🧾 Invoice #' + inv.invoiceNumber + '\n'
+      + '💰 Amount Due: ' + UI.money(inv.balance || inv.total) + '\n'
+      + '📅 Due: ' + UI.dateShort(inv.dueDate) + '\n\n'
+      + 'Payment Options:\n'
+      + '• 💳 Credit Card — reply to this email and we\'ll send a secure payment link\n'
+      + '• 📝 Check — payable to Second Nature Tree Service\n'
+      + '• Venmo — @SecondNatureTree\n'
+      + '• Zelle — info@peekskilltree.com\n\n'
+      + 'Thank you for choosing Second Nature Tree Service!\n\n'
+      + 'Doug Brown\n(914) 391-5233\ninfo@peekskilltree.com';
+
+    var html = '<div style="padding:16px;">'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">To</label>'
+      + '<input type="email" id="inv-send-to" value="' + email + '" placeholder="client@email.com" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '</div>'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Subject</label>'
+      + '<input type="text" id="inv-send-subject" value="' + subject + '" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '</div>'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Message</label>'
+      + '<textarea id="inv-send-body" rows="14" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;font-family:inherit;resize:vertical;">' + body + '</textarea>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">📎 Invoice PDF will be attached</div>'
+      + '</div>';
+
+    UI.showModal('Send Invoice #' + inv.invoiceNumber, html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-outline" onclick="PDF.generateInvoice(\'' + invoiceId + '\')">👁 Preview PDF</button>'
+        + ' <button class="btn btn-primary" onclick="Workflow._confirmSendInvoice(\'' + invoiceId + '\')">📧 Send Invoice</button>'
+    });
+  },
+
+  _confirmSendInvoice: function(invoiceId) {
+    var to = document.getElementById('inv-send-to').value.trim();
+    if (!to) { UI.toast('Enter an email address', 'error'); return; }
+
+    var subject = document.getElementById('inv-send-subject').value;
+    var body = document.getElementById('inv-send-body').value;
+    var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    window.open(mailto, '_blank');
+
+    DB.invoices.update(invoiceId, { status: 'awaiting_payment', sentAt: new Date().toISOString(), sentTo: to });
+    UI.closeModal();
+    UI.toast('Invoice sent to ' + to);
   }
 };

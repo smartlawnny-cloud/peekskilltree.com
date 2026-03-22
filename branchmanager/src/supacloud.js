@@ -133,11 +133,19 @@ var CloudSync = {
   }
 };
 
-// Auto-init after Supabase connects
-setTimeout(function() {
+// Auto-init after Supabase connects — retry until connected
+(function waitForSupabase(attempts) {
   if (SupabaseDB && SupabaseDB.ready) {
-    CloudSync.init().then(function() {
+    // Check if we need to sync (no local data or stale)
+    var localClients = localStorage.getItem('bm-clients');
+    var hasLocal = localClients && JSON.parse(localClients).length > 0;
+    if (!hasLocal || (Date.now() - CloudSync.lastSync > 3600000)) {
+      CloudSync.init().then(function() { CloudSync.wrapWrites(); });
+    } else {
       CloudSync.wrapWrites();
-    });
+      console.log('CloudSync: using cached data (' + JSON.parse(localClients).length + ' clients)');
+    }
+  } else if (attempts > 0) {
+    setTimeout(function() { waitForSupabase(attempts - 1); }, 1000);
   }
-}, 3000); // Give Supabase 3s to connect
+})(15); // Try for 15 seconds

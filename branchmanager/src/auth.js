@@ -93,13 +93,15 @@ var Auth = {
       }
     }
 
-    // Local auth fallback
+    // Local auth fallback — case insensitive email
+    var emailLower = email.toLowerCase();
     var users = {
       'info@peekskilltree.com': { password: 'branch2026', role: 'owner', name: 'Doug Brown' },
-      'crew@peekskilltree.com': { password: 'crew2026', role: 'crew_lead', name: 'Crew Lead' }
+      'crew@peekskilltree.com': { password: 'crew2026', role: 'crew_lead', name: 'Crew Lead' },
+      'doug@peekskilltree.com': { password: 'branch2026', role: 'owner', name: 'Doug Brown' }
     };
 
-    var user = users[email];
+    var user = users[emailLower];
     if (user && user.password === password) {
       Auth.user = { email: email, role: user.role, name: user.name };
       Auth.role = user.role;

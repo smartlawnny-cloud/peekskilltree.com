@@ -287,6 +287,7 @@
       <button class="nav-item" data-page="reports"><span class="icon">📥</span> Reports</button>
       <button class="nav-item" data-page="onlinebooking"><span class="icon">🌐</span> Online Booking</button>
       <button class="nav-item" data-page="import"><span class="icon">📦</span> Import Data</button>
+      <button class="nav-item" data-page="backup"><span class="icon">💾</span> Backup</button>
       <button class="nav-item" data-page="settings"><span class="icon">⚙️</span> Settings</button>
     </div>
 
@@ -336,7 +337,9 @@
 <script src="src/pages/recurring.js"></script>
 <script src="src/pages/notifications.js"></script>
 <script src="src/pages/expenses.js"></script>
+<script src="src/email.js"></script>
 <script src="src/pages/reports.js"></script>
+<script src="src/pages/backup.js"></script>
 <script src="src/pages/onlinebooking.js"></script>
 <script src="src/pages/import.js"></script>
 <script src="src/pages/settings.js"></script>
@@ -411,6 +414,7 @@ var pageConfigs = {
   reports: { title: 'Reports & Exports', action: null },
   onlinebooking: { title: 'Online Booking', action: null },
   import: { title: 'Import Data', action: null },
+  backup: { title: 'Backup & Restore', action: null },
   settings: { title: 'Settings', action: null }
 };
 
@@ -438,6 +442,7 @@ var pageRenderers = {
   reports: function() { return ReportsPage.render(); },
   onlinebooking: function() { return OnlineBooking.render(); },
   import: function() { return ImportPage.render(); },
+  backup: function() { return BackupPage.render(); },
   settings: function() { return SettingsPage.render(); },
   calculators: function() {
     return '<div class="stat-grid">'
@@ -456,8 +461,10 @@ var pageRenderers = {
 // ── Auth Gate ──
 function checkAuth() {
   if (!Auth.isLoggedIn()) {
-    document.querySelector('.app').style.display = 'none';
-    document.querySelector('.bottom-nav').style.display = 'none';
+    var appEl = document.querySelector('.app');
+    var bottomNav = document.querySelector('.bottom-nav');
+    if (appEl) appEl.style.display = 'none';
+    if (bottomNav) bottomNav.style.display = 'none';
     var loginDiv = document.getElementById('login-screen');
     if (!loginDiv) {
       loginDiv = document.createElement('div');
@@ -467,7 +474,8 @@ function checkAuth() {
     loginDiv.innerHTML = Auth.renderLogin();
     return false;
   }
-  document.querySelector('.app').style.display = '';
+  var appEl = document.querySelector('.app');
+  if (appEl) appEl.style.display = '';
   var loginDiv = document.getElementById('login-screen');
   if (loginDiv) loginDiv.innerHTML = '';
 

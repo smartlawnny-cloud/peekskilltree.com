@@ -140,6 +140,56 @@ var PDF = {
     PDF._openPrint(html);
   },
 
+  generateJobSheet: function(jobId) {
+    var job = DB.jobs.getById(jobId);
+    if (!job) { UI.toast('Job not found', 'error'); return; }
+
+    var html = '<!DOCTYPE html><html><head><title>Job Sheet #' + (job.jobNumber || '') + '</title>' + PDF._style()
+      + '<style>.check { display:inline-block;width:16px;height:16px;border:2px solid #999;border-radius:3px;margin-right:8px;vertical-align:middle; }</style>'
+      + '</head><body>';
+    html += '<div class="header">' + PDF._companyHeader()
+      + '<div class="doc-info"><h2>JOB SHEET</h2><p>#' + (job.jobNumber || '') + '</p><p>' + UI.dateShort(job.scheduledDate) + '</p></div></div>';
+
+    // Client & property
+    html += '<div class="client-box"><h3>Client</h3>'
+      + '<p><strong>' + job.clientName + '</strong></p>'
+      + '<p>' + (job.property || '') + '</p>'
+      + (job.clientPhone ? '<p>📞 ' + job.clientPhone + '</p>' : '')
+      + '</div>';
+
+    // Scope
+    html += '<div style="margin-bottom:24px;"><h3 style="font-size:16px;margin-bottom:8px;">Scope of Work</h3>'
+      + '<p style="font-size:14px;line-height:1.6;">' + (job.description || 'See quote for details') + '</p></div>';
+
+    // Checklist
+    html += '<div style="margin-bottom:24px;"><h3 style="font-size:16px;margin-bottom:8px;">Crew Checklist</h3>'
+      + '<div style="font-size:14px;line-height:2;">'
+      + '<div><span class="check"></span> Scope reviewed with homeowner</div>'
+      + '<div><span class="check"></span> Hazards identified (power lines, structures, underground)</div>'
+      + '<div><span class="check"></span> Drop zone cleared</div>'
+      + '<div><span class="check"></span> Equipment staged and inspected</div>'
+      + '<div><span class="check"></span> PPE — all crew</div>'
+      + '<div><span class="check"></span> Work completed per scope</div>'
+      + '<div><span class="check"></span> Cleanup complete — rake, blow, debris removed</div>'
+      + '<div><span class="check"></span> Client walkthrough and sign-off</div>'
+      + '<div><span class="check"></span> Before/after photos taken</div>'
+      + '</div></div>';
+
+    // Notes
+    html += '<div class="notes"><h4>Crew Notes</h4>'
+      + '<div style="min-height:100px;border-top:1px solid #ddd;margin-top:8px;"></div></div>';
+
+    // Time tracking
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">'
+      + '<div style="padding:12px;border:1px solid #ddd;border-radius:8px;"><strong>Arrive:</strong> ___________</div>'
+      + '<div style="padding:12px;border:1px solid #ddd;border-radius:8px;"><strong>Depart:</strong> ___________</div>'
+      + '<div style="padding:12px;border:1px solid #ddd;border-radius:8px;"><strong>Total Hours:</strong> _______</div>'
+      + '</div>';
+
+    html += PDF._footer() + '</body></html>';
+    PDF._openPrint(html);
+  },
+
   _openPrint: function(html) {
     var w = window.open('', '_blank', 'width=800,height=1000');
     w.document.write(html);
@@ -147,3 +197,6 @@ var PDF = {
     setTimeout(function() { w.print(); }, 500);
   }
 };
+
+// Alias for workflow references
+var PDFGen = PDF;

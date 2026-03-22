@@ -6,19 +6,20 @@
 var PropertyMap = {
   map: null,
   markers: [],
+  // Equipment with relative dimensions (w x h in feet) for scaled rectangles on map
   equipmentList: [
-    { id: 'bucket', label: 'Bucket Truck', icon: '🚛', color: '#2196f3' },
-    { id: 'chipper', label: 'Chipper', icon: '⚙️', color: '#4caf50' },
-    { id: 'crane', label: 'Crane', icon: '🏗️', color: '#ff9800' },
-    { id: 'stump', label: 'Stump Grinder', icon: '🪵', color: '#795548' },
-    { id: 'truck', label: 'Chip Truck', icon: '🚚', color: '#607d8b' },
-    { id: 'ram', label: 'Ram 2500', icon: '🛻', color: '#9c27b0' },
-    { id: 'loader', label: 'Loader', icon: '🚜', color: '#e91e63' },
-    { id: 'climber', label: 'Climber', icon: '🧗', color: '#f44336' },
-    { id: 'ground', label: 'Ground Crew', icon: '👷', color: '#00bcd4' },
-    { id: 'dropzone', label: 'Drop Zone', icon: '🎯', color: '#ff5722' },
-    { id: 'hazard', label: 'Hazard', icon: '⚠️', color: '#f44336' },
-    { id: 'powerline', label: 'Power Lines', icon: '⚡', color: '#ffc107' }
+    { id: 'bucket', label: 'Bucket Truck', color: '#2196f3', w: 35, h: 10 },
+    { id: 'chipper', label: 'Chipper', color: '#4caf50', w: 14, h: 6 },
+    { id: 'crane', label: 'Crane', color: '#ff9800', w: 50, h: 12 },
+    { id: 'truck', label: 'Chip Truck', color: '#607d8b', w: 28, h: 9 },
+    { id: 'ram', label: 'Ram 2500', color: '#9c27b0', w: 20, h: 7 },
+    { id: 'loader', label: 'Loader', color: '#e91e63', w: 18, h: 8 },
+    { id: 'trailer', label: 'Trailer', color: '#78909c', w: 22, h: 8 },
+    { id: 'climber', label: 'Climber', color: '#f44336', w: 4, h: 4 },
+    { id: 'ground', label: 'Ground Crew', color: '#00bcd4', w: 4, h: 4 },
+    { id: 'dropzone', label: 'Drop Zone', color: '#ff5722', w: 30, h: 30 },
+    { id: 'hazard', label: 'Hazard', color: '#f44336', w: 6, h: 6 },
+    { id: 'powerline', label: 'Power Lines', color: '#ffc107', w: 4, h: 40 }
   ],
 
   show: function(address, existingMarkers) {
@@ -56,8 +57,12 @@ var PropertyMap = {
       + '<p style="font-size:11px;color:var(--text-light);margin-bottom:10px;">Click to place on map. Drag to move.</p>';
 
     self.equipmentList.forEach(function(eq) {
-      html += '<button class="btn btn-outline" style="width:100%;margin-bottom:6px;font-size:12px;padding:6px 8px;justify-content:flex-start;" '
+      // Scale preview: 1ft = ~1px in panel preview
+      var pw = Math.max(Math.round(eq.w * 0.8), 8);
+      var ph = Math.max(Math.round(eq.h * 0.8), 6);
+      html += '<button class="btn btn-outline" style="width:100%;margin-bottom:6px;font-size:11px;padding:6px 8px;justify-content:flex-start;gap:8px;" '
         + 'onclick="PropertyMap.addEquipment(\'' + eq.id + '\')">'
+        + '<span style="display:inline-block;width:' + pw + 'px;height:' + ph + 'px;background:' + eq.color + ';border-radius:2px;flex-shrink:0;opacity:.8;"></span>'
         + '<span style="font-size:16px;">' + eq.icon + '</span> ' + eq.label + '</button>';
     });
 
@@ -145,21 +150,50 @@ var PropertyMap = {
     self._placeMarker(eqId, center.lng + offset, center.lat + offset, '');
   },
 
+  // Convert feet to pixels at current zoom level
+  _feetToPixels: function(feet) {
+    if (!PropertyMap.map) return feet;
+    var zoom = PropertyMap.map.getZoom();
+    // At zoom 20, ~1ft = 1px. Each zoom level halves the scale.
+    var pixelsPerFoot = Math.pow(2, zoom - 20) * 1.0;
+    return Math.max(feet * pixelsPerFoot, 1);
+  },
+
   _placeMarker: function(eqId, lng, lat, notes) {
     var self = PropertyMap;
     var eq = self.equipmentList.find(function(e) { return e.id === eqId; });
     if (!eq) return;
 
+    // Create scaled rectangle element
     var el = document.createElement('div');
-    el.style.cssText = 'width:36px;height:36px;background:' + eq.color + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:grab;';
-    el.textContent = eq.icon;
-    el.title = eq.label;
+    // Use a minimum size so it's always visible, scale up at high zoom
+    var minW = Math.max(eq.w * 1.5, 30);
+    var minH = Math.max(eq.h * 1.5, 16);
+    el.style.cssText = 'width:' + minW + 'px;height:' + minH + 'px;background:' + eq.color + ';'
+      + 'border-radius:3px;display:flex;align-items:center;justify-content:center;'
+      + 'font-size:9px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.03em;'
+      + 'border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:grab;'
+      + 'text-shadow:0 1px 2px rgba(0,0,0,.5);line-height:1.1;text-align:center;padding:1px 3px;'
+      + 'opacity:.85;';
+    el.textContent = eq.label;
+    el.title = eq.label + ' (' + eq.w + '\' × ' + eq.h + '\')';
+
+    // Update size on zoom
+    var updateSize = function() {
+      var scale = Math.pow(2, (self.map.getZoom() - 18)) * 1.5;
+      scale = Math.max(scale, 0.5);
+      scale = Math.min(scale, 4);
+      el.style.width = Math.max(eq.w * scale, 28) + 'px';
+      el.style.height = Math.max(eq.h * scale, 14) + 'px';
+      el.style.fontSize = Math.max(7 * scale, 7) + 'px';
+    };
+    self.map.on('zoom', updateSize);
 
     var marker = new maplibregl.Marker({ element: el, draggable: true })
       .setLngLat([lng, lat])
       .addTo(self.map);
 
-    var markerData = { id: eqId, label: eq.label, icon: eq.icon, lng: lng, lat: lat, notes: notes || '', marker: marker };
+    var markerData = { id: eqId, label: eq.label, lng: lng, lat: lat, notes: notes || '', marker: marker, cleanup: function() { self.map.off('zoom', updateSize); } };
     self.markers.push(markerData);
 
     marker.on('dragend', function() {

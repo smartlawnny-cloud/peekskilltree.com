@@ -40,44 +40,91 @@ var PropertyMap = {
 
   _init: function(address, existingMarkers) {
     var self = PropertyMap;
+    var isMobile = window.innerWidth < 768;
 
-    var html = '<div style="display:flex;gap:12px;height:70vh;min-height:400px;">'
-      // Map
-      + '<div style="flex:1;position:relative;">'
-      + '<div id="prop-map" style="width:100%;height:100%;border-radius:10px;overflow:hidden;"></div>'
-      + '<div style="position:absolute;top:10px;left:10px;z-index:10;">'
-      + '<div style="background:rgba(255,255,255,.95);border-radius:8px;padding:8px 12px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:13px;">'
-      + '<input type="text" id="map-address" value="' + (address || '') + '" placeholder="Enter address..." style="border:none;outline:none;font-size:14px;width:250px;font-weight:600;">'
-      + ' <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="PropertyMap.geocode()">Go</button>'
-      + '</div></div>'
-      + '</div>'
-      // Equipment panel
-      + '<div style="width:180px;background:var(--white);border-radius:10px;border:1px solid var(--border);padding:12px;overflow-y:auto;">'
-      + '<h4 style="font-size:13px;margin-bottom:8px;color:var(--text);">Equipment</h4>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-bottom:10px;">Click to place on map. Drag to move.</p>';
-
+    // ── Build equipment buttons (shared between mobile and desktop) ──
+    var eqButtons = '';
     self.equipmentList.forEach(function(eq) {
-      // Scale preview: 1ft = ~1px in panel preview
       var pw = Math.max(Math.round(eq.w * 0.8), 8);
       var ph = Math.max(Math.round(eq.h * 0.8), 6);
-      html += '<button class="btn btn-outline" style="width:100%;margin-bottom:6px;font-size:11px;padding:6px 8px;display:flex;align-items:center;gap:8px;" '
-        + 'onclick="PropertyMap.addEquipment(\'' + eq.id + '\')">'
-        + '<span style="display:inline-block;width:' + pw + 'px;height:' + ph + 'px;background:' + eq.color + ';border-radius:2px;flex-shrink:0;opacity:.85;"></span>'
-        + eq.label + '</button>';
+      if (isMobile) {
+        // Mobile: compact grid buttons
+        eqButtons += '<button type="button" style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--white);border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;" '
+          + 'onclick="PropertyMap.addEquipment(\'' + eq.id + '\')">'
+          + '<span style="display:inline-block;width:' + pw + 'px;height:' + ph + 'px;background:' + eq.color + ';border-radius:2px;flex-shrink:0;"></span>'
+          + eq.label + '</button>';
+      } else {
+        // Desktop: vertical list
+        eqButtons += '<button class="btn btn-outline" style="width:100%;margin-bottom:6px;font-size:11px;padding:6px 8px;display:flex;align-items:center;gap:8px;" '
+          + 'onclick="PropertyMap.addEquipment(\'' + eq.id + '\')">'
+          + '<span style="display:inline-block;width:' + pw + 'px;height:' + ph + 'px;background:' + eq.color + ';border-radius:2px;flex-shrink:0;opacity:.85;"></span>'
+          + eq.label + '</button>';
+      }
     });
 
-    html += '<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'
-      + '<button class="btn btn-outline" style="width:100%;font-size:12px;" onclick="PropertyMap.clearMarkers()">Clear All</button>'
-      + '</div></div></div>';
+    var html;
+    if (isMobile) {
+      // ── MOBILE: Full page layout with bottom equipment drawer ──
+      html = '<div id="propmap-fullpage" style="position:fixed;inset:0;z-index:9999;background:var(--white);display:flex;flex-direction:column;">'
+        // Top bar
+        + '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--white);border-bottom:1px solid var(--border);z-index:10;">'
+        + '<button onclick="PropertyMap.closeMobile()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;">✕</button>'
+        + '<input type="text" id="map-address" value="' + (address || '') + '" placeholder="Enter address..." style="flex:1;padding:8px 10px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;">'
+        + '<button class="btn btn-primary" style="padding:6px 12px;font-size:13px;" onclick="PropertyMap.geocode()">Go</button>'
+        + '</div>'
+        // Map (fills available space)
+        + '<div style="flex:1;position:relative;">'
+        + '<div id="prop-map" style="width:100%;height:100%;"></div>'
+        // Placed count badge
+        + '<div id="placed-count" style="position:absolute;top:10px;right:10px;background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;display:none;">0 placed</div>'
+        + '</div>'
+        // Equipment drawer (bottom, scrollable horizontal)
+        + '<div style="background:var(--bg);border-top:1px solid var(--border);padding:10px 12px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+        + '<span style="font-size:12px;font-weight:700;">Tap to place equipment</span>'
+        + '<button class="btn btn-outline" style="font-size:11px;padding:4px 8px;" onclick="PropertyMap.clearMarkers()">Clear</button>'
+        + '</div>'
+        + '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;">'
+        + eqButtons
+        + '</div>'
+        + '</div>'
+        // Bottom action bar
+        + '<div style="padding:10px 12px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;">'
+        + '<button class="btn btn-outline" style="flex:1;" onclick="PropertyMap.closeMobile()">Cancel</button>'
+        + '<button class="btn btn-primary" style="flex:1;" onclick="PropertyMap.saveToRecord();PropertyMap.closeMobile();">Save to Quote</button>'
+        + '</div>'
+        + '</div>';
 
-    // Placed equipment list
-    html += '<div id="placed-equipment" style="margin-top:12px;"></div>';
+      // Inject into body (not a modal)
+      var container = document.createElement('div');
+      container.id = 'propmap-container';
+      container.innerHTML = html;
+      document.body.appendChild(container);
+    } else {
+      // ── DESKTOP: Side-by-side in modal ──
+      html = '<div style="display:flex;gap:12px;height:70vh;min-height:400px;">'
+        + '<div style="flex:1;position:relative;">'
+        + '<div id="prop-map" style="width:100%;height:100%;border-radius:10px;overflow:hidden;"></div>'
+        + '<div style="position:absolute;top:10px;left:10px;z-index:10;">'
+        + '<div style="background:rgba(255,255,255,.95);border-radius:8px;padding:8px 12px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:13px;">'
+        + '<input type="text" id="map-address" value="' + (address || '') + '" placeholder="Enter address..." style="border:none;outline:none;font-size:14px;width:250px;font-weight:600;">'
+        + ' <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="PropertyMap.geocode()">Go</button>'
+        + '</div></div></div>'
+        + '<div style="width:180px;background:var(--white);border-radius:10px;border:1px solid var(--border);padding:12px;overflow-y:auto;">'
+        + '<h4 style="font-size:13px;margin-bottom:8px;">Equipment</h4>'
+        + '<p style="font-size:11px;color:var(--text-light);margin-bottom:10px;">Click to place. Drag to move.</p>'
+        + eqButtons
+        + '<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'
+        + '<button class="btn btn-outline" style="width:100%;font-size:12px;" onclick="PropertyMap.clearMarkers()">Clear All</button>'
+        + '</div></div></div>'
+        + '<div id="placed-equipment" style="margin-top:12px;"></div>';
 
-    UI.showModal('Property Map', html, {
-      wide: true,
-      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
-        + ' <button class="btn btn-primary" onclick="PropertyMap.saveToRecord()">Save to Quote/Job</button>'
-    });
+      UI.showModal('Property Map', html, {
+        wide: true,
+        footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+          + ' <button class="btn btn-primary" onclick="PropertyMap.saveToRecord()">Save to Quote/Job</button>'
+      });
+    }
 
     // Init map after modal renders
     setTimeout(function() {
@@ -207,6 +254,14 @@ var PropertyMap = {
 
   _updatePlacedList: function() {
     var self = PropertyMap;
+
+    // Update mobile badge
+    var badge = document.getElementById('placed-count');
+    if (badge) {
+      badge.style.display = self.markers.length > 0 ? '' : 'none';
+      badge.textContent = self.markers.length + ' placed';
+    }
+
     var el = document.getElementById('placed-equipment');
     if (!el) return;
 
@@ -253,9 +308,17 @@ var PropertyMap = {
 
   saveToRecord: function() {
     var data = PropertyMap.getMarkerData();
-    // Store in a temp variable for the quote/job to pick up
     PropertyMap._savedData = data;
     UI.toast(data.length + ' equipment positions saved');
     UI.closeModal();
+  },
+
+  closeMobile: function() {
+    var container = document.getElementById('propmap-container');
+    if (container) container.remove();
+    if (PropertyMap.map) {
+      PropertyMap.map.remove();
+      PropertyMap.map = null;
+    }
   }
 };

@@ -41,19 +41,72 @@ var JobsPage = {
 
   showForm: function(jobId) {
     var j = jobId ? DB.jobs.getById(jobId) : {};
-    var clientOptions = DB.clients.getAll().map(function(c) { return { value: c.id, label: c.name }; });
+    // Get clients synchronously from localStorage
+    var allClients = [];
+    try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
+    var clientOptions = allClients.map(function(c) { return { value: c.id, label: c.name }; });
+
+    // Get team members for crew assignment
+    var team = [];
+    try { team = JSON.parse(localStorage.getItem('bm-team') || '[]'); } catch(e) {}
+
+    // Time slots (Jobber style - 30 min increments)
+    var timeSlots = [];
+    for (var h = 6; h <= 18; h++) {
+      for (var m = 0; m < 60; m += 30) {
+        var hour = h > 12 ? h - 12 : h;
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        var display = hour + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+        var value = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+        timeSlots.push({ value: value, label: display });
+      }
+    }
 
     var html = '<form id="job-form" onsubmit="JobsPage.save(event, \'' + (jobId || '') + '\')">'
-      + UI.formField('Client *', 'select', 'j-clientId', j.clientId, { options: [{ value: '', label: 'Select...' }].concat(clientOptions) })
+      + UI.formField('Client *', 'select', 'j-clientId', j.clientId, { options: [{ value: '', label: 'Select a client...' }].concat(clientOptions) })
       + UI.formField('Property Address', 'text', 'j-property', j.property, { placeholder: 'Job site address' })
       + UI.formField('Description', 'text', 'j-description', j.description, { placeholder: 'e.g., Remove 2 dead oaks' })
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
-      + UI.formField('Scheduled Date', 'date', 'j-date', j.scheduledDate)
-      + UI.formField('Total ($)', 'number', 'j-total', j.total, { placeholder: '0.00' })
+
+      // Date + Time (Jobber style)
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'
+      + UI.formField('Date *', 'date', 'j-date', j.scheduledDate ? j.scheduledDate.split('T')[0] : '')
+      + UI.formField('Start Time', 'select', 'j-starttime', j.startTime || '08:00', { options: [{ value: '', label: 'Anytime' }].concat(timeSlots) })
+      + UI.formField('End Time', 'select', 'j-endtime', j.endTime || '', { options: [{ value: '', label: 'Open' }].concat(timeSlots) })
       + '</div>'
+
+      // Arrival window (Jobber style)
+      + '<div style="margin-bottom:12px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Arrival Window</label>'
+      + '<div style="display:flex;gap:4px;flex-wrap:wrap;">'
+      + '<button type="button" class="btn btn-outline arr-btn" onclick="JobsPage._setArrival(this,\'anytime\')" style="font-size:12px;padding:5px 10px;">Anytime</button>'
+      + '<button type="button" class="btn btn-primary arr-btn" onclick="JobsPage._setArrival(this,\'morning\')" style="font-size:12px;padding:5px 10px;">Morning (8-12)</button>'
+      + '<button type="button" class="btn btn-outline arr-btn" onclick="JobsPage._setArrival(this,\'afternoon\')" style="font-size:12px;padding:5px 10px;">Afternoon (12-5)</button>'
+      + '<button type="button" class="btn btn-outline arr-btn" onclick="JobsPage._setArrival(this,\'specific\')" style="font-size:12px;padding:5px 10px;">Specific Time</button>'
+      + '</div><input type="hidden" id="j-arrival" value="' + (j.arrivalWindow || 'morning') + '">'
+      + '</div>'
+
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+      + UI.formField('Total ($)', 'number', 'j-total', j.total, { placeholder: '0.00' })
       + UI.formField('Status', 'select', 'j-status', j.status || 'scheduled', { options: ['scheduled', 'in_progress', 'completed', 'late', 'cancelled'] })
-      + UI.formField('Crew (comma separated)', 'text', 'j-crew', j.crew ? j.crew.join(', ') : '', { placeholder: 'Doug Brown, Ryan Knapp' })
-      + UI.formField('Notes', 'textarea', 'j-notes', j.notes, { placeholder: 'Job notes...' })
+      + '</div>'
+
+      // Crew assignment (checkboxes for team members)
+      + '<div style="margin-bottom:12px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:6px;">Assign Crew</label>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+    var currentCrew = j.crew || [];
+    if (team.length) {
+      team.forEach(function(t) {
+        var checked = currentCrew.indexOf(t.name) >= 0;
+        html += '<label style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:' + (checked ? 'var(--green-bg)' : 'var(--bg)') + ';border:1px solid ' + (checked ? '#c8e6c9' : 'var(--border)') + ';border-radius:6px;cursor:pointer;font-size:13px;">'
+          + '<input type="checkbox" class="j-crew-check" value="' + t.name + '"' + (checked ? ' checked' : '') + ' style="width:16px;height:16px;">'
+          + '👷 ' + t.name + '</label>';
+      });
+    }
+    html += '<input type="text" id="j-crew-other" placeholder="+ Add name" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:120px;">'
+      + '</div></div>'
+
+      + UI.formField('Notes', 'textarea', 'j-notes', j.notes, { placeholder: 'Job notes, special instructions...' })
       + '</form>';
 
     UI.showModal(jobId ? 'Edit Job #' + j.jobNumber : 'New Job', html, {
@@ -62,20 +115,42 @@ var JobsPage = {
     });
   },
 
+  _setArrival: function(btn, window) {
+    document.querySelectorAll('.arr-btn').forEach(function(b) {
+      b.classList.remove('btn-primary'); b.classList.add('btn-outline');
+    });
+    btn.classList.remove('btn-outline'); btn.classList.add('btn-primary');
+    document.getElementById('j-arrival').value = window;
+  },
+
   save: function(e, jobId) {
     e.preventDefault();
     var clientId = document.getElementById('j-clientId').value;
-    var client = clientId ? DB.clients.getById(clientId) : null;
+    // Get client from localStorage directly
+    var allClients = [];
+    try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
+    var client = allClients.find(function(c) { return c.id === clientId; });
+
+    // Collect crew from checkboxes
+    var crew = [];
+    document.querySelectorAll('.j-crew-check:checked').forEach(function(cb) { crew.push(cb.value); });
+    var otherCrew = document.getElementById('j-crew-other').value.trim();
+    if (otherCrew) crew.push(otherCrew);
 
     var data = {
       clientId: clientId,
       clientName: client ? client.name : '',
+      clientPhone: client ? client.phone : '',
+      clientEmail: client ? client.email : '',
       property: document.getElementById('j-property').value.trim(),
       description: document.getElementById('j-description').value.trim(),
       scheduledDate: document.getElementById('j-date').value,
+      startTime: document.getElementById('j-starttime').value,
+      endTime: document.getElementById('j-endtime').value,
+      arrivalWindow: document.getElementById('j-arrival').value,
       total: parseFloat(document.getElementById('j-total').value) || 0,
       status: document.getElementById('j-status').value,
-      crew: document.getElementById('j-crew').value.split(',').map(function(s) { return s.trim(); }).filter(Boolean),
+      crew: crew,
       notes: document.getElementById('j-notes').value.trim()
     };
 

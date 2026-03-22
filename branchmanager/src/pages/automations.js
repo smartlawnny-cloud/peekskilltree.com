@@ -74,6 +74,19 @@ var AutomationsPage = {
       AutomationsPage._rule('requestConfirm', config)
     ], 'Confirm receipt of new service requests.');
 
+    // Email/SMS Templates
+    if (typeof Templates !== 'undefined') {
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;" onclick="var el=document.getElementById(\'template-editor\');el.style.display=el.style.display===\'none\'?\'block\':\'none\';">'
+        + '<h3>📝 Email & SMS Templates</h3><span style="color:var(--text-light);">▶</span></div>'
+        + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Customize the messages sent to clients. Use variables like {{name}}, {{amount}}, {{date}}.</p>'
+        + '<div id="template-editor" style="display:none;">';
+      Object.keys(Templates.library).forEach(function(key) {
+        html += Templates.renderEditor(key);
+      });
+      html += '</div></div>';
+    }
+
     // Manual triggers
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
       + '<h3 style="margin-bottom:12px;">Manual Triggers</h3>'

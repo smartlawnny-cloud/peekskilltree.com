@@ -43,9 +43,21 @@
   .sidebar {
     width:var(--sidebar-w); background:var(--sidebar-bg); color:var(--text);
     display:flex; flex-direction:column; flex-shrink:0;
-    transition: transform 0.25s ease;
+    transition: width 0.2s ease, transform 0.25s ease;
     z-index:100; border-right:1px solid var(--sidebar-border);
+    overflow:hidden;
   }
+  .sidebar.collapsed { width:56px; }
+  .sidebar.collapsed .sidebar-header h1,
+  .sidebar.collapsed .sidebar-user,
+  .sidebar.collapsed .nav-section,
+  .sidebar.collapsed .nav-item span:not(.icon),
+  .sidebar.collapsed .nav-item .badge,
+  .sidebar.collapsed .sidebar-footer,
+  .sidebar.collapsed > div[style*="padding"] { display:none !important; }
+  .sidebar.collapsed .sidebar-header { justify-content:center; padding:14px 8px; }
+  .sidebar.collapsed .nav-item { justify-content:center; padding:10px 0; }
+  .sidebar.collapsed .nav-item .icon { width:auto; font-size:16px; }
   .sidebar-header {
     padding:18px 16px 16px; border-bottom:1px solid var(--sidebar-border);
     display:flex; align-items:center; gap:10px;
@@ -334,53 +346,51 @@
     </div>
 
     <div class="sidebar-nav">
-      <div class="nav-section">Main</div>
+      <!-- Jobber-style nav (matches their exact layout) -->
       <button class="nav-item active" data-page="dashboard"><span class="icon si">⌂</span> Dashboard</button>
       <button class="nav-item" data-page="pipeline"><span class="icon si">⊞</span> Pipeline</button>
       <button class="nav-item" data-page="schedule"><span class="icon si">▦</span> Schedule</button>
-
-      <div class="nav-section">Work</div>
       <button class="nav-item" data-page="clients"><span class="icon si">♟</span> Clients <span class="badge" id="badge-clients"></span></button>
       <button class="nav-item" data-page="requests"><span class="icon si">↙</span> Requests <span class="badge" id="badge-requests"></span></button>
       <button class="nav-item" data-page="quotes"><span class="icon si">☰</span> Quotes</button>
       <button class="nav-item" data-page="jobs"><span class="icon si">⚙</span> Jobs</button>
       <button class="nav-item" data-page="invoices"><span class="icon si">$</span> Invoices</button>
-
-      <div class="nav-section">Reports</div>
-      <button class="nav-item" data-page="insights"><span class="icon si">◔</span> Insights</button>
-      <button class="nav-item" data-page="reviews"><span class="icon si">★</span> Reviews</button>
-
-      <div class="nav-section">Team</div>
-      <button class="nav-item" data-page="team"><span class="icon si">⚑</span> Team</button>
-      <button class="nav-item" data-page="timesheet"><span class="icon si">◷</span> Timesheet</button>
-      <button class="nav-item" data-page="automations"><span class="icon si">⟳</span> Automations</button>
-
-      <div class="nav-section">More</div>
-      <button class="nav-item" data-page="calculators"><span class="icon si">∑</span> Calculators</button>
-      <button class="nav-item" data-page="crewview"><span class="icon si">☷</span> Crew View</button>
-      <button class="nav-item" data-page="employeecenter"><span class="icon si">◉</span> My Pay</button>
-      <button class="nav-item" data-page="budget"><span class="icon si">⊟</span> Budget</button>
-      <button class="nav-item" data-page="dispatch"><span class="icon si">⇢</span> Dispatch</button>
-      <button class="nav-item" data-page="clientmap"><span class="icon si">◎</span> Client Map</button>
-      <button class="nav-item" data-page="photomap"><span class="icon si">⊡</span> Photo Map</button>
-      <button class="nav-item" data-page="messaging"><span class="icon si">◻</span> Messages</button>
-      <button class="nav-item" data-page="equipment"><span class="icon si">⚙</span> Equipment</button>
-      <button class="nav-item" data-page="jobcosting"><span class="icon si">▤</span> Job Costing</button>
-      <button class="nav-item" data-page="recurring"><span class="icon si">↻</span> Recurring</button>
-      <button class="nav-item" data-page="notifications"><span class="icon si">◌</span> Activity</button>
+      <button class="nav-item" data-page="timesheet"><span class="icon si">◷</span> Timesheets</button>
       <button class="nav-item" data-page="expenses"><span class="icon si">↗</span> Expenses</button>
-      <button class="nav-item" data-page="profitloss"><span class="icon si">▥</span> P&L</button>
-      <button class="nav-item" data-page="weeklysummary"><span class="icon si">⊞</span> Weekly Summary</button>
-      <button class="nav-item" data-page="reviewtools"><span class="icon si">★</span> Review Tools</button>
-      <button class="nav-item" data-page="reports"><span class="icon si">↓</span> Reports</button>
-      <button class="nav-item" data-page="onlinebooking"><span class="icon si">⊕</span> Online Booking</button>
-      <button class="nav-item" data-page="import"><span class="icon si">⤒</span> Import Data</button>
-      <button class="nav-item" data-page="backup"><span class="icon si">⇩</span> Backup</button>
+      <button class="nav-item" data-page="insights"><span class="icon si">◔</span> Reporting</button>
+      <button class="nav-item" data-page="team"><span class="icon si">⚑</span> Team</button>
+      <button class="nav-item" data-page="automations"><span class="icon si">⟳</span> Apps</button>
       <button class="nav-item" data-page="settings"><span class="icon si">⚙</span> Settings</button>
-      <button class="nav-item" onclick="Auth.logout()" style="color:var(--red);margin-top:8px;border-top:1px solid var(--border);padding-top:12px;"><span class="icon si">⏻</span> Logout</button>
+
+      <!-- Extra tools (expandable) -->
+      <div class="nav-section" style="cursor:pointer;" onclick="var el=document.getElementById('more-nav');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.more-arrow').textContent=el.style.display==='none'?'▸':'▾';">More <span class="more-arrow" style="float:right;">▸</span></div>
+      <div id="more-nav" style="display:none;">
+        <button class="nav-item" data-page="calculators"><span class="icon si">∑</span> Calculators</button>
+        <button class="nav-item" data-page="crewview"><span class="icon si">☷</span> Crew View</button>
+        <button class="nav-item" data-page="employeecenter"><span class="icon si">◉</span> My Pay</button>
+        <button class="nav-item" data-page="budget"><span class="icon si">⊟</span> Budget Planner</button>
+        <button class="nav-item" data-page="dispatch"><span class="icon si">⇢</span> Dispatch</button>
+        <button class="nav-item" data-page="clientmap"><span class="icon si">◎</span> Client Map</button>
+        <button class="nav-item" data-page="photomap"><span class="icon si">⊡</span> Photo Map</button>
+        <button class="nav-item" data-page="messaging"><span class="icon si">◻</span> Messages</button>
+        <button class="nav-item" data-page="equipment"><span class="icon si">⚙</span> Equipment</button>
+        <button class="nav-item" data-page="jobcosting"><span class="icon si">▤</span> Job Costing</button>
+        <button class="nav-item" data-page="recurring"><span class="icon si">↻</span> Recurring Jobs</button>
+        <button class="nav-item" data-page="notifications"><span class="icon si">◌</span> Activity Feed</button>
+        <button class="nav-item" data-page="profitloss"><span class="icon si">▥</span> Profit & Loss</button>
+        <button class="nav-item" data-page="weeklysummary"><span class="icon si">⊞</span> Weekly Summary</button>
+        <button class="nav-item" data-page="reviews"><span class="icon si">★</span> Reviews</button>
+        <button class="nav-item" data-page="reviewtools"><span class="icon si">★</span> Review Tools</button>
+        <button class="nav-item" data-page="reports"><span class="icon si">↓</span> Reports</button>
+        <button class="nav-item" data-page="onlinebooking"><span class="icon si">⊕</span> Online Booking</button>
+        <button class="nav-item" data-page="import"><span class="icon si">⤒</span> Import Data</button>
+        <button class="nav-item" data-page="backup"><span class="icon si">⇩</span> Backup</button>
+      </div>
     </div>
 
-    <div class="sidebar-footer">Branch Manager v1.0</div>
+    <div class="sidebar-footer">
+      <button onclick="document.getElementById('sidebar').classList.toggle('collapsed');localStorage.setItem('bm-sidebar-collapsed',document.getElementById('sidebar').classList.contains('collapsed'))" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;color:var(--text-light);width:100%;" title="Collapse sidebar">◀</button>
+    </div>
   </nav>
 
   <!-- Main Content -->

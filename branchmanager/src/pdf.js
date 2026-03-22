@@ -69,7 +69,10 @@ var PDF = {
     if (q.property) html += '<p style="margin-top:8px;"><strong>Property:</strong> ' + q.property + '</p>';
     html += '</div>';
 
-    if (q.description) html += '<p style="margin-bottom:16px;font-size:15px;"><strong>Scope:</strong> ' + q.description + '</p>';
+    if (q.description) {
+      html += '<div style="margin-bottom:16px;"><h3 style="font-size:15px;color:#1a3c12;margin-bottom:6px;">Scope of Work</h3>'
+        + '<p style="font-size:14px;line-height:1.6;color:#444;">' + q.description + '</p></div>';
+    }
 
     // Line items
     if (q.lineItems && q.lineItems.length) {
@@ -81,11 +84,34 @@ var PDF = {
       html += '</tbody></table>';
     }
 
+    // Deposit request
+    if (q.total > 1000) {
+      var deposit = Math.round(q.total * 0.5);
+      html += '<div style="background:#fff3e0;border-radius:8px;padding:16px;margin-bottom:20px;border:1px solid #ffe0b2;">'
+        + '<h4 style="font-size:14px;color:#e65100;margin-bottom:6px;">Deposit Required</h4>'
+        + '<p style="font-size:14px;">A 50% deposit of <strong>' + UI.money(deposit) + '</strong> is required to schedule this work. '
+        + 'Balance of <strong>' + UI.money(q.total - deposit) + '</strong> is due upon completion.</p></div>';
+    }
+
     // Terms
     html += '<div class="notes"><h4>Terms &amp; Conditions</h4>'
-      + '<p>This quote is valid for 30 days from the date above. Payment is due upon completion unless otherwise arranged. '
-      + 'All work is performed by licensed and insured professionals. '
-      + 'Client is responsible for ensuring access to the property and identifying any underground utilities.</p></div>';
+      + '<ul style="padding-left:18px;margin-top:6px;line-height:1.8;">'
+      + '<li>This quote is valid for 30 days from the date above.</li>'
+      + '<li>Payment is due upon completion unless otherwise arranged.</li>'
+      + '<li>All work performed by licensed and insured professionals.</li>'
+      + '<li>Client responsible for ensuring access and identifying underground utilities.</li>'
+      + '<li>Cleanup of debris included. Stump grinding quoted separately if applicable.</li>'
+      + '<li>Additional work beyond this scope will be quoted separately.</li>'
+      + '</ul></div>';
+
+    // Acceptance signature
+    html += '<div style="margin-top:30px;padding:20px;border:2px solid #1a3c12;border-radius:8px;">'
+      + '<h4 style="font-size:14px;color:#1a3c12;margin-bottom:16px;">Authorization to Proceed</h4>'
+      + '<p style="font-size:13px;color:#555;margin-bottom:20px;">I authorize Second Nature Tree Service to perform the work described above at the quoted price.</p>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">'
+      + '<div><div style="border-bottom:1px solid #999;height:30px;margin-bottom:4px;"></div><span style="font-size:11px;color:#888;">Client Signature</span></div>'
+      + '<div><div style="border-bottom:1px solid #999;height:30px;margin-bottom:4px;"></div><span style="font-size:11px;color:#888;">Date</span></div>'
+      + '</div></div>';
 
     html += PDF._footer() + '</body></html>';
     PDF._openPrint(html);
@@ -130,10 +156,20 @@ var PDF = {
       html += '</tbody></table>';
     }
 
-    // Payment info
-    html += '<div class="notes"><h4>Payment Information</h4>'
+    // Payment methods
+    html += '<div style="background:#f0f8e8;border-radius:8px;padding:16px;margin-bottom:24px;border:1px solid #c8e6c9;">'
+      + '<h4 style="font-size:14px;color:#1a3c12;margin-bottom:10px;">Payment Options</h4>'
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center;font-size:13px;">'
+      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>💳 Card</strong><br><span style="font-size:11px;color:#666;">Pay online via link</span></div>'
+      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>📝 Check</strong><br><span style="font-size:11px;color:#666;">Second Nature Tree Service</span></div>'
+      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>Venmo</strong><br><span style="font-size:11px;color:#666;">@SecondNatureTree</span></div>'
+      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>Zelle</strong><br><span style="font-size:11px;color:#666;">info@peekskilltree.com</span></div>'
+      + '</div></div>';
+
+    // Payment terms
+    html += '<div class="notes"><h4>Payment Terms</h4>'
       + '<p>Payment is due by ' + UI.dateShort(inv.dueDate) + '. '
-      + 'Please make checks payable to Second Nature Tree Service. '
+      + 'Late payments may be subject to a 1.5% monthly finance charge. '
       + 'For questions about this invoice, call (914) 391-5233 or email info@peekskilltree.com.</p></div>';
 
     html += PDF._footer() + '</body></html>';

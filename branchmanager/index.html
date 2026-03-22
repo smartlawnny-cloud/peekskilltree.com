@@ -282,6 +282,7 @@
       <button class="nav-item" data-page="budget"><span class="icon">📋</span> Budget Planner</button>
       <button class="nav-item" data-page="dispatch"><span class="icon">🚛</span> Dispatch</button>
       <button class="nav-item" data-page="clientmap"><span class="icon">🗺</span> Client Map</button>
+      <button class="nav-item" data-page="photomap"><span class="icon">📸</span> Photo Map</button>
       <button class="nav-item" data-page="messaging"><span class="icon">💬</span> Messages</button>
       <button class="nav-item" data-page="recurring"><span class="icon">🔄</span> Recurring</button>
       <button class="nav-item" data-page="notifications"><span class="icon">🔔</span> Activity</button>
@@ -337,6 +338,7 @@
 <script src="src/pages/messaging.js"></script>
 <script src="src/pages/profitloss.js"></script>
 <script src="src/pages/clientmap.js"></script>
+<script src="src/pages/photomap.js"></script>
 <script src="src/pages/crewview.js"></script>
 <script src="src/pages/employeecenter.js"></script>
 <script src="src/pages/budget.js"></script>
@@ -416,6 +418,7 @@ var pageConfigs = {
   budget: { title: 'Budget Planner', action: null },
   dispatch: { title: 'Dispatch', action: '🗺 Open Route', actionFn: 'DispatchPage.openRoute()' },
   clientmap: { title: 'Client Map', action: null },
+  photomap: { title: 'Photo Map', action: null },
   messaging: { title: 'Messages', action: null },
   recurring: { title: 'Recurring Jobs', action: null },
   notifications: { title: 'Activity', action: null },
@@ -447,6 +450,7 @@ var pageRenderers = {
   budget: function() { return BudgetPage.render(); },
   dispatch: function() { return DispatchPage.render(); },
   clientmap: function() { return ClientMapPage.render(); },
+  photomap: function() { return PhotoMap.render(); },
   messaging: function() { return MessagingPage.render(); },
   recurring: function() { return RecurringJobs.render(); },
   notifications: function() { return NotificationsPage.render(); },

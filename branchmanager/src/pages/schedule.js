@@ -3,7 +3,7 @@
  * Week and Month views with job cards
  */
 var SchedulePage = {
-  view: 'week', // 'week' or 'month'
+  view: 'week', // 'day', 'week', 'month'
   currentDate: new Date(),
 
   render: function() {
@@ -21,12 +21,15 @@ var SchedulePage = {
       + '<button class="btn btn-outline" onclick="SchedulePage.goToday()" style="font-size:12px;">Today</button>'
       + '</div>'
       + '<div style="display:flex;gap:4px;">'
-      + '<button class="btn ' + (self.view === 'week' ? 'btn-primary' : 'btn-outline') + '" onclick="SchedulePage.setView(\'week\')">Week</button>'
-      + '<button class="btn ' + (self.view === 'month' ? 'btn-primary' : 'btn-outline') + '" onclick="SchedulePage.setView(\'month\')">Month</button>'
+      + '<button class="btn ' + (self.view === 'day' ? 'btn-primary' : 'btn-outline') + '" onclick="SchedulePage.setView(\'day\')" style="font-size:12px;padding:6px 12px;">Day</button>'
+      + '<button class="btn ' + (self.view === 'week' ? 'btn-primary' : 'btn-outline') + '" onclick="SchedulePage.setView(\'week\')" style="font-size:12px;padding:6px 12px;">Week</button>'
+      + '<button class="btn ' + (self.view === 'month' ? 'btn-primary' : 'btn-outline') + '" onclick="SchedulePage.setView(\'month\')" style="font-size:12px;padding:6px 12px;">Month</button>'
       + '</div>'
       + '</div>';
 
-    if (self.view === 'week') {
+    if (self.view === 'day') {
+      html += self._renderDay();
+    } else if (self.view === 'week') {
       html += self._renderWeek();
     } else {
       html += self._renderMonth();
@@ -37,16 +40,86 @@ var SchedulePage = {
   _getTitle: function() {
     var d = SchedulePage.currentDate;
     var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    if (SchedulePage.view === 'day') {
+      return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    }
     if (SchedulePage.view === 'month') {
       return months[d.getMonth()] + ' ' + d.getFullYear();
     }
-    // Week title: "Mar 17 - 23, 2026"
     var start = new Date(d);
     start.setDate(start.getDate() - start.getDay());
     var end = new Date(start);
     end.setDate(end.getDate() + 6);
     var sm = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return sm[start.getMonth()] + ' ' + start.getDate() + ' - ' + (end.getMonth() !== start.getMonth() ? sm[end.getMonth()] + ' ' : '') + end.getDate() + ', ' + end.getFullYear();
+  },
+
+  _renderDay: function() {
+    var d = SchedulePage.currentDate;
+    var dateStr = d.toISOString().split('T')[0];
+    var allJobs = DB.jobs.getAll();
+    var dayJobs = allJobs.filter(function(j) { return j.scheduledDate === dateStr; });
+
+    var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;">';
+
+    // Time slots from 6am to 7pm
+    for (var h = 6; h <= 19; h++) {
+      var hour = h > 12 ? h - 12 : h;
+      var ampm = h >= 12 ? 'PM' : 'AM';
+      var timeStr = String(h).padStart(2, '0') + ':00';
+      var slotJobs = dayJobs.filter(function(j) { return j.startTime && j.startTime.substring(0,2) === String(h).padStart(2,'0'); });
+
+      html += '<div style="display:flex;border-bottom:1px solid var(--border);min-height:52px;">'
+        + '<div style="width:70px;padding:8px 10px;font-size:12px;font-weight:600;color:var(--text-light);border-right:1px solid var(--border);flex-shrink:0;text-align:right;">'
+        + hour + ':00 ' + ampm + '</div>'
+        + '<div style="flex:1;padding:4px 8px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;">';
+
+      slotJobs.forEach(function(j) {
+        var bgColor = j.status === 'completed' ? '#e6f6ee' : j.status === 'late' ? '#fde8e8' : j.status === 'in_progress' ? '#fefcbf' : '#ebf4ff';
+        var borderColor = j.status === 'completed' ? '#1a8a5c' : j.status === 'late' ? '#e53e3e' : j.status === 'in_progress' ? '#ed8936' : '#4299e1';
+        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="background:' + bgColor + ';border-left:3px solid ' + borderColor + ';border-radius:6px;padding:8px 12px;cursor:pointer;flex:1;min-width:200px;">'
+          + '<div style="font-weight:700;font-size:13px;">' + (j.clientName || '') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">' + (j.description || '#' + j.jobNumber) + '</div>'
+          + '<div style="display:flex;gap:8px;margin-top:4px;font-size:11px;">'
+          + '<span style="font-weight:700;color:var(--accent);">' + UI.moneyInt(j.total) + '</span>'
+          + (j.crew ? '<span style="color:var(--text-light);">👷 ' + j.crew.join(', ') + '</span>' : '')
+          + '</div></div>';
+      });
+
+      html += '</div></div>';
+    }
+
+    // Unscheduled jobs (no startTime)
+    var unscheduled = dayJobs.filter(function(j) { return !j.startTime; });
+    if (unscheduled.length) {
+      html += '<div style="display:flex;border-top:2px solid var(--accent);">'
+        + '<div style="width:70px;padding:8px 10px;font-size:11px;font-weight:700;color:var(--accent);border-right:1px solid var(--border);text-align:right;">Any<br>time</div>'
+        + '<div style="flex:1;padding:6px 8px;display:flex;gap:6px;flex-wrap:wrap;">';
+      unscheduled.forEach(function(j) {
+        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="background:var(--green-bg);border-left:3px solid var(--accent);border-radius:6px;padding:8px 12px;cursor:pointer;flex:1;min-width:200px;">'
+          + '<div style="font-weight:700;font-size:13px;">' + (j.clientName || '') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">' + (j.description || '#' + j.jobNumber) + '</div>'
+          + '<div style="font-weight:700;font-size:11px;color:var(--accent);margin-top:4px;">' + UI.moneyInt(j.total) + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+
+    html += '</div>';
+
+    // Day summary
+    if (dayJobs.length) {
+      var dayTotal = dayJobs.reduce(function(s,j) { return s + (j.total||0); }, 0);
+      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;">'
+        + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Jobs</div><div style="font-size:24px;font-weight:800;">' + dayJobs.length + '</div></div>'
+        + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Revenue</div><div style="font-size:24px;font-weight:800;color:var(--accent);">' + UI.moneyInt(dayTotal) + '</div></div>'
+        + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Crew Needed</div><div style="font-size:24px;font-weight:800;">' + dayJobs.reduce(function(s,j){return s+(j.crew?j.crew.length:0);},0) + '</div></div>'
+        + '</div>';
+    } else {
+      html += '<div style="margin-top:16px;text-align:center;padding:24px;color:var(--text-light);font-size:14px;">No jobs scheduled for this day. <button class="btn btn-primary" style="margin-left:8px;" onclick="JobsPage.showForm()">+ Schedule Job</button></div>';
+    }
+
+    return html;
   },
 
   _renderWeek: function() {
@@ -166,21 +239,17 @@ var SchedulePage = {
 
   prev: function() {
     var d = SchedulePage.currentDate;
-    if (SchedulePage.view === 'week') {
-      d.setDate(d.getDate() - 7);
-    } else {
-      d.setMonth(d.getMonth() - 1);
-    }
+    if (SchedulePage.view === 'day') { d.setDate(d.getDate() - 1); }
+    else if (SchedulePage.view === 'week') { d.setDate(d.getDate() - 7); }
+    else { d.setMonth(d.getMonth() - 1); }
     loadPage('schedule');
   },
 
   next: function() {
     var d = SchedulePage.currentDate;
-    if (SchedulePage.view === 'week') {
-      d.setDate(d.getDate() + 7);
-    } else {
-      d.setMonth(d.getMonth() + 1);
-    }
+    if (SchedulePage.view === 'day') { d.setDate(d.getDate() + 1); }
+    else if (SchedulePage.view === 'week') { d.setDate(d.getDate() + 7); }
+    else { d.setMonth(d.getMonth() + 1); }
     loadPage('schedule');
   },
 

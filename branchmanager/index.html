@@ -254,6 +254,7 @@
 
       <div class="nav-section">Tools</div>
       <button class="nav-item" data-page="calculators"><span class="icon">🧮</span> Calculators</button>
+      <button class="nav-item" data-page="import"><span class="icon">📦</span> Import Data</button>
       <button class="nav-item" data-page="settings"><span class="icon">⚙️</span> Settings</button>
     </div>
 
@@ -293,6 +294,7 @@
 <script src="src/pages/invoices.js"></script>
 <script src="src/pages/schedule.js"></script>
 <script src="src/pages/insights.js"></script>
+<script src="src/pages/import.js"></script>
 <script src="src/pages/settings.js"></script>
 <script src="src/pages/propertymap.js"></script>
 <script src="src/pages/estimator.js"></script>
@@ -350,6 +352,7 @@ var pageConfigs = {
   timesheet: { title: 'Timesheet', action: null },
   automations: { title: 'Automations', action: null },
   calculators: { title: 'Calculators', action: null },
+  import: { title: 'Import Data', action: null },
   settings: { title: 'Settings', action: null }
 };
 
@@ -367,6 +370,7 @@ var pageRenderers = {
   team: function() { return TeamPage.render(); },
   timesheet: function() { return TimeTrackPage.renderClockWidget() + TimeTrackPage.renderTimesheet(); },
   automations: function() { return AutomationsPage.render(); },
+  import: function() { return ImportPage.render(); },
   settings: function() { return SettingsPage.render(); },
   calculators: function() {
     return '<div class="stat-grid">'

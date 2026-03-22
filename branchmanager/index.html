@@ -288,6 +288,8 @@
       <button class="nav-item" data-page="notifications"><span class="icon">🔔</span> Activity</button>
       <button class="nav-item" data-page="expenses"><span class="icon">💸</span> Expenses</button>
       <button class="nav-item" data-page="profitloss"><span class="icon">📊</span> Profit & Loss</button>
+      <button class="nav-item" data-page="weeklysummary"><span class="icon">📋</span> Weekly Summary</button>
+      <button class="nav-item" data-page="reviewtools"><span class="icon">⭐</span> Review Tools</button>
       <button class="nav-item" data-page="reports"><span class="icon">📥</span> Reports</button>
       <button class="nav-item" data-page="onlinebooking"><span class="icon">🌐</span> Online Booking</button>
       <button class="nav-item" data-page="import"><span class="icon">📦</span> Import Data</button>
@@ -348,6 +350,8 @@
 <script src="src/pages/expenses.js"></script>
 <script src="src/email.js"></script>
 <script src="src/pages/reports.js"></script>
+<script src="src/pages/reviewtools.js"></script>
+<script src="src/pages/weeklysummary.js"></script>
 <script src="src/pages/backup.js"></script>
 <script src="src/pages/onlinebooking.js"></script>
 <script src="src/pages/import.js"></script>
@@ -424,6 +428,8 @@ var pageConfigs = {
   notifications: { title: 'Activity', action: null },
   expenses: { title: 'Expenses', action: '+ Add Expense', actionFn: 'loadPage("expenses")' },
   profitloss: { title: 'Profit & Loss', action: null },
+  weeklysummary: { title: 'Weekly Summary', action: null },
+  reviewtools: { title: 'Review Tools', action: null },
   reports: { title: 'Reports & Exports', action: null },
   onlinebooking: { title: 'Online Booking', action: null },
   import: { title: 'Import Data', action: null },
@@ -456,6 +462,8 @@ var pageRenderers = {
   notifications: function() { return NotificationsPage.render(); },
   expenses: function() { return ExpensesPage.render(); },
   profitloss: function() { return ProfitLossPage.render(); },
+  weeklysummary: function() { return WeeklySummary.render(); },
+  reviewtools: function() { return ReviewTools.render(); },
   reports: function() { return ReportsPage.render(); },
   onlinebooking: function() { return OnlineBooking.render(); },
   import: function() { return ImportPage.render(); },

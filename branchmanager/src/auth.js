@@ -139,7 +139,7 @@ var Auth = {
   getVisiblePages: function() {
     var all = ['dashboard','pipeline','schedule','dispatch','clients','requests','quotes','jobs','invoices',
       'insights','reviews','team','timesheet','automations','calculators','messaging','clientmap',
-      'recurring','notifications','expenses','profitloss','onlinebooking','import','settings'];
+      'recurring','notifications','expenses','profitloss','reports','onlinebooking','import','settings'];
 
     if (Auth.role === 'crew_member') {
       return ['dashboard','dispatch','schedule','timesheet','notifications'];

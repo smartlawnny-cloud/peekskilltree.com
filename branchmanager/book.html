@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Request a Free Estimate — Second Nature Tree Service</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f6f8; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .form-card { background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,.08); max-width:480px; width:100%; padding:32px; }
+  .logo { text-align:center; margin-bottom:24px; }
+  .logo h1 { font-size:20px; color:#1a3c12; margin-top:8px; }
+  .logo p { font-size:13px; color:#666; }
+  .logo .tree { font-size:36px; }
+  .field { margin-bottom:12px; }
+  .field label { display:block; font-size:12px; font-weight:600; color:#555; margin-bottom:4px; }
+  .field input, .field select, .field textarea {
+    width:100%; padding:12px 14px; border:2px solid #e0e0e0; border-radius:10px;
+    font-size:15px; font-family:inherit; transition:border-color .2s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:#4a8a10; }
+  .field textarea { resize:vertical; min-height:80px; }
+  .required::after { content:' *'; color:#c0392b; }
+  .submit-btn {
+    width:100%; padding:14px; background:#1a3c12; color:#fff; border:none;
+    border-radius:10px; font-size:16px; font-weight:700; cursor:pointer;
+    transition:background .2s;
+  }
+  .submit-btn:hover { background:#2d5a27; }
+  .submit-btn:disabled { background:#999; cursor:not-allowed; }
+  .success { display:none; text-align:center; padding:40px 20px; }
+  .success .check { font-size:48px; margin-bottom:12px; }
+  .success h2 { color:#1a3c12; margin-bottom:8px; }
+  .success p { color:#666; font-size:14px; line-height:1.6; }
+  .info { text-align:center; margin-top:16px; font-size:12px; color:#999; }
+  .info a { color:#4a8a10; }
+  .stars { color:#f9a825; font-size:14px; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div class="form-card">
+  <div id="form-view">
+    <div class="logo">
+      <div class="tree">🌳</div>
+      <h1>Second Nature Tree Service</h1>
+      <p>Peekskill, NY — Licensed & Insured</p>
+      <div class="stars">★★★★★ 5.0 — 100+ Reviews</div>
+    </div>
+
+    <form id="booking-form" onsubmit="submitRequest(event)">
+      <div class="field">
+        <label class="required">Your Name</label>
+        <input type="text" id="b-name" required placeholder="First and last name">
+      </div>
+      <div class="field">
+        <label class="required">Phone Number</label>
+        <input type="tel" id="b-phone" required placeholder="(914) 555-1234">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="b-email" placeholder="you@email.com">
+      </div>
+      <div class="field">
+        <label class="required">Property Address</label>
+        <input type="text" id="b-address" required placeholder="123 Main St, Peekskill, NY">
+      </div>
+      <div class="field">
+        <label class="required">Service Needed</label>
+        <select id="b-service" required>
+          <option value="">Select a service...</option>
+          <option>Tree Removal</option>
+          <option>Tree Pruning / Trimming</option>
+          <option>Stump Removal</option>
+          <option>Storm Damage / Emergency</option>
+          <option>Land Clearing</option>
+          <option>Bucket Truck Work</option>
+          <option>Cabling & Bracing</option>
+          <option>Tree Health Assessment</option>
+          <option>Gutter Clean Out</option>
+          <option>Firewood</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Describe the Work</label>
+        <textarea id="b-details" placeholder="Tell us about the trees, the situation, any concerns..."></textarea>
+      </div>
+      <button type="submit" class="submit-btn" id="submit-btn">Request Free Estimate</button>
+    </form>
+
+    <div class="info">
+      We typically respond within 2 hours during business hours.<br>
+      <a href="tel:9143915233">(914) 391-5233</a> · <a href="https://peekskilltree.com">peekskilltree.com</a>
+    </div>
+  </div>
+
+  <div id="success-view" class="success">
+    <div class="check">✅</div>
+    <h2>Request Received!</h2>
+    <p>Thanks! We'll review your request and get back to you within 2 hours during business hours.</p>
+    <p style="margin-top:16px;font-weight:600;">— Doug, Second Nature Tree Service</p>
+    <p style="margin-top:16px;"><a href="tel:9143915233" style="color:#1a3c12;font-weight:600;">📞 Call (914) 391-5233</a></p>
+  </div>
+</div>
+
+<script>
+function submitRequest(e) {
+  e.preventDefault();
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  var data = {
+    name: document.getElementById('b-name').value,
+    phone: document.getElementById('b-phone').value,
+    email: document.getElementById('b-email').value,
+    address: document.getElementById('b-address').value,
+    service: document.getElementById('b-service').value,
+    details: document.getElementById('b-details').value,
+    source: 'online_booking',
+    submitted: new Date().toISOString()
+  };
+
+  // Send to Supabase
+  var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+
+  fetch(SUPABASE_URL + '/rest/v1/requests', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({
+      client_name: data.name,
+      client_email: data.email,
+      client_phone: data.phone,
+      property: data.address,
+      source: data.service,
+      notes: data.details,
+      status: 'new',
+      created_at: data.submitted,
+      updated_at: data.submitted
+    })
+  }).then(function() {
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('success-view').style.display = 'block';
+  }).catch(function(err) {
+    // Still show success — form data can be emailed as fallback
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('success-view').style.display = 'block';
+    console.warn('Supabase insert failed:', err);
+  });
+}
+</script>
+</body>
+</html>

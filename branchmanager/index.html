@@ -260,6 +260,7 @@
       <button class="nav-item" data-page="notifications"><span class="icon">🔔</span> Activity</button>
       <button class="nav-item" data-page="expenses"><span class="icon">💸</span> Expenses</button>
       <button class="nav-item" data-page="profitloss"><span class="icon">📊</span> Profit & Loss</button>
+      <button class="nav-item" data-page="onlinebooking"><span class="icon">🌐</span> Online Booking</button>
       <button class="nav-item" data-page="import"><span class="icon">📦</span> Import Data</button>
       <button class="nav-item" data-page="settings"><span class="icon">⚙️</span> Settings</button>
     </div>
@@ -308,6 +309,7 @@
 <script src="src/pages/recurring.js"></script>
 <script src="src/pages/notifications.js"></script>
 <script src="src/pages/expenses.js"></script>
+<script src="src/pages/onlinebooking.js"></script>
 <script src="src/pages/import.js"></script>
 <script src="src/pages/settings.js"></script>
 <script src="src/pages/propertymap.js"></script>
@@ -374,6 +376,7 @@ var pageConfigs = {
   notifications: { title: 'Activity', action: null },
   expenses: { title: 'Expenses', action: '+ Add Expense', actionFn: 'loadPage("expenses")' },
   profitloss: { title: 'Profit & Loss', action: null },
+  onlinebooking: { title: 'Online Booking', action: null },
   import: { title: 'Import Data', action: null },
   settings: { title: 'Settings', action: null }
 };
@@ -398,6 +401,7 @@ var pageRenderers = {
   notifications: function() { return NotificationsPage.render(); },
   expenses: function() { return ExpensesPage.render(); },
   profitloss: function() { return ProfitLossPage.render(); },
+  onlinebooking: function() { return OnlineBooking.render(); },
   import: function() { return ImportPage.render(); },
   settings: function() { return SettingsPage.render(); },
   calculators: function() {

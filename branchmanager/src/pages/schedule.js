@@ -8,7 +8,12 @@ var SchedulePage = {
 
   render: function() {
     var self = SchedulePage;
-    var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
+    // Weather widget at top
+    var html = '';
+    if (typeof Weather !== 'undefined') {
+      html += Weather.renderWidget();
+    }
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
       + '<div style="display:flex;align-items:center;gap:8px;">'
       + '<button class="btn btn-outline" onclick="SchedulePage.prev()">&larr;</button>'
       + '<h3 id="cal-title" style="font-size:18px;min-width:200px;text-align:center;">' + self._getTitle() + '</h3>'

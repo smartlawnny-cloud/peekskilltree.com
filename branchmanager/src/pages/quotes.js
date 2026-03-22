@@ -194,67 +194,123 @@ var QuotesPage = {
     var q = DB.quotes.getById(id);
     if (!q) return;
 
-    var html = '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px;">'
-      + '<div><h2 style="margin-bottom:4px;">Quote #' + q.quoteNumber + '</h2>'
-      + '<div style="color:var(--text-light);">' + (q.clientName || '') + '</div>'
-      + '<div style="font-size:13px;color:var(--text-light);">' + (q.property || '') + '</div></div>'
-      + '<div style="text-align:right;">' + UI.statusBadge(q.status) + '<div style="font-size:2rem;font-weight:800;color:var(--green-dark);margin-top:8px;">' + UI.money(q.total) + '</div></div>'
-      + '</div>';
+    // Full-page quote detail (Jobber style)
+    var html = ''
+      // Back + header
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'quotes\')" style="padding:6px 12px;">← Back</button>'
+      + '<div style="flex:1;">'
+      + '<h2 style="font-size:22px;margin-bottom:2px;">Quote #' + q.quoteNumber + '</h2>'
+      + '<span style="font-size:14px;color:var(--text-light);">' + (q.clientName || '') + (q.property ? ' — ' + q.property : '') + '</span>'
+      + '</div>'
+      + '<div style="display:flex;gap:6px;">'
+      + '<button class="btn btn-outline" onclick="QuotesPage.showForm(\'' + id + '\')">Edit</button>'
+      + '<button class="btn btn-outline" onclick="PDF.generateQuote(\'' + id + '\')">📄 PDF</button>'
+      + '<button class="btn btn-outline" onclick="QuotesPage._sendQuote(\'' + id + '\')">📧 Send</button>'
+      + (q.status !== 'converted' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.quoteToJob(\'' + id + '\');loadPage(\'jobs\');">✅ Convert to Job</button>' : '')
+      + '</div></div>'
 
-    // Line items table
-    if (q.lineItems && q.lineItems.length) {
-      html += '<table class="data-table" style="margin-bottom:16px;"><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
-      q.lineItems.forEach(function(item) {
-        html += '<tr><td>' + (item.service || 'Custom') + '</td><td>' + (item.description || '') + '</td><td>' + item.qty + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || item.qty * item.rate) + '</td></tr>';
-      });
-      html += '<tr style="background:var(--bg);"><td colspan="4" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:800;font-size:1.1em;">' + UI.money(q.total) + '</td></tr>';
-      html += '</tbody></table>';
-    }
+      // Stats bar
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">'
+      + UI.statCard('Status', '<span style="font-size:14px;">' + UI.statusBadge(q.status) + '</span>', '', '', '')
+      + UI.statCard('Total', UI.money(q.total), '', '', '')
+      + UI.statCard('Created', UI.dateShort(q.createdAt || ''), '', '', '')
+      + UI.statCard('Client', q.clientName || '—', '', '', '')
+      + '</div>'
 
-    // Description
-    if (q.description) {
-      html += '<div style="padding:12px;background:var(--bg);border-radius:8px;margin-bottom:16px;font-size:14px;">' + q.description + '</div>';
-    }
+      // Two column
+      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">'
 
-    // Workflow actions
-    if (typeof Workflow !== 'undefined') {
-      html += '<div style="margin-bottom:16px;">' + Workflow.quoteActions(id) + '</div>';
-    }
+      // Left — main
+      + '<div>'
 
-    // Status buttons
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">';
+      // Status workflow
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Status</h4>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
     ['draft', 'sent', 'awaiting', 'approved', 'declined'].forEach(function(s) {
-      html += '<button class="btn ' + (q.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage.setStatus(\'' + id + '\',\'' + s + '\')" style="font-size:12px;padding:6px 12px;">' + s + '</button>';
+      html += '<button class="btn ' + (q.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage.setStatus(\'' + id + '\',\'' + s + '\')" style="font-size:12px;padding:6px 14px;">' + s + '</button>';
     });
-    html += '</div>';
+    html += '</div></div>'
 
-    // Contact info
-    if (q.clientPhone || q.clientEmail) {
-      html += '<div style="display:flex;gap:12px;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:16px;font-size:13px;">';
-      if (q.clientPhone) html += '<a href="tel:' + q.clientPhone + '" style="color:var(--green-dark);font-weight:600;">📞 ' + q.clientPhone + '</a>';
-      if (q.clientEmail) html += '<a href="mailto:' + q.clientEmail + '" style="color:var(--green-dark);font-weight:600;">✉️ ' + q.clientEmail + '</a>';
-      html += '</div>';
+      // Description
+      + (q.description ? '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+        + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Description</h4>'
+        + '<p style="font-size:14px;line-height:1.6;margin:0;">' + q.description + '</p></div>' : '')
+
+      // Line items
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">'
+      + '<div style="padding:12px 16px;border-bottom:1px solid var(--border);"><h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin:0;">Line Items</h4></div>';
+    if (q.lineItems && q.lineItems.length) {
+      html += '<table class="data-table" style="border:none;border-radius:0;"><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
+      q.lineItems.forEach(function(item) {
+        html += '<tr><td>' + (item.service || 'Custom') + '</td><td style="color:var(--text-light);">' + (item.description || '') + '</td><td>' + item.qty + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || item.qty * item.rate) + '</td></tr>';
+      });
+      html += '<tr style="background:var(--green-bg);"><td colspan="4" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:800;font-size:15px;color:var(--accent);">' + UI.money(q.total) + '</td></tr>';
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">No line items</div>';
     }
+    html += '</div>'
 
-    // Photos
-    if (typeof Photos !== 'undefined') {
-      html += Photos.renderGallery('quote', id);
+      // Photos
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Photos</h4>';
+    if (typeof Photos !== 'undefined') { html += Photos.renderGallery('quote', id); }
+    else { html += '<div style="color:var(--text-light);font-size:13px;">No photos</div>'; }
+    html += '</div></div>'
+
+      // Right sidebar
+      + '<div>'
+
+      // Client info
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Client</h4>'
+      + '<div style="font-size:14px;font-weight:600;margin-bottom:6px;">' + (q.clientName || '—') + '</div>'
+      + (q.property ? '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">📍 ' + q.property + '</div>' : '')
+      + (q.clientPhone ? '<a href="tel:' + q.clientPhone + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 Call</a>' : '')
+      + (q.clientEmail ? '<a href="mailto:' + q.clientEmail + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">✉️ Email</a>' : '')
+      + (q.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(q.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;">🗺 Directions</a>' : '')
+      + '</div>'
+
+      // Property map
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Property Map</h4>'
+      + '<button class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;" onclick="PropertyMap.show(\'' + (q.property || '').replace(/'/g, "\\'") + '\')">📐 Equipment Layout</button>'
+      + '</div>'
+
+      // Notes
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Internal Notes</h4>'
+      + (q.notes ? '<div style="font-size:13px;line-height:1.6;">' + q.notes + '</div>' : '<div style="color:var(--text-light);font-size:13px;">No notes</div>')
+      + '</div>'
+
+      + '</div></div>';
+
+    // Render full page
+    document.getElementById('pageTitle').textContent = 'Quote #' + q.quoteNumber;
+    document.getElementById('pageContent').innerHTML = html;
+    document.getElementById('pageAction').style.display = 'none';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+  },
+
+  _sendQuote: function(id) {
+    var q = DB.quotes.getById(id);
+    if (!q) return;
+    if (q.clientEmail) {
+      UI.toast('Quote sent to ' + q.clientEmail);
+      DB.quotes.update(id, { status: 'sent' });
+      QuotesPage.showDetail(id);
+    } else {
+      UI.toast('No client email on file', 'error');
     }
-
-    UI.showModal('Quote #' + q.quoteNumber, html, {
-      wide: true,
-      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
-        + ' <button class="btn btn-outline" onclick="PDF.generateQuote(\'' + id + '\')">📄 PDF</button>'
-        + ' <button class="btn btn-outline" onclick="UI.closeModal();QuotesPage.showForm(\'' + id + '\')">✏️ Edit</button>'
-        + (q.status !== 'converted' ? ' <button class="btn btn-primary" onclick="Workflow.quoteToJob(\'' + id + '\');UI.closeModal();loadPage(\'jobs\');">✅ Convert to Job</button>' : '')
-    });
   },
 
   setStatus: function(id, status) {
     DB.quotes.update(id, { status: status });
     UI.toast('Quote status: ' + status);
-    UI.closeModal();
-    loadPage('quotes');
+    QuotesPage.showDetail(id);
   },
 
   _applyEstimator: function() {

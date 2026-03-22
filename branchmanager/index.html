@@ -245,7 +245,10 @@
     <div class="sidebar-header">
       <h1>🌳 Branch Manager <span>Second Nature Tree Service</span></h1>
     </div>
-    <div class="sidebar-user">Doug Brown &bull; Owner</div>
+    <div class="sidebar-user" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Doug Brown · Owner</span>
+      <button onclick="Auth.logout()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">Logout</button>
+    </div>
     <div style="padding:8px 16px;">
       <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="QuickCreate.show()">+ Create New</button>
     </div>
@@ -312,6 +315,7 @@
 </div>
 
 <!-- Module scripts -->
+<script src="src/auth.js"></script>
 <script src="src/db.js"></script>
 <script src="src/ui.js"></script>
 <script src="src/pages/dashboard.js"></script>
@@ -443,7 +447,40 @@ var pageRenderers = {
   }
 };
 
+// ── Auth Gate ──
+function checkAuth() {
+  if (!Auth.isLoggedIn()) {
+    document.querySelector('.app').style.display = 'none';
+    document.querySelector('.bottom-nav').style.display = 'none';
+    var loginDiv = document.getElementById('login-screen');
+    if (!loginDiv) {
+      loginDiv = document.createElement('div');
+      loginDiv.id = 'login-screen';
+      document.body.insertBefore(loginDiv, document.body.firstChild);
+    }
+    loginDiv.innerHTML = Auth.renderLogin();
+    return false;
+  }
+  document.querySelector('.app').style.display = '';
+  var loginDiv = document.getElementById('login-screen');
+  if (loginDiv) loginDiv.innerHTML = '';
+
+  // Update sidebar user info
+  var userEl = document.querySelector('.sidebar-user');
+  if (userEl) userEl.innerHTML = Auth.user.name + ' <span style="opacity:.6;">· ' + Auth.role.replace(/_/g, ' ') + '</span>';
+
+  // Hide nav items user can't access
+  document.querySelectorAll('.nav-item[data-page]').forEach(function(btn) {
+    var page = btn.dataset.page;
+    btn.style.display = Auth.canAccess(page) ? '' : 'none';
+  });
+
+  return true;
+}
+
 function loadPage(page) {
+  if (!checkAuth()) return;
+  if (!Auth.canAccess(page)) { page = 'dashboard'; }
   var config = pageConfigs[page] || { title: page, action: null };
   document.getElementById('pageTitle').textContent = config.title;
   var actionBtn = document.getElementById('pageAction');
@@ -506,7 +543,9 @@ var QuickCreate = {
 };
 
 // ── Init ──
-loadPage('dashboard');
+if (checkAuth()) {
+  loadPage('dashboard');
+}
 
 // ── Service Worker ──
 if ('serviceWorker' in navigator) {

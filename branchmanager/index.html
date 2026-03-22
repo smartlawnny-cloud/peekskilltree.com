@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Branch Manager">
 <link rel="manifest" href="manifest.json">
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
   :root {
@@ -85,10 +86,10 @@
   }
   .nav-item:hover { background:var(--sidebar-hover); color:var(--text); }
   .nav-item.active { background:var(--sidebar-active); color:var(--accent); font-weight:600; }
-  .nav-item .icon { width:18px; text-align:center; font-size:14px; }
-  .nav-item .icon.si { font-family:inherit; font-size:15px; color:var(--text-light); font-style:normal; line-height:1; }
-  .nav-item:hover .icon.si { color:var(--text); }
-  .nav-item.active .icon.si { color:var(--accent); }
+  .nav-item .icon { width:20px; text-align:center; font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .nav-item .li { width:18px; height:18px; stroke:var(--text-light); stroke-width:1.75; }
+  .nav-item:hover .li { stroke:var(--text); }
+  .nav-item.active .li { stroke:var(--accent); }
   .nav-item .badge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; min-width:18px; text-align:center; }
 
   .sidebar-footer {
@@ -346,45 +347,45 @@
     </div>
 
     <div class="sidebar-nav">
-      <!-- Jobber-style nav (matches their exact layout) -->
-      <button class="nav-item active" data-page="dashboard"><span class="icon si">⌂</span> Dashboard</button>
-      <button class="nav-item" data-page="pipeline"><span class="icon si">⊞</span> Pipeline</button>
-      <button class="nav-item" data-page="schedule"><span class="icon si">▦</span> Schedule</button>
-      <button class="nav-item" data-page="clients"><span class="icon si">♟</span> Clients <span class="badge" id="badge-clients"></span></button>
-      <button class="nav-item" data-page="requests"><span class="icon si">↙</span> Requests <span class="badge" id="badge-requests"></span></button>
-      <button class="nav-item" data-page="quotes"><span class="icon si">☰</span> Quotes</button>
-      <button class="nav-item" data-page="jobs"><span class="icon si">⚙</span> Jobs</button>
-      <button class="nav-item" data-page="invoices"><span class="icon si">$</span> Invoices</button>
-      <button class="nav-item" data-page="timesheet"><span class="icon si">◷</span> Timesheets</button>
-      <button class="nav-item" data-page="expenses"><span class="icon si">↗</span> Expenses</button>
-      <button class="nav-item" data-page="insights"><span class="icon si">◔</span> Reporting</button>
-      <button class="nav-item" data-page="team"><span class="icon si">⚑</span> Team</button>
-      <button class="nav-item" data-page="automations"><span class="icon si">⟳</span> Apps</button>
-      <button class="nav-item" data-page="settings"><span class="icon si">⚙</span> Settings</button>
+      <!-- Jobber-style nav with Lucide SVG icons -->
+      <button class="nav-item active" data-page="dashboard"><span class="icon"><i data-lucide="layout-dashboard" class="li"></i></span> Dashboard</button>
+      <button class="nav-item" data-page="pipeline"><span class="icon"><i data-lucide="kanban" class="li"></i></span> Pipeline</button>
+      <button class="nav-item" data-page="schedule"><span class="icon"><i data-lucide="calendar" class="li"></i></span> Schedule</button>
+      <button class="nav-item" data-page="clients"><span class="icon"><i data-lucide="users" class="li"></i></span> Clients <span class="badge" id="badge-clients"></span></button>
+      <button class="nav-item" data-page="requests"><span class="icon"><i data-lucide="inbox" class="li"></i></span> Requests <span class="badge" id="badge-requests"></span></button>
+      <button class="nav-item" data-page="quotes"><span class="icon"><i data-lucide="file-text" class="li"></i></span> Quotes</button>
+      <button class="nav-item" data-page="jobs"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Jobs</button>
+      <button class="nav-item" data-page="invoices"><span class="icon"><i data-lucide="receipt" class="li"></i></span> Invoices</button>
+      <button class="nav-item" data-page="timesheet"><span class="icon"><i data-lucide="clock" class="li"></i></span> Timesheets</button>
+      <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
+      <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Reporting</button>
+      <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team</button>
+      <button class="nav-item" data-page="automations"><span class="icon"><i data-lucide="puzzle" class="li"></i></span> Apps</button>
+      <button class="nav-item" data-page="settings"><span class="icon"><i data-lucide="settings" class="li"></i></span> Settings</button>
 
       <!-- Extra tools (expandable) -->
       <div class="nav-section" style="cursor:pointer;" onclick="var el=document.getElementById('more-nav');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.more-arrow').textContent=el.style.display==='none'?'▸':'▾';">More <span class="more-arrow" style="float:right;">▸</span></div>
       <div id="more-nav" style="display:none;">
-        <button class="nav-item" data-page="calculators"><span class="icon si">∑</span> Calculators</button>
-        <button class="nav-item" data-page="crewview"><span class="icon si">☷</span> Crew View</button>
-        <button class="nav-item" data-page="employeecenter"><span class="icon si">◉</span> My Pay</button>
-        <button class="nav-item" data-page="budget"><span class="icon si">⊟</span> Budget Planner</button>
-        <button class="nav-item" data-page="dispatch"><span class="icon si">⇢</span> Dispatch</button>
-        <button class="nav-item" data-page="clientmap"><span class="icon si">◎</span> Client Map</button>
-        <button class="nav-item" data-page="photomap"><span class="icon si">⊡</span> Photo Map</button>
-        <button class="nav-item" data-page="messaging"><span class="icon si">◻</span> Messages</button>
-        <button class="nav-item" data-page="equipment"><span class="icon si">⚙</span> Equipment</button>
-        <button class="nav-item" data-page="jobcosting"><span class="icon si">▤</span> Job Costing</button>
-        <button class="nav-item" data-page="recurring"><span class="icon si">↻</span> Recurring Jobs</button>
-        <button class="nav-item" data-page="notifications"><span class="icon si">◌</span> Activity Feed</button>
-        <button class="nav-item" data-page="profitloss"><span class="icon si">▥</span> Profit & Loss</button>
-        <button class="nav-item" data-page="weeklysummary"><span class="icon si">⊞</span> Weekly Summary</button>
-        <button class="nav-item" data-page="reviews"><span class="icon si">★</span> Reviews</button>
-        <button class="nav-item" data-page="reviewtools"><span class="icon si">★</span> Review Tools</button>
-        <button class="nav-item" data-page="reports"><span class="icon si">↓</span> Reports</button>
-        <button class="nav-item" data-page="onlinebooking"><span class="icon si">⊕</span> Online Booking</button>
-        <button class="nav-item" data-page="import"><span class="icon si">⤒</span> Import Data</button>
-        <button class="nav-item" data-page="backup"><span class="icon si">⇩</span> Backup</button>
+        <button class="nav-item" data-page="calculators"><span class="icon"><i data-lucide="calculator" class="li"></i></span> Calculators</button>
+        <button class="nav-item" data-page="crewview"><span class="icon"><i data-lucide="shield" class="li"></i></span> Crew View</button>
+        <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="wallet" class="li"></i></span> My Pay</button>
+        <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget Planner</button>
+        <button class="nav-item" data-page="dispatch"><span class="icon"><i data-lucide="truck" class="li"></i></span> Dispatch</button>
+        <button class="nav-item" data-page="clientmap"><span class="icon"><i data-lucide="map-pin" class="li"></i></span> Client Map</button>
+        <button class="nav-item" data-page="photomap"><span class="icon"><i data-lucide="camera" class="li"></i></span> Photo Map</button>
+        <button class="nav-item" data-page="messaging"><span class="icon"><i data-lucide="message-square" class="li"></i></span> Messages</button>
+        <button class="nav-item" data-page="equipment"><span class="icon"><i data-lucide="cog" class="li"></i></span> Equipment</button>
+        <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Job Costing</button>
+        <button class="nav-item" data-page="recurring"><span class="icon"><i data-lucide="repeat" class="li"></i></span> Recurring Jobs</button>
+        <button class="nav-item" data-page="notifications"><span class="icon"><i data-lucide="bell" class="li"></i></span> Activity Feed</button>
+        <button class="nav-item" data-page="profitloss"><span class="icon"><i data-lucide="line-chart" class="li"></i></span> Profit & Loss</button>
+        <button class="nav-item" data-page="weeklysummary"><span class="icon"><i data-lucide="clipboard-list" class="li"></i></span> Weekly Summary</button>
+        <button class="nav-item" data-page="reviews"><span class="icon"><i data-lucide="star" class="li"></i></span> Reviews</button>
+        <button class="nav-item" data-page="reviewtools"><span class="icon"><i data-lucide="award" class="li"></i></span> Review Tools</button>
+        <button class="nav-item" data-page="reports"><span class="icon"><i data-lucide="download" class="li"></i></span> Reports</button>
+        <button class="nav-item" data-page="onlinebooking"><span class="icon"><i data-lucide="globe" class="li"></i></span> Online Booking</button>
+        <button class="nav-item" data-page="import"><span class="icon"><i data-lucide="upload" class="li"></i></span> Import Data</button>
+        <button class="nav-item" data-page="backup"><span class="icon"><i data-lucide="database" class="li"></i></span> Backup</button>
       </div>
     </div>
 
@@ -406,10 +407,10 @@
           <input type="text" placeholder="Search clients, jobs..." id="globalSearch">
         </div>
         <div class="topbar-icons">
-          <button class="topbar-icon" onclick="loadPage('notifications')" title="Notifications"><span>🔔</span><span class="topbar-dot" id="notif-dot"></span></button>
-          <button class="topbar-icon" onclick="loadPage('messaging')" title="Messages"><span>💬</span></button>
-          <button class="topbar-icon" onclick="QuickCreate.show()" title="Create New"><span style="font-size:18px;font-weight:700;color:var(--accent);">＋</span></button>
-          <button class="topbar-icon" onclick="loadPage('settings')" title="Settings"><span>⚙️</span></button>
+          <button class="topbar-icon" onclick="loadPage('notifications')" title="Notifications"><i data-lucide="bell" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i><span class="topbar-dot" id="notif-dot"></span></button>
+          <button class="topbar-icon" onclick="loadPage('messaging')" title="Messages"><i data-lucide="message-square" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i></button>
+          <button class="topbar-icon" onclick="QuickCreate.show()" title="Create New"><i data-lucide="plus" style="width:20px;height:20px;stroke:var(--accent);stroke-width:2.5;"></i></button>
+          <button class="topbar-icon" onclick="loadPage('settings')" title="Settings"><i data-lucide="settings" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i></button>
           <div class="topbar-avatar" onclick="this.querySelector('.avatar-menu').classList.toggle('open')">
             <span>DB</span>
             <div class="avatar-menu">
@@ -742,5 +743,13 @@ if (typeof origLoadPage === 'function') {
     </button>
   </div>
 </nav>
+<script>
+// Initialize Lucide icons after DOM is ready
+if (typeof lucide !== 'undefined') lucide.createIcons();
+// Re-init after page loads (for dynamically added icons)
+document.addEventListener('DOMContentLoaded', function() { if (typeof lucide !== 'undefined') lucide.createIcons(); });
+// Restore sidebar state
+if (localStorage.getItem('bm-sidebar-collapsed') === 'true') document.getElementById('sidebar').classList.add('collapsed');
+</script>
 </body>
 </html>

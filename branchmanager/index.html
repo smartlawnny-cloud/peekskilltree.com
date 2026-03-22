@@ -736,14 +736,14 @@ if (typeof origLoadPage === 'function') {
     <button class="bottom-nav-btn active" data-page="dashboard" onclick="loadPage('dashboard')">
       <span class="bnav-icon">🏠</span>Home
     </button>
-    <button class="bottom-nav-btn" data-page="pipeline" onclick="loadPage('pipeline')">
-      <span class="bnav-icon">📊</span>Pipeline
-    </button>
-    <button class="bottom-nav-btn" data-page="dispatch" onclick="loadPage('dispatch')">
-      <span class="bnav-icon">🚛</span>Dispatch
-    </button>
     <button class="bottom-nav-btn" data-page="schedule" onclick="loadPage('schedule')">
       <span class="bnav-icon">📅</span>Schedule
+    </button>
+    <button class="bottom-nav-btn" onclick="QuickCreate.show()" style="position:relative;">
+      <span class="bnav-icon" style="background:var(--accent);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:-8px auto 0;">+</span>New
+    </button>
+    <button class="bottom-nav-btn" data-page="notifications" onclick="loadPage('notifications')">
+      <span class="bnav-icon">🔔</span>Activity
     </button>
     <button class="bottom-nav-btn" onclick="toggleSidebar()">
       <span class="bnav-icon">☰</span>More

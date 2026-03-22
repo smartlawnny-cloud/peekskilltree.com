@@ -78,6 +78,11 @@ var InvoicesPage = {
         + '</div>';
     }
 
+    // Payment history with deposit tracking
+    if (typeof Payments !== 'undefined') {
+      html += Payments.renderForInvoice(id);
+    }
+
     // Contact info
     if (inv.clientPhone || inv.clientEmail) {
       html += '<div style="display:flex;gap:12px;padding:10px;background:var(--bg);border-radius:8px;margin-top:16px;font-size:13px;">';

@@ -284,6 +284,8 @@
       <button class="nav-item" data-page="clientmap"><span class="icon">🗺</span> Client Map</button>
       <button class="nav-item" data-page="photomap"><span class="icon">📸</span> Photo Map</button>
       <button class="nav-item" data-page="messaging"><span class="icon">💬</span> Messages</button>
+      <button class="nav-item" data-page="equipment"><span class="icon">🔧</span> Equipment</button>
+      <button class="nav-item" data-page="jobcosting"><span class="icon">📈</span> Job Costing</button>
       <button class="nav-item" data-page="recurring"><span class="icon">🔄</span> Recurring</button>
       <button class="nav-item" data-page="notifications"><span class="icon">🔔</span> Activity</button>
       <button class="nav-item" data-page="expenses"><span class="icon">💸</span> Expenses</button>
@@ -345,6 +347,8 @@
 <script src="src/pages/crewview.js"></script>
 <script src="src/pages/employeecenter.js"></script>
 <script src="src/pages/budget.js"></script>
+<script src="src/pages/equipment.js"></script>
+<script src="src/pages/jobcosting.js"></script>
 <script src="src/pages/dispatch.js"></script>
 <script src="src/pages/recurring.js"></script>
 <script src="src/pages/notifications.js"></script>
@@ -425,6 +429,8 @@ var pageConfigs = {
   clientmap: { title: 'Client Map', action: null },
   photomap: { title: 'Photo Map', action: null },
   messaging: { title: 'Messages', action: null },
+  equipment: { title: 'Equipment', action: '+ Add', actionFn: 'EquipmentPage.showForm()' },
+  jobcosting: { title: 'Job Costing', action: null },
   recurring: { title: 'Recurring Jobs', action: null },
   notifications: { title: 'Activity', action: null },
   expenses: { title: 'Expenses', action: '+ Add Expense', actionFn: 'loadPage("expenses")' },
@@ -459,6 +465,8 @@ var pageRenderers = {
   clientmap: function() { return ClientMapPage.render(); },
   photomap: function() { return PhotoMap.render(); },
   messaging: function() { return MessagingPage.render(); },
+  equipment: function() { return EquipmentPage.render(); },
+  jobcosting: function() { return JobCosting.render(); },
   recurring: function() { return RecurringJobs.render(); },
   notifications: function() { return NotificationsPage.render(); },
   expenses: function() { return ExpensesPage.render(); },

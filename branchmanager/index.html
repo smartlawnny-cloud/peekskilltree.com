@@ -278,6 +278,8 @@
       <div class="nav-section">Tools</div>
       <button class="nav-item" data-page="calculators"><span class="icon">🧮</span> Calculators</button>
       <button class="nav-item" data-page="crewview"><span class="icon">👷</span> Crew View</button>
+      <button class="nav-item" data-page="employeecenter"><span class="icon">💰</span> My Pay</button>
+      <button class="nav-item" data-page="budget"><span class="icon">📋</span> Budget Planner</button>
       <button class="nav-item" data-page="dispatch"><span class="icon">🚛</span> Dispatch</button>
       <button class="nav-item" data-page="clientmap"><span class="icon">🗺</span> Client Map</button>
       <button class="nav-item" data-page="messaging"><span class="icon">💬</span> Messages</button>
@@ -336,6 +338,8 @@
 <script src="src/pages/profitloss.js"></script>
 <script src="src/pages/clientmap.js"></script>
 <script src="src/pages/crewview.js"></script>
+<script src="src/pages/employeecenter.js"></script>
+<script src="src/pages/budget.js"></script>
 <script src="src/pages/dispatch.js"></script>
 <script src="src/pages/recurring.js"></script>
 <script src="src/pages/notifications.js"></script>
@@ -408,6 +412,8 @@ var pageConfigs = {
   automations: { title: 'Automations', action: null },
   calculators: { title: 'Calculators', action: null },
   crewview: { title: 'Crew View', action: null },
+  employeecenter: { title: 'My Pay & Hours', action: null },
+  budget: { title: 'Budget Planner', action: null },
   dispatch: { title: 'Dispatch', action: '🗺 Open Route', actionFn: 'DispatchPage.openRoute()' },
   clientmap: { title: 'Client Map', action: null },
   messaging: { title: 'Messages', action: null },
@@ -437,6 +443,8 @@ var pageRenderers = {
   timesheet: function() { return TimeTrackPage.renderClockWidget() + TimeTrackPage.renderTimesheet(); },
   automations: function() { return AutomationsPage.render(); },
   crewview: function() { return CrewView.render(); },
+  employeecenter: function() { return EmployeeCenter.render(); },
+  budget: function() { return BudgetPage.render(); },
   dispatch: function() { return DispatchPage.render(); },
   clientmap: function() { return ClientMapPage.render(); },
   messaging: function() { return MessagingPage.render(); },

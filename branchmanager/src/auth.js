@@ -150,10 +150,10 @@ var Auth = {
       'recurring','notifications','expenses','profitloss','reports','onlinebooking','import','settings'];
 
     if (Auth.role === 'crew_member') {
-      return ['crewview','dispatch','schedule','timesheet','notifications'];
+      return ['crewview','dispatch','schedule','timesheet','employeecenter','budget','notifications'];
     }
     if (Auth.role === 'crew_lead') {
-      return ['dashboard','dispatch','schedule','clients','jobs','quotes','timesheet','messaging','notifications','expenses'];
+      return ['dashboard','dispatch','schedule','clients','jobs','quotes','timesheet','messaging','employeecenter','budget','notifications','expenses'];
     }
     return all; // owner sees everything
   },

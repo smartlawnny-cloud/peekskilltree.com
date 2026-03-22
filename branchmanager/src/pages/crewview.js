@@ -145,8 +145,58 @@ var CrewView = {
       localStorage.setItem('bm-time-entries', JSON.stringify(entries));
 
       UI.toast('Clocked out! ' + hrs + ' hours logged');
+
+      // Prompt for expenses
+      CrewView._showExpensePrompt(hrs);
     }
-    loadPage('crewview');
+  },
+
+  _showExpensePrompt: function(hours) {
+    var html = '<div style="text-align:center;margin-bottom:16px;">'
+      + '<div style="font-size:36px;">⛽</div>'
+      + '<h3 style="margin:8px 0 4px;">Log any expenses?</h3>'
+      + '<p style="font-size:13px;color:var(--text-light);">You worked ' + hours + ' hours. Add fuel, dump fees, or supplies before you forget.</p></div>'
+      + '<div style="display:grid;gap:8px;">'
+      + '<div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;">'
+      + '<select id="exp-cat-prompt" style="padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<option value="fuel">⛽ Fuel</option><option value="supplies">🪚 Supplies</option><option value="dump">🚛 Dump Fee</option><option value="food">🍔 Food</option><option value="other">📋 Other</option></select>'
+      + '<input type="number" id="exp-amt-prompt" placeholder="Amount $" step="0.01" style="padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-weight:700;">'
+      + '<input type="text" id="exp-note-prompt" placeholder="Note (optional)" style="padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '</div>'
+      + '<button onclick="CrewView._saveExpenseFromPrompt()" style="background:var(--green-dark);color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">💰 Add Expense</button>'
+      + '</div>';
+
+    UI.showModal('End of Day', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal();loadPage(\'crewview\');">Skip — No Expenses</button>'
+    });
+  },
+
+  _saveExpenseFromPrompt: function() {
+    var amt = parseFloat(document.getElementById('exp-amt-prompt').value);
+    if (!amt || amt <= 0) { UI.toast('Enter an amount', 'error'); return; }
+    var cat = document.getElementById('exp-cat-prompt').value;
+    var note = document.getElementById('exp-note-prompt').value;
+
+    if (!DB.expenses) {
+      DB.expenses = {
+        getAll: function() { try { return JSON.parse(localStorage.getItem('bm-expenses')) || []; } catch(e) { return []; } },
+        create: function(r) {
+          var all = DB.expenses.getAll();
+          r.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+          r.date = r.date || new Date().toISOString();
+          all.unshift(r);
+          localStorage.setItem('bm-expenses', JSON.stringify(all));
+          return r;
+        }
+      };
+    }
+
+    DB.expenses.create({ amount: amt, category: cat, description: note || cat });
+    UI.toast('Expense logged: $' + amt.toFixed(2));
+
+    // Clear and allow adding more
+    document.getElementById('exp-amt-prompt').value = '';
+    document.getElementById('exp-note-prompt').value = '';
   },
 
   startJob: function(jobId) {

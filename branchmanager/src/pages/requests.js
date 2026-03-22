@@ -86,39 +86,60 @@ var RequestsPage = {
     var r = DB.requests.getById(id);
     if (!r) return;
 
-    var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">'
-      + '<div>'
-      + '<h3 style="margin-bottom:12px;">' + (r.clientName || 'Unknown') + '</h3>'
-      + '<div style="font-size:14px;line-height:2;">'
-      + '<div>📍 ' + (r.property || '—') + '</div>'
-      + '<div>📞 ' + UI.phone(r.phone) + '</div>'
-      + '<div>✉️ ' + (r.email || '—') + '</div>'
-      + '<div>📣 Source: <strong>' + (r.source || '—') + '</strong></div>'
-      + '<div>📅 Requested: ' + UI.dateRelative(r.createdAt) + '</div>'
+    var html = ''
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'requests\')" style="padding:6px 12px;">← Back</button>'
+      + '<div style="flex:1;"><h2 style="font-size:22px;margin-bottom:2px;">' + (r.clientName || 'New Request') + '</h2>'
+      + '<span style="font-size:14px;color:var(--text-light);">' + UI.dateRelative(r.createdAt) + ' · via ' + (r.source || 'Unknown') + '</span></div>'
+      + '<div style="display:flex;gap:6px;">'
+      + '<button class="btn btn-primary" onclick="QuotesPage.showForm(null,\'' + (r.clientId || '') + '\')">+ Create Quote</button>'
+      + '</div></div>'
+
+      + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">'
+      + UI.statCard('Status', '<span style="font-size:14px;">' + UI.statusBadge(r.status) + '</span>', '', '', '')
+      + UI.statCard('Source', r.source || '—', '', '', '')
+      + UI.statCard('Received', UI.dateShort(r.createdAt), '', '', '')
       + '</div>'
-      + '</div>'
+
+      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">'
       + '<div>'
-      + '<h4>Notes</h4>'
-      + '<p style="font-size:14px;color:var(--text-light);">' + (r.notes || 'No notes') + '</p>'
+
+      // Status workflow
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Status</h4>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    ['new', 'assessment_scheduled', 'assessment_complete', 'converted', 'archived'].forEach(function(s) {
+      html += '<button class="btn ' + (r.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="RequestsPage.setStatus(\'' + r.id + '\',\'' + s + '\')" style="font-size:12px;padding:6px 14px;">' + s.replace(/_/g, ' ') + '</button>';
+    });
+    html += '</div></div>'
+
+      // Notes
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Request Details</h4>'
+      + '<p style="font-size:14px;line-height:1.7;margin:0;">' + (r.notes || 'No details provided') + '</p>'
+      + '</div></div>'
+
+      // Right sidebar
+      + '<div>'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Contact</h4>'
+      + '<div style="font-size:14px;font-weight:600;margin-bottom:8px;">' + (r.clientName || '—') + '</div>'
+      + (r.property ? '<div style="font-size:13px;color:var(--text-light);margin-bottom:10px;">📍 ' + r.property + '</div>' : '')
+      + (r.phone ? '<a href="tel:' + r.phone.replace(/\D/g,'') + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 ' + UI.phone(r.phone) + '</a>' : '')
+      + (r.email ? '<a href="mailto:' + r.email + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">✉️ ' + r.email + '</a>' : '')
+      + (r.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(r.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;">🗺 Directions</a>' : '')
+      + '</div>'
       + '</div></div>';
 
-    var statusOptions = '<div style="display:flex;gap:8px;margin-top:16px;">';
-    ['new', 'assessment_scheduled', 'assessment_complete', 'converted', 'archived'].forEach(function(s) {
-      statusOptions += '<button class="btn ' + (r.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="RequestsPage.setStatus(\'' + r.id + '\',\'' + s + '\')">' + s.replace(/_/g, ' ') + '</button>';
-    });
-    statusOptions += '</div>';
-
-    UI.showModal('Request — ' + (r.clientName || ''), html + statusOptions, {
-      wide: true,
-      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
-        + ' <button class="btn btn-primary" onclick="UI.closeModal();QuotesPage.showForm(null, \'' + r.clientId + '\')">Create Quote</button>'
-    });
+    document.getElementById('pageTitle').textContent = 'Request';
+    document.getElementById('pageContent').innerHTML = html;
+    document.getElementById('pageAction').style.display = 'none';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   },
 
   setStatus: function(id, status) {
     DB.requests.update(id, { status: status });
     UI.toast('Status updated to ' + status.replace(/_/g, ' '));
-    UI.closeModal();
-    loadPage('requests');
+    RequestsPage.showDetail(id);
   }
 };

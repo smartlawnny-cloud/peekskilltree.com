@@ -16,6 +16,43 @@ var DashboardPage = {
       + UI.statCard('Active Jobs', stats.activeJobs.toString(), 'In progress', '', '', "loadPage('jobs')")
       + '</div>';
 
+    // Revenue chart (last 6 months)
+    var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var allInvoices = DB.invoices.getAll();
+    var now = new Date();
+    var chartData = [];
+    for (var m = 5; m >= 0; m--) {
+      var mDate = new Date(now.getFullYear(), now.getMonth() - m, 1);
+      var mEnd = new Date(now.getFullYear(), now.getMonth() - m + 1, 0);
+      var mRev = allInvoices.filter(function(inv) {
+        var d = new Date(inv.createdAt);
+        return d >= mDate && d <= mEnd && (inv.status === 'paid' || inv.status === 'collected');
+      }).reduce(function(s, inv) { return s + (inv.total || 0); }, 0);
+      chartData.push({ label: monthNames[mDate.getMonth()], value: mRev });
+    }
+    var maxRev = Math.max.apply(null, chartData.map(function(d) { return d.value; })) || 1;
+    var ytdRevenue = allInvoices.filter(function(inv) {
+      return new Date(inv.createdAt).getFullYear() === now.getFullYear();
+    }).reduce(function(s, inv) { return s + (inv.total || 0); }, 0);
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;cursor:pointer;" onclick="loadPage(\'profitloss\')">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="font-size:16px;">Revenue</h3>'
+      + '<div style="text-align:right;"><span style="font-size:22px;font-weight:800;color:var(--green-dark);">' + UI.moneyInt(ytdRevenue) + '</span>'
+      + '<div style="font-size:11px;color:var(--text-light);">' + now.getFullYear() + ' YTD</div></div></div>'
+      + '<div style="display:flex;align-items:flex-end;gap:6px;height:80px;">';
+    chartData.forEach(function(d) {
+      var barH = Math.max(4, (d.value / maxRev) * 70);
+      var isCurrentMonth = d.label === monthNames[now.getMonth()];
+      html += '<div style="flex:1;text-align:center;">'
+        + '<div style="height:70px;display:flex;align-items:flex-end;justify-content:center;">'
+        + '<div style="width:100%;max-width:36px;height:' + barH + 'px;background:' + (isCurrentMonth ? 'var(--green-dark)' : '#c8e6c9') + ';border-radius:4px 4px 0 0;"></div></div>'
+        + '<div style="font-size:10px;color:var(--text-light);margin-top:4px;">' + d.label + '</div>'
+        + (d.value > 0 ? '<div style="font-size:10px;font-weight:600;">$' + Math.round(d.value/1000) + 'k</div>' : '')
+        + '</div>';
+    });
+    html += '</div></div>';
+
     // Time clock widget
     html += TimeTrackPage.renderClockWidget();
 

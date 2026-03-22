@@ -150,7 +150,7 @@ var Auth = {
       'recurring','notifications','expenses','profitloss','reports','onlinebooking','import','settings'];
 
     if (Auth.role === 'crew_member') {
-      return ['dashboard','dispatch','schedule','timesheet','notifications'];
+      return ['crewview','dispatch','schedule','timesheet','notifications'];
     }
     if (Auth.role === 'crew_lead') {
       return ['dashboard','dispatch','schedule','clients','jobs','quotes','timesheet','messaging','notifications','expenses'];

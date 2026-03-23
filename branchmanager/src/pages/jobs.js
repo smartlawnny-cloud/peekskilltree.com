@@ -2,42 +2,89 @@
  * Branch Manager — Jobs Page
  */
 var JobsPage = {
+  _page: 0, _perPage: 50, _search: '', _filter: 'all',
+
   render: function() {
+    var self = JobsPage;
     var all = DB.jobs.getAll();
     var late = all.filter(function(j) { return j.status === 'late'; }).length;
     var scheduled = all.filter(function(j) { return j.status === 'scheduled'; }).length;
+    var inProgress = all.filter(function(j) { return j.status === 'in_progress'; }).length;
     var completed = all.filter(function(j) { return j.status === 'completed'; }).length;
 
     var html = '<div class="stat-grid">'
-      + UI.statCard('Late', late.toString(), 'Need attention', late > 0 ? 'down' : '', '')
-      + UI.statCard('Scheduled', scheduled.toString(), 'Upcoming', '', '')
-      + UI.statCard('Completed', completed.toString(), 'All time', '', '')
-      + UI.statCard('Total Jobs', all.length.toString(), '', '', '')
+      + UI.statCard('Late', late.toString(), 'Need attention', late > 0 ? 'down' : '', '', "JobsPage._setFilter('late')")
+      + UI.statCard('Scheduled', scheduled.toString(), 'Upcoming', '', '', "JobsPage._setFilter('scheduled')")
+      + UI.statCard('In Progress', inProgress.toString(), 'Active now', '', '', "JobsPage._setFilter('in_progress')")
+      + UI.statCard('Completed', completed.toString(), 'All time', '', '', "JobsPage._setFilter('completed')")
       + '</div>';
+
+    // Search + filter
+    html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">'
+      + '<div style="flex:1;min-width:200px;position:relative;">'
+      + '<input type="text" placeholder="Search jobs..." value="' + self._search + '" oninput="JobsPage._search=this.value;JobsPage._page=0;loadPage(\'jobs\')" style="width:100%;padding:9px 12px 9px 34px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-light);">🔍</span></div>'
+      + '<div style="display:flex;gap:4px;">';
+    [['all', all.length], ['scheduled', scheduled], ['in_progress', inProgress], ['completed', completed], ['late', late]].forEach(function(f) {
+      if (f[0] === 'late' && f[1] === 0) return; // hide late if none
+      html += '<button class="btn ' + (self._filter === f[0] ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage._setFilter(\'' + f[0] + '\')" style="font-size:12px;padding:6px 10px;">' + f[0].replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase();}) + ' (' + f[1] + ')</button>';
+    });
+    html += '</div></div>';
+
+    var filtered = self._getFiltered();
+    var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
+
+    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Showing ' + Math.min(self._page * self._perPage + 1, filtered.length) + '–' + Math.min((self._page + 1) * self._perPage, filtered.length) + ' of ' + filtered.length + '</div>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + '<th>Client</th><th>Job #</th><th>Description</th><th>Scheduled</th><th>Status</th><th>Crew</th><th style="text-align:right;">Total</th>'
+      + '<th>Client</th><th>#</th><th>Description</th><th>Scheduled</th><th>Status</th><th>Crew</th><th style="text-align:right;">Total</th>'
       + '</tr></thead><tbody>';
 
-    if (all.length === 0) {
-      html += '<tr><td colspan="7">' + UI.emptyState('🔧', 'No jobs yet', 'Create a job from an approved quote or add one manually.', '+ New Job', 'JobsPage.showForm()') + '</td></tr>';
+    if (page.length === 0) {
+      html += '<tr><td colspan="7">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No jobs match "' + self._search + '"</div>' : UI.emptyState('🔧', 'No jobs yet', 'Create a job from an approved quote.', '+ New Job', 'JobsPage.showForm()')) + '</td></tr>';
     } else {
-      all.forEach(function(j) {
-        html += '<tr onclick="JobsPage.showDetail(\'' + j.id + '\')">'
+      page.forEach(function(j) {
+        html += '<tr onclick="JobsPage.showDetail(\'' + j.id + '\')" style="cursor:pointer;">'
           + '<td><strong>' + (j.clientName || '—') + '</strong></td>'
           + '<td>#' + (j.jobNumber || '') + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);">' + (j.description || '—') + '</td>'
-          + '<td>' + UI.dateShort(j.scheduledDate) + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (j.description || '—') + '</td>'
+          + '<td style="white-space:nowrap;">' + UI.dateShort(j.scheduledDate) + '</td>'
           + '<td>' + UI.statusBadge(j.status) + '</td>'
-          + '<td style="font-size:12px;">' + (j.crew ? j.crew.join(', ') : '—') + '</td>'
+          + '<td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (j.crew ? j.crew.join(', ') : '—') + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(j.total) + '</td>'
           + '</tr>';
       });
     }
     html += '</tbody></table></div>';
+
+    // Pagination
+    var totalPages = Math.ceil(filtered.length / self._perPage);
+    if (totalPages > 1) {
+      html += '<div style="display:flex;justify-content:center;gap:4px;margin-top:12px;">';
+      html += '<button class="btn btn-outline" onclick="JobsPage._goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
+      for (var p = Math.max(0, self._page - 2); p <= Math.min(totalPages - 1, self._page + 2); p++) {
+        html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage._goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+      }
+      html += '<button class="btn btn-outline" onclick="JobsPage._goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
+      html += '</div>';
+    }
     return html;
   },
+
+  _getFiltered: function() {
+    var self = JobsPage;
+    var all = DB.jobs.getAll();
+    if (self._filter !== 'all') all = all.filter(function(j) { return j.status === self._filter; });
+    if (self._search && self._search.length >= 2) {
+      var s = self._search.toLowerCase();
+      all = all.filter(function(j) { return (j.clientName||'').toLowerCase().indexOf(s) >= 0 || (j.description||'').toLowerCase().indexOf(s) >= 0 || (j.property||'').toLowerCase().indexOf(s) >= 0 || String(j.jobNumber).indexOf(s) >= 0; });
+    }
+    all.sort(function(a, b) { return (b.jobNumber || 0) - (a.jobNumber || 0); });
+    return all;
+  },
+  _setFilter: function(f) { JobsPage._filter = f; JobsPage._page = 0; loadPage('jobs'); },
+  _goPage: function(p) { var t = Math.ceil(JobsPage._getFiltered().length / JobsPage._perPage); JobsPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('jobs'); },
 
   showForm: function(jobId) {
     var j = jobId ? DB.jobs.getById(jobId) : {};

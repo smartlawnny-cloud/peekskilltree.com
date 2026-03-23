@@ -114,10 +114,11 @@ var ClientsPage = {
     var c = DB.clients.getById(id);
     if (!c) return;
 
-    // Get related records
-    var clientJobs = DB.jobs.getAll().filter(function(j) { return j.clientId === id; });
-    var clientInvoices = DB.invoices.getAll().filter(function(i) { return i.clientId === id; });
-    var clientQuotes = DB.quotes.getAll().filter(function(q) { return q.clientId === id; });
+    // Get related records (match by clientId OR clientName since imports may not have IDs linked)
+    var cName = (c.name || '').trim().toLowerCase();
+    var clientJobs = DB.jobs.getAll().filter(function(j) { return j.clientId === id || (j.clientName || '').trim().toLowerCase() === cName; });
+    var clientInvoices = DB.invoices.getAll().filter(function(i) { return i.clientId === id || (i.clientName || '').trim().toLowerCase() === cName; });
+    var clientQuotes = DB.quotes.getAll().filter(function(q) { return q.clientId === id || (q.clientName || '').trim().toLowerCase() === cName; });
     var totalRevenue = clientInvoices.filter(function(i) { return i.status === 'paid'; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
     var totalOutstanding = clientInvoices.filter(function(i) { return i.status !== 'paid'; }).reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0);
 

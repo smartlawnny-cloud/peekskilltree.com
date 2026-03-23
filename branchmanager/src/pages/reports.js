@@ -4,7 +4,59 @@
  */
 var ReportsPage = {
   render: function() {
-    var html = '<div class="section-header"><h2>Reports & Exports</h2>'
+    var html = '';
+
+    // Invoice Aging Report
+    var invoices = DB.invoices.getAll();
+    var unpaid = invoices.filter(function(i) { return i.status !== 'paid' && (i.total || 0) > 0; });
+    var now = Date.now();
+    var aging = { current: [], over30: [], over60: [], over90: [] };
+    unpaid.forEach(function(inv) {
+      var due = inv.dueDate ? new Date(inv.dueDate).getTime() : new Date(inv.createdAt).getTime();
+      var days = Math.floor((now - due) / 86400000);
+      if (days > 90) aging.over90.push(inv);
+      else if (days > 60) aging.over60.push(inv);
+      else if (days > 30) aging.over30.push(inv);
+      else aging.current.push(inv);
+    });
+    var sumOf = function(arr) { return arr.reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0); };
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:20px;">'
+      + '<h3 style="margin-bottom:16px;">Invoice Aging</h3>'
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">'
+      + '<div style="text-align:center;padding:14px;background:#e8f5e9;border-radius:10px;"><div style="font-size:11px;color:#666;text-transform:uppercase;font-weight:600;">Current</div><div style="font-size:22px;font-weight:800;color:#2e7d32;">' + UI.moneyInt(sumOf(aging.current)) + '</div><div style="font-size:12px;color:#666;">' + aging.current.length + ' invoice' + (aging.current.length !== 1 ? 's' : '') + '</div></div>'
+      + '<div style="text-align:center;padding:14px;background:#fff3e0;border-radius:10px;"><div style="font-size:11px;color:#666;text-transform:uppercase;font-weight:600;">30+ Days</div><div style="font-size:22px;font-weight:800;color:#e65100;">' + UI.moneyInt(sumOf(aging.over30)) + '</div><div style="font-size:12px;color:#666;">' + aging.over30.length + ' invoice' + (aging.over30.length !== 1 ? 's' : '') + '</div></div>'
+      + '<div style="text-align:center;padding:14px;background:#fce4ec;border-radius:10px;"><div style="font-size:11px;color:#666;text-transform:uppercase;font-weight:600;">60+ Days</div><div style="font-size:22px;font-weight:800;color:#c62828;">' + UI.moneyInt(sumOf(aging.over60)) + '</div><div style="font-size:12px;color:#666;">' + aging.over60.length + ' invoice' + (aging.over60.length !== 1 ? 's' : '') + '</div></div>'
+      + '<div style="text-align:center;padding:14px;background:#ffebee;border-radius:10px;"><div style="font-size:11px;color:#666;text-transform:uppercase;font-weight:600;">90+ Days</div><div style="font-size:22px;font-weight:800;color:#b71c1c;">' + UI.moneyInt(sumOf(aging.over90)) + '</div><div style="font-size:12px;color:#666;">' + aging.over90.length + ' invoice' + (aging.over90.length !== 1 ? 's' : '') + '</div></div>'
+      + '</div>';
+
+    // List unpaid invoices
+    if (unpaid.length > 0) {
+      html += '<table class="data-table"><thead><tr><th>Client</th><th>#</th><th>Due</th><th>Days</th><th style="text-align:right;">Amount</th><th>Action</th></tr></thead><tbody>';
+      unpaid.sort(function(a, b) {
+        var da = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+        var db = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+        return da - db;
+      }).forEach(function(inv) {
+        var due = inv.dueDate ? new Date(inv.dueDate).getTime() : new Date(inv.createdAt).getTime();
+        var days = Math.floor((now - due) / 86400000);
+        var color = days > 90 ? '#b71c1c' : days > 60 ? '#c62828' : days > 30 ? '#e65100' : 'var(--text)';
+        html += '<tr>'
+          + '<td><strong>' + (inv.clientName || '—') + '</strong></td>'
+          + '<td>#' + (inv.invoiceNumber || '') + '</td>'
+          + '<td>' + UI.dateShort(inv.dueDate) + '</td>'
+          + '<td style="font-weight:700;color:' + color + ';">' + (days > 0 ? days + 'd overdue' : 'Current') + '</td>'
+          + '<td style="text-align:right;font-weight:600;">' + UI.money(inv.balance || inv.total) + '</td>'
+          + '<td><button class="btn btn-outline" style="font-size:11px;padding:4px 10px;" onclick="Workflow.sendInvoice(\'' + inv.id + '\')">Send Reminder</button></td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="text-align:center;padding:16px;color:var(--accent);font-weight:600;">All caught up! No outstanding invoices.</div>';
+    }
+    html += '</div>';
+
+    html += '<div class="section-header"><h2>Reports & Exports</h2>'
       + '<p style="color:var(--text-light);margin-top:4px;">Download your data as CSV files for accounting, tax prep, or backup.</p></div>';
 
     var reports = [

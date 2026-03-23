@@ -247,6 +247,20 @@
     .stat-grid { grid-template-columns:1fr; }
   }
 
+  /* ── Print ── */
+  @media print {
+    .sidebar, .bottom-nav, .topbar, .modal-overlay, .sidebar-overlay, #inv-bulk-bar { display:none !important; }
+    .app { display:block !important; }
+    .content-area { margin-left:0 !important; }
+    .content { overflow:visible !important; height:auto !important; padding:0 !important; }
+    body { background:#fff !important; color:#000 !important; overflow:visible !important; height:auto !important; }
+    .stat-card { border:1px solid #ccc !important; break-inside:avoid; }
+    .data-table { font-size:11px; }
+    .data-table th { background:#f0f0f0 !important; }
+    .btn, button { display:none !important; }
+    a { color:#000 !important; text-decoration:none !important; }
+  }
+
   /* ── Modals ── */
   .modal-overlay {
     position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:200;

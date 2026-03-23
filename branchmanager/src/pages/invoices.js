@@ -35,17 +35,28 @@ var InvoicesPage = {
 
     html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Showing ' + Math.min(self._page * self._perPage + 1, filtered.length) + '–' + Math.min((self._page + 1) * self._perPage, filtered.length) + ' of ' + filtered.length + '</div>';
 
+    // Bulk action bar (hidden until selections made)
+    html += '<div id="inv-bulk-bar" style="display:none;position:sticky;top:60px;z-index:50;background:var(--accent);color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:8px;display:none;justify-content:space-between;align-items:center;">'
+      + '<span id="inv-bulk-count" style="font-weight:700;">0 selected</span>'
+      + '<div style="display:flex;gap:6px;">'
+      + '<button onclick="InvoicesPage._bulkAction(\'paid\')" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Mark Paid</button>'
+      + '<button onclick="InvoicesPage._bulkAction(\'reminder\')" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Send Reminder</button>'
+      + '<button onclick="InvoicesPage._bulkAction(\'clear\')" style="background:none;color:rgba(255,255,255,.7);border:none;padding:6px 8px;font-size:12px;cursor:pointer;">Clear</button>'
+      + '</div></div>';
+
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
+      + '<th style="width:32px;"><input type="checkbox" onchange="InvoicesPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
       + '<th>Client</th><th>#</th><th>Due</th><th>Subject</th><th>Status</th><th style="text-align:right;">Total</th><th style="text-align:right;">Balance</th>'
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
-      html += '<tr><td colspan="7">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No invoices match "' + self._search + '"</div>' : UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.')) + '</td></tr>';
+      html += '<tr><td colspan="8">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No invoices match "' + self._search + '"</div>' : UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.')) + '</td></tr>';
     } else {
       page.forEach(function(inv) {
-        html += '<tr onclick="InvoicesPage.showDetail(\'' + inv.id + '\')" style="cursor:pointer;">'
-          + '<td><strong>' + (inv.clientName || '—') + '</strong></td>'
+        html += '<tr style="cursor:pointer;">'
+          + '<td onclick="event.stopPropagation()"><input type="checkbox" class="inv-check" value="' + inv.id + '" onchange="InvoicesPage._updateBulk()" style="width:16px;height:16px;"></td>'
+          + '<td onclick="InvoicesPage.showDetail(\'' + inv.id + '\')"><strong>' + (inv.clientName || '—') + '</strong></td>'
           + '<td>#' + (inv.invoiceNumber || '') + '</td>'
           + '<td style="white-space:nowrap;">' + UI.dateShort(inv.dueDate) + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (inv.subject || '—') + '</td>'
@@ -85,6 +96,42 @@ var InvoicesPage = {
   },
   _setFilter: function(f) { InvoicesPage._filter = f; InvoicesPage._page = 0; loadPage('invoices'); },
   _goPage: function(p) { var t = Math.ceil(InvoicesPage._getFiltered().length / InvoicesPage._perPage); InvoicesPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('invoices'); },
+
+  _selectAll: function(checked) {
+    document.querySelectorAll('.inv-check').forEach(function(cb) { cb.checked = checked; });
+    InvoicesPage._updateBulk();
+  },
+  _updateBulk: function() {
+    var selected = document.querySelectorAll('.inv-check:checked');
+    var bar = document.getElementById('inv-bulk-bar');
+    var count = document.getElementById('inv-bulk-count');
+    if (bar) bar.style.display = selected.length > 0 ? 'flex' : 'none';
+    if (count) count.textContent = selected.length + ' selected';
+  },
+  _getSelected: function() {
+    return Array.from(document.querySelectorAll('.inv-check:checked')).map(function(cb) { return cb.value; });
+  },
+  _bulkAction: function(action) {
+    var ids = InvoicesPage._getSelected();
+    if (ids.length === 0) return;
+    if (action === 'paid') {
+      UI.confirm('Mark ' + ids.length + ' invoice' + (ids.length > 1 ? 's' : '') + ' as paid?', function() {
+        ids.forEach(function(id) { Workflow.markPaid(id, 'bulk'); });
+        UI.toast(ids.length + ' invoices marked paid');
+        loadPage('invoices');
+      });
+    } else if (action === 'reminder') {
+      var sent = 0;
+      ids.forEach(function(id) {
+        var inv = DB.invoices.getById(id);
+        if (inv && inv.status !== 'paid') { Workflow.sendInvoice(id); sent++; }
+      });
+      UI.toast(sent + ' reminder' + (sent > 1 ? 's' : '') + ' queued');
+    } else if (action === 'clear') {
+      document.querySelectorAll('.inv-check').forEach(function(cb) { cb.checked = false; });
+      InvoicesPage._updateBulk();
+    }
+  },
 
   showDetail: function(id) {
     var inv = DB.invoices.getById(id);

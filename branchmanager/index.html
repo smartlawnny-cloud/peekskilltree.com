@@ -74,7 +74,7 @@
   .sidebar.collapsed .nav-item .badge,
   .sidebar.collapsed .sidebar-footer,
   .sidebar.collapsed > div[style*="padding"] { display:none !important; }
-  .sidebar.collapsed .sidebar-header { justify-content:center; padding:14px 8px; }
+  .sidebar.collapsed .sidebar-header { justify-content:center; padding:14px 8px; cursor:pointer; }
   .sidebar.collapsed .nav-item { justify-content:center; padding:10px 0; }
   .sidebar.collapsed .nav-item .icon { width:auto; font-size:16px; }
   .sidebar-header {
@@ -368,7 +368,7 @@
 
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
-    <div class="sidebar-header">
+    <div class="sidebar-header" onclick="if(document.getElementById('sidebar').classList.contains('collapsed'))toggleSidebar()">
       <div class="sidebar-logo">
         <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="32" height="32" rx="7" fill="#1a8a5c"/>

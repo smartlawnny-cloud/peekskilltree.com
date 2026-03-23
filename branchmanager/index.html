@@ -397,7 +397,7 @@
     </div>
 
     <div class="sidebar-footer" style="display:flex;gap:6px;">
-      <button onclick="document.getElementById('sidebar').classList.toggle('collapsed');localStorage.setItem('bm-sidebar-collapsed',document.getElementById('sidebar').classList.contains('collapsed'))" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;color:var(--text-light);flex:1;" title="Collapse sidebar">◀</button>
+      <button onclick="toggleSidebar()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;color:var(--text-light);flex:1;" title="Collapse sidebar">◀</button>
       <button onclick="Auth.logout()" style="background:none;border:1px solid #e8bcbc;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;color:#c0392b;white-space:nowrap;" title="Log out">Log Out</button>
     </div>
   </nav>
@@ -519,8 +519,15 @@ document.querySelectorAll('.nav-item').forEach(function(btn) {
 });
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebarOverlay').classList.toggle('open');
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('sidebarOverlay');
+  if (window.innerWidth <= 768) {
+    sb.classList.toggle('open');
+    ov.classList.toggle('open');
+  } else {
+    sb.classList.toggle('collapsed');
+    localStorage.setItem('bm-sidebar-collapsed', sb.classList.contains('collapsed'));
+  }
 }
 
 // ── Page Config ──

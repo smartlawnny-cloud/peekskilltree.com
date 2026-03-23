@@ -3,41 +3,92 @@
  * Quote list, builder with line items, status management
  */
 var QuotesPage = {
+  _page: 0, _perPage: 50, _search: '', _filter: 'all', _sort: 'createdAt', _sortDir: -1,
+
   render: function() {
+    var self = QuotesPage;
     var all = DB.quotes.getAll();
     var draft = all.filter(function(q) { return q.status === 'draft'; }).length;
     var sent = all.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).length;
     var approved = all.filter(function(q) { return q.status === 'approved'; }).length;
 
     var html = '<div class="stat-grid">'
-      + UI.statCard('Draft', draft.toString(), '', '', '')
-      + UI.statCard('Awaiting Response', sent.toString(), '', '', '')
-      + UI.statCard('Approved', approved.toString(), '', '', '')
-      + UI.statCard('Total Quotes', all.length.toString(), '', '', '')
+      + UI.statCard('Draft', draft.toString(), '', '', '', "QuotesPage._setFilter('draft')")
+      + UI.statCard('Awaiting Response', sent.toString(), '', '', '', "QuotesPage._setFilter('sent')")
+      + UI.statCard('Approved', approved.toString(), '', '', '', "QuotesPage._setFilter('approved')")
+      + UI.statCard('Total Quotes', all.length.toString(), '', '', '', "QuotesPage._setFilter('all')")
       + '</div>';
+
+    // Search + filter
+    html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">'
+      + '<div style="flex:1;min-width:200px;position:relative;">'
+      + '<input type="text" placeholder="Search quotes..." value="' + self._search + '" oninput="QuotesPage._search=this.value;QuotesPage._page=0;loadPage(\'quotes\')" style="width:100%;padding:9px 12px 9px 34px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-light);">🔍</span></div></div>';
+
+    var filtered = self._getFiltered();
+    var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
+
+    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Showing ' + Math.min(self._page * self._perPage + 1, filtered.length) + '–' + Math.min((self._page + 1) * self._perPage, filtered.length) + ' of ' + filtered.length + '</div>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
       + '<th>Client</th><th>Quote #</th><th>Description</th><th>Created</th><th>Status</th><th style="text-align:right;">Total</th>'
       + '</tr></thead><tbody>';
 
-    if (all.length === 0) {
-      html += '<tr><td colspan="6">' + UI.emptyState('📋', 'No quotes yet', 'Create your first quote to send to a client.', '+ New Quote', 'QuotesPage.showForm()') + '</td></tr>';
+    if (page.length === 0) {
+      html += '<tr><td colspan="6">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No quotes match "' + self._search + '"</div>' : UI.emptyState('📋', 'No quotes yet', 'Create your first quote.', '+ New Quote', 'QuotesPage.showForm()')) + '</td></tr>';
     } else {
-      all.forEach(function(q) {
-        html += '<tr onclick="QuotesPage.showDetail(\'' + q.id + '\')">'
+      page.forEach(function(q) {
+        html += '<tr onclick="QuotesPage.showDetail(\'' + q.id + '\')" style="cursor:pointer;">'
           + '<td><strong>' + (q.clientName || '—') + '</strong></td>'
           + '<td>#' + (q.quoteNumber || '') + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);">' + (q.description || q.property || '—') + '</td>'
-          + '<td>' + UI.dateShort((q.createdAt || '').split('T')[0]) + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (q.description || q.property || '—') + '</td>'
+          + '<td>' + UI.dateShort(q.createdAt) + '</td>'
           + '<td>' + UI.statusBadge(q.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(q.total) + '</td>'
           + '</tr>';
       });
     }
     html += '</tbody></table></div>';
+
+    // Pagination
+    var totalPages = Math.ceil(filtered.length / self._perPage);
+    if (totalPages > 1) {
+      html += '<div style="display:flex;justify-content:center;gap:4px;margin-top:12px;">';
+      html += '<button class="btn btn-outline" onclick="QuotesPage._goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
+      for (var p = Math.max(0, self._page - 2); p <= Math.min(totalPages - 1, self._page + 2); p++) {
+        html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage._goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+      }
+      html += '<button class="btn btn-outline" onclick="QuotesPage._goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
+      html += '</div>';
+    }
     return html;
   },
+
+  _getFiltered: function() {
+    var self = QuotesPage;
+    var all = DB.quotes.getAll();
+    if (self._filter !== 'all') {
+      all = all.filter(function(q) {
+        if (self._filter === 'sent') return q.status === 'sent' || q.status === 'awaiting';
+        return q.status === self._filter;
+      });
+    }
+    if (self._search && self._search.length >= 2) {
+      var s = self._search.toLowerCase();
+      all = all.filter(function(q) {
+        return (q.clientName || '').toLowerCase().indexOf(s) >= 0 || (q.description || '').toLowerCase().indexOf(s) >= 0 || (q.property || '').toLowerCase().indexOf(s) >= 0 || String(q.quoteNumber).indexOf(s) >= 0;
+      });
+    }
+    all.sort(function(a, b) {
+      var va = a[self._sort] || '', vb = b[self._sort] || '';
+      if (typeof va === 'number') return (va - vb) * self._sortDir;
+      return va.toString().localeCompare(vb.toString()) * self._sortDir;
+    });
+    return all;
+  },
+  _setFilter: function(f) { QuotesPage._filter = f; QuotesPage._page = 0; loadPage('quotes'); },
+  _goPage: function(p) { var t = Math.ceil(QuotesPage._getFiltered().length / QuotesPage._perPage); QuotesPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('quotes'); },
 
   showForm: function(quoteId, clientId) {
     var q = quoteId ? DB.quotes.getById(quoteId) : {};

@@ -2,42 +2,89 @@
  * Branch Manager — Invoices Page
  */
 var InvoicesPage = {
+  _page: 0, _perPage: 50, _search: '', _filter: 'all',
+
   render: function() {
+    var self = InvoicesPage;
     var all = DB.invoices.getAll();
     var receivable = DB.invoices.totalReceivable();
+    var unpaid = all.filter(function(i) { return i.status !== 'paid'; });
     var draft = all.filter(function(i) { return i.status === 'draft'; }).length;
     var paid = all.filter(function(i) { return i.status === 'paid'; }).length;
 
     var html = '<div class="stat-grid">'
-      + UI.statCard('Receivables', UI.moneyInt(receivable), all.filter(function(i){return i.status!=='paid';}).length + ' unpaid', receivable > 0 ? 'down' : '', '')
-      + UI.statCard('Draft', draft.toString(), '', '', '')
-      + UI.statCard('Paid', paid.toString(), 'All time', '', '')
-      + UI.statCard('Total Invoices', all.length.toString(), '', '', '')
+      + UI.statCard('Receivables', UI.moneyInt(receivable), unpaid.length + ' unpaid', receivable > 0 ? 'down' : '', '', "InvoicesPage._setFilter('unpaid')")
+      + UI.statCard('Draft', draft.toString(), '', '', '', "InvoicesPage._setFilter('draft')")
+      + UI.statCard('Paid', paid.toString(), 'All time', '', '', "InvoicesPage._setFilter('paid')")
+      + UI.statCard('Total Invoices', all.length.toString(), '', '', '', "InvoicesPage._setFilter('all')")
       + '</div>';
+
+    // Search
+    html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">'
+      + '<div style="flex:1;min-width:200px;position:relative;">'
+      + '<input type="text" placeholder="Search invoices..." value="' + self._search + '" oninput="InvoicesPage._search=this.value;InvoicesPage._page=0;loadPage(\'invoices\')" style="width:100%;padding:9px 12px 9px 34px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-light);">🔍</span></div>'
+      + '<div style="display:flex;gap:4px;">';
+    [['all', all.length], ['unpaid', unpaid.length], ['paid', paid], ['draft', draft]].forEach(function(f) {
+      html += '<button class="btn ' + (self._filter === f[0] ? 'btn-primary' : 'btn-outline') + '" onclick="InvoicesPage._setFilter(\'' + f[0] + '\')" style="font-size:12px;padding:6px 10px;">' + f[0].charAt(0).toUpperCase() + f[0].slice(1) + ' (' + f[1] + ')</button>';
+    });
+    html += '</div></div>';
+
+    var filtered = self._getFiltered();
+    var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
+
+    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Showing ' + Math.min(self._page * self._perPage + 1, filtered.length) + '–' + Math.min((self._page + 1) * self._perPage, filtered.length) + ' of ' + filtered.length + '</div>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + '<th>Client</th><th>Invoice #</th><th>Due Date</th><th>Subject</th><th>Status</th><th style="text-align:right;">Total</th><th style="text-align:right;">Balance</th>'
+      + '<th>Client</th><th>#</th><th>Due</th><th>Subject</th><th>Status</th><th style="text-align:right;">Total</th><th style="text-align:right;">Balance</th>'
       + '</tr></thead><tbody>';
 
-    if (all.length === 0) {
-      html += '<tr><td colspan="7">' + UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.') + '</td></tr>';
+    if (page.length === 0) {
+      html += '<tr><td colspan="7">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No invoices match "' + self._search + '"</div>' : UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.')) + '</td></tr>';
     } else {
-      all.forEach(function(inv) {
-        html += '<tr onclick="InvoicesPage.showDetail(\'' + inv.id + '\')">'
+      page.forEach(function(inv) {
+        html += '<tr onclick="InvoicesPage.showDetail(\'' + inv.id + '\')" style="cursor:pointer;">'
           + '<td><strong>' + (inv.clientName || '—') + '</strong></td>'
           + '<td>#' + (inv.invoiceNumber || '') + '</td>'
-          + '<td>' + UI.dateShort(inv.dueDate) + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);">' + (inv.subject || '—') + '</td>'
+          + '<td style="white-space:nowrap;">' + UI.dateShort(inv.dueDate) + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (inv.subject || '—') + '</td>'
           + '<td>' + UI.statusBadge(inv.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(inv.total) + '</td>'
-          + '<td style="text-align:right;font-weight:600;color:' + (inv.balance > 0 ? 'var(--red)' : 'var(--green-dark)') + ';">' + UI.money(inv.balance) + '</td>'
+          + '<td style="text-align:right;font-weight:600;color:' + ((inv.balance||0) > 0 ? 'var(--red)' : 'var(--accent)') + ';">' + UI.money(inv.balance || 0) + '</td>'
           + '</tr>';
       });
     }
     html += '</tbody></table></div>';
+
+    // Pagination
+    var totalPages = Math.ceil(filtered.length / self._perPage);
+    if (totalPages > 1) {
+      html += '<div style="display:flex;justify-content:center;gap:4px;margin-top:12px;">';
+      html += '<button class="btn btn-outline" onclick="InvoicesPage._goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
+      for (var p = Math.max(0, self._page - 2); p <= Math.min(totalPages - 1, self._page + 2); p++) {
+        html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="InvoicesPage._goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+      }
+      html += '<button class="btn btn-outline" onclick="InvoicesPage._goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
+      html += '</div>';
+    }
     return html;
   },
+
+  _getFiltered: function() {
+    var self = InvoicesPage;
+    var all = DB.invoices.getAll();
+    if (self._filter === 'unpaid') all = all.filter(function(i) { return i.status !== 'paid'; });
+    else if (self._filter !== 'all') all = all.filter(function(i) { return i.status === self._filter; });
+    if (self._search && self._search.length >= 2) {
+      var s = self._search.toLowerCase();
+      all = all.filter(function(i) { return (i.clientName||'').toLowerCase().indexOf(s) >= 0 || (i.subject||'').toLowerCase().indexOf(s) >= 0 || String(i.invoiceNumber).indexOf(s) >= 0; });
+    }
+    all.sort(function(a, b) { return (b.invoiceNumber || 0) - (a.invoiceNumber || 0); });
+    return all;
+  },
+  _setFilter: function(f) { InvoicesPage._filter = f; InvoicesPage._page = 0; loadPage('invoices'); },
+  _goPage: function(p) { var t = Math.ceil(InvoicesPage._getFiltered().length / InvoicesPage._perPage); InvoicesPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('invoices'); },
 
   showDetail: function(id) {
     var inv = DB.invoices.getById(id);

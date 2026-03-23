@@ -33,6 +33,24 @@
     --sidebar-active: #e6f6ee;
     --accent: #1a8a5c;
   }
+  [data-theme="dark"] {
+    --green-bg: #1a2e23;
+    --white: #1e2128;
+    --bg: #15171c;
+    --text: #e2e8f0;
+    --text-light: #8492a6;
+    --border: #2d3748;
+    --sidebar-bg: #1a1d24;
+    --sidebar-border: #2d3748;
+    --sidebar-hover: #1a2e23;
+    --sidebar-active: #1a3328;
+  }
+  [data-theme="dark"] .data-table th { background:#1a1d24; }
+  [data-theme="dark"] .stat-card { background:var(--white); }
+  [data-theme="dark"] .modal { background:#1e2128; color:var(--text); }
+  [data-theme="dark"] .modal-header { border-color:var(--border); }
+  [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background:#2d3748; color:var(--text); border-color:#4a5568; }
+  [data-theme="dark"] .toast { background:#2d3748; color:#e2e8f0; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; font-size:14px; }
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -418,6 +436,7 @@
           <button class="topbar-icon" onclick="loadPage('notifications')" title="Notifications"><i data-lucide="bell" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i><span class="topbar-dot" id="notif-dot"></span></button>
           <button class="topbar-icon" onclick="loadPage('messaging')" title="Messages"><i data-lucide="message-square" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i></button>
           <button class="topbar-icon" onclick="QuickCreate.show()" title="Create New"><i data-lucide="plus" style="width:20px;height:20px;stroke:var(--accent);stroke-width:2.5;"></i></button>
+          <button class="topbar-icon" onclick="toggleDarkMode()" id="dark-mode-btn" title="Toggle dark mode" style="font-size:16px;">🌙</button>
           <button class="topbar-icon" onclick="loadPage('settings')" title="Settings"><i data-lucide="settings" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i></button>
           <div class="topbar-avatar" onclick="this.querySelector('.avatar-menu').classList.toggle('open')">
             <span>DB</span>
@@ -718,6 +737,20 @@ var _loadPageWrapped = function(page) {
 // Override only if loadPage exists
 if (typeof origLoadPage === 'function') {
   window.loadPage = _loadPageWrapped;
+}
+
+// ── Dark Mode ──
+function toggleDarkMode() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+  localStorage.setItem('bm-dark-mode', isDark ? '' : 'dark');
+  var btn = document.getElementById('dark-mode-btn');
+  if (btn) btn.textContent = isDark ? '🌙' : '☀️';
+}
+// Restore on load
+if (localStorage.getItem('bm-dark-mode') === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  setTimeout(function() { var btn = document.getElementById('dark-mode-btn'); if (btn) btn.textContent = '☀️'; }, 100);
 }
 
 // ── Keyboard Shortcuts ──

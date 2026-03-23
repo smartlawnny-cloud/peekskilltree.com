@@ -188,8 +188,14 @@ var Workflow = {
     if (!to) { UI.toast('Enter an email address', 'error'); return; }
     var subject = document.getElementById('q-send-subject').value;
     var body = document.getElementById('q-send-body').value;
-    var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-    window.open(mailto, '_blank');
+
+    Workflow._sendViaSupabase(to, subject, body, function(ok) {
+      if (!ok) {
+        var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+        window.open(mailto, '_blank');
+      }
+    });
+
     DB.quotes.update(quoteId, { status: 'sent', sentAt: new Date().toISOString(), sentTo: to });
     UI.closeModal();
     UI.toast('Quote sent to ' + to);
@@ -246,11 +252,29 @@ var Workflow = {
 
     var subject = document.getElementById('inv-send-subject').value;
     var body = document.getElementById('inv-send-body').value;
-    var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-    window.open(mailto, '_blank');
+
+    // Try SendGrid via Supabase, fallback to mailto
+    Workflow._sendViaSupabase(to, subject, body, function(ok) {
+      if (!ok) {
+        var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+        window.open(mailto, '_blank');
+      }
+    });
 
     DB.invoices.update(invoiceId, { status: 'awaiting_payment', sentAt: new Date().toISOString(), sentTo: to });
     UI.closeModal();
     UI.toast('Invoice sent to ' + to);
+  },
+
+  _sendViaSupabase: function(to, subject, body, callback) {
+    var url = 'https://ltpivkqahvplapyagljt.supabase.co/rest/v1/rpc/send_email';
+    var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+    fetch(url, {
+      method: 'POST',
+      headers: { 'apikey': key, 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to_email: to, subject: subject, body: body })
+    }).then(function(r) { return r.json(); })
+      .then(function(d) { if (callback) callback(d && d.success); })
+      .catch(function() { if (callback) callback(false); });
   }
 };

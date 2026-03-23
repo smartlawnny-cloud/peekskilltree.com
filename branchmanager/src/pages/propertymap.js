@@ -211,9 +211,9 @@ var PropertyMap = {
     var eq = self.equipmentList.find(function(e) { return e.id === eqId; });
     if (!eq) return;
 
-    // Create scaled rectangle element
+    // Create scaled rectangle element with rotation support
     var el = document.createElement('div');
-    // Use a minimum size so it's always visible, scale up at high zoom
+    var rotation = 0;
     var minW = Math.max(eq.w * 1.5, 30);
     var minH = Math.max(eq.h * 1.5, 16);
     el.style.cssText = 'width:' + minW + 'px;height:' + minH + 'px;background:' + eq.color + ';'
@@ -221,11 +221,38 @@ var PropertyMap = {
       + 'font-size:9px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.03em;'
       + 'border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:grab;'
       + 'text-shadow:0 1px 2px rgba(0,0,0,.5);line-height:1.1;text-align:center;padding:1px 3px;'
-      + 'opacity:.85;';
+      + 'opacity:.85;transition:transform 0.2s ease;position:relative;';
     el.textContent = eq.label;
-    el.title = eq.label + ' (' + eq.w + '\' × ' + eq.h + '\')';
+    el.title = eq.label + ' — tap to rotate, drag to move';
 
-    // Update size on zoom
+    // Rotate handle (small circle at corner)
+    var handle = document.createElement('div');
+    handle.style.cssText = 'position:absolute;top:-8px;right:-8px;width:16px;height:16px;'
+      + 'background:#fff;border:2px solid ' + eq.color + ';border-radius:50%;cursor:pointer;'
+      + 'display:flex;align-items:center;justify-content:center;font-size:9px;color:' + eq.color + ';'
+      + 'box-shadow:0 1px 4px rgba(0,0,0,.3);z-index:5;';
+    handle.textContent = '↻';
+    handle.title = 'Click to rotate 45°';
+    el.appendChild(handle);
+
+    // Click handle to rotate 45° each click
+    handle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      rotation = (rotation + 45) % 360;
+      el.style.transform = 'rotate(' + rotation + 'deg)';
+      markerData.rotation = rotation;
+    });
+
+    // Right-click on equipment to rotate 45° (desktop alternative)
+    el.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      rotation = (rotation + 45) % 360;
+      el.style.transform = 'rotate(' + rotation + 'deg)';
+      markerData.rotation = rotation;
+    });
+
+    // Update size on zoom (preserve rotation)
     var updateSize = function() {
       var scale = Math.pow(2, (self.map.getZoom() - 18)) * 1.5;
       scale = Math.max(scale, 0.5);
@@ -233,6 +260,7 @@ var PropertyMap = {
       el.style.width = Math.max(eq.w * scale, 28) + 'px';
       el.style.height = Math.max(eq.h * scale, 14) + 'px';
       el.style.fontSize = Math.max(7 * scale, 7) + 'px';
+      el.style.transform = 'rotate(' + rotation + 'deg)';
     };
     self.map.on('zoom', updateSize);
 
@@ -240,7 +268,7 @@ var PropertyMap = {
       .setLngLat([lng, lat])
       .addTo(self.map);
 
-    var markerData = { id: eqId, label: eq.label, lng: lng, lat: lat, notes: notes || '', marker: marker, cleanup: function() { self.map.off('zoom', updateSize); } };
+    var markerData = { id: eqId, label: eq.label, lng: lng, lat: lat, rotation: rotation, notes: notes || '', marker: marker, cleanup: function() { self.map.off('zoom', updateSize); } };
     self.markers.push(markerData);
 
     marker.on('dragend', function() {
@@ -302,7 +330,7 @@ var PropertyMap = {
 
   getMarkerData: function() {
     return PropertyMap.markers.map(function(m) {
-      return { id: m.id, label: m.label, icon: m.icon, lng: m.lng, lat: m.lat, notes: m.notes };
+      return { id: m.id, label: m.label, icon: m.icon, lng: m.lng, lat: m.lat, rotation: m.rotation || 0, notes: m.notes };
     });
   },
 

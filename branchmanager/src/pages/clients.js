@@ -138,8 +138,6 @@ var ClientsPage = {
 
   filter: function(status, btn) {
     ClientsPage.setFilter(status);
-      else { tr.style.display = tr.dataset.status === status ? '' : 'none'; }
-    });
   },
 
   showForm: function(id) {

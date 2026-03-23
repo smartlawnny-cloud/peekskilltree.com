@@ -652,20 +652,38 @@ var pageRenderers = {
   }
 };
 
-// ── Auth Gate (bypassed during development) ──
+// ── Auth Gate ──
 function checkAuth() {
-  // Auto-login as owner for dev mode
   if (!Auth.isLoggedIn()) {
-    Auth.quickLogin('owner');
+    var appEl = document.querySelector('.app');
+    var bottomNav = document.querySelector('.bottom-nav');
+    if (appEl) appEl.style.display = 'none';
+    if (bottomNav) bottomNav.style.display = 'none';
+    var loginDiv = document.getElementById('login-screen');
+    if (!loginDiv) {
+      loginDiv = document.createElement('div');
+      loginDiv.id = 'login-screen';
+      document.body.insertBefore(loginDiv, document.body.firstChild);
+    }
+    loginDiv.innerHTML = Auth.renderLogin();
+    return false;
   }
   var appEl = document.querySelector('.app');
+  var bottomNav = document.querySelector('.bottom-nav');
   if (appEl) appEl.style.display = '';
+  if (bottomNav) bottomNav.style.display = '';
   var loginDiv = document.getElementById('login-screen');
   if (loginDiv) loginDiv.innerHTML = '';
 
   // Update sidebar user info
   var userEl = document.querySelector('.sidebar-user');
   if (userEl) userEl.innerHTML = Auth.user.name + ' <span style="opacity:.6;">· ' + Auth.role.replace(/_/g, ' ') + '</span>';
+
+  // Hide nav items user can't access
+  document.querySelectorAll('.nav-item[data-page]').forEach(function(btn) {
+    var page = btn.dataset.page;
+    btn.style.display = Auth.canAccess(page) ? '' : 'none';
+  });
 
   return true;
 }

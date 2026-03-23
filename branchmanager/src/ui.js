@@ -44,18 +44,26 @@ var UI = (function() {
   function moneyInt(n) { return '$' + Math.round(n || 0).toLocaleString(); }
   function dateShort(d) {
     if (!d) return '—';
-    var dt = new Date(d + 'T12:00:00');
+    var dt;
+    // Handle ISO timestamps (from Supabase) and plain dates
+    if (d.length > 10) {
+      dt = new Date(d);
+    } else {
+      dt = new Date(d + 'T12:00:00');
+    }
+    if (isNaN(dt.getTime())) return '—';
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return months[dt.getMonth()] + ' ' + dt.getDate() + ', ' + dt.getFullYear();
   }
   function dateRelative(d) {
     if (!d) return '—';
     var now = new Date(); var dt = new Date(d);
+    if (isNaN(dt.getTime())) return '—';
     var diff = Math.floor((now - dt) / 86400000);
     if (diff === 0) return 'Today';
     if (diff === 1) return 'Yesterday';
     if (diff < 7) return diff + ' days ago';
-    return dateShort(d.split('T')[0]);
+    return dateShort(d);
   }
   function phone(p) {
     if (!p) return '—';

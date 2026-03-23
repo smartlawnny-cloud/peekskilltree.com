@@ -141,9 +141,58 @@ var Workflow = {
 
   sendQuote: function(quoteId) {
     var q = DB.quotes.getById(quoteId);
-    if (!q || !q.clientEmail) { UI.toast('No email on file', 'error'); return; }
-    DB.quotes.update(quoteId, { status: 'sent', sentAt: new Date().toISOString() });
-    UI.toast('Quote sent to ' + q.clientEmail);
+    if (!q) { UI.toast('Quote not found', 'error'); return; }
+
+    // Find client email
+    var allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]');
+    var client = allClients.find(function(c) { return c.id === q.clientId || (c.name||'').toLowerCase() === (q.clientName||'').toLowerCase(); });
+    var email = (client && client.email) || q.clientEmail || '';
+    var firstName = (q.clientName || '').split(' ')[0] || 'there';
+
+    var subject = 'Your estimate from Second Nature Tree — Quote #' + (q.quoteNumber || '');
+    var body = 'Hi ' + firstName + ',\n\n'
+      + 'Thanks for having us out to take a look! Here\'s your estimate for the work we discussed.\n\n'
+      + '📋 Quote #' + (q.quoteNumber || '') + '\n'
+      + '📍 ' + (q.property || 'Your property') + '\n'
+      + '💰 Total: ' + UI.money(q.total) + '\n\n'
+      + (q.description ? '📝 ' + q.description + '\n\n' : '')
+      + 'To approve this quote, just reply "approved" to this email or call (914) 391-5233.\n\n'
+      + 'We can usually schedule within 1-2 weeks of approval.\n\n'
+      + 'Doug Brown\nSecond Nature Tree Service\n(914) 391-5233\ninfo@peekskilltree.com';
+
+    var html = '<div style="padding:16px;">'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">To</label>'
+      + '<input type="email" id="q-send-to" value="' + email + '" placeholder="client@email.com" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '</div>'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Subject</label>'
+      + '<input type="text" id="q-send-subject" value="' + subject.replace(/"/g, '&quot;') + '" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '</div>'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Message</label>'
+      + '<textarea id="q-send-body" rows="14" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;font-family:inherit;resize:vertical;">' + body + '</textarea>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">📎 Quote PDF will be attached</div>'
+      + '</div>';
+
+    UI.showModal('Send Quote #' + (q.quoteNumber || ''), html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-outline" onclick="PDF.generateQuote(\'' + quoteId + '\')">👁 Preview PDF</button>'
+        + ' <button class="btn btn-primary" onclick="Workflow._confirmSendQuote(\'' + quoteId + '\')">📧 Send Quote</button>'
+    });
+  },
+
+  _confirmSendQuote: function(quoteId) {
+    var to = document.getElementById('q-send-to').value.trim();
+    if (!to) { UI.toast('Enter an email address', 'error'); return; }
+    var subject = document.getElementById('q-send-subject').value;
+    var body = document.getElementById('q-send-body').value;
+    var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    window.open(mailto, '_blank');
+    DB.quotes.update(quoteId, { status: 'sent', sentAt: new Date().toISOString(), sentTo: to });
+    UI.closeModal();
+    UI.toast('Quote sent to ' + to);
   },
 
   sendInvoice: function(invoiceId) {

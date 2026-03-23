@@ -712,6 +712,40 @@ var _loadPageWrapped = function(page) {
 if (typeof origLoadPage === 'function') {
   window.loadPage = _loadPageWrapped;
 }
+
+// ── Keyboard Shortcuts ──
+document.addEventListener('keydown', function(e) {
+  // Don't trigger in inputs
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  // Don't trigger in modals
+  if (document.querySelector('.modal-overlay')) return;
+
+  var meta = e.metaKey || e.ctrlKey;
+
+  if (meta && e.key === 'k') { e.preventDefault(); document.getElementById('globalSearch').focus(); }
+  else if (meta && e.key === 'n') { e.preventDefault(); QuickCreate.show(); }
+  else if (e.key === '1') { loadPage('dashboard'); }
+  else if (e.key === '2') { loadPage('schedule'); }
+  else if (e.key === '3') { loadPage('clients'); }
+  else if (e.key === '4') { loadPage('quotes'); }
+  else if (e.key === '5') { loadPage('jobs'); }
+  else if (e.key === '6') { loadPage('invoices'); }
+  else if (e.key === '7') { loadPage('pipeline'); }
+  else if (e.key === '?') {
+    UI.showModal('Keyboard Shortcuts', '<div style="font-size:14px;line-height:2.2;">'
+      + '<div style="display:flex;justify-content:space-between;"><span>Search</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">⌘K</kbd></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span>Create New</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">⌘N</kbd></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span>Dashboard</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">1</kbd></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span>Schedule</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">2</kbd></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span>Clients</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">3</kbd></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span>Quotes</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">4</kbd></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span>Jobs</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">5</kbd></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span>Invoices</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">6</kbd></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span>Pipeline</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">7</kbd></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span>Help</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">?</kbd></div>'
+      + '</div>');
+  }
+});
 </script>
 
 <!-- Mobile Bottom Nav -->

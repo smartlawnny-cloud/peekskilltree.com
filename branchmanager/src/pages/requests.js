@@ -101,7 +101,7 @@ var RequestsPage = {
       + UI.statCard('Received', UI.dateShort(r.createdAt), '', '', '')
       + '</div>'
 
-      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">'
+      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;" class="detail-grid">'
       + '<div>'
 
       // Status workflow

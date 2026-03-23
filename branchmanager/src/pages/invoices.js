@@ -155,7 +155,7 @@ var InvoicesPage = {
       + UI.statCard('Due Date', UI.dateShort(inv.dueDate), '', '', '')
       + '</div>'
 
-      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">'
+      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;" class="detail-grid">'
       + '<div>'
 
       // Payment buttons

@@ -270,7 +270,7 @@ var QuotesPage = {
       + '</div>'
 
       // Two column
-      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">'
+      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;" class="detail-grid">'
 
       // Left — main
       + '<div>'

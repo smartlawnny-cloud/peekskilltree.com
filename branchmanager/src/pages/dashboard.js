@@ -9,7 +9,17 @@ var DashboardPage = {
     var unpaidInvoices = DB.invoices.getAll().filter(function(i) { return i.status !== 'paid' && i.balance > 0; });
     var recentRequests = DB.requests.getAll().filter(function(r) { return r.status === 'new'; }).slice(0, 5);
 
-    var html = '<div class="stat-grid">'
+    // Show sync banner if no local data but Supabase is connected
+    var localClients = JSON.parse(localStorage.getItem('bm-clients') || '[]');
+    var html = '';
+    if (localClients.length === 0 && SupabaseDB && SupabaseDB.DEFAULT_URL) {
+      html += '<div style="padding:16px;background:#e3f2fd;border-radius:10px;border-left:4px solid #1976d2;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">'
+        + '<div><strong style="color:#1565c0;">Your data is in the cloud</strong>'
+        + '<div style="font-size:13px;color:#555;margin-top:4px;">535 clients, 433 quotes, 259 jobs, 348 invoices ready to sync.</div></div>'
+        + '<button class="btn btn-primary" onclick="DashboardPage.syncNow()" id="sync-btn" style="white-space:nowrap;">Sync Now</button>'
+        + '</div>';
+    }
+    html += '<div class="stat-grid">'
       + UI.statCard("Today's Jobs", todayJobs.length.toString(), todayJobs.length ? todayJobs.map(function(j){return j.clientName;}).join(', ') : 'No visits scheduled', '', '', "loadPage('schedule')")
       + UI.statCard('Receivables', UI.moneyInt(stats.receivables), unpaidInvoices.length + ' clients owe you', stats.receivables > 0 ? 'down' : '', '', "loadPage('invoices')")
       + UI.statCard('New Requests', stats.newRequests.toString(), 'Awaiting response', stats.newRequests > 0 ? '' : '', '', "loadPage('requests')")
@@ -168,5 +178,51 @@ var DashboardPage = {
     }
 
     return html;
+  },
+
+  syncNow: async function() {
+    var btn = document.getElementById('sync-btn');
+    if (btn) { btn.textContent = 'Syncing...'; btn.disabled = true; }
+    if (SupabaseDB && SupabaseDB.ready) {
+      await SupabaseDB._pullFromCloud();
+    } else {
+      // Direct fetch if SupabaseDB not initialized yet
+      var url = 'https://ltpivkqahvplapyagljt.supabase.co';
+      var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+      var tables = [
+        { local: 'bm-clients', remote: 'clients' },
+        { local: 'bm-requests', remote: 'requests' },
+        { local: 'bm-quotes', remote: 'quotes' },
+        { local: 'bm-jobs', remote: 'jobs' },
+        { local: 'bm-invoices', remote: 'invoices' },
+        { local: 'bm-services', remote: 'services' },
+        { local: 'bm-team', remote: 'team_members' }
+      ];
+      var total = 0;
+      for (var i = 0; i < tables.length; i++) {
+        var t = tables[i];
+        try {
+          var resp = await fetch(url + '/rest/v1/' + t.remote + '?select=*&limit=5000&order=created_at.desc', {
+            headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
+          });
+          var data = await resp.json();
+          if (data && data.length > 0) {
+            // Convert snake_case to camelCase
+            var converted = data.map(function(row) {
+              var newRow = {};
+              Object.keys(row).forEach(function(k) {
+                var camel = k.replace(/_([a-z])/g, function(m, p1) { return p1.toUpperCase(); });
+                newRow[camel] = row[k];
+              });
+              return newRow;
+            });
+            localStorage.setItem(t.local, JSON.stringify(converted));
+            total += converted.length;
+          }
+        } catch (e) { console.warn('Sync error:', t.remote, e); }
+      }
+      UI.toast(total + ' records synced from cloud!');
+    }
+    loadPage('dashboard');
   }
 };

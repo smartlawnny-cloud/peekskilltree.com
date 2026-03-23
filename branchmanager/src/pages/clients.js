@@ -3,51 +3,141 @@
  * Full client list, detail view, add/edit forms
  */
 var ClientsPage = {
+  _page: 0,
+  _perPage: 50,
+  _filter: 'all',
+  _search: '',
+  _sort: 'name',
+  _sortDir: 1,
+
   render: function() {
+    var self = ClientsPage;
     var stats = DB.dashboard.getStats();
-    var clients = DB.clients.getAll();
+    var clients = self._getFiltered();
 
     var html = '<div class="stat-grid">'
-      + UI.statCard('Total Clients', stats.totalClients.toLocaleString(), 'All time', '', '')
-      + UI.statCard('Active', stats.activeClients.toLocaleString(), 'Current clients', '', '')
-      + UI.statCard('Leads', stats.leadClients.toLocaleString(), 'Not yet converted', '', '')
+      + UI.statCard('Total Clients', stats.totalClients.toLocaleString(), 'All time', '', '', "ClientsPage.setFilter('all')")
+      + UI.statCard('Active', stats.activeClients.toLocaleString(), 'Current clients', '', '', "ClientsPage.setFilter('active')")
+      + UI.statCard('Leads', stats.leadClients.toLocaleString(), 'Not yet converted', '', '', "ClientsPage.setFilter('lead')")
       + '</div>';
 
-    // Filters
-    html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">'
-      + '<button class="btn btn-outline client-filter active" data-filter="all" onclick="ClientsPage.filter(\'all\',this)">All (' + clients.length + ')</button>'
-      + '<button class="btn btn-outline client-filter" data-filter="active" onclick="ClientsPage.filter(\'active\',this)">Active (' + stats.activeClients + ')</button>'
-      + '<button class="btn btn-outline client-filter" data-filter="lead" onclick="ClientsPage.filter(\'lead\',this)">Leads (' + stats.leadClients + ')</button>'
+    // Search + filters
+    html += '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">'
+      + '<div style="flex:1;min-width:200px;position:relative;">'
+      + '<input type="text" id="client-search" placeholder="Search by name, address, phone..." value="' + self._search + '" oninput="ClientsPage.setSearch(this.value)" style="width:100%;padding:9px 12px 9px 34px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-light);">🔍</span>'
+      + '</div>'
+      + '<div style="display:flex;gap:4px;">';
+    ['all', 'active', 'lead'].forEach(function(f) {
+      var count = f === 'all' ? stats.totalClients : f === 'active' ? stats.activeClients : stats.leadClients;
+      html += '<button class="btn ' + (self._filter === f ? 'btn-primary' : 'btn-outline') + '" onclick="ClientsPage.setFilter(\'' + f + '\')" style="font-size:12px;padding:6px 12px;">' + f.charAt(0).toUpperCase() + f.slice(1) + ' (' + count + ')</button>';
+    });
+    html += '</div></div>';
+
+    // Results count
+    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">'
+      + 'Showing ' + Math.min(self._page * self._perPage + 1, clients.length) + '–' + Math.min((self._page + 1) * self._perPage, clients.length) + ' of ' + clients.length + ' clients'
       + '</div>';
 
-    // Table
+    // Paginated slice
+    var pageClients = clients.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
+
+    // Table with sortable headers
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table" id="clients-table"><thead><tr>'
-      + '<th>Name</th><th>Address</th><th>Phone</th><th>Email</th><th>Status</th>'
+      + self._sortHeader('Name', 'name')
+      + self._sortHeader('Address', 'address')
+      + self._sortHeader('Phone', 'phone')
+      + self._sortHeader('Email', 'email')
+      + self._sortHeader('Status', 'status')
       + '</tr></thead><tbody>';
 
-    if (clients.length === 0) {
-      html += '<tr><td colspan="5">' + UI.emptyState('👥', 'No clients yet', 'Add your first client or import from Jobber.', '+ Add Client', 'ClientsPage.showForm()') + '</td></tr>';
+    if (pageClients.length === 0) {
+      html += '<tr><td colspan="5">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No clients match "' + self._search + '"</div>' : UI.emptyState('👥', 'No clients yet', 'Add your first client or import from Jobber.', '+ Add Client', 'ClientsPage.showForm()')) + '</td></tr>';
     } else {
-      clients.forEach(function(c) {
-        html += '<tr onclick="ClientsPage.showDetail(\'' + c.id + '\')" data-status="' + c.status + '">'
+      pageClients.forEach(function(c) {
+        html += '<tr onclick="ClientsPage.showDetail(\'' + c.id + '\')" style="cursor:pointer;" data-status="' + c.status + '">'
           + '<td><strong>' + (c.name || '') + '</strong>' + (c.company ? '<br><span style="font-size:12px;color:var(--text-light);">' + c.company + '</span>' : '') + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);">' + (c.address || '—') + '</td>'
-          + '<td>' + UI.phone(c.phone) + '</td>'
-          + '<td style="font-size:13px;">' + (c.email || '—') + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (c.address || '—') + '</td>'
+          + '<td style="white-space:nowrap;">' + UI.phone(c.phone) + '</td>'
+          + '<td style="font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + (c.email || '—') + '</td>'
           + '<td>' + UI.statusBadge(c.status) + '</td>'
           + '</tr>';
       });
     }
     html += '</tbody></table></div>';
+
+    // Pagination
+    var totalPages = Math.ceil(clients.length / self._perPage);
+    if (totalPages > 1) {
+      html += '<div style="display:flex;justify-content:center;gap:4px;margin-top:12px;">';
+      html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(0)" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>«</button>';
+      html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
+      // Show max 5 page buttons
+      var startP = Math.max(0, self._page - 2);
+      var endP = Math.min(totalPages - 1, startP + 4);
+      for (var p = startP; p <= endP; p++) {
+        html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="ClientsPage.goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+      }
+      html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
+      html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(' + (totalPages - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>»</button>';
+      html += '</div>';
+    }
+
     return html;
   },
 
+  _sortHeader: function(label, field) {
+    var arrow = ClientsPage._sort === field ? (ClientsPage._sortDir === 1 ? ' ▲' : ' ▼') : '';
+    return '<th onclick="ClientsPage.setSort(\'' + field + '\')" style="cursor:pointer;user-select:none;">' + label + '<span style="font-size:10px;color:var(--text-light);">' + arrow + '</span></th>';
+  },
+
+  _getFiltered: function() {
+    var self = ClientsPage;
+    var clients = DB.clients.getAll();
+
+    // Filter by status
+    if (self._filter !== 'all') {
+      clients = clients.filter(function(c) { return c.status === self._filter; });
+    }
+
+    // Search
+    if (self._search && self._search.length >= 2) {
+      var q = self._search.toLowerCase();
+      clients = clients.filter(function(c) {
+        return (c.name || '').toLowerCase().indexOf(q) >= 0
+          || (c.address || '').toLowerCase().indexOf(q) >= 0
+          || (c.phone || '').replace(/\D/g, '').indexOf(q.replace(/\D/g, '')) >= 0
+          || (c.email || '').toLowerCase().indexOf(q) >= 0
+          || (c.company || '').toLowerCase().indexOf(q) >= 0;
+      });
+    }
+
+    // Sort
+    clients.sort(function(a, b) {
+      var va = (a[self._sort] || '').toString().toLowerCase();
+      var vb = (b[self._sort] || '').toString().toLowerCase();
+      return va < vb ? -self._sortDir : va > vb ? self._sortDir : 0;
+    });
+
+    return clients;
+  },
+
+  setFilter: function(f) { ClientsPage._filter = f; ClientsPage._page = 0; loadPage('clients'); },
+  setSearch: function(q) { ClientsPage._search = q; ClientsPage._page = 0; loadPage('clients'); },
+  setSort: function(field) {
+    if (ClientsPage._sort === field) { ClientsPage._sortDir *= -1; }
+    else { ClientsPage._sort = field; ClientsPage._sortDir = 1; }
+    loadPage('clients');
+  },
+  goPage: function(p) {
+    var total = Math.ceil(ClientsPage._getFiltered().length / ClientsPage._perPage);
+    ClientsPage._page = Math.max(0, Math.min(p, total - 1));
+    loadPage('clients');
+  },
+
   filter: function(status, btn) {
-    document.querySelectorAll('.client-filter').forEach(function(b) { b.classList.remove('active'); });
-    btn.classList.add('active');
-    document.querySelectorAll('#clients-table tbody tr').forEach(function(tr) {
-      if (status === 'all') { tr.style.display = ''; }
+    ClientsPage.setFilter(status);
       else { tr.style.display = tr.dataset.status === status ? '' : 'none'; }
     });
   },

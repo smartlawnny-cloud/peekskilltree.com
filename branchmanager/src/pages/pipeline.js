@@ -53,11 +53,12 @@ var PipelinePage = {
         + '<span style="font-size:11px;color:var(--text-light);">' + UI.moneyInt(stageStats[stage.id].value) + '</span>'
         + '</div></div>';
 
-      // Deal cards
+      // Deal cards (limit to 15 per column for performance)
+      var maxShow = 15;
       if (stageDeals.length === 0) {
         html += '<div style="text-align:center;padding:20px;font-size:12px;color:#ccc;border:2px dashed #e0e0e0;border-radius:8px;">Drop here</div>';
       } else {
-        stageDeals.forEach(function(deal) {
+        stageDeals.slice(0, maxShow).forEach(function(deal) {
           html += '<div class="pipeline-card" draggable="true" ondragstart="PipelinePage.dragStart(event, \'' + deal.id + '\')" onclick="PipelinePage.showDeal(\'' + deal.id + '\')"'
             + ' style="background:var(--white);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid var(--border);cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:box-shadow .15s;"'
             + ' onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.12)\'" onmouseout="this.style.boxShadow=\'0 1px 3px rgba(0,0,0,.06)\'">'
@@ -70,6 +71,11 @@ var PipelinePage = {
             + (deal.source ? '<div style="font-size:10px;color:var(--text-light);margin-top:4px;">via ' + deal.source + '</div>' : '')
             + '</div>';
         });
+      }
+
+      // Show more button if truncated
+      if (stageDeals.length > maxShow) {
+        html += '<div style="text-align:center;padding:8px;font-size:12px;color:var(--accent);font-weight:600;">+ ' + (stageDeals.length - maxShow) + ' more</div>';
       }
 
       // Add deal button

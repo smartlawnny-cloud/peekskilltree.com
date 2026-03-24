@@ -36,6 +36,14 @@ var SettingsPage = {
     // SendJim Direct Mail
     html += SendJim.renderSettings();
 
+    // Sync from Cloud
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+      + '<div><h3 style="margin-bottom:4px;">Cloud Sync</h3>'
+      + '<p style="font-size:13px;color:var(--text-light);margin:0;">Pull latest data from Supabase to this device</p></div>'
+      + '<button class="btn btn-primary" onclick="SettingsPage.syncNow(this)">Sync Now</button>'
+      + '</div></div>';
+
     // Supabase Connection
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
       + '<h3 style="margin-bottom:8px;">Database Connection</h3>'
@@ -172,5 +180,46 @@ var SettingsPage = {
       UI.toast('All data cleared');
       loadPage('settings');
     });
+  },
+
+  syncNow: async function(btn) {
+    if (btn) { btn.textContent = 'Syncing...'; btn.disabled = true; }
+    if (typeof DashboardPage !== 'undefined' && DashboardPage.syncNow) {
+      await DashboardPage.syncNow();
+    } else if (typeof SupabaseDB !== 'undefined' && SupabaseDB.resync) {
+      await SupabaseDB.resync();
+    } else {
+      // Direct fetch fallback
+      var url = 'https://ltpivkqahvplapyagljt.supabase.co';
+      var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+      var tables = [
+        {local:'bm-clients',remote:'clients'},{local:'bm-jobs',remote:'jobs'},
+        {local:'bm-invoices',remote:'invoices'},{local:'bm-quotes',remote:'quotes'},
+        {local:'bm-services',remote:'services'},{local:'bm-team',remote:'team_members'}
+      ];
+      var total = 0;
+      for (var t of tables) {
+        try {
+          var resp = await fetch(url+'/rest/v1/'+t.remote+'?select=*&limit=5000&order=created_at.desc',{
+            headers:{'apikey':key,'Authorization':'Bearer '+key}
+          });
+          var data = await resp.json();
+          if (data && data.length) {
+            var conv = data.map(function(row) {
+              var n = {};
+              Object.keys(row).forEach(function(k) {
+                n[k.replace(/_([a-z])/g,function(m,p){return p.toUpperCase();})] = row[k];
+              });
+              return n;
+            });
+            localStorage.setItem(t.local, JSON.stringify(conv));
+            total += conv.length;
+          }
+        } catch(e) {}
+      }
+      UI.toast(total + ' records synced from cloud!');
+    }
+    if (btn) { btn.textContent = 'Sync Now'; btn.disabled = false; }
+    loadPage('settings');
   }
 };

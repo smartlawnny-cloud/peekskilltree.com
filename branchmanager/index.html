@@ -76,8 +76,11 @@
   .sidebar.collapsed .sidebar-footer { padding:8px !important; justify-content:center; }
   .sidebar.collapsed .sidebar-footer .log-out-btn { display:none !important; }
   .sidebar.collapsed .sidebar-header { justify-content:center; padding:14px 8px; cursor:pointer; }
-  .sidebar.collapsed .nav-item { justify-content:center; padding:10px 0; }
+  .sidebar.collapsed .nav-item { justify-content:center; padding:10px 0; font-size:0; overflow:hidden; }
   .sidebar.collapsed .nav-item .icon { width:auto; font-size:16px; }
+  .sidebar.collapsed .nav-item .icon i, .sidebar.collapsed .nav-item .icon svg { width:20px; height:20px; }
+  .sidebar.collapsed .create-btn { font-size:0; padding:10px; }
+  .sidebar.collapsed .create-btn::before { content:'+'; font-size:18px; font-weight:700; }
   .sidebar-header {
     padding:16px 14px 14px; border-bottom:1px solid var(--sidebar-border);
     display:flex; align-items:center; gap:10px;
@@ -380,7 +383,7 @@
       <h1>Branch Manager <span>Second Nature Tree Service</span></h1>
     </div>
     <div style="padding:10px 14px 8px;">
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:9px;font-size:13px;font-weight:600;border-radius:6px;" onclick="QuickCreate.show()">+ Create New</button>
+      <button class="btn btn-primary create-btn" style="width:100%;justify-content:center;padding:9px;font-size:13px;font-weight:600;border-radius:6px;" onclick="QuickCreate.show()">+ Create New</button>
     </div>
 
     <div class="sidebar-nav">

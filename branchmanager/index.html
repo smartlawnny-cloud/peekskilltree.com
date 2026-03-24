@@ -72,8 +72,9 @@
   .sidebar.collapsed .nav-section,
   .sidebar.collapsed .nav-item span:not(.icon),
   .sidebar.collapsed .nav-item .badge,
-  .sidebar.collapsed .sidebar-footer,
-  .sidebar.collapsed > div[style*="padding"] { display:none !important; }
+  .sidebar.collapsed > div[style*="padding"]:not(.sidebar-footer) { display:none !important; }
+  .sidebar.collapsed .sidebar-footer { padding:8px !important; justify-content:center; }
+  .sidebar.collapsed .sidebar-footer .log-out-btn { display:none !important; }
   .sidebar.collapsed .sidebar-header { justify-content:center; padding:14px 8px; cursor:pointer; }
   .sidebar.collapsed .nav-item { justify-content:center; padding:10px 0; }
   .sidebar.collapsed .nav-item .icon { width:auto; font-size:16px; }
@@ -431,9 +432,9 @@
       </div>
     </div>
 
-    <div class="sidebar-footer" style="display:flex;gap:6px;">
-      <button onclick="toggleSidebar()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;color:var(--text-light);flex:1;" title="Collapse sidebar">◀</button>
-      <button onclick="Auth.logout()" style="background:none;border:1px solid #e8bcbc;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;color:#c0392b;white-space:nowrap;" title="Log out">Log Out</button>
+    <div class="sidebar-footer" style="display:flex;gap:6px;padding:10px 14px;">
+      <button id="sidebar-toggle-btn" onclick="toggleSidebar()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;color:var(--text-light);flex:1;" title="Collapse sidebar">◀</button>
+      <button class="log-out-btn" onclick="Auth.logout()" style="background:none;border:1px solid #e8bcbc;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;color:#c0392b;white-space:nowrap;" title="Log out">Log Out</button>
     </div>
   </nav>
 
@@ -563,6 +564,8 @@ function toggleSidebar() {
   } else {
     sb.classList.toggle('collapsed');
     localStorage.setItem('bm-sidebar-collapsed', sb.classList.contains('collapsed'));
+    var btn = document.getElementById('sidebar-toggle-btn');
+    if (btn) btn.textContent = sb.classList.contains('collapsed') ? '▶' : '◀';
   }
 }
 
@@ -849,7 +852,11 @@ if (typeof lucide !== 'undefined') lucide.createIcons();
 // Re-init after page loads (for dynamically added icons)
 document.addEventListener('DOMContentLoaded', function() { if (typeof lucide !== 'undefined') lucide.createIcons(); });
 // Restore sidebar state
-if (localStorage.getItem('bm-sidebar-collapsed') === 'true') document.getElementById('sidebar').classList.add('collapsed');
+if (localStorage.getItem('bm-sidebar-collapsed') === 'true') {
+  document.getElementById('sidebar').classList.add('collapsed');
+  var tb = document.getElementById('sidebar-toggle-btn');
+  if (tb) tb.textContent = '▶';
+}
 </script>
 </body>
 </html>

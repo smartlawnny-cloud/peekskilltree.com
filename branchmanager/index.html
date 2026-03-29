@@ -75,6 +75,7 @@
   .sidebar.collapsed > div[style*="padding"]:not(.sidebar-footer) { display:none !important; }
   .sidebar.collapsed .sidebar-footer { padding:8px !important; justify-content:center; }
   .sidebar.collapsed .sidebar-footer .log-out-btn { display:none !important; }
+  .sidebar.collapsed .sidebar-footer #sidebar-toggle-btn { padding:6px; font-size:16px; }
   .sidebar.collapsed .sidebar-header { justify-content:center; padding:14px 8px; cursor:pointer; }
   .sidebar.collapsed .nav-item { justify-content:center; padding:10px 0; font-size:0; overflow:hidden; }
   .sidebar.collapsed .nav-item .icon { width:auto; font-size:16px; }
@@ -216,25 +217,27 @@
   .empty-state h3 { font-size:16px; color:var(--text); margin-bottom:6px; font-weight:600; }
   .empty-state p { font-size:13px; max-width:380px; margin:0 auto; }
 
-  /* ── Mobile Bottom Nav ── */
+  /* ── Mobile Bottom Nav (Jobber-style) ── */
   .bottom-nav {
     display:none; position:fixed; bottom:0; left:0; right:0; z-index:150;
     background:var(--white); border-top:1px solid var(--border);
-    padding:4px 0 env(safe-area-inset-bottom, 4px);
-    box-shadow:0 -2px 12px rgba(0,0,0,.08);
+    padding:6px 0 env(safe-area-inset-bottom, 8px);
+    box-shadow:0 -4px 20px rgba(0,0,0,.08);
   }
   .bottom-nav-inner {
     display:flex; justify-content:space-around; align-items:center;
   }
   .bottom-nav-btn {
-    display:flex; flex-direction:column; align-items:center; gap:2px;
-    background:none; border:none; padding:6px 12px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; padding:4px 12px; cursor:pointer;
     font-size:10px; color:var(--text-light); font-weight:600;
-    transition:color .15s;
+    transition:color .15s; -webkit-tap-highlight-color:transparent;
   }
   .bottom-nav-btn.active { color:var(--accent); }
+  .bottom-nav-btn:active { transform:scale(.9); }
   .bottom-nav-btn .bnav-icon { font-size:20px; display:block; margin:0 auto 2px; }
   .bottom-nav-btn svg.bnav-icon { width:22px; height:22px; }
+  .bottom-nav-btn svg.bnav-icon.active-icon { stroke:var(--accent); }
 
   /* ── Responsive ── */
   @media (max-width: 768px) {
@@ -243,12 +246,33 @@
     .sidebar-overlay.open { display:block; }
     .hamburger { display:block; }
     .stat-grid { grid-template-columns:1fr 1fr; }
-    .content { padding:16px; padding-bottom:80px; }
-    .topbar { padding:12px 16px; }
+    .content { padding:16px; padding-bottom:88px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+    .topbar { padding:10px 16px; padding-top:max(10px,env(safe-area-inset-top)); }
     .search-box { min-width:auto; flex:1; }
     .bottom-nav { display:block; }
     .detail-grid { grid-template-columns:1fr !important; }
     .option-grid { grid-template-columns:1fr !important; }
+
+    /* Jobber-style native feel */
+    .sidebar { display:none !important; }
+    .sidebar-overlay { display:none !important; }
+    .hamburger { display:none !important; }
+    .main { margin-left:0 !important; }
+
+    /* Rounded cards */
+    .card, .stat-card { border-radius:14px !important; }
+    .stat-card { padding:14px !important; }
+
+    /* Larger inputs */
+    input, select, textarea { font-size:16px !important; padding:12px !important; border-radius:10px !important; }
+    .btn { min-height:44px; border-radius:12px !important; }
+
+    /* Toast above tabs */
+    .toast { bottom:96px !important; left:16px !important; right:16px !important; border-radius:12px !important; }
+
+    /* Modal slides up from bottom */
+    .modal { max-width:100% !important; max-height:95vh !important; border-radius:20px 20px 0 0 !important; margin-top:auto !important; }
+    .modal-overlay { align-items:flex-end !important; }
   }
   @media (max-width: 480px) {
     .stat-grid { grid-template-columns:1fr; }
@@ -372,7 +396,7 @@
 
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
-    <div class="sidebar-header" onclick="if(document.getElementById('sidebar').classList.contains('collapsed'))toggleSidebar()">
+    <div class="sidebar-header" onclick="toggleSidebar()">
       <div class="sidebar-logo">
         <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="32" height="32" rx="7" fill="#1a8a5c"/>
@@ -413,6 +437,7 @@
       <div class="nav-section" style="cursor:pointer;" onclick="var el=document.getElementById('more-nav');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.more-arrow').textContent=el.style.display==='none'?'▸':'▾';">More <span class="more-arrow" style="float:right;">▸</span></div>
       <div id="more-nav" style="display:none;">
         <button class="nav-item" data-page="calculators"><span class="icon"><i data-lucide="calculator" class="li"></i></span> Calculators</button>
+        <button class="nav-item" data-page="treemeasure"><span class="icon"><i data-lucide="ruler" class="li"></i></span> Tree Measure</button>
         <button class="nav-item" data-page="crewview"><span class="icon"><i data-lucide="shield" class="li"></i></span> Crew View</button>
         <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="wallet" class="li"></i></span> My Pay</button>
         <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget Planner</button>
@@ -520,6 +545,7 @@
 <script src="src/pages/settings.js"></script>
 <script src="src/pages/propertymap.js"></script>
 <script src="src/pages/estimator.js"></script>
+<script src="src/pages/treemeasure.js"></script>
 <script src="src/stripe.js"></script>
 <script src="src/pages/search.js"></script>
 <script src="src/pages/clienthub.js"></script>
@@ -588,6 +614,7 @@ var pageConfigs = {
   timesheet: { title: 'Timesheet', action: null },
   automations: { title: 'Automations', action: null },
   calculators: { title: 'Calculators', action: null },
+  treemeasure: { title: 'Tree Measure', action: null },
   crewview: { title: 'Crew View', action: null },
   employeecenter: { title: 'My Pay & Hours', action: null },
   budget: { title: 'Budget Planner', action: null },
@@ -644,10 +671,13 @@ var pageRenderers = {
   import: function() { return ImportPage.render(); },
   backup: function() { return BackupPage.render(); },
   settings: function() { return SettingsPage.render(); },
+  treemeasure: function() { return TreeMeasure.render(); },
   calculators: function() {
     return '<div class="stat-grid">'
       + '<div class="stat-card" style="cursor:pointer;" onclick="Estimator.show()">'
       + '<div class="stat-label">🧮 Job Estimator</div><div class="stat-value" style="font-size:18px;">Price a Job</div><div class="stat-sub">Crew + equipment + insurance + markup → instant quote</div></div>'
+      + '<div class="stat-card" style="cursor:pointer;" onclick="loadPage(\'treemeasure\')">'
+      + '<div class="stat-label">🌲 Tree Measure</div><div class="stat-value" style="font-size:18px;">Height & DBH</div><div class="stat-sub">Phone angle for height, tape for DBH → instant estimate</div></div>'
       + '<a href="https://peekskilltree.com/sub.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
       + '<div class="stat-label">💰 Full Rate Sheet</div><div class="stat-value" style="font-size:18px;">Detailed Rates</div><div class="stat-sub">All rates, tiers, industry comparison</div></a>'
       + '<a href="https://peekskilltree.com/be.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'

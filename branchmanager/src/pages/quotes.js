@@ -94,6 +94,19 @@ var QuotesPage = {
     var q = quoteId ? DB.quotes.getById(quoteId) : {};
     var client = clientId ? DB.clients.getById(clientId) : (q.clientId ? DB.clients.getById(q.clientId) : null);
     var items = q.lineItems || [{ service: '', description: '', qty: 1, rate: 0 }];
+
+    // Check for tree measurement data
+    var treeMeasure = null;
+    try { treeMeasure = JSON.parse(localStorage.getItem('bm-tree-measure')); localStorage.removeItem('bm-tree-measure'); } catch(e) {}
+    if (treeMeasure && !quoteId) {
+      var desc = 'Tree removal';
+      if (treeMeasure.dbh) desc += ' — ' + treeMeasure.dbh + '" DBH';
+      if (treeMeasure.height) desc += ', ~' + treeMeasure.height + ' ft';
+      if (treeMeasure.complexity) desc += ' (' + treeMeasure.complexity + ')';
+      var price = treeMeasure.dbh ? Math.round(treeMeasure.dbh * 100 / 50) * 50 : 0;
+      items = [{ service: 'Tree Removal', description: desc, qty: 1, rate: price }];
+      q.description = desc;
+    }
     var services = DB.services.getAll();
 
     // Get clients synchronously from localStorage

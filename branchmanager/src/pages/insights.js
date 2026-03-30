@@ -95,7 +95,7 @@ var InsightsPage = {
     // Funnel
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
       + '<h3 style="margin-bottom:16px;">Pipeline Funnel</h3>';
-    var quoteRate = totalRequests > 0 ? Math.round((totalQuotes / totalRequests) * 100) : 0;
+    var quoteRate = totalLeads > 0 ? Math.round((totalQuotes / totalLeads) * 100) : 0;
     var closeRate = totalQuotes > 0 ? Math.round((convertedQuotes / totalQuotes) * 100) : 0;
     var completeRate = totalJobs > 0 ? Math.round((completedJobs / totalJobs) * 100) : 0;
     var funnelData = [

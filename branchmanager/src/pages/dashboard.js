@@ -25,54 +25,82 @@ var DashboardPage = {
     var allJobs = DB.jobs.getAll();
     var now = new Date();
 
-    html += '<div class="stat-grid">'
-      + UI.statCard("Today's Jobs", todayJobs.length.toString(), todayJobs.length ? todayJobs.map(function(j){return UI.esc(j.clientName);}).join(', ') : 'No visits scheduled', '', '', "loadPage('schedule')")
-      + UI.statCard('Receivables', UI.moneyInt(stats.receivables), unpaidInvoices.length + ' clients owe you', stats.receivables > 0 ? 'down' : '', '', "loadPage('invoices')")
-      + UI.statCard('New Requests', stats.newRequests.toString(), 'Awaiting response', stats.newRequests > 0 ? '' : '', '', "loadPage('requests')")
-      + UI.statCard('Active Jobs', stats.activeJobs.toString(), 'In progress', '', '', "loadPage('jobs')")
+    // Jobber-style date greeting
+    var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var monthFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var hour = now.getHours();
+    var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name || 'Doug' : 'Doug';
+    html += '<div style="margin-bottom:20px;">'
+      + '<div style="font-size:13px;color:var(--text-light);">' + dayNames[now.getDay()] + ', ' + monthFull[now.getMonth()] + ' ' + now.getDate() + '</div>'
+      + '<h2 style="font-size:28px;font-weight:700;margin-top:2px;">' + greeting + ', ' + userName.split(' ')[0] + '</h2>'
       + '</div>';
 
-    // Action Required (Jobber-style alerts)
+    // Jobber-style Workflow cards (2x2 grid)
     var overdueInvoices = unpaidInvoices.filter(function(i) { return i.dueDate && new Date(i.dueDate) < now; });
     var unapprovedQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
+    var draftQuotes = allQuotes.filter(function(q) { return q.status === 'draft'; });
+    var changesQuotes = allQuotes.filter(function(q) { return q.status === 'changes_requested'; });
+    var approvedQuotes = allQuotes.filter(function(q) { return q.status === 'approved'; });
     var lateJobs = allJobs.filter(function(j) { return j.status === 'late'; });
-    var hasAlerts = overdueInvoices.length || recentRequests.length || unapprovedQuotes.length || lateJobs.length;
+    var activeJobs = allJobs.filter(function(j) { return j.status === 'active' || j.status === 'in_progress' || j.status === 'scheduled'; });
+    var needsInvoicing = allJobs.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+    var actionJobs = allJobs.filter(function(j) { return j.status === 'action_required'; });
+    var sentInvoices = allInvoices.filter(function(i) { return i.status === 'sent' && (!i.dueDate || new Date(i.dueDate) >= now); });
+    var draftInvoices = allInvoices.filter(function(i) { return i.status === 'draft'; });
 
-    if (hasAlerts) {
-      html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);margin-bottom:16px;overflow:hidden;">'
-        + '<div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'
-        + '<span style="font-size:16px;">⚡</span><h3 style="font-size:15px;margin:0;">Action Required</h3></div>';
+    var reqTotal = allQuotes.filter(function(q){return q.status==='approved'||q.status==='converted';}).reduce(function(s,q){return s+(q.total||0);},0);
+    var activeJobTotal = activeJobs.reduce(function(s,j){return s+(j.total||0);},0);
+    var draftInvTotal = draftInvoices.reduce(function(s,i){return s+(i.total||0);},0);
+    var overdueTotal = overdueInvoices.reduce(function(s,i){return s+(i.balance||0);},0);
 
-      if (overdueInvoices.length) {
-        html += '<div onclick="loadPage(\'invoices\')" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--bg);cursor:pointer;transition:background .1s;" onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'\'">'
-          + '<div style="width:36px;height:36px;border-radius:8px;background:#fde8e8;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🔴</div>'
-          + '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + overdueInvoices.length + ' overdue invoice' + (overdueInvoices.length > 1 ? 's' : '') + '</div>'
-          + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(overdueInvoices.reduce(function(s,i){return s+(i.balance||0);},0)) + ' outstanding</div></div>'
-          + '<span style="color:var(--text-light);font-size:18px;">›</span></div>';
-      }
-      if (recentRequests.length) {
-        html += '<div onclick="loadPage(\'requests\')" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--bg);cursor:pointer;transition:background .1s;" onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'\'">'
-          + '<div style="width:36px;height:36px;border-radius:8px;background:#e3f2fd;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📥</div>'
-          + '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + recentRequests.length + ' new request' + (recentRequests.length > 1 ? 's' : '') + '</div>'
-          + '<div style="font-size:12px;color:var(--text-light);">Awaiting response</div></div>'
-          + '<span style="color:var(--text-light);font-size:18px;">›</span></div>';
-      }
-      if (unapprovedQuotes.length) {
-        html += '<div onclick="loadPage(\'quotes\')" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--bg);cursor:pointer;transition:background .1s;" onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'\'">'
-          + '<div style="width:36px;height:36px;border-radius:8px;background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📋</div>'
-          + '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + unapprovedQuotes.length + ' quote' + (unapprovedQuotes.length > 1 ? 's' : '') + ' awaiting approval</div>'
-          + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(unapprovedQuotes.reduce(function(s,q){return s+(q.total||0);},0)) + ' pending</div></div>'
-          + '<span style="color:var(--text-light);font-size:18px;">›</span></div>';
-      }
-      if (lateJobs.length) {
-        html += '<div onclick="loadPage(\'jobs\')" style="display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;transition:background .1s;" onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'\'">'
-          + '<div style="width:36px;height:36px;border-radius:8px;background:#ffebee;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⚠️</div>'
-          + '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + lateJobs.length + ' late job' + (lateJobs.length > 1 ? 's' : '') + '</div>'
-          + '<div style="font-size:12px;color:var(--text-light);">Needs rescheduling</div></div>'
-          + '<span style="color:var(--text-light);font-size:18px;">›</span></div>';
-      }
-      html += '</div>';
-    }
+    html += '<h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Workflow</h3>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;background:var(--white);">';
+
+    // Requests card
+    html += '<div onclick="loadPage(\'requests\')" style="padding:16px 20px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;position:relative;">'
+      + '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#e07c24;"></div>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;">📋 Requests</div>'
+      + '<div style="font-size:32px;font-weight:700;">' + recentRequests.length + '</div>'
+      + '<div style="font-size:14px;font-weight:600;">New</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:6px;">Assessments complete (0)</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Overdue (0)</div>'
+      + '</div>';
+
+    // Quotes card
+    var awaitingQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
+    html += '<div onclick="loadPage(\'quotes\')" style="padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;position:relative;">'
+      + '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#8b2252;"></div>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;">💰 Quotes</div>'
+      + '<div style="font-size:32px;font-weight:700;display:inline;">' + approvedQuotes.length + '</div>'
+      + '<span style="font-size:14px;color:var(--text-light);margin-left:6px;">' + UI.moneyInt(reqTotal) + '</span>'
+      + '<div style="font-size:14px;font-weight:600;">Approved</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-top:6px;"><span>Draft (' + draftQuotes.length + ')</span><span>' + UI.moneyInt(draftQuotes.reduce(function(s,q){return s+(q.total||0);},0)) + '</span></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);"><span>Changes requested (' + changesQuotes.length + ')</span><span>' + UI.moneyInt(changesQuotes.reduce(function(s,q){return s+(q.total||0);},0)) + '</span></div>'
+      + '</div>';
+
+    // Jobs card
+    html += '<div onclick="loadPage(\'jobs\')" style="padding:16px 20px;border-right:1px solid var(--border);cursor:pointer;position:relative;">'
+      + '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#2e7d32;"></div>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;">🔧 Jobs</div>'
+      + '<div style="font-size:32px;font-weight:700;">' + needsInvoicing.length + '</div>'
+      + '<div style="font-size:14px;font-weight:600;">Requires invoicing</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-top:6px;"><span>Active (' + activeJobs.length + ')</span><span>' + UI.moneyInt(activeJobTotal) + '</span></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);"><span>Action required (' + (actionJobs.length + lateJobs.length) + ')</span><span>' + UI.moneyInt(lateJobs.reduce(function(s,j){return s+(j.total||0);},0)) + '</span></div>'
+      + '</div>';
+
+    // Invoices card
+    html += '<div onclick="loadPage(\'invoices\')" style="padding:16px 20px;cursor:pointer;position:relative;">'
+      + '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#1565c0;"></div>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;">📄 Invoices</div>'
+      + '<div style="font-size:32px;font-weight:700;display:inline;">' + unpaidInvoices.length + '</div>'
+      + '<span style="font-size:14px;color:var(--text-light);margin-left:6px;">' + UI.moneyInt(unpaidInvoices.reduce(function(s,i){return s+(i.balance||0);},0)) + '</span>'
+      + '<div style="font-size:14px;font-weight:600;">Awaiting payment</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-top:6px;"><span>Draft (' + draftInvoices.length + ')</span><span>' + UI.moneyInt(draftInvTotal) + '</span></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:' + (overdueInvoices.length ? 'var(--red)' : 'var(--text-light)') + ';"><span>Past due (' + overdueInvoices.length + ')</span><span>' + UI.moneyInt(overdueTotal) + '</span></div>'
+      + '</div>';
+
+    html += '</div>';
 
     // Revenue chart (last 6 months)
     var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];

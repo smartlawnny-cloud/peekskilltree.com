@@ -6,14 +6,57 @@ var RequestsPage = {
     var all = DB.requests.getAll();
     var newCount = DB.requests.countNew();
 
-    var html = '<div class="stat-grid">'
-      + UI.statCard('New', newCount.toString(), 'Awaiting response', '', '')
-      + UI.statCard('Total Requests', all.length.toString(), 'All time', '', '')
+    // Jobber-style stat cards row
+    var assessed = all.filter(function(r) { return r.status === 'assessed' || r.status === 'assessment_complete'; }).length;
+    var overdue = all.filter(function(r) { return r.status === 'overdue'; }).length;
+    var unscheduled = all.filter(function(r) { return r.status === 'unscheduled'; }).length;
+    var recentNew = all.filter(function(r) { var d=new Date(r.createdAt); var ago=new Date(); ago.setDate(ago.getDate()-30); return d>=ago && r.status==='new'; });
+    var converted = all.filter(function(r) { return r.status === 'converted' || r.status === 'quoted'; });
+    var convRate = all.length > 0 ? Math.round(converted.length / all.length * 100) : 0;
+
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
+      // Overview
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
+      + '<div style="font-size:12px;"><span style="color:#1565c0;">●</span> New (' + newCount + ')</div>'
+      + '<div style="font-size:12px;"><span style="color:#2e7d32;">●</span> Assessment complete (' + assessed + ')</div>'
+      + '<div style="font-size:12px;"><span style="color:#dc3545;">●</span> Overdue (' + overdue + ')</div>'
+      + '<div style="font-size:12px;"><span style="color:#e6a817;">●</span> Unscheduled (' + unscheduled + ')</div>'
+      + '</div>'
+      // New requests
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">New requests</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + recentNew.length + '</div>'
+      + '</div>'
+      // Conversion rate
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">Conversion rate</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:12px;">' + convRate + '%</div>'
+      + '</div>'
+      // Total
+      + '<div style="padding:14px 16px;">'
+      + '<div style="font-size:14px;font-weight:700;">Total requests</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:12px;">' + all.length + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">All time</div>'
+      + '</div>'
       + '</div>';
+
+    // Jobber-style header + search
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;">'
+      + '<h3 style="font-size:16px;font-weight:700;margin:0;">All requests</h3>'
+      + '<span style="font-size:13px;color:var(--text-light);">(' + all.length + ' results)</span>'
+      + '<button class="filter-btn active" style="font-size:12px;padding:5px 12px;">Status | All</button>'
+      + '</div>'
+      + '<div class="search-box" style="min-width:200px;max-width:280px;">'
+      + '<span style="color:var(--text-light);">🔍</span>'
+      + '<input type="text" placeholder="Search requests..." oninput="">'
+      + '</div></div>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + '<th>Client</th><th>Property</th><th>Contact</th><th>Source</th><th>Requested</th><th>Status</th>'
+      + '<th>Client</th><th>Title</th><th>Property</th><th>Contact</th><th>Requested</th><th>Status</th>'
       + '</tr></thead><tbody>';
 
     if (all.length === 0) {

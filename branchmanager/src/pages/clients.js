@@ -15,29 +15,52 @@ var ClientsPage = {
     var stats = DB.dashboard.getStats();
     var clients = self._getFiltered();
 
-    var html = '<div class="stat-grid">'
-      + UI.statCard('Total Clients', stats.totalClients.toLocaleString(), 'All time', '', '', "ClientsPage.setFilter('all')")
-      + UI.statCard('Active', stats.activeClients.toLocaleString(), 'Current clients', '', '', "ClientsPage.setFilter('active')")
-      + UI.statCard('Leads', stats.leadClients.toLocaleString(), 'Not yet converted', '', '', "ClientsPage.setFilter('lead')")
-      + '</div>';
+    // Jobber-style stat cards row
+    var now = new Date();
+    var ago30 = new Date(); ago30.setDate(ago30.getDate()-30);
+    var allClients = DB.clients.getAll();
+    var newLeads30 = allClients.filter(function(c){ return c.status==='lead' && new Date(c.createdAt)>=ago30; }).length;
+    var newClients30 = allClients.filter(function(c){ return c.status==='active' && new Date(c.createdAt)>=ago30; }).length;
+    var ytdClients = allClients.filter(function(c){ return new Date(c.createdAt).getFullYear()===now.getFullYear(); }).length;
 
-    // Search + filters
-    html += '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">'
-      + '<div style="flex:1;min-width:200px;position:relative;">'
-      + '<input type="text" id="client-search" placeholder="Search by name, address, phone..." value="' + self._search + '" oninput="ClientsPage.setSearch(this.value)" style="width:100%;padding:9px 12px 9px 34px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
-      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-light);">🔍</span>'
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
+      // New leads
+      + '<div onclick="ClientsPage.setFilter(\'lead\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
+      + '<div style="font-size:14px;font-weight:700;">New leads</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + newLeads30 + '</div>'
       + '</div>'
-      + '<div style="display:flex;gap:4px;">';
-    ['all', 'active', 'lead'].forEach(function(f) {
-      var count = f === 'all' ? stats.totalClients : f === 'active' ? stats.activeClients : stats.leadClients;
-      html += '<button class="btn ' + (self._filter === f ? 'btn-primary' : 'btn-outline') + '" onclick="ClientsPage.setFilter(\'' + f + '\')" style="font-size:12px;padding:6px 12px;">' + f.charAt(0).toUpperCase() + f.slice(1) + ' (' + count + ')</button>';
-    });
-    html += '</div></div>';
-
-    // Results count
-    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">'
-      + 'Showing ' + Math.min(self._page * self._perPage + 1, clients.length) + '–' + Math.min((self._page + 1) * self._perPage, clients.length) + ' of ' + clients.length + ' clients'
+      // New clients
+      + '<div onclick="ClientsPage.setFilter(\'active\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
+      + '<div style="font-size:14px;font-weight:700;">New clients</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + newClients30 + '</div>'
+      + '</div>'
+      // Total new clients YTD
+      + '<div onclick="ClientsPage.setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
+      + '<div style="font-size:14px;font-weight:700;">Total new clients</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Year to date</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + ytdClients + '</div>'
+      + '</div>'
+      // Total
+      + '<div style="padding:14px 16px;">'
+      + '<div style="font-size:14px;font-weight:700;">All clients</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:12px;">' + stats.totalClients + '</div>'
+      + '</div>'
       + '</div>';
+
+    // Jobber-style header + filter/search
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      + '<h3 style="font-size:16px;font-weight:700;margin:0;">Filtered clients</h3>'
+      + '<span style="font-size:13px;color:var(--text-light);">(' + clients.length + ' results)</span>'
+      + '<button class="filter-btn" style="font-size:12px;padding:5px 12px;">Filter by tag +</button>'
+      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="ClientsPage.setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | Leads and Active</button>'
+      + '</div>'
+      + '<div class="search-box" style="min-width:200px;max-width:280px;">'
+      + '<span style="color:var(--text-light);">🔍</span>'
+      + '<input type="text" id="client-search" placeholder="Search clients..." value="' + UI.esc(self._search) + '" oninput="ClientsPage.setSearch(this.value)">'
+      + '</div></div>';
 
     // Paginated slice
     var pageClients = clients.slice(self._page * self._perPage, (self._page + 1) * self._perPage);

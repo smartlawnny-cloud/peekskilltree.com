@@ -12,28 +12,60 @@ var InvoicesPage = {
     var draft = all.filter(function(i) { return i.status === 'draft'; }).length;
     var paid = all.filter(function(i) { return i.status === 'paid'; }).length;
 
-    var html = '<div class="stat-grid">'
-      + UI.statCard('Receivables', UI.moneyInt(receivable), unpaid.length + ' unpaid', receivable > 0 ? 'down' : '', '', "InvoicesPage._setFilter('unpaid')")
-      + UI.statCard('Draft', draft.toString(), '', '', '', "InvoicesPage._setFilter('draft')")
-      + UI.statCard('Paid', paid.toString(), 'All time', '', '', "InvoicesPage._setFilter('paid')")
-      + UI.statCard('Total Invoices', all.length.toString(), '', '', '', "InvoicesPage._setFilter('all')")
-      + '</div>';
+    // Jobber-style stat cards row
+    var now = new Date();
+    var pastDue = all.filter(function(i) { return i.status !== 'paid' && i.dueDate && new Date(i.dueDate) < now; });
+    var sentNotDue = all.filter(function(i) { return i.status === 'sent' && (!i.dueDate || new Date(i.dueDate) >= now); });
+    var pastDueTotal = pastDue.reduce(function(s,i){return s+(i.balance||0);},0);
+    var sentNotDueTotal = sentNotDue.reduce(function(s,i){return s+(i.balance||0);},0);
+    var draftTotal = all.filter(function(i){return i.status==='draft';}).reduce(function(s,i){return s+(i.total||0);},0);
+    var recentIssued = all.filter(function(i) { var d=new Date(i.createdAt); var ago=new Date(); ago.setDate(ago.getDate()-30); return d>=ago; });
+    var recentIssuedTotal = recentIssued.reduce(function(s,i){return s+(i.total||0);},0);
+    var avgInvoice = recentIssued.length > 0 ? Math.round(recentIssuedTotal / recentIssued.length) : 0;
 
-    // Search
-    html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">'
-      + '<div style="flex:1;min-width:200px;position:relative;">'
-      + '<input type="text" placeholder="Search invoices..." value="' + self._search + '" oninput="InvoicesPage._search=this.value;InvoicesPage._page=0;loadPage(\'invoices\')" style="width:100%;padding:9px 12px 9px 34px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
-      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-light);">🔍</span></div>'
-      + '<div style="display:flex;gap:4px;">';
-    [['all', all.length], ['unpaid', unpaid.length], ['paid', paid], ['draft', draft]].forEach(function(f) {
-      html += '<button class="btn ' + (self._filter === f[0] ? 'btn-primary' : 'btn-outline') + '" onclick="InvoicesPage._setFilter(\'' + f[0] + '\')" style="font-size:12px;padding:6px 10px;">' + f[0].charAt(0).toUpperCase() + f[0].slice(1) + ' (' + f[1] + ')</button>';
-    });
-    html += '</div></div>';
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
+      // Overview
+      + '<div onclick="InvoicesPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
+      + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;"><span><span style="color:#dc3545;">●</span> Past due (' + pastDue.length + ')</span><span>' + UI.moneyInt(pastDueTotal) + '</span></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;"><span><span style="color:#e6a817;">●</span> Sent but not due (' + sentNotDue.length + ')</span><span>' + UI.moneyInt(sentNotDueTotal) + '</span></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;"><span><span style="color:#6c757d;">●</span> Draft (' + draft + ')</span><span>' + UI.moneyInt(draftTotal) + '</span></div>'
+      + '</div>'
+      // Issued
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">Issued</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + recentIssued.length + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(recentIssuedTotal) + '</div>'
+      + '</div>'
+      // Average invoice
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">Average invoice</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + UI.moneyInt(avgInvoice) + '</div>'
+      + '</div>'
+      // Payment time
+      + '<div style="padding:14px 16px;">'
+      + '<div style="font-size:14px;font-weight:700;">Invoice payment time</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:12px;">' + paid + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Paid invoices</div>'
+      + '</div>'
+      + '</div>';
 
     var filtered = self._getFiltered();
     var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
-    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Showing ' + Math.min(self._page * self._perPage + 1, filtered.length) + '–' + Math.min((self._page + 1) * self._perPage, filtered.length) + ' of ' + filtered.length + '</div>';
+    // Jobber-style header + filter chips + search
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      + '<h3 style="font-size:16px;font-weight:700;margin:0;">All invoices</h3>'
+      + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
+      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="InvoicesPage._setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | All</button>'
+      + '</div>'
+      + '<div class="search-box" style="min-width:200px;max-width:280px;">'
+      + '<span style="color:var(--text-light);">🔍</span>'
+      + '<input type="text" placeholder="Search invoices..." value="' + UI.esc(self._search) + '" oninput="InvoicesPage._search=this.value;InvoicesPage._page=0;loadPage(\'invoices\')">'
+      + '</div></div>';
 
     // Bulk action bar (hidden until selections made)
     html += '<div id="inv-bulk-bar" style="display:none;position:sticky;top:60px;z-index:50;background:var(--accent);color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:8px;display:none;justify-content:space-between;align-items:center;">'

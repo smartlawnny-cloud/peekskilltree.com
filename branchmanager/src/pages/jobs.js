@@ -12,29 +12,61 @@ var JobsPage = {
     var inProgress = all.filter(function(j) { return j.status === 'in_progress'; }).length;
     var completed = all.filter(function(j) { return j.status === 'completed'; }).length;
 
-    var html = '<div class="stat-grid">'
-      + UI.statCard('Late', late.toString(), 'Need attention', late > 0 ? 'down' : '', '', "JobsPage._setFilter('late')")
-      + UI.statCard('Scheduled', scheduled.toString(), 'Upcoming', '', '', "JobsPage._setFilter('scheduled')")
-      + UI.statCard('In Progress', inProgress.toString(), 'Active now', '', '', "JobsPage._setFilter('in_progress')")
-      + UI.statCard('Completed', completed.toString(), 'All time', '', '', "JobsPage._setFilter('completed')")
-      + '</div>';
+    // Jobber-style stat cards row
+    var activeJobs = all.filter(function(j) { return j.status === 'active' || j.status === 'in_progress' || j.status === 'scheduled'; });
+    var needsInvoicing = all.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+    var actionReq = all.filter(function(j) { return j.status === 'action_required'; });
+    var unscheduled = all.filter(function(j) { return !j.scheduledDate; });
+    var recentVisits = all.filter(function(j) { var d = new Date(j.scheduledDate); var ago = new Date(); ago.setDate(ago.getDate()-30); return d >= ago && d <= new Date(); });
+    var upcomingVisits = all.filter(function(j) { var d = new Date(j.scheduledDate); var ahead = new Date(); ahead.setDate(ahead.getDate()+30); return d > new Date() && d <= ahead; });
+    var activeTotal = activeJobs.reduce(function(s,j){return s+(j.total||0);},0);
+    var upcomingTotal = upcomingVisits.reduce(function(s,j){return s+(j.total||0);},0);
 
-    // Search + filter
-    html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">'
-      + '<div style="flex:1;min-width:200px;position:relative;">'
-      + '<input type="text" placeholder="Search jobs..." value="' + self._search + '" oninput="JobsPage._search=this.value;JobsPage._page=0;loadPage(\'jobs\')" style="width:100%;padding:9px 12px 9px 34px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
-      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-light);">🔍</span></div>'
-      + '<div style="display:flex;gap:4px;">';
-    [['all', all.length], ['scheduled', scheduled], ['in_progress', inProgress], ['completed', completed], ['late', late]].forEach(function(f) {
-      if (f[0] === 'late' && f[1] === 0) return; // hide late if none
-      html += '<button class="btn ' + (self._filter === f[0] ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage._setFilter(\'' + f[0] + '\')" style="font-size:12px;padding:6px 10px;">' + f[0].replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase();}) + ' (' + f[1] + ')</button>';
-    });
-    html += '</div></div>';
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
+      // Overview
+      + '<div onclick="JobsPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
+      + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
+      + '<div style="font-size:12px;"><span style="color:#dc3545;">●</span> Late (' + late + ')</div>'
+      + '<div style="font-size:12px;"><span style="color:#e6a817;">●</span> Requires Invoicing (' + needsInvoicing.length + ')</div>'
+      + '<div style="font-size:12px;"><span style="color:#fd7e14;">●</span> Action Required (' + actionReq.length + ')</div>'
+      + '<div style="font-size:12px;"><span style="color:#6c757d;">●</span> Unscheduled (' + unscheduled.length + ')</div>'
+      + '</div>'
+      // Recent visits
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">Recent visits</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + recentVisits.length + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(activeTotal) + '</div>'
+      + '</div>'
+      // Visits scheduled
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">Visits scheduled</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Next 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + upcomingVisits.length + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(upcomingTotal) + '</div>'
+      + '</div>'
+      // 4th card
+      + '<div style="padding:14px 16px;">'
+      + '<div style="font-size:14px;font-weight:700;">Total jobs</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:12px;">' + all.length + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">All time</div>'
+      + '</div>'
+      + '</div>';
 
     var filtered = self._getFiltered();
     var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
-    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Showing ' + Math.min(self._page * self._perPage + 1, filtered.length) + '–' + Math.min((self._page + 1) * self._perPage, filtered.length) + ' of ' + filtered.length + '</div>';
+    // Jobber-style header + filter chips + search
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      + '<h3 style="font-size:16px;font-weight:700;margin:0;">All jobs</h3>'
+      + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
+      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="JobsPage._setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | All</button>'
+      + '</div>'
+      + '<div class="search-box" style="min-width:200px;max-width:280px;">'
+      + '<span style="color:var(--text-light);">🔍</span>'
+      + '<input type="text" placeholder="Search jobs..." value="' + UI.esc(self._search) + '" oninput="JobsPage._search=this.value;JobsPage._page=0;loadPage(\'jobs\')">'
+      + '</div></div>';
 
     // Bulk action bar
     html += '<div id="job-bulk-bar" style="display:none;position:sticky;top:60px;z-index:50;background:var(--accent);color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:8px;justify-content:space-between;align-items:center;">'
@@ -47,7 +79,7 @@ var JobsPage = {
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
       + '<th style="width:32px;"><input type="checkbox" onchange="JobsPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
-      + '<th>Client</th><th>#</th><th>Description</th><th>Scheduled</th><th>Status</th><th>Crew</th><th style="text-align:right;">Total</th>'
+      + '<th>Client</th><th>Job number</th><th>Property</th><th>Schedule</th><th>Status</th><th>Crew</th><th style="text-align:right;">Total</th>'
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
@@ -256,38 +288,60 @@ var JobsPage = {
     var timeEntries = DB.timeEntries ? DB.timeEntries.getAll().filter(function(te) { return te.jobId === id; }) : [];
     var totalHours = timeEntries.reduce(function(s, te) { return s + (te.hours || 0); }, 0);
 
-    // Full-page job detail (Jobber style)
+    // Jobber-style job detail
+    var statusColors = {scheduled:'#1565c0',in_progress:'#e07c24',completed:'#2e7d32',invoiced:'#2e7d32',late:'#dc3545',cancelled:'#6c757d'};
+    var statusColor = statusColors[j.status] || '#2e7d32';
+    var client = j.clientId ? DB.clients.getById(j.clientId) : null;
+
     var html = ''
-      // Back + header
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
-      + '<button class="btn btn-outline" onclick="loadPage(\'jobs\')" style="padding:6px 12px;">← Back</button>'
-      + '<div style="flex:1;">'
-      + '<h2 style="font-size:22px;margin-bottom:2px;">Job #' + j.jobNumber + '</h2>'
-      + '<span style="font-size:14px;color:var(--text-light);">' + UI.esc(j.clientName || '') + (j.property ? ' — ' + UI.esc(j.property) : '') + '</span>'
+      // Colored status bar
+      + '<div style="height:4px;background:' + statusColor + ';margin:-24px -24px 16px -24px;"></div>'
+
+      // Status + action buttons
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<span style="font-size:20px;">🔧</span>'
+      + '<span>' + UI.statusBadge(j.status) + '</span>'
       + '</div>'
       + '<div style="display:flex;gap:6px;">'
-      + '<button class="btn btn-outline" onclick="JobsPage.showForm(\'' + id + '\')">Edit</button>'
-      + '<button class="btn btn-outline" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>'
-      + '<button class="btn btn-outline" onclick="PropertyMap.show(\'' + (j.property || '').replace(/'/g, "\\'") + '\')">🗺 Map</button>'
-      + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');">Create Invoice</button>' : '')
+      + '<button class="btn btn-outline" onclick="JobsPage.showForm(\'' + id + '\')">··· More</button>'
+      + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');">Create Invoice</button>' : '<button class="btn btn-primary" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>')
       + '</div></div>'
 
-      // Status + total bar
-      + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;">'
-      + UI.statCard('Status', '<span style="font-size:14px;">' + UI.statusBadge(j.status) + '</span>', '', '', '')
-      + UI.statCard('Total', UI.money(j.total), '', '', '')
-      + UI.statCard('Scheduled', UI.dateShort(j.scheduledDate), (j.startTime || 'Anytime'), '', '')
-      + UI.statCard('Time Tracked', totalHours.toFixed(1) + ' hrs', timeEntries.length + ' entries', '', '')
-      + UI.statCard('Crew', (j.crew ? j.crew.length : 0) + ' assigned', '', '', '')
+      // Title
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">'
+      + '<h2 style="font-size:24px;font-weight:700;">Job for ' + UI.esc(j.clientName || '—') + '</h2>'
+      + '<button onclick="JobsPage.showForm(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-light);">✏️</button>'
       + '</div>'
 
-      // Two column layout
-      + '<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">'
+      // Two-column: Client card (left) + metadata (right)
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="detail-grid">'
 
-      // Left — main content
+      // Client contact card
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:start;">'
       + '<div>'
+      + '<div style="font-size:16px;font-weight:700;">' + UI.esc(j.clientName || '—') + ' <span style="color:#2e7d32;font-size:10px;">●</span></div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Property Address</div>'
+      + '<div style="font-size:14px;margin-top:2px;">' + UI.esc(j.property || '—') + '</div>'
+      + (j.clientPhone || (client && client.phone) ? '<div style="font-size:14px;margin-top:8px;">' + (j.clientPhone || client.phone) + '</div>' : '')
+      + (j.clientEmail || (client && client.email) ? '<div style="margin-top:2px;"><a href="mailto:' + (j.clientEmail || (client && client.email) || '') + '" style="font-size:14px;color:#1565c0;">' + (j.clientEmail || (client && client.email) || '') + '</a></div>' : '')
+      + '</div>'
+      + '<button style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-light);">···</button>'
+      + '</div></div>'
 
-      // Workflow progress bar (Jobber style)
+      // Job metadata table
+      + '<div>'
+      + '<table style="width:100%;font-size:14px;border-collapse:collapse;">'
+      + '<tr><td style="padding:8px 0;color:var(--text-light);width:130px;">Job #</td><td style="padding:8px 0;font-weight:500;">' + (j.jobNumber || '') + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:var(--text-light);">Scheduled</td><td style="padding:8px 0;">' + UI.dateShort(j.scheduledDate) + (j.startTime ? ' at ' + j.startTime : '') + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:var(--text-light);">Total</td><td style="padding:8px 0;font-weight:700;font-size:16px;">' + UI.money(j.total) + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:var(--text-light);">Time Tracked</td><td style="padding:8px 0;">' + totalHours.toFixed(1) + ' hrs (' + timeEntries.length + ' entries)</td></tr>'
+      + '<tr><td style="padding:8px 0;color:var(--text-light);">Crew</td><td style="padding:8px 0;">' + (j.crew && j.crew.length ? j.crew.join(', ') : 'Unassigned') + '</td></tr>'
+      + '</table></div>'
+      + '</div>'
+
+      // Workflow progress bar
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">';
     var jStages = ['scheduled','in_progress','completed','invoiced'];
     var jLabels = {scheduled:'Scheduled',in_progress:'In Progress',completed:'Completed',invoiced:'Invoiced'};

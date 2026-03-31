@@ -12,27 +12,62 @@ var QuotesPage = {
     var sent = all.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).length;
     var approved = all.filter(function(q) { return q.status === 'approved'; }).length;
 
-    var html = '<div class="stat-grid">'
-      + UI.statCard('Draft', draft.toString(), '', '', '', "QuotesPage._setFilter('draft')")
-      + UI.statCard('Awaiting Response', sent.toString(), '', '', '', "QuotesPage._setFilter('sent')")
-      + UI.statCard('Approved', approved.toString(), '', '', '', "QuotesPage._setFilter('approved')")
-      + UI.statCard('Total Quotes', all.length.toString(), '', '', '', "QuotesPage._setFilter('all')")
-      + '</div>';
+    // Jobber-style stat cards row
+    var converted = all.filter(function(q) { return q.status === 'converted'; });
+    var changesReq = all.filter(function(q) { return q.status === 'changes_requested'; });
+    var sentTotal = all.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).reduce(function(s,q){return s+(q.total||0);},0);
+    var convertedTotal = converted.reduce(function(s,q){return s+(q.total||0);},0);
+    var convRate = all.length > 0 ? Math.round((converted.length + approved) / all.length * 100) : 0;
 
-    // Search + filter
-    html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">'
-      + '<div style="flex:1;min-width:200px;position:relative;">'
-      + '<input type="text" placeholder="Search quotes..." value="' + self._search + '" oninput="QuotesPage._search=this.value;QuotesPage._page=0;loadPage(\'quotes\')" style="width:100%;padding:9px 12px 9px 34px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
-      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-light);">🔍</span></div></div>';
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
+      // Overview
+      + '<div onclick="QuotesPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
+      + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
+      + '<div style="font-size:12px;"><span style="color:#6c757d;">●</span> Draft (' + draft + ')</div>'
+      + '<div style="font-size:12px;"><span style="color:#e6a817;">●</span> Awaiting response (' + sent + ')</div>'
+      + '<div style="font-size:12px;"><span style="color:#dc3545;">●</span> Changes requested (' + changesReq.length + ')</div>'
+      + '<div style="font-size:12px;"><span style="color:#2e7d32;">●</span> Approved (' + approved + ')</div>'
+      + '</div>'
+      // Conversion rate
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">Conversion rate</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + convRate + '%</div>'
+      + '</div>'
+      // Sent
+      + '<div onclick="QuotesPage._setFilter(\'sent\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
+      + '<div style="font-size:14px;font-weight:700;">Sent</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + sent + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(sentTotal) + '</div>'
+      + '</div>'
+      // Converted
+      + '<div onclick="QuotesPage._setFilter(\'converted\')" style="padding:14px 16px;cursor:pointer;">'
+      + '<div style="font-size:14px;font-weight:700;">Converted</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + converted.length + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(convertedTotal) + '</div>'
+      + '</div>'
+      + '</div>';
 
     var filtered = self._getFiltered();
     var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
-    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Showing ' + Math.min(self._page * self._perPage + 1, filtered.length) + '–' + Math.min((self._page + 1) * self._perPage, filtered.length) + ' of ' + filtered.length + '</div>';
+    // Jobber-style "All quotes (X results)" + filter chips + search
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      + '<h3 style="font-size:16px;font-weight:700;margin:0;">All quotes</h3>'
+      + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
+      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="QuotesPage._setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | All</button>'
+      + '</div>'
+      + '<div class="search-box" style="min-width:200px;max-width:280px;">'
+      + '<span style="color:var(--text-light);">🔍</span>'
+      + '<input type="text" placeholder="Search quotes..." value="' + UI.esc(self._search) + '" oninput="QuotesPage._search=this.value;QuotesPage._page=0;loadPage(\'quotes\')">'
+      + '</div></div>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + '<th>Client</th><th>Quote #</th><th>Description</th><th>Created</th><th>Status</th><th style="text-align:right;">Total</th>'
+      + '<th>Client</th><th>Quote number</th><th>Property</th><th>Created</th><th>Status</th><th style="text-align:right;">Total</th>'
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
@@ -42,7 +77,7 @@ var QuotesPage = {
         html += '<tr onclick="QuotesPage.showDetail(\'' + q.id + '\')" style="cursor:pointer;">'
           + '<td><strong>' + UI.esc(q.clientName || '—') + '</strong></td>'
           + '<td>#' + (q.quoteNumber || '') + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(q.description || q.property || '—') + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(q.property || '—') + '</td>'
           + '<td>' + UI.dateShort(q.createdAt) + '</td>'
           + '<td>' + UI.statusBadge(q.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(q.total) + '</td>'
@@ -258,37 +293,60 @@ var QuotesPage = {
     var q = DB.quotes.getById(id);
     if (!q) return;
 
-    // Full-page quote detail (Jobber style)
+    // Jobber-style quote detail
+    var statusColors = {draft:'#6c757d',sent:'#e07c24',awaiting:'#e07c24',approved:'#2e7d32',converted:'#2e7d32',declined:'#dc3545'};
+    var statusColor = statusColors[q.status] || '#8b2252';
+    var client = q.clientId ? DB.clients.getById(q.clientId) : null;
+
     var html = ''
-      // Back + header
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
-      + '<button class="btn btn-outline" onclick="loadPage(\'quotes\')" style="padding:6px 12px;">← Back</button>'
-      + '<div style="flex:1;">'
-      + '<h2 style="font-size:22px;margin-bottom:2px;">Quote #' + q.quoteNumber + '</h2>'
-      + '<span style="font-size:14px;color:var(--text-light);">' + UI.esc(q.clientName || '') + (q.property ? ' — ' + UI.esc(q.property) : '') + '</span>'
+      // Colored status bar
+      + '<div style="height:4px;background:' + statusColor + ';margin:-24px -24px 16px -24px;"></div>'
+
+      // Status + action buttons
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<span style="font-size:20px;">💰</span>'
+      + '<span>' + UI.statusBadge(q.status) + '</span>'
       + '</div>'
       + '<div style="display:flex;gap:6px;">'
-      + '<button class="btn btn-outline" onclick="QuotesPage.showForm(\'' + id + '\')">Edit</button>'
-      + '<button class="btn btn-outline" onclick="PDF.generateQuote(\'' + id + '\')">📄 PDF</button>'
-      + '<button class="btn btn-outline" onclick="QuotesPage._sendQuote(\'' + id + '\')">📧 Send</button>'
-      + (q.status !== 'converted' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.quoteToJob(\'' + id + '\');loadPage(\'jobs\');">✅ Convert to Job</button>' : '')
+      + '<button class="btn btn-outline" onclick="QuotesPage.showForm(\'' + id + '\')">··· More</button>'
+      + '<button class="btn btn-primary" onclick="QuotesPage._sendQuote(\'' + id + '\')">📧 Send Quote</button>'
       + '</div></div>'
 
-      // Stats bar
-      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">'
-      + UI.statCard('Status', '<span style="font-size:14px;">' + UI.statusBadge(q.status) + '</span>', '', '', '')
-      + UI.statCard('Total', UI.money(q.total), '', '', '')
-      + UI.statCard('Created', UI.dateShort(q.createdAt || ''), '', '', '')
-      + UI.statCard('Client', q.clientName || '—', '', '', '')
+      // Title
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">'
+      + '<h2 style="font-size:24px;font-weight:700;">Quote for ' + UI.esc(q.clientName || '—') + '</h2>'
+      + '<button onclick="QuotesPage.showForm(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-light);">✏️</button>'
       + '</div>'
 
-      // Two column
-      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;" class="detail-grid">'
+      // Two-column: Client card (left) + metadata (right) — Jobber layout
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="detail-grid">'
 
-      // Left — main
+      // Client contact card
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:start;">'
       + '<div>'
+      + '<div style="font-size:16px;font-weight:700;">' + UI.esc(q.clientName || '—') + ' <span style="color:#1565c0;font-size:10px;">●</span></div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Property Address</div>'
+      + '<div style="font-size:14px;margin-top:2px;">' + UI.esc(q.property || '—') + '</div>'
+      + (q.clientPhone || (client && client.phone) ? '<div style="font-size:14px;margin-top:8px;">' + (q.clientPhone || client.phone) + '</div>' : '')
+      + (q.clientEmail || (client && client.email) ? '<div style="margin-top:2px;"><a href="mailto:' + (q.clientEmail || client.email) + '" style="font-size:14px;color:#1565c0;">' + (q.clientEmail || client.email) + '</a></div>' : '')
+      + '</div>'
+      + '<button style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-light);">···</button>'
+      + '</div></div>'
 
-      // Workflow progress bar (Jobber style)
+      // Quote metadata table
+      + '<div>'
+      + '<table style="width:100%;font-size:14px;border-collapse:collapse;">'
+      + '<tr><td style="padding:8px 0;color:var(--text-light);width:120px;">Quote #</td><td style="padding:8px 0;font-weight:500;">' + (q.quoteNumber || '') + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:var(--text-light);">Created</td><td style="padding:8px 0;">' + UI.dateShort(q.createdAt) + '</td></tr>'
+      + (q.sentAt ? '<tr><td style="padding:8px 0;color:var(--text-light);">Sent</td><td style="padding:8px 0;">' + UI.dateShort(q.sentAt) + '</td></tr>' : '')
+      + '<tr><td style="padding:8px 0;color:var(--text-light);">Total</td><td style="padding:8px 0;font-weight:700;font-size:16px;">' + UI.money(q.total) + '</td></tr>'
+      + (q.source ? '<tr><td style="padding:8px 0;color:var(--text-light);">Lead Source</td><td style="padding:8px 0;">' + UI.esc(q.source) + '</td></tr>' : '')
+      + '</table></div>'
+      + '</div>'
+
+      // Workflow progress bar
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">';
     var qStages = ['draft','sent','approved','converted'];
     var qStageLabels = {draft:'Draft',sent:'Sent',approved:'Approved',converted:'Converted to Job'};
@@ -320,54 +378,44 @@ var QuotesPage = {
         + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Description</h4>'
         + '<p style="font-size:14px;line-height:1.6;margin:0;">' + UI.esc(q.description) + '</p></div>' : '')
 
-      // Line items
+      // Line items (Product / Service)
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">'
-      + '<div style="padding:12px 16px;border-bottom:1px solid var(--border);"><h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin:0;">Line Items</h4></div>';
+      + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);"><h4 style="font-size:15px;font-weight:700;margin:0;">Product / Service</h4><button onclick="QuotesPage.showForm(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-light);">✏️</button></div>';
     if (q.lineItems && q.lineItems.length) {
-      html += '<table class="data-table" style="border:none;border-radius:0;"><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
+      html += '<table class="data-table" style="border:none;border-radius:0;"><thead><tr><th>Line Item</th><th>Quantity</th><th style="text-align:right;">Unit Price</th><th style="text-align:right;">Total</th></tr></thead><tbody>';
       q.lineItems.forEach(function(item) {
-        html += '<tr><td>' + (item.service || 'Custom') + '</td><td style="color:var(--text-light);">' + (item.description || '') + '</td><td>' + item.qty + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || item.qty * item.rate) + '</td></tr>';
+        html += '<tr><td><strong>' + (item.service || 'Custom') + '</strong>' + (item.description ? '<br><span style="color:var(--text-light);font-size:12px;">' + item.description + '</span>' : '') + '</td><td>' + item.qty + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || item.qty * item.rate) + '</td></tr>';
       });
-      html += '<tr style="background:var(--green-bg);"><td colspan="4" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:800;font-size:15px;color:var(--accent);">' + UI.money(q.total) + '</td></tr>';
+      html += '<tr style="background:var(--green-bg);"><td colspan="3" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:800;font-size:15px;color:var(--accent);">' + UI.money(q.total) + '</td></tr>';
       html += '</tbody></table>';
     } else {
       html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">No line items</div>';
     }
     html += '</div>'
 
+      // Photos + Notes + Actions in bottom section
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="detail-grid">'
+
       // Photos
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Photos</h4>';
     if (typeof Photos !== 'undefined') { html += Photos.renderGallery('quote', id); }
     else { html += '<div style="color:var(--text-light);font-size:13px;">No photos</div>'; }
-    html += '</div></div>'
+    html += '</div>'
 
-      // Right sidebar
+      // Notes + Actions
       + '<div>'
-
-      // Client info
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Client</h4>'
-      + '<div style="font-size:14px;font-weight:600;margin-bottom:6px;">' + UI.esc(q.clientName || '—') + '</div>'
-      + (q.property ? '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">📍 ' + UI.esc(q.property) + '</div>' : '')
-      + (q.clientPhone ? '<a href="tel:' + q.clientPhone + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 Call</a>' : '')
-      + (q.clientEmail ? '<a href="mailto:' + q.clientEmail + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">✉️ Email</a>' : '')
-      + (q.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(q.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;">🗺 Directions</a>' : '')
-      + '</div>'
-
-      // Property map
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Property Map</h4>'
-      + '<button class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;" onclick="PropertyMap.show(\'' + (q.property || '').replace(/'/g, "\\'") + '\')">📐 Equipment Layout</button>'
-      + '</div>'
-
-      // Notes
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Internal Notes</h4>'
       + (q.notes ? '<div style="font-size:13px;line-height:1.6;">' + UI.esc(q.notes) + '</div>' : '<div style="color:var(--text-light);font-size:13px;">No notes</div>')
       + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:6px;">'
+      + '<button class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;" onclick="PDF.generateQuote(\'' + id + '\')">📄 Download PDF</button>'
+      + (q.property ? '<button class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;" onclick="PropertyMap.show(\'' + (q.property || '').replace(/'/g, "\\'") + '\')">📐 Equipment Layout</button>' : '')
+      + (q.status !== 'converted' ? '<button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="if(typeof Workflow!==\'undefined\')Workflow.quoteToJob(\'' + id + '\');loadPage(\'jobs\');">✅ Convert to Job</button>' : '')
+      + '</div></div>'
 
-      + '</div></div>';
+      + '</div>';
 
     // Render full page
     document.getElementById('pageTitle').textContent = 'Quote #' + q.quoteNumber;

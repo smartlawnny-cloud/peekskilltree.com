@@ -87,6 +87,18 @@ var SettingsPage = {
       + '<button class="btn" style="background:var(--red);color:#fff;" onclick="SettingsPage.clearAll()">Clear All Data</button>'
       + '</div></div>';
 
+    // About
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<h3 style="margin-bottom:12px;">About Branch Manager</h3>'
+      + '<div style="font-size:13px;color:var(--text-light);line-height:1.8;">'
+      + '<div><strong>Version:</strong> 1.0.0</div>'
+      + '<div><strong>Pages:</strong> 35 modules</div>'
+      + '<div><strong>Stack:</strong> Vanilla JS + Supabase + Stripe + MapLibre</div>'
+      + '<div><strong>Storage:</strong> localStorage + Supabase cloud sync</div>'
+      + '<div><strong>PWA:</strong> Installable, offline capable</div>'
+      + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;">Built for Second Nature Tree Service. Replaces Jobber ($50-130/mo) with a $0/mo custom solution.</div>'
+      + '</div></div>';
+
     html += '</div>';
     return html;
   },

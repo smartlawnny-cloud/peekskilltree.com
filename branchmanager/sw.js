@@ -1,19 +1,24 @@
-// Branch Manager — Service Worker v4
+// Branch Manager — Service Worker v5
 // Full offline support + push notifications
-var CACHE_NAME = 'branch-manager-v4';
+var CACHE_NAME = 'branch-manager-v5';
 var ASSETS = [
   './',
   './index.html',
   './manifest.json',
   // Core
+  './src/auth.js',
   './src/db.js',
   './src/ui.js',
   './src/pdf.js',
   './src/supabase.js',
+  './src/supacloud.js',
   './src/stripe.js',
   './src/sendjim.js',
   './src/templates.js',
   './src/photos.js',
+  './src/email.js',
+  './src/geofence.js',
+  './src/weather.js',
   // Pages
   './src/pages/dashboard.js',
   './src/pages/pipeline.js',
@@ -55,7 +60,11 @@ var ASSETS = [
   './src/pages/workflow.js',
   './src/pages/clienthub.js',
   './src/pages/comms.js',
-  './src/pages/payments.js'
+  './src/pages/payments.js',
+  // Icons
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png'
 ];
 
 // Install — cache all assets
@@ -64,7 +73,6 @@ self.addEventListener('install', function(e) {
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(ASSETS).catch(function(err) {
         console.warn('SW: Some assets failed to cache', err);
-        // Cache what we can
         return Promise.allSettled(
           ASSETS.map(function(url) { return cache.add(url).catch(function(){}); })
         );
@@ -104,7 +112,6 @@ self.addEventListener('fetch', function(e) {
     }).catch(function() {
       return caches.match(e.request).then(function(cached) {
         if (cached) return cached;
-        // For navigation requests, return index.html (SPA fallback)
         if (e.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
@@ -120,8 +127,8 @@ self.addEventListener('push', function(e) {
   e.waitUntil(
     self.registration.showNotification(data.title || 'Branch Manager', {
       body: data.body || '',
-      icon: data.icon || './icon-192.png',
-      badge: './icon-192.png',
+      icon: data.icon || './icons/icon-192.png',
+      badge: './icons/icon-192.png',
       data: data.url || './',
       tag: data.tag || 'default',
       actions: data.actions || []

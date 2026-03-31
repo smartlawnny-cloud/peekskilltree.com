@@ -264,6 +264,17 @@
     .card, .stat-card { border-radius:14px !important; }
     .stat-card { padding:14px !important; }
 
+    /* Jobber stat card rows — stack 2x2 on mobile */
+    .stat-row { grid-template-columns:1fr 1fr !important; }
+
+    /* Make tables horizontally scrollable */
+    .data-table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .data-table thead, .data-table tbody, .data-table tr { display:table; width:100%; table-layout:auto; }
+    .data-table th, .data-table td { white-space:nowrap; font-size:13px !important; padding:10px 8px !important; }
+
+    /* Hide less important table columns on mobile */
+    .data-table th:nth-child(n+4):not(:last-child), .data-table td:nth-child(n+4):not(:last-child) { display:none; }
+
     /* Larger inputs */
     input, select, textarea { font-size:16px !important; padding:12px !important; border-radius:10px !important; }
     .btn { min-height:44px; border-radius:12px !important; }
@@ -274,6 +285,12 @@
     /* Modal slides up from bottom */
     .modal { max-width:100% !important; max-height:95vh !important; border-radius:20px 20px 0 0 !important; margin-top:auto !important; }
     .modal-overlay { align-items:flex-end !important; }
+
+    /* Filter chips wrap nicely */
+    .filter-btn { font-size:11px !important; padding:6px 10px !important; }
+
+    /* Topbar icons — hide less essential ones */
+    .topbar-icons button:nth-child(n+4) { display:none; }
   }
   @media (max-width: 480px) {
     .stat-grid { grid-template-columns:1fr; }

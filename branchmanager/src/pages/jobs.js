@@ -22,7 +22,7 @@ var JobsPage = {
     var activeTotal = activeJobs.reduce(function(s,j){return s+(j.total||0);},0);
     var upcomingTotal = upcomingVisits.reduce(function(s,j){return s+(j.total||0);},0);
 
-    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
       // Overview
       + '<div onclick="JobsPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
       + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'

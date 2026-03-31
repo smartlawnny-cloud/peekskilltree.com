@@ -23,7 +23,7 @@ var ClientsPage = {
     var newClients30 = allClients.filter(function(c){ return c.status==='active' && new Date(c.createdAt)>=ago30; }).length;
     var ytdClients = allClients.filter(function(c){ return new Date(c.createdAt).getFullYear()===now.getFullYear(); }).length;
 
-    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
       // New leads
       + '<div onclick="ClientsPage.setFilter(\'lead\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
       + '<div style="font-size:14px;font-weight:700;">New leads</div>'

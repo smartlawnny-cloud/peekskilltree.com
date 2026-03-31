@@ -233,52 +233,119 @@ var ClientsPage = {
     var totalRevenue = clientInvoices.filter(function(i) { return i.status === 'paid'; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
     var totalOutstanding = clientInvoices.filter(function(i) { return i.status !== 'paid'; }).reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0);
 
-    // Full-page client detail (Jobber style)
+    // Jobber-style client detail
     var html = ''
-      // Back button + header
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
-      + '<button class="btn btn-outline" onclick="loadPage(\'clients\')" style="padding:6px 12px;">← Back</button>'
-      + '<div style="flex:1;">'
-      + '<h2 style="font-size:22px;margin-bottom:2px;">' + UI.esc(c.name) + '</h2>'
-      + (c.company ? '<span style="color:var(--text-light);font-size:13px;">' + UI.esc(c.company) + '</span>' : '')
-      + '</div>'
-      + '<div style="display:flex;gap:6px;">'
-      + '<button class="btn btn-outline" onclick="ClientsPage.showForm(\'' + id + '\')">Edit</button>'
-      + '<button class="btn btn-outline" onclick="QuotesPage.showForm(null,\'' + id + '\')">+ Quote</button>'
-      + '<button class="btn btn-primary" onclick="JobsPage.showForm(null,\'' + id + '\')">+ Job</button>'
-      + '</div></div>'
+      // Breadcrumb
+      + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;">'
+      + '<a onclick="loadPage(\'clients\')" style="color:var(--text-light);cursor:pointer;text-decoration:none;">Second Nature Tree</a>'
+      + ' | <span style="color:var(--text);">' + UI.esc(c.name) + '</span></div>'
 
-      // Stats row
-      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">'
-      + UI.statCard('Revenue', UI.moneyInt(totalRevenue), 'Lifetime', '', '')
-      + UI.statCard('Outstanding', UI.moneyInt(totalOutstanding), 'Unpaid', '', '')
-      + UI.statCard('Jobs', clientJobs.length.toString(), 'Total', '', '')
-      + UI.statCard('Quotes', clientQuotes.length.toString(), 'Total', '', '')
+      // Action buttons (right-aligned)
+      + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px;">'
+      + (c.email ? '<button class="btn btn-primary" onclick="window.location.href=\'mailto:' + c.email + '\'">✉️ Email</button>' : '')
+      + '<button class="btn btn-outline" onclick="ClientsPage.showForm(\'' + id + '\')">✏️ Edit</button>'
+      + '<button class="btn btn-outline">··· More Actions</button>'
       + '</div>'
 
-      // Two column layout
-      + '<div class="detail-grid" style="display:grid;grid-template-columns:320px 1fr;gap:20px;">'
+      // Client name (big, like Jobber)
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">'
+      + '<div style="width:48px;height:48px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text-light);">👤</div>'
+      + '<h2 style="font-size:28px;font-weight:700;">' + UI.esc(c.name) + '</h2>'
+      + '</div>'
 
-      // Left sidebar — contact info
+      // Two column: Properties (left) + Contact info (right)
+      + '<div class="detail-grid" style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;">'
+
+      // Left — Properties card
       + '<div>'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Contact Info</h4>'
-      + '<div style="font-size:14px;line-height:2.2;">'
-      + (c.address ? '<div style="display:flex;gap:8px;align-items:start;"><span style="color:var(--text-light);width:16px;">📍</span> <span>' + UI.esc(c.address) + '</span></div>' : '')
-      + (c.phone ? '<div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--text-light);width:16px;">📞</span> <a href="tel:' + c.phone.replace(/\D/g,'') + '" style="color:var(--accent);text-decoration:none;">' + UI.phone(c.phone) + '</a></div>' : '')
-      + (c.email ? '<div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--text-light);width:16px;">✉️</span> <a href="mailto:' + c.email + '" style="color:var(--accent);text-decoration:none;font-size:13px;">' + c.email + '</a></div>' : '')
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="font-size:18px;font-weight:700;">Properties</h3>'
+      + '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="ClientsPage.showForm(\'' + id + '\')">+ New Property</button>'
       + '</div>'
-      + '<div style="margin-top:12px;">' + UI.statusBadge(c.status) + '</div>'
-      + (c.tags && c.tags.length ? '<div style="margin-top:12px;display:flex;gap:4px;flex-wrap:wrap;">' + c.tags.map(function(t) { return '<span style="display:inline-block;padding:3px 10px;background:var(--bg);border-radius:12px;font-size:11px;font-weight:600;color:var(--text-light);">' + UI.esc(t) + '</span>'; }).join('') + '</div>' : '')
+      + (c.address ? '<div style="display:flex;gap:12px;align-items:start;">'
+        + '<div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;color:#2e7d32;">📍</div>'
+        + '<div style="font-size:14px;line-height:1.6;">' + UI.esc(c.address).replace(/,/g, '<br>') + '</div>'
+        + '</div>' : '<div style="color:var(--text-light);font-size:13px;">No property address</div>')
       + '</div>'
 
-      // Quick actions
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Quick Actions</h4>'
-      + (c.phone ? '<a href="tel:' + c.phone.replace(/\D/g,'') + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;">📞 Call</a>' : '')
-      + (c.email ? '<a href="mailto:' + c.email + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;">✉️ Email</a>' : '')
-      + (c.address ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(c.address) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;">🗺 Directions</a>' : '')
+      // Schedule section
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+      + '<h3 style="font-size:18px;font-weight:700;">Schedule</h3>'
+      + '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="JobsPage.showForm(null,\'' + id + '\')">New</button>'
+      + '</div>';
+    var upcomingJobs = clientJobs.filter(function(j){ return j.status==='scheduled'||j.status==='in_progress'; });
+    var overdueJobs = clientJobs.filter(function(j){ return j.status==='late'; });
+    if (overdueJobs.length) {
+      html += '<div style="color:#dc3545;font-size:13px;font-weight:600;margin-bottom:8px;">Overdue</div>';
+      overdueJobs.forEach(function(j) {
+        html += '<div style="padding:8px 0;border-bottom:1px solid var(--bg);font-size:13px;cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
+          + '<strong>' + (j.description || 'Job #' + j.jobNumber) + '</strong><br>'
+          + '<span style="color:var(--text-light);">' + UI.dateShort(j.scheduledDate) + '</span></div>';
+      });
+    }
+    if (upcomingJobs.length) {
+      upcomingJobs.forEach(function(j) {
+        html += '<div style="padding:8px 0;border-bottom:1px solid var(--bg);font-size:13px;cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
+          + '<strong>' + (j.description || 'Job #' + j.jobNumber) + '</strong><br>'
+          + '<span style="color:var(--text-light);">' + UI.dateShort(j.scheduledDate) + '</span></div>';
+      });
+    }
+    if (!upcomingJobs.length && !overdueJobs.length) {
+      html += '<div style="color:var(--text-light);font-size:13px;">No upcoming schedule</div>';
+    }
+    html += '</div>'
+
+      // Recent pricing
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px;">'
+      + '<h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Recent pricing for this property</h3>';
+    var recentLineItems = [];
+    clientQuotes.forEach(function(q) {
+      if (q.lineItems) q.lineItems.forEach(function(li) {
+        recentLineItems.push({ service: li.service, quoted: li.amount || (li.qty * li.rate), type: 'quoted' });
+      });
+    });
+    if (recentLineItems.length) {
+      html += '<table style="width:100%;font-size:13px;border-collapse:collapse;">'
+        + '<tr style="text-transform:uppercase;font-size:10px;font-weight:600;color:var(--text-light);letter-spacing:.05em;"><td style="padding:6px 0;">Line Item</td><td style="padding:6px 0;text-align:right;">Quoted</td></tr>';
+      recentLineItems.slice(0, 5).forEach(function(li) {
+        html += '<tr><td style="padding:6px 0;">' + (li.service || 'Custom') + '</td><td style="padding:6px 0;text-align:right;">' + UI.money(li.quoted) + '</td></tr>';
+      });
+      html += '</table>';
+    } else {
+      html += '<div style="color:var(--text-light);font-size:13px;">No pricing history</div>';
+    }
+    html += '</div></div>'
+
+      // Right — Contact info + Tags + Internal notes
+      + '<div>'
+      + '<div style="margin-bottom:16px;">'
+      + '<h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Contact info</h3>'
+      + '<table style="width:100%;font-size:14px;border-collapse:collapse;">'
+      + (c.phone ? '<tr><td style="padding:8px 0;color:var(--text-light);width:60px;">Main</td><td style="padding:8px 0;"><a href="tel:' + c.phone.replace(/\D/g,'') + '" style="color:var(--text);text-decoration:none;">' + UI.phone(c.phone) + '</a></td></tr>' : '')
+      + (c.email ? '<tr><td style="padding:8px 0;color:var(--text-light);">Main</td><td style="padding:8px 0;"><a href="mailto:' + c.email + '" style="color:#1565c0;text-decoration:none;">' + c.email + '</a></td></tr>' : '')
+      + '<tr><td style="padding:8px 0;color:var(--text-light);">Status</td><td style="padding:8px 0;">' + UI.statusBadge(c.status) + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:var(--text-light);">Revenue</td><td style="padding:8px 0;font-weight:600;">' + UI.moneyInt(totalRevenue) + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:var(--text-light);">Owed</td><td style="padding:8px 0;' + (totalOutstanding > 0 ? 'color:var(--red);font-weight:600;' : '') + '">' + UI.moneyInt(totalOutstanding) + '</td></tr>'
+      + '</table></div>'
+
+      // Tags
+      + '<div style="margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+      + '<h3 style="font-size:18px;font-weight:700;">Tags</h3>'
+      + '<button class="btn btn-outline" style="font-size:12px;padding:4px 10px;" onclick="ClientsPage.showForm(\'' + id + '\')">+ New Tag</button>'
       + '</div>'
+      + (c.tags && c.tags.length ? '<div style="display:flex;gap:4px;flex-wrap:wrap;">' + c.tags.map(function(t) { return '<span style="display:inline-block;padding:4px 12px;background:var(--bg);border-radius:12px;font-size:12px;font-weight:600;color:var(--text-light);">' + UI.esc(t) + '</span>'; }).join('') + '</div>' : '<div style="font-size:13px;color:var(--text-light);font-style:italic;">This client has no tags</div>')
+      + '</div>'
+
+      // Internal notes
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<h3 style="font-size:18px;font-weight:700;margin-bottom:4px;">Internal notes</h3>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Internal notes will only be seen by your team</div>'
+      + (c.notes ? '<div style="font-size:13px;color:var(--text);line-height:1.6;padding:8px;background:var(--bg);border-radius:6px;">' + UI.esc(c.notes) + '</div>' : '<textarea placeholder="Note details" style="width:100%;height:80px;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:13px;resize:vertical;" readonly></textarea>')
+      + '</div>'
+      + '</div></div>'
 
       // Notes
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px;">'

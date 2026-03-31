@@ -265,7 +265,7 @@ var QuotesPage = {
       + '<button class="btn btn-outline" onclick="loadPage(\'quotes\')" style="padding:6px 12px;">← Back</button>'
       + '<div style="flex:1;">'
       + '<h2 style="font-size:22px;margin-bottom:2px;">Quote #' + q.quoteNumber + '</h2>'
-      + '<span style="font-size:14px;color:var(--text-light);">' + (q.clientName || '') + (q.property ? ' — ' + q.property : '') + '</span>'
+      + '<span style="font-size:14px;color:var(--text-light);">' + UI.esc(q.clientName || '') + (q.property ? ' — ' + UI.esc(q.property) : '') + '</span>'
       + '</div>'
       + '<div style="display:flex;gap:6px;">'
       + '<button class="btn btn-outline" onclick="QuotesPage.showForm(\'' + id + '\')">Edit</button>'
@@ -288,19 +288,37 @@ var QuotesPage = {
       // Left — main
       + '<div>'
 
-      // Status workflow
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Status</h4>'
+      // Workflow progress bar (Jobber style)
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">';
+    var qStages = ['draft','sent','approved','converted'];
+    var qStageLabels = {draft:'Draft',sent:'Sent',approved:'Approved',converted:'Converted to Job'};
+    var qIdx = qStages.indexOf(q.status === 'awaiting' ? 'sent' : q.status);
+    if (qIdx < 0) qIdx = 0;
+    html += '<div style="display:flex;align-items:center;margin-bottom:14px;">';
+    qStages.forEach(function(s, i) {
+      var done = i <= qIdx;
+      var active = i === qIdx;
+      html += '<div style="flex:1;text-align:center;position:relative;">'
+        + '<div style="width:28px;height:28px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;'
+        + (done ? 'background:var(--accent);color:#fff;' : 'background:var(--bg);color:var(--text-light);border:2px solid var(--border);') + '">'
+        + (done && !active ? '✓' : (i + 1)) + '</div>'
+        + '<div style="font-size:11px;font-weight:' + (active ? '700' : '500') + ';color:' + (done ? 'var(--accent)' : 'var(--text-light)') + ';margin-top:4px;">' + qStageLabels[s] + '</div>'
+        + '</div>';
+      if (i < qStages.length - 1) {
+        html += '<div style="flex:0 0 40px;height:2px;background:' + (i < qIdx ? 'var(--accent)' : 'var(--border)') + ';margin-top:-16px;"></div>';
+      }
+    });
+    html += '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
     ['draft', 'sent', 'awaiting', 'approved', 'declined'].forEach(function(s) {
-      html += '<button class="btn ' + (q.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage.setStatus(\'' + id + '\',\'' + s + '\')" style="font-size:12px;padding:6px 14px;">' + s + '</button>';
+      html += '<button class="btn ' + (q.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage.setStatus(\'' + id + '\',\'' + s + '\')" style="font-size:11px;padding:5px 12px;">' + s + '</button>';
     });
     html += '</div></div>'
 
       // Description
       + (q.description ? '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
         + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Description</h4>'
-        + '<p style="font-size:14px;line-height:1.6;margin:0;">' + q.description + '</p></div>' : '')
+        + '<p style="font-size:14px;line-height:1.6;margin:0;">' + UI.esc(q.description) + '</p></div>' : '')
 
       // Line items
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">'
@@ -330,8 +348,8 @@ var QuotesPage = {
       // Client info
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Client</h4>'
-      + '<div style="font-size:14px;font-weight:600;margin-bottom:6px;">' + (q.clientName || '—') + '</div>'
-      + (q.property ? '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">📍 ' + q.property + '</div>' : '')
+      + '<div style="font-size:14px;font-weight:600;margin-bottom:6px;">' + UI.esc(q.clientName || '—') + '</div>'
+      + (q.property ? '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">📍 ' + UI.esc(q.property) + '</div>' : '')
       + (q.clientPhone ? '<a href="tel:' + q.clientPhone + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 Call</a>' : '')
       + (q.clientEmail ? '<a href="mailto:' + q.clientEmail + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">✉️ Email</a>' : '')
       + (q.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(q.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;">🗺 Directions</a>' : '')
@@ -346,7 +364,7 @@ var QuotesPage = {
       // Notes
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Internal Notes</h4>'
-      + (q.notes ? '<div style="font-size:13px;line-height:1.6;">' + q.notes + '</div>' : '<div style="color:var(--text-light);font-size:13px;">No notes</div>')
+      + (q.notes ? '<div style="font-size:13px;line-height:1.6;">' + UI.esc(q.notes) + '</div>' : '<div style="color:var(--text-light);font-size:13px;">No notes</div>')
       + '</div>'
 
       + '</div></div>';

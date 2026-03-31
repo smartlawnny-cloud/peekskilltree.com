@@ -287,12 +287,31 @@ var JobsPage = {
       // Left — main content
       + '<div>'
 
-      // Status workflow buttons
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Status</h4>'
+      // Workflow progress bar (Jobber style)
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">';
+    var jStages = ['scheduled','in_progress','completed','invoiced'];
+    var jLabels = {scheduled:'Scheduled',in_progress:'In Progress',completed:'Completed',invoiced:'Invoiced'};
+    var jIdx = jStages.indexOf(j.status);
+    if (jIdx < 0) jIdx = 0;
+    if (j.invoiceId) jIdx = 3;
+    html += '<div style="display:flex;align-items:center;margin-bottom:14px;">';
+    jStages.forEach(function(s, i) {
+      var done = i <= jIdx;
+      var active = i === jIdx;
+      html += '<div style="flex:1;text-align:center;position:relative;">'
+        + '<div style="width:28px;height:28px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;'
+        + (done ? 'background:var(--accent);color:#fff;' : 'background:var(--bg);color:var(--text-light);border:2px solid var(--border);') + '">'
+        + (done && !active ? '✓' : (i + 1)) + '</div>'
+        + '<div style="font-size:11px;font-weight:' + (active ? '700' : '500') + ';color:' + (done ? 'var(--accent)' : 'var(--text-light)') + ';margin-top:4px;">' + jLabels[s] + '</div>'
+        + '</div>';
+      if (i < jStages.length - 1) {
+        html += '<div style="flex:0 0 40px;height:2px;background:' + (i < jIdx ? 'var(--accent)' : 'var(--border)') + ';margin-top:-16px;"></div>';
+      }
+    });
+    html += '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
     ['scheduled', 'in_progress', 'completed', 'cancelled'].forEach(function(s) {
-      html += '<button class="btn ' + (j.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage.setStatus(\'' + id + '\',\'' + s + '\');JobsPage.showDetail(\'' + id + '\');" style="font-size:12px;padding:6px 14px;">' + s.replace(/_/g, ' ') + '</button>';
+      html += '<button class="btn ' + (j.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage.setStatus(\'' + id + '\',\'' + s + '\');JobsPage.showDetail(\'' + id + '\');" style="font-size:11px;padding:5px 12px;">' + s.replace(/_/g, ' ') + '</button>';
     });
     html += '</div></div>'
 

@@ -19,20 +19,63 @@ var DashboardPage = {
         + '<button class="btn btn-primary" onclick="DashboardPage.syncNow()" id="sync-btn" style="white-space:nowrap;">Sync Now</button>'
         + '</div>';
     }
+    // Pre-compute data needed for both action alerts and revenue chart
+    var allInvoices = DB.invoices.getAll();
+    var allQuotes = DB.quotes.getAll();
+    var allJobs = DB.jobs.getAll();
+    var now = new Date();
+
     html += '<div class="stat-grid">'
-      + UI.statCard("Today's Jobs", todayJobs.length.toString(), todayJobs.length ? todayJobs.map(function(j){return j.clientName;}).join(', ') : 'No visits scheduled', '', '', "loadPage('schedule')")
+      + UI.statCard("Today's Jobs", todayJobs.length.toString(), todayJobs.length ? todayJobs.map(function(j){return UI.esc(j.clientName);}).join(', ') : 'No visits scheduled', '', '', "loadPage('schedule')")
       + UI.statCard('Receivables', UI.moneyInt(stats.receivables), unpaidInvoices.length + ' clients owe you', stats.receivables > 0 ? 'down' : '', '', "loadPage('invoices')")
       + UI.statCard('New Requests', stats.newRequests.toString(), 'Awaiting response', stats.newRequests > 0 ? '' : '', '', "loadPage('requests')")
       + UI.statCard('Active Jobs', stats.activeJobs.toString(), 'In progress', '', '', "loadPage('jobs')")
       + '</div>';
 
+    // Action Required (Jobber-style alerts)
+    var overdueInvoices = unpaidInvoices.filter(function(i) { return i.dueDate && new Date(i.dueDate) < now; });
+    var unapprovedQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
+    var lateJobs = allJobs.filter(function(j) { return j.status === 'late'; });
+    var hasAlerts = overdueInvoices.length || recentRequests.length || unapprovedQuotes.length || lateJobs.length;
+
+    if (hasAlerts) {
+      html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);margin-bottom:16px;overflow:hidden;">'
+        + '<div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'
+        + '<span style="font-size:16px;">⚡</span><h3 style="font-size:15px;margin:0;">Action Required</h3></div>';
+
+      if (overdueInvoices.length) {
+        html += '<div onclick="loadPage(\'invoices\')" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--bg);cursor:pointer;transition:background .1s;" onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'\'">'
+          + '<div style="width:36px;height:36px;border-radius:8px;background:#fde8e8;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🔴</div>'
+          + '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + overdueInvoices.length + ' overdue invoice' + (overdueInvoices.length > 1 ? 's' : '') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(overdueInvoices.reduce(function(s,i){return s+(i.balance||0);},0)) + ' outstanding</div></div>'
+          + '<span style="color:var(--text-light);font-size:18px;">›</span></div>';
+      }
+      if (recentRequests.length) {
+        html += '<div onclick="loadPage(\'requests\')" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--bg);cursor:pointer;transition:background .1s;" onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'\'">'
+          + '<div style="width:36px;height:36px;border-radius:8px;background:#e3f2fd;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📥</div>'
+          + '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + recentRequests.length + ' new request' + (recentRequests.length > 1 ? 's' : '') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">Awaiting response</div></div>'
+          + '<span style="color:var(--text-light);font-size:18px;">›</span></div>';
+      }
+      if (unapprovedQuotes.length) {
+        html += '<div onclick="loadPage(\'quotes\')" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--bg);cursor:pointer;transition:background .1s;" onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'\'">'
+          + '<div style="width:36px;height:36px;border-radius:8px;background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📋</div>'
+          + '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + unapprovedQuotes.length + ' quote' + (unapprovedQuotes.length > 1 ? 's' : '') + ' awaiting approval</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(unapprovedQuotes.reduce(function(s,q){return s+(q.total||0);},0)) + ' pending</div></div>'
+          + '<span style="color:var(--text-light);font-size:18px;">›</span></div>';
+      }
+      if (lateJobs.length) {
+        html += '<div onclick="loadPage(\'jobs\')" style="display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;transition:background .1s;" onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'\'">'
+          + '<div style="width:36px;height:36px;border-radius:8px;background:#ffebee;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⚠️</div>'
+          + '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + lateJobs.length + ' late job' + (lateJobs.length > 1 ? 's' : '') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">Needs rescheduling</div></div>'
+          + '<span style="color:var(--text-light);font-size:18px;">›</span></div>';
+      }
+      html += '</div>';
+    }
+
     // Revenue chart (last 6 months)
-    // Use invoices if they have totals, otherwise fallback to converted quotes
     var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var allInvoices = DB.invoices.getAll();
-    var allQuotes = DB.quotes.getAll();
-    var allJobs = DB.jobs.getAll();
-    var now = new Date();
 
     // Check if invoices have real totals
     var invoiceTotalSum = allInvoices.reduce(function(s, inv) { return s + (inv.total || 0); }, 0);

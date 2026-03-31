@@ -29,8 +29,9 @@ var Weather = {
     }
 
     var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + Weather.LAT + '&longitude=' + Weather.LON
-      + '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode'
-      + '&temperature_unit=fahrenheit&timezone=America/New_York&forecast_days=5';
+      + '&current=temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m'
+      + '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,wind_speed_10m_max'
+      + '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/New_York&forecast_days=5';
 
     fetch(url).then(function(r) { return r.json(); }).then(function(data) {
       Weather.cache = data;
@@ -81,6 +82,25 @@ var Weather = {
     if (rainyDays.length) {
       html += '<div style="margin-top:8px;padding:8px;background:#fff3e0;border-radius:6px;font-size:12px;color:#e65100;">'
         + '⚠️ Rain likely: <strong>' + rainyDays.join(', ') + '</strong> — consider rescheduling outdoor work</div>';
+    }
+
+    // Wind warning for aerial work
+    if (data.current && data.current.wind_gusts_10m > 25) {
+      html += '<div style="margin-top:8px;padding:8px;background:#ffebee;border-radius:6px;font-size:12px;color:#c62828;">'
+        + '💨 Wind gusts ' + Math.round(data.current.wind_gusts_10m) + ' mph — use caution with bucket truck and climbing</div>';
+    }
+    if (days.wind_speed_10m_max) {
+      var windyDays = [];
+      for (var w = 1; w < 5; w++) {
+        if (days.wind_speed_10m_max[w] > 25) {
+          var wd = new Date(days.time[w] + 'T12:00:00');
+          windyDays.push(dayNames[wd.getDay()] + ' (' + Math.round(days.wind_speed_10m_max[w]) + ' mph)');
+        }
+      }
+      if (windyDays.length) {
+        html += '<div style="margin-top:6px;padding:8px;background:#e3f2fd;border-radius:6px;font-size:12px;color:#1565c0;">'
+          + '💨 Windy days ahead: <strong>' + windyDays.join(', ') + '</strong></div>';
+      }
     }
 
     el.innerHTML = html;

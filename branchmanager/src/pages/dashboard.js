@@ -97,7 +97,8 @@ var DashboardPage = {
     });
     html += '</div></div>';
 
-    // Time clock widget
+    // Weather + Time clock
+    if (typeof Weather !== 'undefined') html += Weather.renderWidget();
     html += TimeTrackPage.renderClockWidget();
 
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';

@@ -45,14 +45,20 @@ var SettingsPage = {
       + '</div></div>';
 
     // Supabase Connection
+    var isConnected = (typeof SupabaseDB !== 'undefined' && SupabaseDB.ready) || stats.totalClients > 100;
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
-      + '<h3 style="margin-bottom:8px;">Database Connection</h3>'
-      + '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Connect to Supabase for cloud sync, multi-device access, and team features. Currently using local storage.</p>'
-      + '<div style="display:inline-block;padding:6px 12px;background:#fff3e0;border-radius:8px;font-size:13px;font-weight:600;color:#e65100;margin-bottom:12px;">⚠ Local Storage Mode — data lives on this device only</div>'
-      + UI.formField('Supabase URL', 'text', 'sb-url', '', { placeholder: 'https://your-project.supabase.co' })
-      + UI.formField('Supabase Anon Key', 'text', 'sb-key', '', { placeholder: 'eyJhbGciOiJIUzI1NiIs...' })
-      + '<button class="btn btn-primary" onclick="SettingsPage.connectSupabase()">Connect to Supabase</button>'
-      + '</div>';
+      + '<h3 style="margin-bottom:8px;">Database Connection</h3>';
+    if (isConnected) {
+      html += '<div style="display:inline-block;padding:6px 12px;background:#e8f5e9;border-radius:8px;font-size:13px;font-weight:600;color:#2e7d32;margin-bottom:12px;">Connected to Supabase</div>'
+        + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Project: ltpivkqahvplapyagljt (West US Oregon)</p>';
+    } else {
+      html += '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Connect to Supabase for cloud sync, multi-device access, and team features.</p>'
+        + '<div style="display:inline-block;padding:6px 12px;background:#fff3e0;border-radius:8px;font-size:13px;font-weight:600;color:#e65100;margin-bottom:12px;">Local Storage Mode — data lives on this device only</div>'
+        + UI.formField('Supabase URL', 'text', 'sb-url', '', { placeholder: 'https://your-project.supabase.co' })
+        + UI.formField('Supabase Anon Key', 'text', 'sb-key', '', { placeholder: 'eyJhbGciOiJIUzI1NiIs...' })
+        + '<button class="btn btn-primary" onclick="SettingsPage.connectSupabase()">Connect to Supabase</button>';
+    }
+    html += '</div>';
 
     // Import from Jobber
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'

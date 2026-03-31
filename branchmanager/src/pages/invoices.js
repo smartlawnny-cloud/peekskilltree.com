@@ -169,29 +169,86 @@ var InvoicesPage = {
     var inv = DB.invoices.getById(id);
     if (!inv) return;
 
-    var html = ''
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
-      + '<button class="btn btn-outline" onclick="loadPage(\'invoices\')" style="padding:6px 12px;">← Back</button>'
-      + '<div style="flex:1;"><h2 style="font-size:22px;margin-bottom:2px;">Invoice #' + inv.invoiceNumber + '</h2>'
-      + '<span style="font-size:14px;color:var(--text-light);">' + UI.esc(inv.clientName || '') + '</span></div>'
-      + '<div style="display:flex;gap:6px;">'
-      + '<button class="btn btn-outline" onclick="PDF.generateInvoice(\'' + id + '\')">📄 PDF</button>'
-      + '<button class="btn btn-outline" onclick="if(typeof Workflow!==\'undefined\')Workflow.sendInvoice(\'' + id + '\');">📧 Send</button>'
-      + (inv.status !== 'paid' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.markPaid(\'' + id + '\',\'cash\');InvoicesPage.showDetail(\'' + id + '\');">💵 Mark Paid</button>' : '')
-      + '</div></div>'
+    var statusColors = {draft:'#6c757d',sent:'#1565c0',viewed:'#e07c24',partial:'#e6a817',paid:'#2e7d32',overdue:'#dc3545',cancelled:'#6c757d'};
+    var statusColor = statusColors[inv.status] || '#1565c0';
 
-      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">'
-      + UI.statCard('Status', '<span style="font-size:14px;">' + UI.statusBadge(inv.status) + '</span>', '', '', '')
-      + UI.statCard('Total', UI.money(inv.total), '', '', '')
-      + UI.statCard('Balance', UI.money(inv.balance || 0), inv.balance > 0 ? 'Due' : 'Paid', inv.balance > 0 ? 'down' : 'up', '')
-      + UI.statCard('Due Date', UI.dateShort(inv.dueDate), '', '', '')
+    // Look up client for contact info
+    var client = inv.clientId ? DB.clients.getById(inv.clientId) : null;
+    var clientPhone = inv.clientPhone || (client ? client.phone : '');
+    var clientEmail = inv.clientEmail || (client ? client.email : '');
+    var clientAddr = client ? client.address : '';
+
+    var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">'
+      // Colored status bar
+      + '<div style="height:4px;background:' + statusColor + ';margin:-24px -24px 16px -24px;border-radius:12px 12px 0 0;"></div>'
+      // Status + actions row
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'invoices\')" style="padding:6px 12px;font-size:12px;">← Back</button>'
+      + UI.statusBadge(inv.status)
       + '</div>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      + '<button class="btn btn-outline" onclick="PDF.generateInvoice(\'' + id + '\')" style="font-size:12px;">PDF</button>'
+      + '<button class="btn btn-outline" onclick="if(typeof Workflow!==\'undefined\')Workflow.sendInvoice(\'' + id + '\');" style="font-size:12px;">Send</button>'
+      + (inv.status !== 'paid' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.markPaid(\'' + id + '\',\'cash\');InvoicesPage.showDetail(\'' + id + '\');" style="font-size:12px;">Mark Paid</button>' : '')
+      + '</div></div>'
+      // Title
+      + '<h2 style="font-size:24px;font-weight:700;margin-bottom:4px;">Invoice for ' + UI.esc(inv.clientName || 'Client') + '</h2>'
+      + '<div style="font-size:14px;color:var(--text-light);margin-bottom:20px;">Invoice #' + (inv.invoiceNumber || '') + (inv.subject ? ' — ' + UI.esc(inv.subject) : '') + '</div>'
 
-      + '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;" class="detail-grid">'
-      + '<div>'
+      // Two-column: Client card + metadata
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="detail-grid">'
+      // Client card
+      + '<div style="background:var(--bg);border-radius:8px;padding:16px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+      + '<div style="width:10px;height:10px;border-radius:50%;background:' + statusColor + ';"></div>'
+      + '<span style="font-weight:700;font-size:15px;">' + UI.esc(inv.clientName || '—') + '</span></div>'
+      + (clientAddr ? '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">📍 ' + UI.esc(clientAddr) + '</div>' : '')
+      + (clientPhone ? '<a href="tel:' + clientPhone.replace(/\D/g,'') + '" style="display:block;font-size:13px;color:var(--accent);margin-bottom:4px;">📞 ' + UI.phone(clientPhone) + '</a>' : '')
+      + (clientEmail ? '<a href="mailto:' + clientEmail + '" style="display:block;font-size:13px;color:var(--accent);">✉️ ' + clientEmail + '</a>' : '')
+      + '</div>'
+      // Metadata table
+      + '<div style="background:var(--bg);border-radius:8px;padding:16px;">'
+      + '<table style="width:100%;font-size:13px;border-collapse:collapse;">'
+      + '<tr><td style="padding:4px 0;color:var(--text-light);">Invoice #</td><td style="padding:4px 0;text-align:right;font-weight:600;">' + (inv.invoiceNumber || '—') + '</td></tr>'
+      + '<tr><td style="padding:4px 0;color:var(--text-light);">Issued</td><td style="padding:4px 0;text-align:right;">' + UI.dateShort(inv.issuedDate || inv.createdAt) + '</td></tr>'
+      + '<tr><td style="padding:4px 0;color:var(--text-light);">Due</td><td style="padding:4px 0;text-align:right;">' + UI.dateShort(inv.dueDate) + '</td></tr>'
+      + '<tr><td style="padding:4px 0;color:var(--text-light);">Total</td><td style="padding:4px 0;text-align:right;font-weight:700;">' + UI.money(inv.total) + '</td></tr>'
+      + '<tr><td style="padding:4px 0;color:var(--text-light);">Paid</td><td style="padding:4px 0;text-align:right;font-weight:700;color:var(--accent);">' + UI.money((inv.total||0) - (inv.balance||0)) + '</td></tr>'
+      + '<tr style="border-top:1px solid var(--border);"><td style="padding:6px 0;color:var(--text-light);font-weight:700;">Balance</td><td style="padding:6px 0;text-align:right;font-weight:800;font-size:15px;color:' + (inv.balance > 0 ? 'var(--red)' : 'var(--accent)') + ';">' + UI.money(inv.balance || 0) + '</td></tr>'
+      + '</table></div>'
+      + '</div></div>';
 
-      // Payment buttons
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+    // Main content area
+    html += '<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;margin-top:20px;" class="detail-grid"><div>';
+
+    // Line items
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">'
+      + '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin:0;">Products / Services</h4></div>';
+    if (inv.lineItems && inv.lineItems.length) {
+      html += '<table class="data-table" style="border:none;border-radius:0;"><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
+      inv.lineItems.forEach(function(item) {
+        html += '<tr><td style="font-weight:600;">' + (item.service || 'Custom') + '</td><td style="color:var(--text-light);">' + (item.description || '') + '</td><td>' + (item.qty || 1) + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || (item.qty||1) * item.rate) + '</td></tr>';
+      });
+      html += '<tr style="background:var(--green-bg);"><td colspan="4" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:800;font-size:15px;color:var(--accent);">' + UI.money(inv.total) + '</td></tr>';
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">No line items</div>';
+    }
+    html += '</div>';
+
+    // Payment history
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Payment History</h4>';
+    if (typeof Payments !== 'undefined') { html += Payments.renderForInvoice(id); }
+    else { html += '<div style="color:var(--text-light);font-size:13px;">No payments recorded</div>'; }
+    html += '</div></div>';
+
+    // Right sidebar
+    html += '<div>';
+    // Record Payment
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Record Payment</h4>';
     if (inv.status !== 'paid') {
       if (typeof Workflow !== 'undefined') {
@@ -202,55 +259,24 @@ var InvoicesPage = {
       if (typeof Stripe !== 'undefined' && inv.balance > 0) {
         var fees = Stripe.calcFees(inv.balance || inv.total);
         html += '<div style="margin-top:10px;font-size:12px;color:var(--text-light);display:flex;gap:16px;flex-wrap:wrap;">'
-          + '<span>💳 Card fee: $' + fees.card.toFixed(2) + '</span>'
-          + '<span>🏦 ACH fee: $' + fees.ach.toFixed(2) + '</span></div>';
+          + '<span>Card fee: $' + fees.card.toFixed(2) + '</span>'
+          + '<span>ACH fee: $' + fees.ach.toFixed(2) + '</span></div>';
       }
     } else {
-      html += '<div style="text-align:center;padding:12px;color:var(--accent);font-weight:600;">✅ Fully Paid</div>';
+      html += '<div style="text-align:center;padding:12px;color:var(--accent);font-weight:600;">Fully Paid</div>';
     }
-    html += '</div>'
+    html += '</div>';
 
-      // Line items
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">'
-      + '<div style="padding:12px 16px;border-bottom:1px solid var(--border);"><h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin:0;">Line Items</h4></div>';
-    if (inv.lineItems && inv.lineItems.length) {
-      html += '<table class="data-table" style="border:none;border-radius:0;"><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
-      inv.lineItems.forEach(function(item) {
-        html += '<tr><td>' + (item.service || 'Custom') + '</td><td style="color:var(--text-light);">' + (item.description || '') + '</td><td>' + (item.qty || 1) + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || (item.qty||1) * item.rate) + '</td></tr>';
-      });
-      html += '<tr style="background:var(--green-bg);"><td colspan="4" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:800;font-size:15px;color:var(--accent);">' + UI.money(inv.total) + '</td></tr>';
-      html += '</tbody></table>';
-    } else {
-      html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">No line items</div>';
-    }
-    html += '</div>'
+    // Status workflow
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Status</h4>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    ['draft','sent','paid'].forEach(function(s) {
+      html += '<button class="btn ' + (inv.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="InvoicesPage.setStatus(\'' + inv.id + '\',\'' + s + '\')" style="font-size:11px;padding:5px 12px;">' + s + '</button>';
+    });
+    html += '</div></div>';
 
-      // Payment history
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Payment History</h4>';
-    if (typeof Payments !== 'undefined') { html += Payments.renderForInvoice(id); }
-    else { html += '<div style="color:var(--text-light);font-size:13px;">No payments recorded</div>'; }
-    html += '</div></div>'
-
-      // Right sidebar
-      + '<div>'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Client</h4>'
-      + '<div style="font-size:14px;font-weight:600;margin-bottom:8px;">' + (inv.clientName || '—') + '</div>'
-      + (inv.clientPhone ? '<a href="tel:' + inv.clientPhone + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 Call</a>' : '')
-      + (inv.clientEmail ? '<a href="mailto:' + inv.clientEmail + '" class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;">✉️ Email</a>' : '')
-      + '</div>'
-
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Details</h4>'
-      + '<div style="font-size:13px;line-height:2;">'
-      + '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-light);">Issued</span><span>' + UI.dateShort(inv.issuedDate) + '</span></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-light);">Due</span><span>' + UI.dateShort(inv.dueDate) + '</span></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-light);">Total</span><span style="font-weight:700;">' + UI.money(inv.total) + '</span></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-light);">Paid</span><span style="font-weight:700;color:var(--accent);">' + UI.money((inv.total||0) - (inv.balance||0)) + '</span></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-light);">Balance</span><span style="font-weight:700;color:' + (inv.balance > 0 ? 'var(--red)' : 'var(--accent)') + ';">' + UI.money(inv.balance || 0) + '</span></div>'
-      + '</div></div>'
-      + '</div></div>';
+    html += '</div></div>';
 
     document.getElementById('pageTitle').textContent = 'Invoice #' + inv.invoiceNumber;
     document.getElementById('pageContent').innerHTML = html;

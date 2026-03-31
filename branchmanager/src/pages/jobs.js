@@ -56,9 +56,9 @@ var JobsPage = {
       page.forEach(function(j) {
         html += '<tr style="cursor:pointer;">'
           + '<td onclick="event.stopPropagation()"><input type="checkbox" class="job-check" value="' + j.id + '" onchange="JobsPage._updateBulk()" style="width:16px;height:16px;"></td>'
-          + '<td onclick="JobsPage.showDetail(\'' + j.id + '\')"><strong>' + (j.clientName || '—') + '</strong></td>'
+          + '<td onclick="JobsPage.showDetail(\'' + j.id + '\')"><strong>' + UI.esc(j.clientName || '—') + '</strong></td>'
           + '<td>#' + (j.jobNumber || '') + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (j.description || '—') + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(j.description || '—') + '</td>'
           + '<td style="white-space:nowrap;">' + UI.dateShort(j.scheduledDate) + '</td>'
           + '<td>' + UI.statusBadge(j.status) + '</td>'
           + '<td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (j.crew ? j.crew.join(', ') : '—') + '</td>'
@@ -263,7 +263,7 @@ var JobsPage = {
       + '<button class="btn btn-outline" onclick="loadPage(\'jobs\')" style="padding:6px 12px;">← Back</button>'
       + '<div style="flex:1;">'
       + '<h2 style="font-size:22px;margin-bottom:2px;">Job #' + j.jobNumber + '</h2>'
-      + '<span style="font-size:14px;color:var(--text-light);">' + (j.clientName || '') + (j.property ? ' — ' + j.property : '') + '</span>'
+      + '<span style="font-size:14px;color:var(--text-light);">' + UI.esc(j.clientName || '') + (j.property ? ' — ' + UI.esc(j.property) : '') + '</span>'
       + '</div>'
       + '<div style="display:flex;gap:6px;">'
       + '<button class="btn btn-outline" onclick="JobsPage.showForm(\'' + id + '\')">Edit</button>'
@@ -299,7 +299,7 @@ var JobsPage = {
       // Description
       + (j.description ? '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
         + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Description</h4>'
-        + '<p style="font-size:14px;line-height:1.6;margin:0;">' + j.description + '</p></div>' : '')
+        + '<p style="font-size:14px;line-height:1.6;margin:0;">' + UI.esc(j.description) + '</p></div>' : '')
 
       // Line items
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">'

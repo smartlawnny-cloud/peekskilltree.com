@@ -40,9 +40,9 @@ var QuotesPage = {
     } else {
       page.forEach(function(q) {
         html += '<tr onclick="QuotesPage.showDetail(\'' + q.id + '\')" style="cursor:pointer;">'
-          + '<td><strong>' + (q.clientName || '—') + '</strong></td>'
+          + '<td><strong>' + UI.esc(q.clientName || '—') + '</strong></td>'
           + '<td>#' + (q.quoteNumber || '') + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (q.description || q.property || '—') + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(q.description || q.property || '—') + '</td>'
           + '<td>' + UI.dateShort(q.createdAt) + '</td>'
           + '<td>' + UI.statusBadge(q.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(q.total) + '</td>'

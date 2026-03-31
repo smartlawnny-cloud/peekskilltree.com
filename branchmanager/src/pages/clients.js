@@ -57,10 +57,10 @@ var ClientsPage = {
     } else {
       pageClients.forEach(function(c) {
         html += '<tr onclick="ClientsPage.showDetail(\'' + c.id + '\')" style="cursor:pointer;" data-status="' + c.status + '">'
-          + '<td><strong>' + (c.name || '') + '</strong>' + (c.company ? '<br><span style="font-size:12px;color:var(--text-light);">' + c.company + '</span>' : '') + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (c.address || '—') + '</td>'
+          + '<td><strong>' + UI.esc(c.name || '') + '</strong>' + (c.company ? '<br><span style="font-size:12px;color:var(--text-light);">' + UI.esc(c.company) + '</span>' : '') + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(c.address || '—') + '</td>'
           + '<td style="white-space:nowrap;">' + UI.phone(c.phone) + '</td>'
-          + '<td style="font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + (c.email || '—') + '</td>'
+          + '<td style="font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(c.email || '—') + '</td>'
           + '<td>' + UI.statusBadge(c.status) + '</td>'
           + '</tr>';
       });
@@ -216,8 +216,8 @@ var ClientsPage = {
       + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
       + '<button class="btn btn-outline" onclick="loadPage(\'clients\')" style="padding:6px 12px;">← Back</button>'
       + '<div style="flex:1;">'
-      + '<h2 style="font-size:22px;margin-bottom:2px;">' + c.name + '</h2>'
-      + (c.company ? '<span style="color:var(--text-light);font-size:13px;">' + c.company + '</span>' : '')
+      + '<h2 style="font-size:22px;margin-bottom:2px;">' + UI.esc(c.name) + '</h2>'
+      + (c.company ? '<span style="color:var(--text-light);font-size:13px;">' + UI.esc(c.company) + '</span>' : '')
       + '</div>'
       + '<div style="display:flex;gap:6px;">'
       + '<button class="btn btn-outline" onclick="ClientsPage.showForm(\'' + id + '\')">Edit</button>'
@@ -241,12 +241,12 @@ var ClientsPage = {
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Contact Info</h4>'
       + '<div style="font-size:14px;line-height:2.2;">'
-      + (c.address ? '<div style="display:flex;gap:8px;align-items:start;"><span style="color:var(--text-light);width:16px;">📍</span> <span>' + c.address + '</span></div>' : '')
+      + (c.address ? '<div style="display:flex;gap:8px;align-items:start;"><span style="color:var(--text-light);width:16px;">📍</span> <span>' + UI.esc(c.address) + '</span></div>' : '')
       + (c.phone ? '<div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--text-light);width:16px;">📞</span> <a href="tel:' + c.phone.replace(/\D/g,'') + '" style="color:var(--accent);text-decoration:none;">' + UI.phone(c.phone) + '</a></div>' : '')
       + (c.email ? '<div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--text-light);width:16px;">✉️</span> <a href="mailto:' + c.email + '" style="color:var(--accent);text-decoration:none;font-size:13px;">' + c.email + '</a></div>' : '')
       + '</div>'
       + '<div style="margin-top:12px;">' + UI.statusBadge(c.status) + '</div>'
-      + (c.tags && c.tags.length ? '<div style="margin-top:12px;display:flex;gap:4px;flex-wrap:wrap;">' + c.tags.map(function(t) { return '<span style="display:inline-block;padding:3px 10px;background:var(--bg);border-radius:12px;font-size:11px;font-weight:600;color:var(--text-light);">' + t + '</span>'; }).join('') + '</div>' : '')
+      + (c.tags && c.tags.length ? '<div style="margin-top:12px;display:flex;gap:4px;flex-wrap:wrap;">' + c.tags.map(function(t) { return '<span style="display:inline-block;padding:3px 10px;background:var(--bg);border-radius:12px;font-size:11px;font-weight:600;color:var(--text-light);">' + UI.esc(t) + '</span>'; }).join('') + '</div>' : '')
       + '</div>'
 
       // Quick actions
@@ -260,7 +260,7 @@ var ClientsPage = {
       // Notes
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Notes</h4>'
-      + (c.notes ? '<div style="font-size:13px;color:var(--text);line-height:1.6;">' + c.notes + '</div>' : '<div style="font-size:13px;color:var(--text-light);">No notes</div>')
+      + (c.notes ? '<div style="font-size:13px;color:var(--text);line-height:1.6;">' + UI.esc(c.notes) + '</div>' : '<div style="font-size:13px;color:var(--text-light);">No notes</div>')
       + '</div>'
       + '</div>'
 

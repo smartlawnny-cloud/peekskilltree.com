@@ -39,6 +39,12 @@ var UI = (function() {
     return '<span class="status-badge ' + (map[status] || 'status-draft') + '">' + (status || '—') + '</span>';
   }
 
+  // ── HTML Escaping (XSS protection) ──
+  function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
   // ── Format helpers ──
   function money(n) { return '$' + (n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function moneyInt(n) { return '$' + Math.round(n || 0).toLocaleString(); }
@@ -78,7 +84,7 @@ var UI = (function() {
     var html = '<div class="form-group">';
     html += '<label for="' + id + '">' + label + '</label>';
     if (type === 'textarea') {
-      html += '<textarea id="' + id + '" rows="' + (options.rows || 3) + '" placeholder="' + (options.placeholder || '') + '">' + (value || '') + '</textarea>';
+      html += '<textarea id="' + id + '" rows="' + (options.rows || 3) + '" placeholder="' + esc(options.placeholder || '') + '">' + esc(value || '') + '</textarea>';
     } else if (type === 'select') {
       html += '<select id="' + id + '">';
       (options.options || []).forEach(function(o) {
@@ -88,7 +94,7 @@ var UI = (function() {
       });
       html += '</select>';
     } else {
-      html += '<input type="' + type + '" id="' + id + '" value="' + (value || '') + '" placeholder="' + (options.placeholder || '') + '"' + (options.required ? ' required' : '') + '>';
+      html += '<input type="' + type + '" id="' + id + '" value="' + esc(value || '') + '" placeholder="' + esc(options.placeholder || '') + '"' + (options.required ? ' required' : '') + '>';
     }
     html += '</div>';
     return html;
@@ -194,6 +200,7 @@ var UI = (function() {
     confirm: confirm,
     toast: toast,
     showLoading: showLoading,
-    validateForm: validateForm
+    validateForm: validateForm,
+    esc: esc
   };
 })();

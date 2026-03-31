@@ -21,8 +21,8 @@ var RequestsPage = {
     } else {
       all.forEach(function(r) {
         html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')">'
-          + '<td><strong>' + (r.clientName || '—') + '</strong></td>'
-          + '<td style="font-size:13px;color:var(--text-light);">' + (r.property || '—') + '</td>'
+          + '<td><strong>' + UI.esc(r.clientName || '—') + '</strong></td>'
+          + '<td style="font-size:13px;color:var(--text-light);">' + UI.esc(r.property || '—') + '</td>'
           + '<td style="font-size:13px;">' + UI.phone(r.phone) + '<br>' + (r.email || '') + '</td>'
           + '<td style="font-size:12px;">' + (r.source || '—') + '</td>'
           + '<td>' + UI.dateRelative(r.createdAt) + '</td>'
@@ -116,7 +116,7 @@ var RequestsPage = {
       // Notes
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Request Details</h4>'
-      + '<p style="font-size:14px;line-height:1.7;margin:0;">' + (r.notes || 'No details provided') + '</p>'
+      + '<p style="font-size:14px;line-height:1.7;margin:0;">' + UI.esc(r.notes || 'No details provided') + '</p>'
       + '</div></div>'
 
       // Right sidebar

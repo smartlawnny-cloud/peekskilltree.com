@@ -109,7 +109,7 @@ var DashboardPage = {
     if (upcoming.length) {
       upcoming.forEach(function(j) {
         html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
-          + '<div><strong style="font-size:14px;">' + j.clientName + '</strong><br><span style="font-size:12px;color:var(--text-light);">#' + j.jobNumber + ' — ' + (j.description || '') + '</span></div>'
+          + '<div><strong style="font-size:14px;">' + UI.esc(j.clientName) + '</strong><br><span style="font-size:12px;color:var(--text-light);">#' + j.jobNumber + ' — ' + UI.esc(j.description || '') + '</span></div>'
           + '<div style="text-align:right;"><div style="font-size:13px;">' + UI.dateShort(j.scheduledDate) + '</div><div>' + UI.statusBadge(j.status) + '</div></div>'
           + '</div>';
       });
@@ -124,7 +124,7 @@ var DashboardPage = {
     if (unpaidInvoices.length) {
       unpaidInvoices.forEach(function(inv) {
         html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')">'
-          + '<div><strong style="font-size:14px;">' + inv.clientName + '</strong><br><span style="font-size:12px;color:var(--text-light);">#' + inv.invoiceNumber + ' — ' + (inv.subject || '') + '</span></div>'
+          + '<div><strong style="font-size:14px;">' + UI.esc(inv.clientName) + '</strong><br><span style="font-size:12px;color:var(--text-light);">#' + inv.invoiceNumber + ' — ' + UI.esc(inv.subject || '') + '</span></div>'
           + '<div style="text-align:right;font-weight:700;color:var(--red);">' + UI.money(inv.balance) + '</div>'
           + '</div>';
       });
@@ -141,7 +141,7 @@ var DashboardPage = {
         + '<h3 style="font-size:16px;margin-bottom:16px;">New Requests</h3>';
       recentRequests.forEach(function(r) {
         html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="RequestsPage.showDetail(\'' + r.id + '\')">'
-          + '<div><strong>' + r.clientName + '</strong> <span style="font-size:12px;color:var(--text-light);">' + (r.source || '') + '</span><br><span style="font-size:13px;color:var(--text-light);">' + (r.property || '') + '</span></div>'
+          + '<div><strong>' + UI.esc(r.clientName) + '</strong> <span style="font-size:12px;color:var(--text-light);">' + UI.esc(r.source || '') + '</span><br><span style="font-size:13px;color:var(--text-light);">' + UI.esc(r.property || '') + '</span></div>'
           + '<div style="text-align:right;">' + UI.statusBadge(r.status) + '<br><span style="font-size:12px;color:var(--text-light);">' + UI.dateRelative(r.createdAt) + '</span></div>'
           + '</div>';
       });

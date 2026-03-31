@@ -8,12 +8,33 @@ var Weather = {
   cache: null,
   cacheTime: 0,
 
+  isEnabled: function() {
+    return localStorage.getItem('bm-weather-enabled') === 'true';
+  },
+
+  toggle: function() {
+    var enabled = !Weather.isEnabled();
+    localStorage.setItem('bm-weather-enabled', enabled ? 'true' : 'false');
+    loadPage(currentPage);
+  },
+
   renderWidget: function() {
-    var html = '<div id="weather-widget" style="background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+    var enabled = Weather.isEnabled();
+    var html = '<div id="weather-widget" style="background:var(--white);border-radius:12px;padding:' + (enabled ? '16px' : '12px 16px') + ';border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;' + (enabled ? 'margin-bottom:8px;' : '') + '">'
       + '<h4 style="font-size:14px;margin:0;">🌤 Weather — Peekskill, NY</h4>'
-      + '<span style="font-size:11px;color:var(--text-light);">5-day forecast</span></div>'
-      + '<div id="weather-data" style="font-size:13px;color:var(--text-light);">Loading...</div>'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + (enabled ? '<span style="font-size:11px;color:var(--text-light);">5-day forecast</span>' : '')
+      + '<button onclick="Weather.toggle()" style="position:relative;width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;background:' + (enabled ? 'var(--accent)' : '#ccc') + ';transition:background .2s;">'
+      + '<span style="position:absolute;top:2px;' + (enabled ? 'left:18px' : 'left:2px') + ';width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span></button>'
+      + '</div></div>';
+
+    if (!enabled) {
+      html += '</div>';
+      return html;
+    }
+
+    html += '<div id="weather-data" style="font-size:13px;color:var(--text-light);">Loading...</div>'
       + '</div>';
 
     // Fetch weather after render

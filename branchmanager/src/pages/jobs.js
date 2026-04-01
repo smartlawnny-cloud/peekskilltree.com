@@ -56,12 +56,16 @@ var JobsPage = {
     // Batch invoice banner for completed jobs without invoices
     if (needsInvoicing.length > 0) {
       var needsTotal = needsInvoicing.reduce(function(s, j) { return s + (j.total || 0); }, 0);
-      html += '<div id="batch-invoice-banner" style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(46,125,50,.3);">'
+      html += '<div id="batch-invoice-banner" style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:0 2px 8px rgba(46,125,50,.3);">'
         + '<div style="display:flex;align-items:center;gap:10px;">'
         + '<span style="font-size:22px;">💰</span>'
-        + '<span style="font-size:14px;font-weight:600;">' + needsInvoicing.length + ' completed job' + (needsInvoicing.length !== 1 ? 's' : '') + ' ready for invoicing &mdash; ' + UI.money(needsTotal) + ' total</span>'
+        + '<div><div style="font-size:14px;font-weight:600;">' + needsInvoicing.length + ' completed job' + (needsInvoicing.length !== 1 ? 's' : '') + ' ready for invoicing &mdash; ' + UI.money(needsTotal) + '</div>'
+        + '<div style="font-size:12px;opacity:.85;margin-top:2px;">Click "Create Invoices" for new jobs, or "Mark as Invoiced" for old Jobber jobs already paid.</div></div>'
         + '</div>'
-        + '<button onclick="JobsPage._batchInvoiceAll()" style="background:#fff;color:#2e7d32;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);">Create All Invoices</button>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        + '<button onclick="JobsPage._markAllLegacyInvoiced()" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.5);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Already Invoiced (Jobber)</button>'
+        + '<button onclick="JobsPage._batchInvoiceAll()" style="background:#fff;color:#2e7d32;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);">Create Invoices</button>'
+        + '</div>'
         + '</div>';
     }
 
@@ -209,6 +213,15 @@ var JobsPage = {
     UI.toast(created + ' invoice' + (created !== 1 ? 's' : '') + ' created!');
     loadPage('invoices');
   },
+  _markAllLegacyInvoiced: function() {
+    var needsInvoicing = DB.jobs.getAll().filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+    UI.confirm('Mark all ' + needsInvoicing.length + ' completed jobs as already invoiced in Jobber? This clears the banner — no new invoices will be created.', function() {
+      needsInvoicing.forEach(function(j) { DB.jobs.update(j.id, { invoiceId: 'legacy' }); });
+      UI.toast(needsInvoicing.length + ' jobs marked as legacy-invoiced');
+      loadPage('jobs');
+    });
+  },
+
   _batchInvoiceAll: function() {
     var all = DB.jobs.getAll();
     var needsInvoicing = all.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });

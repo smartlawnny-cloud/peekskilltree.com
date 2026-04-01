@@ -28,12 +28,36 @@ var PipelinePage = {
     var wonValue = deals.filter(function(d) { return d.stage === 'won'; }).reduce(function(s, d) { return s + (d.value || 0); }, 0);
     var winRate = deals.length > 0 ? Math.round((stageStats.won.count / deals.length) * 100) : 0;
 
-    // Stats
-    var html = '<div class="stat-grid">'
-      + UI.statCard('Pipeline Value', UI.moneyInt(totalValue), deals.length + ' deals', '', '')
-      + UI.statCard('Won', UI.moneyInt(wonValue), stageStats.won.count + ' deals', 'up', '')
-      + UI.statCard('Win Rate', winRate + '%', '', winRate >= 50 ? 'up' : 'down', '')
-      + '</div>';
+    // Jobber-style stat cards
+    var activeDeals = deals.filter(function(d) { return d.stage !== 'won' && d.stage !== 'lost'; });
+    var activeValue = activeDeals.reduce(function(s,d){ return s + (d.value||0); }, 0);
+    var lostCount = stageStats.lost ? stageStats.lost.count : 0;
+
+    var html = '<div class="stat-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
+      + '<div style="font-size:12px;margin-bottom:2px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2196f3;margin-right:6px;"></span>New (' + (stageStats.new_lead?stageStats.new_lead.count:0) + ')</div>'
+      + '<div style="font-size:12px;margin-bottom:2px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff9800;margin-right:6px;"></span>Quote sent (' + (stageStats.quote_sent?stageStats.quote_sent.count:0) + ')</div>'
+      + '<div style="font-size:12px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4caf50;margin-right:6px;"></span>Won (' + (stageStats.won?stageStats.won.count:0) + ')</div>'
+      + '</div>'
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">Pipeline value</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Active deals</div>'
+      + '<div style="font-size:28px;font-weight:800;margin-top:8px;">' + UI.moneyInt(activeValue) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + activeDeals.length + ' deal' + (activeDeals.length !== 1 ? 's' : '') + '</div>'
+      + '</div>'
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">Won</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">All time</div>'
+      + '<div style="font-size:28px;font-weight:800;margin-top:8px;color:var(--green-dark);">' + UI.moneyInt(wonValue) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + (stageStats.won?stageStats.won.count:0) + ' deal' + ((stageStats.won?stageStats.won.count:0) !== 1 ? 's' : '') + '</div>'
+      + '</div>'
+      + '<div style="padding:14px 16px;">'
+      + '<div style="font-size:14px;font-weight:700;">Win rate</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Conversion</div>'
+      + '<div style="font-size:28px;font-weight:800;margin-top:8px;color:' + (winRate >= 50 ? 'var(--green-dark)' : '#e07c24') + ';">' + winRate + '%</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + lostCount + ' lost</div>'
+      + '</div></div>';
 
     // Kanban board
     html += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:16px;">'

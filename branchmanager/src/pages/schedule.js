@@ -1,29 +1,87 @@
 /**
  * Branch Manager — Schedule / Calendar Page
- * Week and Month views with job cards
+ * Jobber-style with Today agenda, Week, and Month views
  */
 var SchedulePage = {
-  view: 'week', // 'day', 'week', 'month'
+  view: 'week',
   currentDate: new Date(),
 
   render: function() {
     var self = SchedulePage;
-    // Weather widget at top
     var html = '';
+    var today = new Date().toISOString().split('T')[0];
+    var allJobs = DB.jobs.getAll();
+    var todayJobs = allJobs.filter(function(j) { return j.scheduledDate === today; });
+
+    // Jobber-style Today's agenda card (always visible at top)
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;">'
+      + '<div style="background:var(--green-dark);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">'
+      + '<div><div style="font-size:12px;opacity:.8;">TODAY</div>'
+      + '<div style="font-size:18px;font-weight:700;">' + self._formatDate(new Date(), 'full') + '</div></div>'
+      + '<div style="text-align:right;"><div style="font-size:28px;font-weight:800;">' + todayJobs.length + '</div>'
+      + '<div style="font-size:11px;opacity:.8;">visit' + (todayJobs.length !== 1 ? 's' : '') + '</div></div>'
+      + '</div>';
+
+    if (todayJobs.length > 0) {
+      var todayRevenue = todayJobs.reduce(function(s,j){ return s + (j.total||0); }, 0);
+      var completed = todayJobs.filter(function(j){ return j.status === 'completed'; }).length;
+
+      // Progress bar
+      var pct = todayJobs.length > 0 ? Math.round(completed / todayJobs.length * 100) : 0;
+      html += '<div style="padding:12px 20px;border-bottom:1px solid var(--border);">'
+        + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-bottom:6px;">'
+        + '<span>' + completed + ' of ' + todayJobs.length + ' complete</span>'
+        + '<span style="font-weight:700;color:var(--green-dark);">' + UI.moneyInt(todayRevenue) + '</span></div>'
+        + '<div style="background:#e8e8e8;border-radius:6px;height:6px;overflow:hidden;">'
+        + '<div style="background:var(--green-dark);height:100%;width:' + pct + '%;border-radius:6px;transition:width .3s;"></div>'
+        + '</div></div>';
+
+      // Job list
+      todayJobs.forEach(function(j, idx) {
+        var statusIcon = j.status === 'completed' ? '✅' : j.status === 'in_progress' ? '🔧' : j.status === 'late' ? '⚠️' : '📋';
+        var statusColor = j.status === 'completed' ? '#2e7d32' : j.status === 'in_progress' ? '#e07c24' : j.status === 'late' ? '#dc3545' : '#1565c0';
+        var borderStyle = idx < todayJobs.length - 1 ? 'border-bottom:1px solid var(--border);' : '';
+
+        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="padding:14px 20px;cursor:pointer;' + borderStyle + 'display:flex;align-items:center;gap:14px;transition:background .15s;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'transparent\'">'
+          + '<div style="font-size:20px;">' + statusIcon + '</div>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.clientName || '') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '#' + j.jobNumber) + '</div>'
+          + (j.property ? '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">📍 ' + UI.esc(j.property) + '</div>' : '')
+          + '</div>'
+          + '<div style="text-align:right;flex-shrink:0;">'
+          + '<div style="font-weight:700;color:var(--green-dark);font-size:14px;">' + UI.moneyInt(j.total) + '</div>'
+          + (j.startTime ? '<div style="font-size:11px;color:var(--text-light);">' + self._formatTime(j.startTime) + '</div>' : '')
+          + '</div>'
+          + '<div style="color:#ccc;font-size:16px;">›</div>'
+          + '</div>';
+      });
+    } else {
+      html += '<div style="padding:24px 20px;text-align:center;color:var(--text-light);">'
+        + '<div style="font-size:32px;margin-bottom:8px;">🌳</div>'
+        + '<div style="font-size:14px;">No visits scheduled for today</div>'
+        + '<button class="btn btn-primary" style="margin-top:12px;" onclick="JobsPage.showForm()">+ Schedule a Job</button>'
+        + '</div>';
+    }
+    html += '</div>';
+
+    // Weather
     if (typeof Weather !== 'undefined') {
       html += Weather.renderWidget();
     }
+
+    // Calendar controls
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
       + '<div style="display:flex;align-items:center;gap:8px;">'
-      + '<button class="btn btn-outline" onclick="SchedulePage.prev()">&larr;</button>'
+      + '<button class="btn btn-outline" onclick="SchedulePage.prev()" style="padding:6px 12px;">&larr;</button>'
       + '<h3 id="cal-title" style="font-size:18px;min-width:200px;text-align:center;">' + self._getTitle() + '</h3>'
-      + '<button class="btn btn-outline" onclick="SchedulePage.next()">&rarr;</button>'
+      + '<button class="btn btn-outline" onclick="SchedulePage.next()" style="padding:6px 12px;">&rarr;</button>'
       + '<button class="btn btn-outline" onclick="SchedulePage.goToday()" style="font-size:12px;">Today</button>'
       + '</div>'
-      + '<div style="display:flex;gap:4px;">'
-      + '<button class="btn ' + (self.view === 'day' ? 'btn-primary' : 'btn-outline') + '" onclick="SchedulePage.setView(\'day\')" style="font-size:12px;padding:6px 12px;">Day</button>'
-      + '<button class="btn ' + (self.view === 'week' ? 'btn-primary' : 'btn-outline') + '" onclick="SchedulePage.setView(\'week\')" style="font-size:12px;padding:6px 12px;">Week</button>'
-      + '<button class="btn ' + (self.view === 'month' ? 'btn-primary' : 'btn-outline') + '" onclick="SchedulePage.setView(\'month\')" style="font-size:12px;padding:6px 12px;">Month</button>'
+      + '<div style="display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:2px;">'
+      + '<button class="btn ' + (self.view === 'day' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'day\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'day' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Day</button>'
+      + '<button class="btn ' + (self.view === 'week' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'week\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'week' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Week</button>'
+      + '<button class="btn ' + (self.view === 'month' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'month\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'month' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Month</button>'
       + '</div>'
       + '</div>';
 
@@ -34,7 +92,59 @@ var SchedulePage = {
     } else {
       html += self._renderMonth();
     }
+
+    // Upcoming jobs (next 7 days)
+    var next7 = [];
+    for (var d = 1; d <= 7; d++) {
+      var futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + d);
+      var fStr = futureDate.toISOString().split('T')[0];
+      var fJobs = allJobs.filter(function(j) { return j.scheduledDate === fStr; });
+      if (fJobs.length > 0) {
+        next7.push({ date: futureDate, dateStr: fStr, jobs: fJobs });
+      }
+    }
+
+    if (next7.length > 0) {
+      html += '<div style="margin-top:20px;">'
+        + '<h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Upcoming This Week</h3>';
+      next7.forEach(function(day) {
+        html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+          + '<div style="font-weight:700;font-size:13px;">' + SchedulePage._formatDate(day.date, 'short') + '</div>'
+          + '<span style="background:var(--green-bg);color:var(--green-dark);font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;">' + day.jobs.length + ' job' + (day.jobs.length !== 1 ? 's' : '') + '</span>'
+          + '</div>';
+        day.jobs.forEach(function(j) {
+          html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="display:flex;justify-content:space-between;padding:6px 0;cursor:pointer;font-size:13px;">'
+            + '<span>' + UI.esc(j.clientName || '#' + j.jobNumber) + '</span>'
+            + '<span style="font-weight:700;color:var(--green-dark);">' + UI.moneyInt(j.total) + '</span></div>';
+        });
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
     return html;
+  },
+
+  _formatDate: function(d, format) {
+    var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var sm = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    if (format === 'full') return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    if (format === 'short') return days[d.getDay()] + ', ' + sm[d.getMonth()] + ' ' + d.getDate();
+    return sm[d.getMonth()] + ' ' + d.getDate();
+  },
+
+  _formatTime: function(t) {
+    if (!t) return '';
+    var parts = t.split(':');
+    var h = parseInt(parts[0]);
+    var m = parts[1] || '00';
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    if (h > 12) h -= 12;
+    if (h === 0) h = 12;
+    return h + ':' + m + ' ' + ampm;
   },
 
   _getTitle: function() {
@@ -63,11 +173,9 @@ var SchedulePage = {
 
     var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;">';
 
-    // Time slots from 6am to 7pm
     for (var h = 6; h <= 19; h++) {
       var hour = h > 12 ? h - 12 : h;
       var ampm = h >= 12 ? 'PM' : 'AM';
-      var timeStr = String(h).padStart(2, '0') + ':00';
       var slotJobs = dayJobs.filter(function(j) { return j.startTime && j.startTime.substring(0,2) === String(h).padStart(2,'0'); });
 
       html += '<div style="display:flex;border-bottom:1px solid var(--border);min-height:52px;">'
@@ -90,7 +198,7 @@ var SchedulePage = {
       html += '</div></div>';
     }
 
-    // Unscheduled jobs (no startTime)
+    // Unscheduled
     var unscheduled = dayJobs.filter(function(j) { return !j.startTime; });
     if (unscheduled.length) {
       html += '<div style="display:flex;border-top:2px solid var(--accent);">'
@@ -110,10 +218,10 @@ var SchedulePage = {
     // Day summary
     if (dayJobs.length) {
       var dayTotal = dayJobs.reduce(function(s,j) { return s + (j.total||0); }, 0);
-      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;">'
-        + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Jobs</div><div style="font-size:24px;font-weight:800;">' + dayJobs.length + '</div></div>'
-        + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Revenue</div><div style="font-size:24px;font-weight:800;color:var(--accent);">' + UI.moneyInt(dayTotal) + '</div></div>'
-        + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Crew Needed</div><div style="font-size:24px;font-weight:800;">' + dayJobs.reduce(function(s,j){return s+(j.crew?j.crew.length:0);},0) + '</div></div>'
+      html += '<div class="stat-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:16px;background:var(--white);">'
+        + '<div style="padding:14px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Jobs</div><div style="font-size:24px;font-weight:800;">' + dayJobs.length + '</div></div>'
+        + '<div style="padding:14px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Revenue</div><div style="font-size:24px;font-weight:800;color:var(--accent);">' + UI.moneyInt(dayTotal) + '</div></div>'
+        + '<div style="padding:14px;text-align:center;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Crew</div><div style="font-size:24px;font-weight:800;">' + dayJobs.reduce(function(s,j){return s+(j.crew?j.crew.length:0);},0) + '</div></div>'
         + '</div>';
     } else {
       html += '<div style="margin-top:16px;text-align:center;padding:24px;color:var(--text-light);font-size:14px;">No jobs scheduled for this day. <button class="btn btn-primary" style="margin-left:8px;" onclick="JobsPage.showForm()">+ Schedule Job</button></div>';
@@ -124,7 +232,7 @@ var SchedulePage = {
 
   _renderWeek: function() {
     var d = new Date(SchedulePage.currentDate);
-    d.setDate(d.getDate() - d.getDay()); // Sunday
+    d.setDate(d.getDate() - d.getDay());
     var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     var today = new Date().toISOString().split('T')[0];
     var allJobs = DB.jobs.getAll();
@@ -149,11 +257,11 @@ var SchedulePage = {
       var isToday = dateStr === today;
       var dayJobs = allJobs.filter(function(j) { return j.scheduledDate === dateStr; });
 
-      html += '<div style="background:var(--white);min-height:120px;padding:6px;' + (isToday ? 'border-top:3px solid var(--green-dark);' : '') + '">';
+      html += '<div onclick="SchedulePage.currentDate=new Date(\'' + dateStr + 'T12:00:00\');SchedulePage.setView(\'day\')" style="background:var(--white);min-height:120px;padding:6px;cursor:pointer;' + (isToday ? 'border-top:3px solid var(--green-dark);' : '') + '">';
       dayJobs.forEach(function(j) {
         var bgColor = j.status === 'completed' ? '#e8f5e9' : j.status === 'late' ? '#ffebee' : j.status === 'in_progress' ? '#fff3e0' : '#e3f2fd';
         var borderColor = j.status === 'completed' ? '#4caf50' : j.status === 'late' ? '#f44336' : j.status === 'in_progress' ? '#ff9800' : '#2196f3';
-        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="background:' + bgColor + ';border-left:3px solid ' + borderColor + ';border-radius:6px;padding:6px 8px;margin-bottom:4px;cursor:pointer;font-size:12px;">'
+        html += '<div onclick="event.stopPropagation();JobsPage.showDetail(\'' + j.id + '\')" style="background:' + bgColor + ';border-left:3px solid ' + borderColor + ';border-radius:6px;padding:6px 8px;margin-bottom:4px;cursor:pointer;font-size:12px;">'
           + '<div style="font-weight:700;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.clientName || '') + '</div>'
           + '<div style="color:var(--text-light);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '#' + j.jobNumber) + '</div>'
           + '<div style="font-weight:700;font-size:11px;color:var(--green-dark);margin-top:2px;">' + UI.moneyInt(j.total) + '</div>'
@@ -165,19 +273,6 @@ var SchedulePage = {
       html += '</div>';
     }
     html += '</div>';
-
-    // Today's summary below calendar
-    var todayJobs = allJobs.filter(function(j) { return j.scheduledDate === today; });
-    if (todayJobs.length > 0) {
-      html += '<div style="margin-top:16px;background:var(--green-dark);border-radius:12px;padding:16px 20px;color:#fff;">'
-        + '<h4 style="margin-bottom:8px;">Today — ' + todayJobs.length + ' Job' + (todayJobs.length > 1 ? 's' : '') + '</h4>';
-      todayJobs.forEach(function(j) {
-        html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.15);font-size:14px;">'
-          + '<div><strong>' + j.clientName + '</strong> — ' + (j.description || '') + '</div>'
-          + '<div>' + UI.moneyInt(j.total) + '</div></div>';
-      });
-      html += '</div>';
-    }
 
     return html;
   },
@@ -194,34 +289,30 @@ var SchedulePage = {
 
     var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;border:1px solid var(--border);">';
 
-    // Header
     days.forEach(function(day) {
       html += '<div style="background:var(--bg);padding:8px;text-align:center;font-size:11px;font-weight:700;color:var(--text-light);">' + day + '</div>';
     });
 
-    // Empty cells before first day
     for (var i = 0; i < firstDay; i++) {
       html += '<div style="background:#fafafa;min-height:80px;padding:4px;"></div>';
     }
 
-    // Day cells
     for (var day = 1; day <= daysInMonth; day++) {
       var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
       var isToday = dateStr === today;
       var dayJobs = allJobs.filter(function(j) { return j.scheduledDate === dateStr; });
 
-      html += '<div style="background:var(--white);min-height:80px;padding:4px;' + (isToday ? 'border:2px solid var(--green-dark);' : '') + '">'
+      html += '<div onclick="SchedulePage.currentDate=new Date(\'' + dateStr + 'T12:00:00\');SchedulePage.setView(\'day\')" style="background:var(--white);min-height:80px;padding:4px;cursor:pointer;' + (isToday ? 'border:2px solid var(--green-dark);' : '') + '">'
         + '<div style="font-size:12px;font-weight:' + (isToday ? '800' : '600') + ';color:' + (isToday ? 'var(--green-dark)' : 'var(--text)') + ';margin-bottom:2px;">' + day + '</div>';
 
       dayJobs.forEach(function(j) {
         var bgColor = j.status === 'completed' ? '#e8f5e9' : j.status === 'late' ? '#ffebee' : '#e3f2fd';
-        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="background:' + bgColor + ';border-radius:4px;padding:2px 4px;margin-bottom:2px;cursor:pointer;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+        html += '<div onclick="event.stopPropagation();JobsPage.showDetail(\'' + j.id + '\')" style="background:' + bgColor + ';border-radius:4px;padding:2px 4px;margin-bottom:2px;cursor:pointer;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
           + (j.clientName || '#' + j.jobNumber) + '</div>';
       });
       html += '</div>';
     }
 
-    // Fill remaining cells
     var totalCells = firstDay + daysInMonth;
     var remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
     for (var i = 0; i < remaining; i++) {

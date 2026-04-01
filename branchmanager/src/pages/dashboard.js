@@ -254,6 +254,11 @@ var DashboardPage = {
     if (typeof Weather !== 'undefined') html += Weather.renderWidget();
     html += TimeTrackPage.renderClockWidget();
 
+    // Client Satisfaction NPS
+    if (typeof Satisfaction !== 'undefined') {
+      html += Satisfaction.renderNPSWidget();
+    }
+
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
 
     // Upcoming Jobs

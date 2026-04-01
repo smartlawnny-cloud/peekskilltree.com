@@ -399,6 +399,11 @@ var JobsPage = {
     }
     html += '</div>'
 
+    // Client satisfaction
+    if (typeof Satisfaction !== 'undefined') {
+      html += Satisfaction.renderForJob(id);
+    }
+
     // Custom fields
     if (typeof CustomFields !== 'undefined') {
       html += CustomFields.renderDisplay('job', id);

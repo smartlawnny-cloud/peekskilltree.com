@@ -1,0 +1,351 @@
+/**
+ * Branch Manager — Claude AI Assistant
+ * Built-in AI powered by Claude for estimates, client comms, business insights
+ */
+var AI = {
+  _visible: false,
+  _messages: [],
+  _apiKey: '',
+  _loading: false,
+
+  init: function() {
+    AI._apiKey = localStorage.getItem('bm-claude-key') || '';
+    AI._messages = JSON.parse(localStorage.getItem('bm-ai-history') || '[]');
+  },
+
+  toggle: function() {
+    if (AI._visible) { AI.hide(); } else { AI.show(); }
+  },
+
+  show: function() {
+    AI.init();
+    AI._visible = true;
+
+    // Create panel
+    var panel = document.createElement('div');
+    panel.id = 'ai-panel';
+    panel.style.cssText = 'position:fixed;right:0;top:0;bottom:0;width:420px;max-width:90vw;background:var(--white);z-index:9999;box-shadow:-8px 0 30px rgba(0,0,0,.15);display:flex;flex-direction:column;transition:transform .25s ease;';
+
+    // Overlay
+    var overlay = document.createElement('div');
+    overlay.id = 'ai-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9998;';
+    overlay.onclick = function() { AI.hide(); };
+
+    panel.innerHTML = AI._renderPanel();
+    document.body.appendChild(overlay);
+    document.body.appendChild(panel);
+
+    // Focus input
+    setTimeout(function() {
+      var input = document.getElementById('ai-input');
+      if (input) input.focus();
+    }, 100);
+
+    // Scroll to bottom
+    AI._scrollToBottom();
+  },
+
+  hide: function() {
+    AI._visible = false;
+    var panel = document.getElementById('ai-panel');
+    var overlay = document.getElementById('ai-overlay');
+    if (panel) panel.remove();
+    if (overlay) overlay.remove();
+  },
+
+  _renderPanel: function() {
+    var html = ''
+      // Header
+      + '<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
+      + '<div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#D4A574 0%,#C4956A 100%);display:flex;align-items:center;justify-content:center;">'
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+      + '<div><div style="font-weight:700;font-size:15px;">Claude AI</div>'
+      + '<div style="font-size:11px;color:var(--text-light);">Your tree service assistant</div></div></div>'
+      + '<div style="display:flex;gap:4px;">'
+      + '<button onclick="AI._clearHistory()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-light);padding:4px 8px;" title="Clear chat">🗑️</button>'
+      + '<button onclick="AI.hide()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-light);padding:4px 8px;">✕</button>'
+      + '</div></div>';
+
+    // API key setup (if not set)
+    if (!AI._apiKey) {
+      html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;">'
+        + '<div style="text-align:center;max-width:320px;">'
+        + '<div style="font-size:40px;margin-bottom:12px;">🤖</div>'
+        + '<h3 style="margin-bottom:8px;">Connect Claude AI</h3>'
+        + '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Enter your Anthropic API key to enable AI-powered estimates, client emails, and business insights.</p>'
+        + '<input type="password" id="ai-key-input" placeholder="sk-ant-..." style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:12px;">'
+        + '<button class="btn btn-primary" onclick="AI._saveKey()" style="width:100%;">Connect</button>'
+        + '<p style="font-size:11px;color:var(--text-light);margin-top:12px;">Key is stored locally on your device only. Get one at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a></p>'
+        + '</div></div>';
+      return html;
+    }
+
+    // Quick actions
+    html += '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;">'
+      + '<button class="ai-quick" onclick="AI.ask(\'Write a professional quote description for a large oak tree removal near power lines\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">✍️ Quote description</button>'
+      + '<button class="ai-quick" onclick="AI.ask(\'Draft a friendly follow-up email to a client whose quote has been pending for a week\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">📧 Follow-up email</button>'
+      + '<button class="ai-quick" onclick="AI.ask(\'Give me a business summary: total revenue, active jobs, open quotes, and any recommendations\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">📊 Business summary</button>'
+      + '<button class="ai-quick" onclick="AI.ask(\'What should I charge for removing a 24-inch DBH oak tree, 60 feet tall, in a tight backyard with no bucket truck access?\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">💰 Price estimate</button>'
+      + '</div>';
+
+    // Messages
+    html += '<div id="ai-messages" style="flex:1;overflow-y:auto;padding:16px;">';
+
+    if (AI._messages.length === 0) {
+      html += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">'
+        + '<div style="font-size:36px;margin-bottom:12px;">🌳</div>'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:8px;">How can I help?</div>'
+        + '<div style="font-size:13px;line-height:1.6;">I can help you with:<br>'
+        + '• Estimate job pricing<br>'
+        + '• Write quote descriptions<br>'
+        + '• Draft client emails & texts<br>'
+        + '• Analyze business performance<br>'
+        + '• Answer tree care questions</div></div>';
+    } else {
+      AI._messages.forEach(function(msg) {
+        html += AI._renderMessage(msg);
+      });
+    }
+    html += '</div>';
+
+    // Input area
+    html += '<div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;">'
+      + '<div style="display:flex;gap:8px;align-items:flex-end;">'
+      + '<textarea id="ai-input" rows="1" placeholder="Ask Claude anything..." '
+      + 'style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:12px;font-size:14px;resize:none;max-height:100px;font-family:inherit;line-height:1.4;" '
+      + 'onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();AI.send();}" '
+      + 'oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,100)+\'px\'"></textarea>'
+      + '<button onclick="AI.send()" style="background:linear-gradient(135deg,#D4A574 0%,#C4956A 100%);color:#fff;border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">↑</button>'
+      + '</div>'
+      + '<div style="font-size:10px;color:var(--text-light);text-align:center;margin-top:6px;">Powered by Claude · Anthropic</div>'
+      + '</div>';
+
+    return html;
+  },
+
+  _renderMessage: function(msg) {
+    var isUser = msg.role === 'user';
+    return '<div style="display:flex;gap:8px;margin-bottom:16px;' + (isUser ? 'flex-direction:row-reverse;' : '') + '">'
+      + '<div style="width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;'
+      + (isUser ? 'background:var(--accent);color:#fff;' : 'background:linear-gradient(135deg,#D4A574,#C4956A);color:#fff;') + '">'
+      + (isUser ? '👤' : '✦') + '</div>'
+      + '<div style="flex:1;max-width:calc(100% - 44px);">'
+      + '<div style="font-size:11px;color:var(--text-light);margin-bottom:4px;' + (isUser ? 'text-align:right;' : '') + '">' + (isUser ? 'You' : 'Claude') + '</div>'
+      + '<div style="background:' + (isUser ? 'var(--accent)' : 'var(--bg)') + ';color:' + (isUser ? '#fff' : 'var(--text)') + ';padding:10px 14px;border-radius:' + (isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px') + ';font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;">'
+      + AI._formatResponse(msg.content) + '</div></div></div>';
+  },
+
+  _formatResponse: function(text) {
+    // Basic markdown-like formatting
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    text = text.replace(/`(.*?)`/g, '<code style="background:rgba(0,0,0,.08);padding:1px 4px;border-radius:3px;font-size:12px;">$1</code>');
+    // Convert bullet points
+    text = text.replace(/^[•·-]\s/gm, '• ');
+    return text;
+  },
+
+  ask: function(question) {
+    var input = document.getElementById('ai-input');
+    if (input) input.value = question;
+    AI.send();
+  },
+
+  send: function() {
+    var input = document.getElementById('ai-input');
+    if (!input) return;
+    var text = input.value.trim();
+    if (!text || AI._loading) return;
+
+    // Add user message
+    AI._messages.push({ role: 'user', content: text });
+    input.value = '';
+    input.style.height = 'auto';
+    AI._refreshMessages();
+    AI._scrollToBottom();
+
+    // Build context about the business
+    var context = AI._buildContext();
+
+    AI._loading = true;
+    AI._showTyping();
+
+    // Call Claude API
+    AI._callClaude(context, text).then(function(response) {
+      AI._loading = false;
+      AI._removeTyping();
+      AI._messages.push({ role: 'assistant', content: response });
+      localStorage.setItem('bm-ai-history', JSON.stringify(AI._messages.slice(-30)));
+      AI._refreshMessages();
+      AI._scrollToBottom();
+    }).catch(function(err) {
+      AI._loading = false;
+      AI._removeTyping();
+      AI._messages.push({ role: 'assistant', content: '❌ Error: ' + (err.message || 'Could not connect to Claude. Check your API key.') });
+      AI._refreshMessages();
+      AI._scrollToBottom();
+    });
+  },
+
+  _buildContext: function() {
+    var stats = DB.dashboard.getStats();
+    var jobs = DB.jobs.getAll();
+    var quotes = DB.quotes.getAll();
+    var invoices = DB.invoices.getAll();
+    var clients = DB.clients.getAll();
+
+    var activeJobs = jobs.filter(function(j) { return j.status !== 'completed' && j.status !== 'cancelled'; });
+    var openQuotes = quotes.filter(function(q) { return q.status === 'draft' || q.status === 'sent' || q.status === 'awaiting'; });
+    var unpaidInvoices = invoices.filter(function(i) { return i.status !== 'paid'; });
+    var totalRevenue = invoices.filter(function(i) { return i.status === 'paid'; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+    var avgJobValue = jobs.length > 0 ? jobs.reduce(function(s, j) { return s + (j.total || 0); }, 0) / jobs.length : 0;
+
+    // Recent jobs for pricing context
+    var recentJobs = jobs.slice(0, 20).map(function(j) {
+      return (j.description || 'Job') + ': $' + (j.total || 0);
+    }).join('; ');
+
+    return 'You are Claude, an AI assistant built into Branch Manager — a field service management app for Second Nature Tree Service in Peekskill, NY.\n\n'
+      + 'BUSINESS CONTEXT:\n'
+      + '• Company: Second Nature Tree Service\n'
+      + '• Location: Peekskill, NY (serves Westchester & Putnam counties)\n'
+      + '• Phone: (914) 391-5233\n'
+      + '• Owner: Doug Brown\n'
+      + '• Services: Tree removal, pruning, stump grinding, cabling, bucket truck work, storm damage, lot clearing\n\n'
+      + 'CURRENT DATA:\n'
+      + '• Total clients: ' + clients.length + '\n'
+      + '• Total jobs: ' + jobs.length + ' (active: ' + activeJobs.length + ')\n'
+      + '• Total quotes: ' + quotes.length + ' (open: ' + openQuotes.length + ')\n'
+      + '• Unpaid invoices: ' + unpaidInvoices.length + '\n'
+      + '• Total revenue (paid): $' + Math.round(totalRevenue).toLocaleString() + '\n'
+      + '• Average job value: $' + Math.round(avgJobValue).toLocaleString() + '\n\n'
+      + 'RECENT JOB PRICING:\n' + recentJobs + '\n\n'
+      + 'INSTRUCTIONS:\n'
+      + '• Be concise and professional\n'
+      + '• For pricing estimates, use the recent job data and industry standards for the NY/Westchester area\n'
+      + '• For emails/texts, write them ready to send — professional but friendly\n'
+      + '• For business analysis, reference the actual numbers above\n'
+      + '• Keep responses under 300 words unless asked for detail\n'
+      + '• Use dollar amounts when discussing pricing\n';
+  },
+
+  _callClaude: function(systemPrompt, userMessage) {
+    return new Promise(function(resolve, reject) {
+      // Build messages array with history for context
+      var apiMessages = [];
+      var recent = AI._messages.slice(-10); // Last 10 messages for context
+      recent.forEach(function(m) {
+        apiMessages.push({ role: m.role, content: m.content });
+      });
+
+      fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': AI._apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: apiMessages
+        })
+      })
+      .then(function(res) {
+        if (!res.ok) {
+          return res.json().then(function(err) {
+            throw new Error(err.error ? err.error.message : 'API error ' + res.status);
+          });
+        }
+        return res.json();
+      })
+      .then(function(data) {
+        if (data.content && data.content[0]) {
+          resolve(data.content[0].text);
+        } else {
+          reject(new Error('No response from Claude'));
+        }
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+    });
+  },
+
+  _showTyping: function() {
+    var container = document.getElementById('ai-messages');
+    if (!container) return;
+    container.innerHTML += '<div id="ai-typing" style="display:flex;gap:8px;margin-bottom:16px;">'
+      + '<div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#D4A574,#C4956A);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;flex-shrink:0;">✦</div>'
+      + '<div><div style="font-size:11px;color:var(--text-light);margin-bottom:4px;">Claude</div>'
+      + '<div style="background:var(--bg);padding:10px 14px;border-radius:14px 14px 14px 4px;font-size:13px;">'
+      + '<span class="typing-dots" style="display:inline-flex;gap:4px;">'
+      + '<span style="width:6px;height:6px;border-radius:50%;background:var(--text-light);animation:blink 1.4s infinite both;animation-delay:0s;"></span>'
+      + '<span style="width:6px;height:6px;border-radius:50%;background:var(--text-light);animation:blink 1.4s infinite both;animation-delay:.2s;"></span>'
+      + '<span style="width:6px;height:6px;border-radius:50%;background:var(--text-light);animation:blink 1.4s infinite both;animation-delay:.4s;"></span>'
+      + '</span></div></div></div>';
+    AI._scrollToBottom();
+  },
+
+  _removeTyping: function() {
+    var typing = document.getElementById('ai-typing');
+    if (typing) typing.remove();
+  },
+
+  _refreshMessages: function() {
+    var container = document.getElementById('ai-messages');
+    if (!container) return;
+    var html = '';
+    if (AI._messages.length === 0) {
+      html = '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">'
+        + '<div style="font-size:36px;margin-bottom:12px;">🌳</div>'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:8px;">How can I help?</div>'
+        + '<div style="font-size:13px;">Ask me about pricing, client emails, or business insights.</div></div>';
+    } else {
+      AI._messages.forEach(function(msg) {
+        html += AI._renderMessage(msg);
+      });
+    }
+    container.innerHTML = html;
+  },
+
+  _scrollToBottom: function() {
+    setTimeout(function() {
+      var container = document.getElementById('ai-messages');
+      if (container) container.scrollTop = container.scrollHeight;
+    }, 50);
+  },
+
+  _saveKey: function() {
+    var key = document.getElementById('ai-key-input').value.trim();
+    if (!key) { UI.toast('Enter your API key', 'error'); return; }
+    localStorage.setItem('bm-claude-key', key);
+    AI._apiKey = key;
+    UI.toast('Claude AI connected!');
+    // Refresh panel
+    var panel = document.getElementById('ai-panel');
+    if (panel) panel.innerHTML = AI._renderPanel();
+    setTimeout(function() {
+      var input = document.getElementById('ai-input');
+      if (input) input.focus();
+    }, 100);
+  },
+
+  _clearHistory: function() {
+    AI._messages = [];
+    localStorage.removeItem('bm-ai-history');
+    AI._refreshMessages();
+    UI.toast('Chat cleared');
+  }
+};
+
+// Add typing animation CSS
+(function() {
+  var style = document.createElement('style');
+  style.textContent = '@keyframes blink { 0%,80%,100% { opacity:.3; } 40% { opacity:1; } }';
+  document.head.appendChild(style);
+})();

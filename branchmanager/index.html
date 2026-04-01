@@ -505,6 +505,7 @@
           <button class="topbar-icon" onclick="loadPage('notifications')" title="Notifications"><i data-lucide="bell" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i><span class="topbar-dot" id="notif-dot"></span></button>
           <button class="topbar-icon" onclick="loadPage('messaging')" title="Messages"><i data-lucide="message-square" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i></button>
           <button class="topbar-icon" onclick="QuickCreate.show()" title="Create New"><i data-lucide="plus" style="width:20px;height:20px;stroke:var(--accent);stroke-width:2.5;"></i></button>
+          <button class="topbar-icon" onclick="AI.toggle()" title="Claude AI Assistant" style="font-size:16px;position:relative;">✦<span style="position:absolute;top:2px;right:2px;width:7px;height:7px;background:#D4A574;border-radius:50%;border:1.5px solid var(--white);"></span></button>
           <button class="topbar-icon" onclick="toggleDarkMode()" id="dark-mode-btn" title="Toggle dark mode" style="font-size:16px;">🌙</button>
           <button class="topbar-icon" onclick="loadPage('settings')" title="Settings"><i data-lucide="settings" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i></button>
           <div class="topbar-avatar" onclick="this.querySelector('.avatar-menu').classList.toggle('open')">
@@ -596,6 +597,7 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script src="src/pages/visits.js"></script>
 <script src="src/pages/customfields.js"></script>
 <script src="src/pages/commandpalette.js"></script>
+<script src="src/pages/ai.js"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';

@@ -497,7 +497,7 @@
         <div class="search-box" style="position:relative;">
           <span>🔍</span>
           <input type="text" placeholder="Search clients, jobs..." id="globalSearch" autocomplete="off">
-          <div id="searchDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:400px;overflow-y:auto;z-index:999;min-width:360px;"></div>
+          <div id="searchDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.15);max-height:70vh;overflow-y:auto;z-index:999;min-width:400px;"></div>
         </div>
         <div class="topbar-icons">
           <button class="topbar-icon" onclick="loadPage('notifications')" title="Notifications"><i data-lucide="bell" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i><span class="topbar-dot" id="notif-dot"></span></button>
@@ -775,54 +775,159 @@ function loadPage(page) {
 // ── Global Search (inline dropdown) ──
 var searchTimeout;
 var searchDropdown = document.getElementById('searchDropdown');
+var _searchIdx = -1;
+
+function _closeSearch() { searchDropdown.style.display='none'; document.getElementById('globalSearch').value=''; _searchIdx=-1; }
+
+function _saveRecent(name, onclick) {
+  var recents = JSON.parse(localStorage.getItem('bm-recent-search') || '[]');
+  recents = recents.filter(function(r) { return r.name !== name; });
+  recents.unshift({ name: name, onclick: onclick, ts: Date.now() });
+  if (recents.length > 8) recents.length = 8;
+  localStorage.setItem('bm-recent-search', JSON.stringify(recents));
+}
+
+function _renderSearchResults(q) {
+  // Group by category
+  var groups = {};
+  var addGroup = function(key, items) { if (items.length) groups[key] = items; };
+
+  var clients = DB.clients.search(q).slice(0,5).map(function(c) {
+    return { name: c.name, line2: c.address || '', line3: c.phone || c.email || '', status: c.status, onclick: "ClientsPage.showDetail('" + c.id + "')" };
+  });
+  addGroup('Clients', clients);
+
+  var jobs = DB.jobs.search(q).slice(0,5).map(function(j) {
+    return { name: '#' + j.jobNumber + ' ' + (j.clientName || ''), line2: j.description || '', line3: j.property || '', status: j.status, onclick: "JobsPage.showDetail('" + j.id + "')", amount: j.total };
+  });
+  addGroup('Jobs', jobs);
+
+  var quotes = DB.quotes.search(q).slice(0,5).map(function(qr) {
+    return { name: '#' + qr.quoteNumber + ' ' + (qr.clientName || ''), line2: qr.description || '', line3: '', status: qr.status, onclick: "QuotesPage.showDetail('" + qr.id + "')", amount: qr.total };
+  });
+  addGroup('Quotes', quotes);
+
+  var invoices = DB.invoices.search(q).slice(0,3).map(function(i) {
+    return { name: '#' + i.invoiceNumber + ' ' + (i.clientName || ''), line2: i.subject || '', line3: '', status: i.status, onclick: "InvoicesPage.showDetail('" + i.id + "')", amount: i.total || i.balance };
+  });
+  addGroup('Invoices', invoices);
+
+  var requests = DB.requests.search(q).slice(0,3).map(function(r) {
+    return { name: r.clientName || 'Unknown', line2: r.property || r.description || '', line3: r.phone || '', status: r.status, onclick: "RequestsPage.showDetail('" + r.id + "')" };
+  });
+  addGroup('Requests', requests);
+
+  var totalResults = Object.keys(groups).reduce(function(s,k){ return s + groups[k].length; }, 0);
+
+  if (totalResults === 0) {
+    searchDropdown.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">'
+      + '<div style="font-size:24px;margin-bottom:8px;">🔍</div>'
+      + 'No results for "<strong>' + UI.esc(q) + '</strong>"'
+      + '<div style="margin-top:8px;font-size:12px;">Try a client name, address, phone, or job number</div></div>';
+    searchDropdown.style.display = 'block';
+    return;
+  }
+
+  var html = '';
+  var icons = { Clients: '👥', Jobs: '🔧', Quotes: '📋', Invoices: '💰', Requests: '📥' };
+  var itemIdx = 0;
+
+  Object.keys(groups).forEach(function(groupName) {
+    html += '<div style="padding:6px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;background:var(--bg);letter-spacing:.5px;">' + icons[groupName] + ' ' + groupName + '</div>';
+
+    groups[groupName].forEach(function(r) {
+      html += '<div class="search-item" data-idx="' + itemIdx + '" onclick="_saveRecent(\'' + UI.esc(r.name).replace(/'/g,"\\'") + '\',\'' + r.onclick.replace(/'/g,"\\'") + '\');' + r.onclick + ';_closeSearch();" '
+        + 'style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;transition:background .1s;" '
+        + 'onmouseover="this.style.background=\'var(--bg)\';_searchIdx=' + itemIdx + '" onmouseout="this.style.background=\'\'">'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(r.name) + '</div>';
+
+      if (r.line2) html += '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(r.line2) + '</div>';
+      if (r.line3) html += '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(r.line3) + '</div>';
+
+      html += '</div>';
+      if (r.amount) html += '<div style="font-weight:700;font-size:13px;color:var(--green-dark);white-space:nowrap;">' + UI.moneyInt(r.amount) + '</div>';
+      html += '<span style="font-size:11px;flex-shrink:0;">' + UI.statusBadge(r.status) + '</span>'
+        + '</div>';
+      itemIdx++;
+    });
+  });
+
+  // View all link
+  html += '<div onclick="_closeSearch();currentPage=\'search\';document.querySelectorAll(\'.nav-item\').forEach(function(b){b.classList.remove(\'active\')});document.getElementById(\'pageTitle\').textContent=\'Search\';document.getElementById(\'pageAction\').style.display=\'none\';document.getElementById(\'pageContent\').innerHTML=SearchPage.render(\'' + q.replace(/'/g,"\\'") + '\');" '
+    + 'style="padding:10px 14px;text-align:center;font-size:12px;color:var(--accent);font-weight:700;cursor:pointer;border-top:1px solid var(--border);" '
+    + 'onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">View all ' + totalResults + ' results →</div>';
+
+  searchDropdown.innerHTML = html;
+  searchDropdown.style.display = 'block';
+  _searchIdx = -1;
+}
+
 document.getElementById('globalSearch').addEventListener('input', function() {
   var q = this.value.trim();
   clearTimeout(searchTimeout);
-  if (!q || q.length < 2) {
-    searchDropdown.style.display = 'none';
+  if (!q || q.length < 1) {
+    // Show recent searches when input is focused but empty
+    if (q.length === 0 && document.activeElement === this) {
+      var recents = JSON.parse(localStorage.getItem('bm-recent-search') || '[]');
+      if (recents.length > 0) {
+        var html = '<div style="padding:6px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;background:var(--bg);letter-spacing:.5px;">🕐 Recent</div>';
+        recents.forEach(function(r) {
+          html += '<div onclick="' + r.onclick + ';_closeSearch();" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;transition:background .1s;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
+            + '<span style="font-size:14px;color:#ccc;">↩</span>'
+            + '<div style="font-weight:600;font-size:13px;">' + UI.esc(r.name) + '</div></div>';
+        });
+        html += '<div onclick="localStorage.removeItem(\'bm-recent-search\');_closeSearch();" style="padding:8px 14px;text-align:center;font-size:11px;color:var(--text-light);cursor:pointer;">Clear recents</div>';
+        searchDropdown.innerHTML = html;
+        searchDropdown.style.display = 'block';
+      } else {
+        searchDropdown.style.display = 'none';
+      }
+    } else {
+      searchDropdown.style.display = 'none';
+    }
     return;
   }
-  searchTimeout = setTimeout(function() {
-    var results = [];
-    DB.clients.search(q).slice(0,5).forEach(function(c) {
-      results.push({ type: 'Client', icon: '👥', name: c.name, detail: c.address || c.phone || '', status: c.status, onclick: "ClientsPage.showDetail('" + c.id + "')" });
-    });
-    DB.jobs.search(q).slice(0,3).forEach(function(j) {
-      results.push({ type: 'Job', icon: '🔧', name: '#' + j.jobNumber + ' ' + (j.clientName || ''), detail: j.description || '', status: j.status, onclick: "JobsPage.showDetail('" + j.id + "')" });
-    });
-    DB.invoices.search(q).slice(0,3).forEach(function(i) {
-      results.push({ type: 'Invoice', icon: '💰', name: '#' + i.invoiceNumber + ' ' + (i.clientName || ''), detail: i.subject || '', status: i.status, onclick: "InvoicesPage.showDetail('" + i.id + "')" });
-    });
-    DB.quotes.search(q).slice(0,3).forEach(function(qr) {
-      results.push({ type: 'Quote', icon: '📋', name: '#' + qr.quoteNumber + ' ' + (qr.clientName || ''), detail: qr.description || '', status: qr.status, onclick: "QuotesPage.showDetail('" + qr.id + "')" });
-    });
-    DB.requests.search(q).slice(0,3).forEach(function(r) {
-      results.push({ type: 'Request', icon: '📥', name: r.clientName || '', detail: r.property || '', status: r.status, onclick: "RequestsPage.showDetail('" + r.id + "')" });
-    });
+  searchTimeout = setTimeout(function() { _renderSearchResults(q); }, 150);
+});
 
-    if (results.length === 0) {
-      searchDropdown.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-light);font-size:13px;">No results for "' + q + '"</div>';
-    } else {
-      var html = '';
-      results.forEach(function(r) {
-        html += '<div onclick="' + r.onclick + ';document.getElementById(\'searchDropdown\').style.display=\'none\';document.getElementById(\'globalSearch\').value=\'\';" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;transition:background .1s;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'var(--white)\'">'
-          + '<span style="font-size:16px;width:24px;text-align:center;">' + r.icon + '</span>'
-          + '<div style="flex:1;min-width:0;">'
-          + '<div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + r.name + '</div>'
-          + '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + r.type + (r.detail ? ' — ' + r.detail : '') + '</div>'
-          + '</div>'
-          + '<span style="font-size:11px;">' + UI.statusBadge(r.status) + '</span>'
-          + '</div>';
-      });
-      html += '<div onclick="document.getElementById(\'globalSearch\').value=\'\';searchDropdown.style.display=\'none\';currentPage=\'search\';document.querySelectorAll(\'.nav-item\').forEach(function(b){b.classList.remove(\'active\')});document.getElementById(\'pageTitle\').textContent=\'Search\';document.getElementById(\'pageAction\').style.display=\'none\';document.getElementById(\'pageContent\').innerHTML=SearchPage.render(\'' + q.replace(/'/g,"\\'") + '\');" style="padding:10px 14px;text-align:center;font-size:12px;color:var(--accent);font-weight:600;cursor:pointer;border-top:1px solid var(--border);" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'var(--white)\'">View all ' + results.length + ' results</div>';
-      searchDropdown.innerHTML = html;
-    }
-    searchDropdown.style.display = 'block';
-  }, 200);
+// Show recents on focus
+document.getElementById('globalSearch').addEventListener('focus', function() {
+  if (!this.value.trim()) {
+    this.dispatchEvent(new Event('input'));
+  }
 });
+
+// Keyboard navigation
 document.getElementById('globalSearch').addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { this.value = ''; searchDropdown.style.display = 'none'; }
+  if (e.key === 'Escape') { _closeSearch(); this.blur(); return; }
+
+  var items = searchDropdown.querySelectorAll('.search-item');
+  if (!items.length) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _searchIdx = Math.min(_searchIdx + 1, items.length - 1);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _searchIdx = Math.max(_searchIdx - 1, 0);
+  } else if (e.key === 'Enter' && _searchIdx >= 0) {
+    e.preventDefault();
+    items[_searchIdx].click();
+    return;
+  } else if (e.key === 'Enter') {
+    // Search all results
+    var viewAll = searchDropdown.querySelector('[style*="text-align:center"]');
+    if (viewAll) viewAll.click();
+    return;
+  } else { return; }
+
+  items.forEach(function(item, i) {
+    item.style.background = i === _searchIdx ? 'var(--bg)' : '';
+  });
+  if (items[_searchIdx]) items[_searchIdx].scrollIntoView({ block: 'nearest' });
 });
+
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.search-box')) searchDropdown.style.display = 'none';
 });

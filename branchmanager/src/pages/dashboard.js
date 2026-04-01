@@ -168,6 +168,88 @@ var DashboardPage = {
     });
     html += '</div></div>';
 
+    // Revenue Forecast widget
+    var openQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting' || q.status === 'draft'; });
+    var pipelineValue = openQuotes.reduce(function(s, q) { return s + (q.total || 0); }, 0);
+    var wonQuotes = allQuotes.filter(function(q) { return q.status === 'approved' || q.status === 'converted'; });
+    var winRate = allQuotes.length > 0 ? wonQuotes.length / allQuotes.length : 0.5;
+    var expectedClose = pipelineValue * winRate;
+    var upcomingJobs = allJobs.filter(function(j) {
+      var d = new Date(j.scheduledDate);
+      return d > now && d <= new Date(now.getTime() + 30 * 86400000);
+    });
+    var upcomingValue = upcomingJobs.reduce(function(s, j) { return s + (j.total || 0); }, 0);
+    var projected30 = expectedClose + upcomingValue;
+
+    html += '<div style="background:linear-gradient(135deg,#1a3c12 0%,#2e5a1e 100%);border-radius:12px;padding:20px;color:#fff;margin-bottom:20px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="font-size:16px;font-weight:700;">Revenue Forecast</h3>'
+      + '<span style="font-size:12px;opacity:.7;">Next 30 days</span></div>'
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;" class="stat-row">'
+      + '<div style="background:rgba(255,255,255,.12);border-radius:8px;padding:12px;text-align:center;">'
+      + '<div style="font-size:22px;font-weight:800;">' + UI.moneyInt(pipelineValue) + '</div>'
+      + '<div style="font-size:11px;opacity:.8;margin-top:4px;">Pipeline</div></div>'
+      + '<div style="background:rgba(255,255,255,.12);border-radius:8px;padding:12px;text-align:center;">'
+      + '<div style="font-size:22px;font-weight:800;">' + UI.moneyInt(expectedClose) + '</div>'
+      + '<div style="font-size:11px;opacity:.8;margin-top:4px;">Expected Close (' + Math.round(winRate * 100) + '%)</div></div>'
+      + '<div style="background:rgba(255,255,255,.12);border-radius:8px;padding:12px;text-align:center;">'
+      + '<div style="font-size:22px;font-weight:800;">' + UI.moneyInt(upcomingValue) + '</div>'
+      + '<div style="font-size:11px;opacity:.8;margin-top:4px;">Scheduled Work</div></div>'
+      + '<div style="background:rgba(255,255,255,.18);border-radius:8px;padding:12px;text-align:center;">'
+      + '<div style="font-size:22px;font-weight:800;">' + UI.moneyInt(projected30) + '</div>'
+      + '<div style="font-size:11px;opacity:.8;margin-top:4px;">30-Day Projected</div></div>'
+      + '</div></div>';
+
+    // Action Items section
+    var overdueInvCount = overdueInvoices.length;
+    var overdueInvTotal = overdueTotal;
+    var sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
+    var expiringQuotes = allQuotes.filter(function(q) {
+      return q.status === 'sent' && q.createdAt && new Date(q.createdAt) < sevenDaysAgo;
+    });
+    var unscheduledJobs = allJobs.filter(function(j) {
+      return (j.status === 'active' || j.status === 'approved' || j.status === 'scheduled') && !j.scheduledDate;
+    });
+    var unsignedQuotes = allQuotes.filter(function(q) {
+      return q.status === 'sent' || q.status === 'awaiting';
+    });
+
+    var hasActions = overdueInvCount > 0 || expiringQuotes.length > 0 || unscheduledJobs.length > 0 || unsignedQuotes.length > 0;
+    if (hasActions) {
+      html += '<h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Action Items</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" class="stat-row">';
+
+      // Overdue invoices
+      html += '<div onclick="InvoicesPage._setFilter(\'overdue\');loadPage(\'invoices\');" style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:10px;padding:14px;cursor:pointer;">'
+        + '<div style="font-size:11px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Overdue Invoices</div>'
+        + '<div style="font-size:28px;font-weight:800;color:#c62828;">' + overdueInvCount + '</div>'
+        + '<div style="font-size:12px;color:#e53935;margin-top:2px;">' + UI.moneyInt(overdueInvTotal) + ' outstanding</div>'
+        + '</div>';
+
+      // Expiring quotes
+      html += '<div onclick="loadPage(\'quotes\')" style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px;cursor:pointer;">'
+        + '<div style="font-size:11px;font-weight:600;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Quotes Expiring</div>'
+        + '<div style="font-size:28px;font-weight:800;color:#e65100;">' + expiringQuotes.length + '</div>'
+        + '<div style="font-size:12px;color:#ef6c00;margin-top:2px;">Sent 7+ days ago</div>'
+        + '</div>';
+
+      // Unscheduled jobs
+      html += '<div onclick="loadPage(\'jobs\')" style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:14px;cursor:pointer;">'
+        + '<div style="font-size:11px;font-weight:600;color:#1565c0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Needs Scheduling</div>'
+        + '<div style="font-size:28px;font-weight:800;color:#1565c0;">' + unscheduledJobs.length + '</div>'
+        + '<div style="font-size:12px;color:#1976d2;margin-top:2px;">No date assigned</div>'
+        + '</div>';
+
+      // Unsigned quotes
+      html += '<div onclick="loadPage(\'quotes\')" style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:10px;padding:14px;cursor:pointer;">'
+        + '<div style="font-size:11px;font-weight:600;color:#6a1b9a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Awaiting Approval</div>'
+        + '<div style="font-size:28px;font-weight:800;color:#6a1b9a;">' + unsignedQuotes.length + '</div>'
+        + '<div style="font-size:12px;color:#7b1fa2;margin-top:2px;">Quotes sent to clients</div>'
+        + '</div>';
+
+      html += '</div>';
+    }
+
     // Weather + Time clock
     if (typeof Weather !== 'undefined') html += Weather.renderWidget();
     html += TimeTrackPage.renderClockWidget();

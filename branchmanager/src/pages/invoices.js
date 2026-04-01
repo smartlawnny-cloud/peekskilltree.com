@@ -67,14 +67,13 @@ var InvoicesPage = {
       + '<input type="text" placeholder="Search invoices..." value="' + UI.esc(self._search) + '" oninput="InvoicesPage._search=this.value;InvoicesPage._page=0;loadPage(\'invoices\')">'
       + '</div></div>';
 
-    // Bulk action bar (hidden until selections made)
-    html += '<div id="inv-bulk-bar" style="display:none;position:sticky;top:60px;z-index:50;background:var(--accent);color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:8px;display:none;justify-content:space-between;align-items:center;">'
-      + '<span id="inv-bulk-count" style="font-weight:700;">0 selected</span>'
-      + '<div style="display:flex;gap:6px;">'
-      + '<button onclick="InvoicesPage._bulkAction(\'paid\')" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Mark Paid</button>'
-      + '<button onclick="InvoicesPage._bulkAction(\'reminder\')" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Send Reminder</button>'
-      + '<button onclick="InvoicesPage._bulkAction(\'clear\')" style="background:none;color:rgba(255,255,255,.7);border:none;padding:6px 8px;font-size:12px;cursor:pointer;">Clear</button>'
-      + '</div></div>';
+    // Batch action bar (hidden until selections made)
+    html += '<div id="inv-batch-bar" style="display:none;background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:8px 16px;margin-bottom:12px;align-items:center;gap:8px;">'
+      + '<span id="inv-batch-count" style="font-weight:700;font-size:13px;">0 selected</span>'
+      + '<button class="btn btn-primary" onclick="InvoicesPage._batchPaid()" style="font-size:12px;padding:5px 12px;">Mark Paid</button>'
+      + '<button class="btn btn-outline" onclick="InvoicesPage._batchReminder()" style="font-size:12px;padding:5px 12px;">Send Reminders</button>'
+      + '<button class="btn btn-outline" onclick="InvoicesPage._batchClear()" style="font-size:12px;padding:5px 12px;">Clear</button>'
+      + '</div>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
@@ -131,38 +130,53 @@ var InvoicesPage = {
 
   _selectAll: function(checked) {
     document.querySelectorAll('.inv-check').forEach(function(cb) { cb.checked = checked; });
-    InvoicesPage._updateBulk();
+    InvoicesPage._updateBatchBar();
   },
   _updateBulk: function() {
+    InvoicesPage._updateBatchBar();
+  },
+  _updateBatchBar: function() {
     var selected = document.querySelectorAll('.inv-check:checked');
-    var bar = document.getElementById('inv-bulk-bar');
-    var count = document.getElementById('inv-bulk-count');
+    var bar = document.getElementById('inv-batch-bar');
+    var count = document.getElementById('inv-batch-count');
     if (bar) bar.style.display = selected.length > 0 ? 'flex' : 'none';
     if (count) count.textContent = selected.length + ' selected';
   },
   _getSelected: function() {
     return Array.from(document.querySelectorAll('.inv-check:checked')).map(function(cb) { return cb.value; });
   },
-  _bulkAction: function(action) {
+  _batchPaid: function() {
     var ids = InvoicesPage._getSelected();
     if (ids.length === 0) return;
-    if (action === 'paid') {
-      UI.confirm('Mark ' + ids.length + ' invoice' + (ids.length > 1 ? 's' : '') + ' as paid?', function() {
-        ids.forEach(function(id) { Workflow.markPaid(id, 'bulk'); });
-        UI.toast(ids.length + ' invoices marked paid');
-        loadPage('invoices');
-      });
-    } else if (action === 'reminder') {
-      var sent = 0;
+    UI.confirm('Mark ' + ids.length + ' invoice' + (ids.length > 1 ? 's' : '') + ' as paid?', function() {
       ids.forEach(function(id) {
-        var inv = DB.invoices.getById(id);
-        if (inv && inv.status !== 'paid') { Workflow.sendInvoice(id); sent++; }
+        if (typeof Workflow !== 'undefined') {
+          Workflow.markPaid(id, 'bulk');
+        } else {
+          DB.invoices.update(id, { status: 'paid', balance: 0, paidDate: new Date().toISOString() });
+        }
       });
-      UI.toast(sent + ' reminder' + (sent > 1 ? 's' : '') + ' queued');
-    } else if (action === 'clear') {
-      document.querySelectorAll('.inv-check').forEach(function(cb) { cb.checked = false; });
-      InvoicesPage._updateBulk();
-    }
+      UI.toast(ids.length + ' invoice' + (ids.length > 1 ? 's' : '') + ' marked paid');
+      loadPage('invoices');
+    });
+  },
+  _batchReminder: function() {
+    var ids = InvoicesPage._getSelected();
+    if (ids.length === 0) return;
+    var sent = 0;
+    ids.forEach(function(id) {
+      var inv = DB.invoices.getById(id);
+      if (inv && inv.status !== 'paid') {
+        if (typeof Workflow !== 'undefined') { Workflow.sendInvoice(id); }
+        sent++;
+      }
+    });
+    UI.toast('Reminders queued for ' + sent + ' invoice' + (sent !== 1 ? 's' : ''));
+    loadPage('invoices');
+  },
+  _batchClear: function() {
+    document.querySelectorAll('.inv-check').forEach(function(cb) { cb.checked = false; });
+    InvoicesPage._updateBatchBar();
   },
 
   showDetail: function(id) {

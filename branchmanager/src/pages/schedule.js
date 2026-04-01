@@ -166,46 +166,72 @@ var SchedulePage = {
   },
 
   _renderDay: function() {
+    var self = SchedulePage;
     var d = SchedulePage.currentDate;
     var dateStr = d.toISOString().split('T')[0];
     var allJobs = DB.jobs.getAll();
     var dayJobs = allJobs.filter(function(j) { return j.scheduledDate === dateStr; });
 
-    var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;">';
+    var html = '';
+
+    // Unscheduled jobs panel for day view
+    var globalUnscheduled = allJobs.filter(function(j) { return !j.scheduledDate && j.status !== 'completed' && j.status !== 'cancelled'; });
+    if (globalUnscheduled.length > 0) {
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;">'
+        + '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">' + String.fromCharCode(128203) + ' Unscheduled Jobs (' + globalUnscheduled.length + ') — <span style="font-size:12px;font-weight:400;color:var(--text-light);">drag to a time slot</span></div>'
+        + '<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">';
+      globalUnscheduled.slice(0, 10).forEach(function(j) {
+        html += '<div draggable="true" ondragstart="SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" '
+          + 'style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:8px 12px;cursor:grab;min-width:160px;flex-shrink:0;">'
+          + '<div style="font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.clientName || '#' + j.jobNumber) + '</div>'
+          + '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '') + '</div>'
+          + '<div style="font-weight:700;font-size:12px;color:var(--green-dark);margin-top:4px;">' + UI.moneyInt(j.total) + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;">';
 
     for (var h = 6; h <= 19; h++) {
       var hour = h > 12 ? h - 12 : h;
       var ampm = h >= 12 ? 'PM' : 'AM';
-      var slotJobs = dayJobs.filter(function(j) { return j.startTime && j.startTime.substring(0,2) === String(h).padStart(2,'0'); });
+      var hPad = (h < 10 ? '0' : '') + h;
+      var slotJobs = dayJobs.filter(function(j) { return j.startTime && j.startTime.substring(0,2) === hPad; });
 
       html += '<div style="display:flex;border-bottom:1px solid var(--border);min-height:52px;">'
         + '<div style="width:70px;padding:8px 10px;font-size:12px;font-weight:600;color:var(--text-light);border-right:1px solid var(--border);flex-shrink:0;text-align:right;">'
         + hour + ':00 ' + ampm + '</div>'
-        + '<div style="flex:1;padding:4px 8px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;">';
+        + '<div data-date="' + dateStr + '" data-hour="' + h + '" '
+        + 'ondragover="event.preventDefault();this.style.background=\'#e8f5e9\';this.style.border=\'2px dashed #4caf50\'" '
+        + 'ondragleave="this.style.background=\'\';this.style.border=\'none\'" '
+        + 'ondrop="SchedulePage._dropOnSlot(event,\'' + dateStr + '\',' + h + ')" '
+        + 'style="flex:1;padding:4px 8px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;transition:background .15s;">';
 
       slotJobs.forEach(function(j) {
         var bgColor = j.status === 'completed' ? '#e6f6ee' : j.status === 'late' ? '#fde8e8' : j.status === 'in_progress' ? '#fefcbf' : '#ebf4ff';
         var borderColor = j.status === 'completed' ? '#1a8a5c' : j.status === 'late' ? '#e53e3e' : j.status === 'in_progress' ? '#ed8936' : '#4299e1';
-        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="background:' + bgColor + ';border-left:3px solid ' + borderColor + ';border-radius:6px;padding:8px 12px;cursor:pointer;flex:1;min-width:200px;">'
+        html += '<div draggable="true" ondragstart="event.stopPropagation();SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" '
+          + 'onclick="JobsPage.showDetail(\'' + j.id + '\')" style="background:' + bgColor + ';border-left:3px solid ' + borderColor + ';border-radius:6px;padding:8px 12px;cursor:grab;flex:1;min-width:200px;">'
           + '<div style="font-weight:700;font-size:13px;">' + (j.clientName || '') + '</div>'
           + '<div style="font-size:12px;color:var(--text-light);">' + (j.description || '#' + j.jobNumber) + '</div>'
           + '<div style="display:flex;gap:8px;margin-top:4px;font-size:11px;">'
           + '<span style="font-weight:700;color:var(--accent);">' + UI.moneyInt(j.total) + '</span>'
-          + (j.crew ? '<span style="color:var(--text-light);">👷 ' + j.crew.join(', ') + '</span>' : '')
+          + (j.crew ? '<span style="color:var(--text-light);">' + String.fromCharCode(128119) + ' ' + j.crew.join(', ') + '</span>' : '')
           + '</div></div>';
       });
 
       html += '</div></div>';
     }
 
-    // Unscheduled
+    // Unscheduled for this day (have date but no time)
     var unscheduled = dayJobs.filter(function(j) { return !j.startTime; });
     if (unscheduled.length) {
       html += '<div style="display:flex;border-top:2px solid var(--accent);">'
         + '<div style="width:70px;padding:8px 10px;font-size:11px;font-weight:700;color:var(--accent);border-right:1px solid var(--border);text-align:right;">Any<br>time</div>'
         + '<div style="flex:1;padding:6px 8px;display:flex;gap:6px;flex-wrap:wrap;">';
       unscheduled.forEach(function(j) {
-        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="background:var(--green-bg);border-left:3px solid var(--accent);border-radius:6px;padding:8px 12px;cursor:pointer;flex:1;min-width:200px;">'
+        html += '<div draggable="true" ondragstart="SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" '
+          + 'onclick="JobsPage.showDetail(\'' + j.id + '\')" style="background:var(--green-bg);border-left:3px solid var(--accent);border-radius:6px;padding:8px 12px;cursor:grab;flex:1;min-width:200px;">'
           + '<div style="font-weight:700;font-size:13px;">' + (j.clientName || '') + '</div>'
           + '<div style="font-size:12px;color:var(--text-light);">' + (j.description || '#' + j.jobNumber) + '</div>'
           + '<div style="font-weight:700;font-size:11px;color:var(--accent);margin-top:4px;">' + UI.moneyInt(j.total) + '</div></div>';
@@ -235,22 +261,47 @@ var SchedulePage = {
   _dragStart: function(e, jobId) {
     SchedulePage._dragJobId = jobId;
     e.dataTransfer.effectAllowed = 'move';
-    e.target.style.opacity = '0.4';
+    e.dataTransfer.setData('text/plain', jobId);
+    e.target.style.opacity = '0.5';
   },
 
   _dragEnd: function(e) {
     e.target.style.opacity = '1';
   },
 
+  _flashDrop: function(el) {
+    el.style.background = '#c8e6c9';
+    el.style.border = 'none';
+    setTimeout(function() {
+      el.style.background = '';
+    }, 400);
+  },
+
   _dropOnDay: function(e, dateStr) {
     e.preventDefault();
-    e.currentTarget.style.background = 'var(--white)';
+    var el = e.currentTarget;
     var jobId = SchedulePage._dragJobId;
     if (!jobId) return;
+    SchedulePage._flashDrop(el);
     DB.jobs.update(jobId, { scheduledDate: dateStr });
-    UI.toast('Job rescheduled to ' + dateStr);
+    UI.toast('Job scheduled to ' + dateStr);
     SchedulePage._dragJobId = null;
-    loadPage('schedule');
+    setTimeout(function() { loadPage('schedule'); }, 300);
+  },
+
+  _dropOnSlot: function(e, dateStr, hour) {
+    e.preventDefault();
+    var el = e.currentTarget;
+    var jobId = SchedulePage._dragJobId;
+    if (!jobId) return;
+    SchedulePage._flashDrop(el);
+    var startTime = (hour < 10 ? '0' : '') + hour + ':00';
+    var displayHour = hour > 12 ? hour - 12 : hour;
+    var ampm = hour >= 12 ? 'PM' : 'AM';
+    DB.jobs.update(jobId, { scheduledDate: dateStr, startTime: startTime });
+    UI.toast('Job scheduled to ' + dateStr + ' at ' + displayHour + ':00 ' + ampm);
+    SchedulePage._dragJobId = null;
+    setTimeout(function() { loadPage('schedule'); }, 300);
   },
 
   _renderWeek: function() {
@@ -297,7 +348,12 @@ var SchedulePage = {
       var isToday = dateStr === today;
       var dayJobs = allJobs.filter(function(j) { return j.scheduledDate === dateStr; });
 
-      html += '<div ondragover="event.preventDefault();this.style.background=\'#e8f5e9\'" ondragleave="this.style.background=\'var(--white)\'" ondrop="SchedulePage._dropOnDay(event,\'' + dateStr + '\')" onclick="SchedulePage.currentDate=new Date(\'' + dateStr + 'T12:00:00\');SchedulePage.setView(\'day\')" style="background:var(--white);min-height:120px;padding:6px;cursor:pointer;' + (isToday ? 'border-top:3px solid var(--green-dark);' : '') + 'transition:background .15s;">';
+      html += '<div data-date="' + dateStr + '" '
+        + 'ondragover="event.preventDefault();this.style.background=\'#e8f5e9\';this.style.boxShadow=\'inset 0 0 0 2px #4caf50\'" '
+        + 'ondragleave="this.style.background=\'var(--white)\';this.style.boxShadow=\'none\'" '
+        + 'ondrop="SchedulePage._dropOnDay(event,\'' + dateStr + '\')" '
+        + 'onclick="SchedulePage.currentDate=new Date(\'' + dateStr + 'T12:00:00\');SchedulePage.setView(\'day\')" '
+        + 'style="background:var(--white);min-height:120px;padding:6px;cursor:pointer;' + (isToday ? 'border-top:3px solid var(--green-dark);' : '') + 'transition:background .15s,box-shadow .15s;">';
       dayJobs.forEach(function(j) {
         var bgColor = j.status === 'completed' ? '#e8f5e9' : j.status === 'late' ? '#ffebee' : j.status === 'in_progress' ? '#fff3e0' : '#e3f2fd';
         var borderColor = j.status === 'completed' ? '#4caf50' : j.status === 'late' ? '#f44336' : j.status === 'in_progress' ? '#ff9800' : '#2196f3';
@@ -327,7 +383,25 @@ var SchedulePage = {
     var allJobs = DB.jobs.getAll();
     var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-    var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;border:1px solid var(--border);">';
+    var html = '';
+
+    // Unscheduled jobs panel for month view
+    var unscheduled = allJobs.filter(function(j) { return !j.scheduledDate && j.status !== 'completed' && j.status !== 'cancelled'; });
+    if (unscheduled.length > 0) {
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;">'
+        + '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">' + String.fromCharCode(128203) + ' Unscheduled Jobs (' + unscheduled.length + ') — <span style="font-size:12px;font-weight:400;color:var(--text-light);">drag to a day</span></div>'
+        + '<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">';
+      unscheduled.slice(0, 10).forEach(function(j) {
+        html += '<div draggable="true" ondragstart="SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" '
+          + 'style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:8px 12px;cursor:grab;min-width:160px;flex-shrink:0;">'
+          + '<div style="font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.clientName || '#' + j.jobNumber) + '</div>'
+          + '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '') + '</div>'
+          + '<div style="font-weight:700;font-size:12px;color:var(--green-dark);margin-top:4px;">' + UI.moneyInt(j.total) + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+
+    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;border:1px solid var(--border);">';
 
     days.forEach(function(day) {
       html += '<div style="background:var(--bg);padding:8px;text-align:center;font-size:11px;font-weight:700;color:var(--text-light);">' + day + '</div>';
@@ -342,12 +416,19 @@ var SchedulePage = {
       var isToday = dateStr === today;
       var dayJobs = allJobs.filter(function(j) { return j.scheduledDate === dateStr; });
 
-      html += '<div onclick="SchedulePage.currentDate=new Date(\'' + dateStr + 'T12:00:00\');SchedulePage.setView(\'day\')" style="background:var(--white);min-height:80px;padding:4px;cursor:pointer;' + (isToday ? 'border:2px solid var(--green-dark);' : '') + '">'
+      html += '<div data-date="' + dateStr + '" '
+        + 'ondragover="event.preventDefault();this.style.background=\'#e8f5e9\';this.style.boxShadow=\'inset 0 0 0 2px #4caf50\'" '
+        + 'ondragleave="this.style.background=\'var(--white)\';this.style.boxShadow=\'none\'" '
+        + 'ondrop="SchedulePage._dropOnDay(event,\'' + dateStr + '\')" '
+        + 'onclick="SchedulePage.currentDate=new Date(\'' + dateStr + 'T12:00:00\');SchedulePage.setView(\'day\')" '
+        + 'style="background:var(--white);min-height:80px;padding:4px;cursor:pointer;transition:background .15s;' + (isToday ? 'border:2px solid var(--green-dark);' : '') + '">'
         + '<div style="font-size:12px;font-weight:' + (isToday ? '800' : '600') + ';color:' + (isToday ? 'var(--green-dark)' : 'var(--text)') + ';margin-bottom:2px;">' + day + '</div>';
 
       dayJobs.forEach(function(j) {
         var bgColor = j.status === 'completed' ? '#e8f5e9' : j.status === 'late' ? '#ffebee' : '#e3f2fd';
-        html += '<div onclick="event.stopPropagation();JobsPage.showDetail(\'' + j.id + '\')" style="background:' + bgColor + ';border-radius:4px;padding:2px 4px;margin-bottom:2px;cursor:pointer;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+        html += '<div draggable="true" ondragstart="event.stopPropagation();SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" '
+          + 'onclick="event.stopPropagation();JobsPage.showDetail(\'' + j.id + '\')" '
+          + 'style="background:' + bgColor + ';border-radius:4px;padding:2px 4px;margin-bottom:2px;cursor:grab;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
           + (j.clientName || '#' + j.jobNumber) + '</div>';
       });
       html += '</div>';

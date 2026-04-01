@@ -576,6 +576,27 @@ var ClientsPage = {
           title: 'Payment received — Invoice #' + inv.invoiceNumber, detail: '', amount: inv.total });
       }
     });
+    // Satisfaction ratings
+    clientJobs.forEach(function(j) {
+      if (j.satisfaction && j.satisfaction.rating) {
+        var stars = '';
+        for (var s = 1; s <= 5; s++) stars += s <= j.satisfaction.rating ? '⭐' : '☆';
+        timeline.push({ date: j.satisfaction.ratedAt || j.completedAt || j.createdAt, type: 'rating', icon: '😊', color: '#ffc107',
+          title: 'Client rated Job #' + j.jobNumber + ' — ' + stars + ' (' + j.satisfaction.rating + '/5)',
+          detail: j.satisfaction.comment || '' });
+      }
+    });
+    // Communication log entries
+    if (typeof CommsLog !== 'undefined') {
+      var comms = CommsLog.getAll(id);
+      comms.forEach(function(comm) {
+        var icons = { call: '📞', text: '💬', email: '📧', note: '📌', visit: '🏠', voicemail: '📱' };
+        var dirLabel = comm.direction === 'inbound' ? '← Inbound' : '→ Outbound';
+        timeline.push({ date: comm.date, type: 'comm', icon: icons[comm.type] || '📋', color: comm.direction === 'inbound' ? '#2980b9' : '#27ae60',
+          title: (comm.type || 'Note').charAt(0).toUpperCase() + (comm.type || 'note').slice(1) + ' ' + dirLabel,
+          detail: comm.notes || '' });
+      });
+    }
     // Client notes
     if (c.notes) {
       timeline.push({ date: c.createdAt, type: 'note', icon: '📝', color: '#666',
@@ -604,6 +625,11 @@ var ClientsPage = {
       html += '</div>';
     } else {
       html += '<div style="text-align:center;padding:24px;color:var(--text-light);">No activity yet</div>';
+    }
+
+    // Communication log
+    if (typeof CommsLog !== 'undefined') {
+      html += CommsLog.renderForClient(id);
     }
 
     if (typeof Photos !== 'undefined') {

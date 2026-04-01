@@ -250,7 +250,7 @@ var SchedulePage = {
         + '<div style="padding:14px;text-align:center;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Crew</div><div style="font-size:24px;font-weight:800;">' + dayJobs.reduce(function(s,j){return s+(j.crew?j.crew.length:0);},0) + '</div></div>'
         + '</div>';
     } else {
-      html += '<div style="margin-top:16px;text-align:center;padding:24px;color:var(--text-light);font-size:14px;">No jobs scheduled for this day. <button class="btn btn-primary" style="margin-left:8px;" onclick="JobsPage.showForm()">+ Schedule Job</button></div>';
+      html += '<div style="margin-top:16px;text-align:center;padding:24px;color:var(--text-light);font-size:14px;">No jobs scheduled for this day. <button class="btn btn-primary" style="margin-left:8px;" onclick="JobsPage.showForm(null,{date:\'' + SchedulePage.currentDate.toISOString().split('T')[0] + '\'})">+ Schedule Job</button></div>';
     }
 
     return html;
@@ -364,7 +364,7 @@ var SchedulePage = {
           + '</div>';
       });
       if (dayJobs.length === 0) {
-        html += '<div style="font-size:10px;color:#ccc;text-align:center;padding-top:20px;">—</div>';
+        html += '<div onclick="event.stopPropagation();JobsPage.showForm(null,{date:\'' + dateStr + '\'})" title="New job" style="font-size:11px;color:#ccc;text-align:center;padding-top:16px;cursor:pointer;" onmouseover="this.style.color=\'var(--green-dark)\'" onmouseout="this.style.color=\'#ccc\'">+ job</div>';
       }
       html += '</div>';
     }
@@ -422,7 +422,10 @@ var SchedulePage = {
         + 'ondrop="SchedulePage._dropOnDay(event,\'' + dateStr + '\')" '
         + 'onclick="SchedulePage.currentDate=new Date(\'' + dateStr + 'T12:00:00\');SchedulePage.setView(\'day\')" '
         + 'style="background:var(--white);min-height:80px;padding:4px;cursor:pointer;transition:background .15s;' + (isToday ? 'border:2px solid var(--green-dark);' : '') + '">'
-        + '<div style="font-size:12px;font-weight:' + (isToday ? '800' : '600') + ';color:' + (isToday ? 'var(--green-dark)' : 'var(--text)') + ';margin-bottom:2px;">' + day + '</div>';
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">'
+        + '<span style="font-size:12px;font-weight:' + (isToday ? '800' : '600') + ';color:' + (isToday ? 'var(--green-dark)' : 'var(--text)') + ';">' + day + '</span>'
+        + '<span onclick="event.stopPropagation();JobsPage.showForm(null,{date:\'' + dateStr + '\'})" title="New job" style="font-size:14px;line-height:1;color:#aaa;padding:1px 4px;border-radius:4px;cursor:pointer;" onmouseover="this.style.background=\'#e8f5e9\';this.style.color=\'var(--green-dark)\'" onmouseout="this.style.background=\'transparent\';this.style.color=\'#aaa\'">+</span>'
+        + '</div>';
 
       dayJobs.forEach(function(j) {
         var bgColor = j.status === 'completed' ? '#e8f5e9' : j.status === 'late' ? '#ffebee' : '#e3f2fd';

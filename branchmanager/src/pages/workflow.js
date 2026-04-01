@@ -62,14 +62,25 @@ var Workflow = {
   markPaid: function(invoiceId, method) {
     var inv = DB.invoices.getById(invoiceId);
     if (!inv) return;
+    method = method || 'cash';
 
     DB.invoices.update(invoiceId, {
       status: 'paid',
       amountPaid: inv.total,
       balance: 0,
       paidDate: new Date().toISOString(),
-      paymentMethod: method || 'cash'
+      paymentMethod: method
     });
+
+    // Log to payment history so Payments.renderForInvoice() shows it
+    var pKey = 'bm-payments-' + invoiceId;
+    var allPmts = [];
+    try { allPmts = JSON.parse(localStorage.getItem(pKey)) || []; } catch(e) {}
+    allPmts.unshift({
+      id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+      invoiceId: invoiceId, amount: inv.total, method: method, note: '', date: new Date().toISOString(), user: 'Doug'
+    });
+    localStorage.setItem(pKey, JSON.stringify(allPmts));
 
     UI.toast('Invoice #' + (inv.invoiceNumber || '') + ' marked paid — ' + UI.money(inv.total));
   },
@@ -267,14 +278,93 @@ var Workflow = {
   },
 
   _sendViaSupabase: function(to, subject, body, callback) {
-    var url = 'https://ltpivkqahvplapyagljt.supabase.co/rest/v1/rpc/send_email';
-    var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
-    fetch(url, {
-      method: 'POST',
-      headers: { 'apikey': key, 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to_email: to, subject: subject, body: body })
-    }).then(function(r) { return r.json(); })
-      .then(function(d) { if (callback) callback(d && d.success); })
-      .catch(function() { if (callback) callback(false); });
+    // Use Email.send() (SendGrid) if configured, else let caller handle fallback
+    if (typeof Email !== 'undefined' && Email.isConfigured()) {
+      Email.send(to, subject, body).then(function(result) {
+        if (callback) callback(result && result.success);
+      });
+    } else {
+      if (callback) callback(false);
+    }
+  },
+
+  // Show a payment recording modal with method selection
+  showMarkPaid: function(invoiceId) {
+    var inv = DB.invoices.getById(invoiceId);
+    if (!inv) return;
+    var balance = inv.balance || inv.total || 0;
+
+    var html = '<div style="text-align:center;padding:8px 0;">'
+      + '<div style="font-size:48px;margin-bottom:12px;">💵</div>'
+      + '<h3 style="font-size:18px;margin-bottom:4px;">Record Payment</h3>'
+      + '<p style="color:var(--text-light);font-size:14px;margin-bottom:20px;">Invoice #' + inv.invoiceNumber + ' — ' + UI.money(balance) + ' due</p>'
+      + '</div>'
+      + '<div style="text-align:left;margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);">Amount Received</label>'
+      + '<input type="number" id="mp-amount" value="' + balance.toFixed(2) + '" step="0.01" min="0.01" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:8px;font-size:18px;font-weight:700;margin-top:4px;text-align:center;">'
+      + '</div>'
+      + '<div style="text-align:left;margin-bottom:8px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:8px;display:block;">Payment Method</label>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">';
+    ['Cash', 'Check', 'Venmo', 'Zelle', 'Card', 'Other'].forEach(function(m, i) {
+      html += '<button type="button" class="mp-method-btn" data-method="' + m.toLowerCase() + '" '
+        + 'onclick="document.querySelectorAll(\'.mp-method-btn\').forEach(function(b){b.style.background=\'var(--bg)\';b.style.color=\'var(--text)\';b.style.borderColor=\'var(--border)\'});this.style.background=\'var(--green-dark)\';this.style.color=\'#fff\';this.style.borderColor=\'var(--green-dark)\';document.getElementById(\'mp-method-val\').value=this.dataset.method;" '
+        + 'style="padding:10px 8px;background:' + (i === 0 ? 'var(--green-dark);color:#fff' : 'var(--bg);color:var(--text)') + ';border:2px solid ' + (i === 0 ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">'
+        + m + '</button>';
+    });
+    html += '</div>'
+      + '<input type="hidden" id="mp-method-val" value="cash">'
+      + '</div>'
+      + '<div style="text-align:left;margin-bottom:20px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);">Note (optional)</label>'
+      + '<input type="text" id="mp-note" placeholder="Check #, transaction ID..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;margin-top:4px;">'
+      + '</div>';
+
+    UI.showModal('Record Payment', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="Workflow._confirmMarkPaid(\'' + invoiceId + '\')">✅ Record Payment</button>'
+    });
+  },
+
+  _confirmMarkPaid: function(invoiceId) {
+    var amount = parseFloat(document.getElementById('mp-amount').value);
+    var method = document.getElementById('mp-method-val').value || 'cash';
+    var note = document.getElementById('mp-note') ? document.getElementById('mp-note').value : '';
+    if (!amount || amount <= 0) { UI.toast('Enter a valid amount', 'error'); return; }
+
+    var inv = DB.invoices.getById(invoiceId);
+    if (!inv) return;
+
+    var prevPaid = inv.amountPaid || 0;
+    var newPaid = prevPaid + amount;
+    var newBalance = Math.max(0, (inv.total || 0) - newPaid);
+    var isFullyPaid = newBalance <= 0;
+
+    DB.invoices.update(invoiceId, {
+      status: isFullyPaid ? 'paid' : 'partial',
+      balance: newBalance,
+      amountPaid: newPaid,
+      paidDate: isFullyPaid ? new Date().toISOString() : (inv.paidDate || null),
+      paymentMethod: method
+    });
+
+    // Save to payment history log
+    var pKey = 'bm-payments-' + invoiceId;
+    var allPmts = [];
+    try { allPmts = JSON.parse(localStorage.getItem(pKey)) || []; } catch(e) {}
+    allPmts.unshift({
+      id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+      invoiceId: invoiceId,
+      amount: amount,
+      method: method,
+      note: note,
+      date: new Date().toISOString(),
+      user: 'Doug'
+    });
+    localStorage.setItem(pKey, JSON.stringify(allPmts));
+
+    UI.toast('Payment recorded — ' + UI.money(amount) + ' via ' + method);
+    UI.closeModal();
+    if (typeof InvoicesPage !== 'undefined') InvoicesPage.showDetail(invoiceId);
   }
 };

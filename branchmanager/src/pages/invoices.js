@@ -257,6 +257,52 @@ var InvoicesPage = {
     InvoicesPage._updateBatchBar();
   },
 
+  _getPayLink: function(id) {
+    return 'https://peekskilltree.com/branchmanager/pay.html?id=' + id;
+  },
+
+  _copyPayLink: function(id) {
+    var link = InvoicesPage._getPayLink(id);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(link).then(function() { UI.toast('Pay link copied!'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = link; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      UI.toast('Pay link copied!');
+    }
+  },
+
+  _sendInvoiceEmail: function(id) {
+    var inv = DB.invoices.getById(id);
+    if (!inv) return;
+    var client = inv.clientId ? DB.clients.getById(inv.clientId) : null;
+    var email = inv.clientEmail || (client && client.email) || '';
+    var firstName = (inv.clientName || '').split(' ')[0] || 'there';
+    var payLink = InvoicesPage._getPayLink(id);
+    var subject = 'Invoice #' + inv.invoiceNumber + ' from Second Nature Tree Service — ' + UI.money(inv.balance || inv.total);
+    var body = 'Hi ' + firstName + ',\n\n'
+      + 'Thank you for choosing Second Nature Tree Service! Your invoice is ready:\n\n'
+      + '📄 Invoice #' + inv.invoiceNumber + '\n'
+      + (inv.subject ? '📋 Job: ' + inv.subject + '\n' : '')
+      + '💰 Amount Due: ' + UI.money(inv.balance || inv.total) + '\n'
+      + (inv.dueDate ? '📅 Due: ' + UI.dateShort(inv.dueDate) + '\n' : '') + '\n'
+      + '👉 View & pay online:\n' + payLink + '\n\n'
+      + 'Payment options: credit/debit card, Venmo, Zelle, check, or cash.\n\n'
+      + 'Questions? Reply to this email or call (914) 391-5233.\n\n'
+      + 'Thanks,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+    if (typeof Email !== 'undefined') {
+      Email.send(email || '', subject, body).then(function() {
+        DB.invoices.update(id, { status: 'sent', sentAt: new Date().toISOString() });
+        UI.toast('Invoice sent to ' + (email || 'client'));
+        InvoicesPage.showDetail(id);
+      });
+    } else {
+      window.open('mailto:' + encodeURIComponent(email || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+      DB.invoices.update(id, { status: 'sent', sentAt: new Date().toISOString() });
+      InvoicesPage.showDetail(id);
+    }
+  },
+
   showDetail: function(id) {
     var inv = DB.invoices.getById(id);
     if (!inv) return;
@@ -281,8 +327,9 @@ var InvoicesPage = {
       + '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       + '<button class="btn btn-outline" onclick="PDF.generateInvoice(\'' + id + '\')" style="font-size:12px;">PDF</button>'
-      + '<button class="btn btn-outline" onclick="if(typeof Workflow!==\'undefined\')Workflow.sendInvoice(\'' + id + '\');" style="font-size:12px;">Send</button>'
-      + (inv.status !== 'paid' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.markPaid(\'' + id + '\',\'cash\');InvoicesPage.showDetail(\'' + id + '\');" style="font-size:12px;">Mark Paid</button>' : '')
+      + (inv.status !== 'paid' ? '<button class="btn btn-outline" onclick="InvoicesPage._copyPayLink(\'' + id + '\')" style="font-size:12px;">🔗 Pay Link</button>' : '')
+      + (inv.status !== 'paid' ? '<button class="btn btn-outline" onclick="if(typeof Workflow!==\'undefined\')Workflow.sendInvoice(\'' + id + '\');else InvoicesPage._sendInvoiceEmail(\'' + id + '\')" style="font-size:12px;">📧 Send</button>' : '')
+      + (inv.status !== 'paid' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.showMarkPaid(\'' + id + '\');" style="font-size:12px;">💵 Mark Paid</button>' : '')
       + '</div></div>'
       // Title
       + '<h2 style="font-size:24px;font-weight:700;margin-bottom:4px;">Invoice for ' + UI.esc(inv.clientName || 'Client') + '</h2>'

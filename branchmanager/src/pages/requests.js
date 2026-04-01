@@ -106,16 +106,31 @@ var RequestsPage = {
   _setFilter: function(f) { RequestsPage._filter = f; loadPage('requests'); },
 
   showForm: function() {
+    var allClients = [];
+    try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
+    var clientOptions = [{ value: '', label: '— New client (fill in below) —' }]
+      .concat(allClients.map(function(c) { return { value: c.id, label: c.name + (c.address ? ' · ' + c.address.split(',')[0] : '') }; }));
+
     var html = '<form id="req-form" onsubmit="RequestsPage.save(event)">'
-      + UI.formField('Client Name *', 'text', 'r-name', '', { required: true, placeholder: 'Full name' })
-      + UI.formField('Property Address', 'text', 'r-property', '', { placeholder: 'Street, City, State ZIP' })
+      + UI.formField('Existing Client', 'select', 'r-clientId', '', { options: clientOptions })
+      + '<div id="r-newclient-fields">'
+      + UI.formField('New Client Name', 'text', 'r-name', '', { placeholder: 'Full name (if new client)' })
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
       + UI.formField('Phone', 'tel', 'r-phone', '', { placeholder: '(914) 555-0000' })
       + UI.formField('Email', 'email', 'r-email', '', { placeholder: 'email@example.com' })
-      + '</div>'
+      + '</div></div>'
+      + UI.formField('Property Address', 'text', 'r-property', '', { placeholder: 'Street, City, State ZIP' })
       + UI.formField('How did they hear about us?', 'select', 'r-source', '', { options: ['','Google Search','Facebook','Instagram','Nextdoor','Friend/Referral','Yelp','Angi','Thumbtack','Drive-by','Repeat Client','Other'] })
       + UI.formField('Notes', 'textarea', 'r-notes', '', { placeholder: 'What do they need?' })
-      + '</form>';
+      + '</form>'
+      + '<script>document.getElementById("r-clientId").addEventListener("change",function(){'
+      + 'var newf=document.getElementById("r-newclient-fields");'
+      + 'newf.style.display=this.value?"none":"block";'
+      + 'if(this.value){'
+      + 'var clients=JSON.parse(localStorage.getItem("bm-clients")||"[]");'
+      + 'var c=clients.find(function(x){return x.id===document.getElementById("r-clientId").value;});'
+      + 'if(c&&!document.getElementById("r-property").value)document.getElementById("r-property").value=c.address||"";'
+      + '}});<\/script>';
 
     UI.showModal('New Request', html, {
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
@@ -125,24 +140,34 @@ var RequestsPage = {
 
   save: function(e) {
     e.preventDefault();
-    var name = document.getElementById('r-name').value.trim();
-    if (!name) { UI.toast('Name is required', 'error'); return; }
+    var existingClientId = document.getElementById('r-clientId').value;
+    var allClients = [];
+    try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
+    var client;
 
-    // Create client if new
-    var client = DB.clients.create({
-      name: name,
-      phone: document.getElementById('r-phone').value.trim(),
-      email: document.getElementById('r-email').value.trim(),
-      address: document.getElementById('r-property').value.trim(),
-      status: 'lead'
-    });
+    if (existingClientId) {
+      // Link to existing client
+      client = allClients.find(function(c) { return c.id === existingClientId; });
+      if (!client) { UI.toast('Client not found', 'error'); return; }
+    } else {
+      // Create new client
+      var name = document.getElementById('r-name').value.trim();
+      if (!name) { UI.toast('Enter a client name or select an existing client', 'error'); return; }
+      client = DB.clients.create({
+        name: name,
+        phone: document.getElementById('r-phone').value.trim(),
+        email: document.getElementById('r-email').value.trim(),
+        address: document.getElementById('r-property').value.trim(),
+        status: 'lead'
+      });
+    }
 
     DB.requests.create({
       clientId: client.id,
-      clientName: name,
-      property: document.getElementById('r-property').value.trim(),
-      phone: document.getElementById('r-phone').value.trim(),
-      email: document.getElementById('r-email').value.trim(),
+      clientName: client.name,
+      property: document.getElementById('r-property').value.trim() || client.address || '',
+      phone: client.phone || '',
+      email: client.email || '',
       source: document.getElementById('r-source').value,
       notes: document.getElementById('r-notes').value.trim(),
       status: 'new'
@@ -170,7 +195,7 @@ var RequestsPage = {
       + UI.statusBadge(r.status)
       + '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-      + '<button class="btn btn-primary" onclick="QuotesPage.showForm(null,\'' + (r.clientId || '') + '\')" style="font-size:12px;">+ Create Quote</button>'
+      + '<button class="btn btn-primary" onclick="RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId || '') + '\')" style="font-size:12px;">+ Create Quote</button>'
       + '</div></div>'
       // Title
       + '<h2 style="font-size:24px;font-weight:700;margin-bottom:4px;">' + UI.esc(r.clientName || 'New Request') + '</h2>'
@@ -235,5 +260,12 @@ var RequestsPage = {
     DB.requests.update(id, { status: status });
     UI.toast('Status updated to ' + status.replace(/_/g, ' '));
     RequestsPage.showDetail(id);
+  },
+
+  _createQuote: function(requestId, clientId) {
+    // Mark request as converted before opening quote form
+    DB.requests.update(requestId, { status: 'converted', convertedAt: new Date().toISOString() });
+    UI.toast('Request marked as converted');
+    QuotesPage.showForm(null, clientId);
   }
 };

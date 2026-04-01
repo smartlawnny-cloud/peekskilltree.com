@@ -213,7 +213,34 @@ var QuotesPage = {
     // Property Map button
     html += '<div style="margin-top:16px;"><button type="button" class="btn btn-outline" onclick="PropertyMap.show(document.getElementById(\'q-property\').value)">🗺️ Open Property Map — Place Equipment</button></div>';
 
-    html += UI.formField('Internal Notes', 'textarea', 'q-notes', q.notes, { placeholder: 'Notes (not shown to client)' })
+    html += UI.formField('Internal Notes', 'textarea', 'q-notes', q.notes, { placeholder: 'Notes (not shown to client)' });
+
+    // Deposit section
+    var depRequired = q.depositRequired || false;
+    var depType = q.depositType || 'percent';
+    var depAmount = q.depositAmount || 50;
+    html += '<div style="background:#f8faf8;border:2px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+      + '<div><h4 style="font-size:14px;font-weight:700;">Require Deposit</h4><div style="font-size:12px;color:var(--text-light);">Client pays deposit before job is scheduled</div></div>'
+      + '<label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-deposit-req" onchange="QuotesPage._toggleDeposit(this.checked)" style="width:18px;height:18px;"' + (depRequired ? ' checked' : '') + '><span style="font-size:13px;font-weight:600;">' + (depRequired ? 'On' : 'Off') + '</span></label>'
+      + '</div>'
+      + '<div id="q-deposit-fields" style="' + (depRequired ? '' : 'display:none;') + 'display:' + (depRequired ? 'grid' : 'none') + ';grid-template-columns:1fr 1fr;gap:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Deposit Type</label>'
+      + '<select id="q-deposit-type" onchange="QuotesPage._calcDeposit()" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<option value="percent"' + (depType === 'percent' ? ' selected' : '') + '>Percentage (%)</option>'
+      + '<option value="flat"' + (depType === 'flat' ? ' selected' : '') + '>Flat Amount ($)</option>'
+      + '</select></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Amount</label>'
+      + '<input type="number" id="q-deposit-amount" value="' + depAmount + '" min="1" oninput="QuotesPage._calcDeposit()" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>'
+      + '</div>'
+      + '<div id="q-deposit-preview" style="margin-top:10px;font-size:13px;color:var(--green-dark);font-weight:600;' + (depRequired ? '' : 'display:none;') + '"></div>'
+      + '</div>'
+
+      // Expiry
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Quote Valid Until</label>'
+      + '<input type="date" id="q-expires" value="' + (q.expiresAt ? q.expiresAt.substring(0,10) : new Date(Date.now() + 30*86400000).toISOString().substring(0,10)) + '" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '</div>'
       + '</form>';
 
     UI.showModal(quoteId ? 'Edit Quote #' + q.quoteNumber : 'New Quote', html, {
@@ -278,6 +305,29 @@ var QuotesPage = {
     if (newRow) { var sel = newRow.querySelector('.q-item-service'); if (sel) sel.focus(); }
   },
 
+  _toggleDeposit: function(checked) {
+    var fields = document.getElementById('q-deposit-fields');
+    var preview = document.getElementById('q-deposit-preview');
+    var label = document.querySelector('#q-deposit-req + span');
+    if (fields) fields.style.display = checked ? 'grid' : 'none';
+    if (preview) preview.style.display = checked ? 'block' : 'none';
+    if (label) label.textContent = checked ? 'On' : 'Off';
+    if (checked) QuotesPage._calcDeposit();
+  },
+
+  _calcDeposit: function() {
+    var totalEl = document.getElementById('q-total-display');
+    var depTypeEl = document.getElementById('q-deposit-type');
+    var depAmtEl = document.getElementById('q-deposit-amount');
+    var preview = document.getElementById('q-deposit-preview');
+    if (!preview) return;
+    var total = parseFloat((totalEl ? totalEl.textContent : '0').replace(/[^0-9.]/g,'')) || 0;
+    var type = depTypeEl ? depTypeEl.value : 'percent';
+    var amount = depAmtEl ? parseFloat(depAmtEl.value) || 0 : 0;
+    var due = type === 'percent' ? (total * amount / 100) : amount;
+    preview.textContent = 'Deposit due: ' + (type === 'percent' ? amount + '% = ' : '') + '$' + due.toFixed(2) + (total > 0 ? ' of $' + total.toFixed(2) + ' total' : '');
+  },
+
   calcTotal: function() {
     var total = 0;
     document.querySelectorAll('.quote-item-row').forEach(function(row) {
@@ -320,30 +370,56 @@ var QuotesPage = {
       }
     });
 
+    var depReq = document.getElementById('q-deposit-req');
+    var depTypeEl = document.getElementById('q-deposit-type');
+    var depAmtEl = document.getElementById('q-deposit-amount');
+    var depositRequired = depReq && depReq.checked;
+    var depositType = depTypeEl ? depTypeEl.value : 'percent';
+    var depositAmount = depAmtEl ? parseFloat(depAmtEl.value) || 0 : 0;
+    var depositDue = depositRequired ? (depositType === 'percent' ? Math.round(total * depositAmount / 100 * 100) / 100 : depositAmount) : 0;
+    var expiresEl = document.getElementById('q-expires');
+    var expiresAt = expiresEl ? expiresEl.value : new Date(Date.now() + 30*86400000).toISOString().split('T')[0];
+
     var data = {
       clientId: clientId,
       clientName: client ? client.name : '',
-      property: document.getElementById('q-property').value.trim(),
+      clientEmail: (client && client.email) || '',
+      clientPhone: (client && client.phone) || '',
+      property: document.getElementById('q-property').value.trim() || (client && client.address) || '',
       description: document.getElementById('q-description').value.trim(),
       lineItems: items,
       total: total,
       notes: document.getElementById('q-notes').value.trim(),
-      status: form.dataset.saveStatus || 'draft'
+      status: form.dataset.saveStatus || 'draft',
+      depositRequired: depositRequired,
+      depositType: depositType,
+      depositAmount: depositAmount,
+      depositDue: depositDue,
+      expiresAt: expiresAt
     };
 
+    var savedId;
     if (quoteId) {
       DB.quotes.update(quoteId, data);
       UI.toast('Quote updated');
+      savedId = quoteId;
     } else {
-      DB.quotes.create(data);
+      var newQ = DB.quotes.create(data);
       UI.toast('Quote created');
+      savedId = newQ.id;
     }
 
     // Update client to active
     if (client && client.status === 'lead') DB.clients.update(clientId, { status: 'active' });
 
     UI.closeModal();
-    loadPage('quotes');
+
+    // "Save & Send" → immediately show the email composer
+    if (data.status === 'sent' && savedId) {
+      QuotesPage._sendQuote(savedId);
+    } else {
+      loadPage('quotes');
+    }
   },
 
   showDetail: function(id) {
@@ -365,8 +441,9 @@ var QuotesPage = {
       + '<span style="font-size:20px;">💰</span>'
       + '<span>' + UI.statusBadge(q.status) + '</span>'
       + '</div>'
-      + '<div style="display:flex;gap:6px;">'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       + '<button class="btn btn-outline" onclick="QuotesPage.showForm(\'' + id + '\')">··· More</button>'
+      + '<button class="btn btn-outline" onclick="QuotesPage._copyApprovalLink(\'' + id + '\')" style="font-size:12px;">🔗 Copy Link</button>'
       + '<button class="btn btn-primary" onclick="QuotesPage._sendQuote(\'' + id + '\')">📧 Send Quote</button>'
       + '</div></div>'
 
@@ -400,6 +477,14 @@ var QuotesPage = {
       + (q.sentAt ? '<tr><td style="padding:8px 0;color:var(--text-light);">Sent</td><td style="padding:8px 0;">' + UI.dateShort(q.sentAt) + '</td></tr>' : '')
       + '<tr><td style="padding:8px 0;color:var(--text-light);">Total</td><td style="padding:8px 0;font-weight:700;font-size:16px;">' + UI.money(q.total) + '</td></tr>'
       + (q.source ? '<tr><td style="padding:8px 0;color:var(--text-light);">Lead Source</td><td style="padding:8px 0;">' + UI.esc(q.source) + '</td></tr>' : '')
+      + (q.expiresAt ? (function() {
+          var exp = new Date(q.expiresAt); var now = new Date();
+          var days = Math.ceil((exp - now) / 86400000);
+          var color = days < 0 ? '#dc3545' : days <= 5 ? '#e6a817' : 'var(--accent)';
+          var label = days < 0 ? 'Expired ' + Math.abs(days) + 'd ago' : days === 0 ? 'Expires today' : 'Expires in ' + days + 'd';
+          return '<tr><td style="padding:8px 0;color:var(--text-light);">Valid Until</td><td style="padding:8px 0;"><span style="color:' + color + ';font-weight:600;font-size:12px;">' + label + '</span> <span style="color:var(--text-light);font-size:12px;">(' + UI.dateShort(q.expiresAt) + ')</span></td></tr>';
+        })() : '')
+      + (q.depositRequired ? '<tr><td style="padding:8px 0;color:var(--text-light);">Deposit</td><td style="padding:8px 0;"><span style="background:' + (q.depositPaid ? '#e8f5e9' : '#fff3e0') + ';color:' + (q.depositPaid ? '#2e7d32' : '#e07c24') + ';padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">' + (q.depositPaid ? '✓ Paid' : 'Due: ' + UI.money(q.depositDue)) + '</span></td></tr>' : '')
       + '</table></div>'
       + '</div>'
 
@@ -470,6 +555,20 @@ var QuotesPage = {
     return;
   },
 
+  _getApprovalLink: function(id) {
+    return 'https://peekskilltree.com/branchmanager/approve.html?id=' + id;
+  },
+
+  _copyApprovalLink: function(id) {
+    var link = QuotesPage._getApprovalLink(id);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(link).then(function() { UI.toast('Approval link copied!'); });
+    } else {
+      var el = document.getElementById('approval-link-input');
+      if (el) { el.select(); document.execCommand('copy'); UI.toast('Approval link copied!'); }
+    }
+  },
+
   _sendQuote: function(id) {
     var q = DB.quotes.getById(id);
     if (!q) return;
@@ -478,6 +577,7 @@ var QuotesPage = {
     var client = q.clientId ? DB.clients.getById(q.clientId) : null;
     var email = (client && client.email) || q.clientEmail || '';
     var firstName = (q.clientName || '').split(' ')[0] || 'there';
+    var approvalLink = QuotesPage._getApprovalLink(id);
 
     // Build email preview (Jobber style)
     var subject = 'Quote #' + q.quoteNumber + ' from Second Nature Tree Service — ' + UI.money(q.total);
@@ -487,11 +587,21 @@ var QuotesPage = {
       + '📍 ' + (q.property || 'Property on file') + '\n'
       + '💰 Total: ' + UI.money(q.total) + '\n\n';
     if (q.description) body += 'Scope: ' + q.description + '\n\n';
-    body += 'To approve this quote, simply reply to this email or call us at (914) 391-5233.\n\n'
-      + 'This quote is valid for 30 days.\n\n'
+    body += '👉 View & approve your quote online:\n' + approvalLink + '\n\n'
+      + 'This quote is valid for 30 days. Click the link above to approve or request changes — no login required.\n\n'
+      + 'Questions? Reply to this email or call (914) 391-5233.\n\n'
       + 'Thanks,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com\nLicensed & Fully Insured — WC-32079 / PC-50644';
 
     var html = '<div style="padding:16px;">'
+      // Approval link prominent display
+      + '<div style="background:#e8f5e9;border-radius:8px;padding:12px 14px;margin-bottom:16px;border-left:3px solid var(--green-dark);">'
+      + '<div style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">🔗 Client Approval Link</div>'
+      + '<div style="display:flex;gap:6px;align-items:center;">'
+      + '<input id="approval-link-input" type="text" readonly value="' + approvalLink + '" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;color:#333;cursor:text;">'
+      + '<button onclick="QuotesPage._copyApprovalLink(\'' + id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Copy</button>'
+      + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:6px;">Client clicks this to view & approve — no login required</div>'
+      + '</div>'
       + '<div style="margin-bottom:16px;">'
       + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">To</label>'
       + '<input type="email" id="send-to" value="' + email + '" placeholder="client@email.com" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
@@ -502,9 +612,9 @@ var QuotesPage = {
       + '</div>'
       + '<div style="margin-bottom:16px;">'
       + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Message</label>'
-      + '<textarea id="send-body" rows="12" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;font-family:inherit;resize:vertical;">' + body + '</textarea>'
+      + '<textarea id="send-body" rows="10" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;font-family:inherit;resize:vertical;">' + body + '</textarea>'
       + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">📎 Quote PDF will be attached automatically</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">📎 Quote PDF will be attached automatically when SendGrid is configured</div>'
       + '</div>';
 
     UI.showModal('Send Quote #' + q.quoteNumber, html, {
@@ -514,21 +624,28 @@ var QuotesPage = {
     });
   },
 
-  _confirmSend: function(id) {
+  _confirmSend: async function(id) {
     var to = document.getElementById('send-to').value.trim();
     if (!to) { UI.toast('Enter an email address', 'error'); return; }
 
     var subject = document.getElementById('send-subject').value;
     var body = document.getElementById('send-body').value;
 
-    // Try mailto as fallback (SendGrid will replace this when wired)
-    var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-    window.open(mailto, '_blank');
+    // Disable button to prevent double-send
+    var sendBtn = document.querySelector('.modal-footer .btn-primary');
+    if (sendBtn) { sendBtn.textContent = 'Sending...'; sendBtn.disabled = true; }
+
+    UI.closeModal();
+
+    // Use Email.send() — handles SendGrid if configured, falls back to mailto
+    if (typeof Email !== 'undefined') {
+      await Email.send(to, subject, body);
+    } else {
+      window.open('mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+    }
 
     // Mark as sent
     DB.quotes.update(id, { status: 'sent', sentAt: new Date().toISOString(), sentTo: to });
-    UI.closeModal();
-    UI.toast('Quote marked as sent to ' + to);
     QuotesPage.showDetail(id);
   },
 

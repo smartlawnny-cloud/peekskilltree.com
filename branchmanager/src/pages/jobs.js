@@ -344,8 +344,11 @@ var JobsPage = {
     UI.toast(ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' exported');
   },
 
-  showForm: function(jobId) {
+  showForm: function(jobId, opts) {
     var j = jobId ? DB.jobs.getById(jobId) : {};
+    // Backwards-compat: opts used to be passed as a clientId string
+    if (typeof opts === 'string') opts = { clientId: opts };
+    opts = opts || {};
     // Get clients synchronously from localStorage
     var allClients = [];
     try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
@@ -368,13 +371,13 @@ var JobsPage = {
     }
 
     var html = '<form id="job-form" onsubmit="JobsPage.save(event, \'' + (jobId || '') + '\')">'
-      + UI.formField('Client *', 'select', 'j-clientId', j.clientId, { options: [{ value: '', label: 'Select a client...' }].concat(clientOptions) })
+      + UI.formField('Client *', 'select', 'j-clientId', j.clientId || opts.clientId || '', { options: [{ value: '', label: 'Select a client...' }].concat(clientOptions) })
       + UI.formField('Property Address', 'text', 'j-property', j.property, { placeholder: 'Job site address' })
       + UI.formField('Description', 'text', 'j-description', j.description, { placeholder: 'e.g., Remove 2 dead oaks' })
 
       // Date + Time (Jobber style)
       + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'
-      + UI.formField('Date *', 'date', 'j-date', j.scheduledDate ? j.scheduledDate.split('T')[0] : '')
+      + UI.formField('Date *', 'date', 'j-date', (j.scheduledDate ? j.scheduledDate.split('T')[0] : '') || opts.date || '')
       + UI.formField('Start Time', 'select', 'j-starttime', j.startTime || '08:00', { options: [{ value: '', label: 'Anytime' }].concat(timeSlots) })
       + UI.formField('End Time', 'select', 'j-endtime', j.endTime || '', { options: [{ value: '', label: 'Open' }].concat(timeSlots) })
       + '</div>'
@@ -554,7 +557,7 @@ var JobsPage = {
     html += '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
     ['scheduled', 'in_progress', 'completed', 'cancelled'].forEach(function(s) {
-      html += '<button class="btn ' + (j.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage.setStatus(\'' + id + '\',\'' + s + '\');JobsPage.showDetail(\'' + id + '\');" style="font-size:11px;padding:5px 12px;">' + s.replace(/_/g, ' ') + '</button>';
+      html += '<button class="btn ' + (j.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage.' + (s === 'completed' ? '_markComplete' : 'setStatus') + '(\'' + id + '\'' + (s !== 'completed' ? ',\'' + s + '\'' : '') + ');" style="font-size:11px;padding:5px 12px;">' + s.replace(/_/g, ' ') + '</button>';
     });
     html += '</div></div>'
 
@@ -697,6 +700,29 @@ var JobsPage = {
     });
   },
 
+  _markComplete: function(id) {
+    var j = DB.jobs.getById(id);
+    if (!j) return;
+    DB.jobs.update(id, { status: 'completed', completedAt: new Date().toISOString() });
+    UI.closeModal();
+
+    // Prompt to create invoice
+    if (!j.invoiceId) {
+      var modal = '<div style="text-align:center;padding:8px 0;">'
+        + '<div style="font-size:48px;margin-bottom:12px;">💰</div>'
+        + '<h3 style="font-size:18px;margin-bottom:8px;">Job Complete!</h3>'
+        + '<p style="color:var(--text-light);font-size:14px;margin-bottom:20px;">Ready to invoice ' + UI.esc(j.clientName || 'the client') + ' for ' + UI.money(j.total) + '?</p>'
+        + '<div style="display:flex;gap:8px;justify-content:center;">'
+        + '<button class="btn btn-outline" onclick="UI.closeModal();loadPage(\'jobs\');">Not Yet</button>'
+        + '<button class="btn btn-primary" onclick="UI.closeModal();JobsPage.createInvoice(\'' + id + '\');loadPage(\'invoices\');">Create Invoice Now</button>'
+        + '</div></div>';
+      UI.showModal('Job Completed', modal);
+    } else {
+      UI.toast('Job marked complete');
+      loadPage('jobs');
+    }
+  },
+
   setStatus: function(id, status) {
     DB.jobs.update(id, { status: status });
     UI.toast('Job status: ' + status.replace(/_/g, ' '));
@@ -710,14 +736,19 @@ var JobsPage = {
     var inv = DB.invoices.create({
       clientId: j.clientId,
       clientName: j.clientName,
+      clientEmail: j.clientEmail || '',
+      clientPhone: j.clientPhone || '',
       jobId: jobId,
       subject: j.description || 'For Services Rendered',
       lineItems: j.lineItems,
       total: j.total,
       balance: j.total,
+      amountPaid: 0,
       status: 'draft',
       dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
     });
+    // Link invoice back to job so dashboard "needs invoicing" alert clears
+    DB.jobs.update(jobId, { invoiceId: inv.id, status: 'completed' });
     UI.toast('Invoice #' + inv.invoiceNumber + ' created');
     UI.closeModal();
     loadPage('invoices');

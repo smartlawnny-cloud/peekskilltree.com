@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Branch Manager">
 <link rel="manifest" href="manifest.json">
-<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js?v=1775046563"></script>
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
@@ -28,11 +28,11 @@
     --red: #dc3545;
     --orange: #fd7e14;
     --blue: #0d6efd;
-    --sidebar-w: 220px;
-    --sidebar-bg: #1b2a2a;
-    --sidebar-border: rgba(255,255,255,.08);
-    --sidebar-hover: rgba(255,255,255,.08);
-    --sidebar-active: rgba(0,168,138,.25);
+    --sidebar-w: 200px;
+    --sidebar-bg: #1a1a2e;
+    --sidebar-border: rgba(255,255,255,.06);
+    --sidebar-hover: rgba(255,255,255,.06);
+    --sidebar-active: rgba(255,255,255,.1);
     --accent: #00836c;
     --accent-hover: #006d59;
   }
@@ -43,10 +43,10 @@
     --text: #e2e8f0;
     --text-light: #8492a6;
     --border: #2d3748;
-    --sidebar-bg: #111a1a;
-    --sidebar-border: rgba(255,255,255,.06);
-    --sidebar-hover: rgba(255,255,255,.06);
-    --sidebar-active: rgba(0,168,138,.2);
+    --sidebar-bg: #111122;
+    --sidebar-border: rgba(255,255,255,.05);
+    --sidebar-hover: rgba(255,255,255,.05);
+    --sidebar-active: rgba(255,255,255,.08);
   }
   [data-theme="dark"] .data-table th { background:#1a1d24; }
   [data-theme="dark"] .stat-card { background:var(--white); }
@@ -86,39 +86,39 @@
   .sidebar.collapsed .create-btn { font-size:0; padding:10px; }
   .sidebar.collapsed .create-btn::before { content:'+'; font-size:18px; font-weight:700; }
   .sidebar-header {
-    padding:16px 14px 14px; border-bottom:1px solid var(--sidebar-border);
-    display:flex; align-items:center; gap:12px; cursor:pointer;
+    padding:14px 16px 12px; border-bottom:1px solid var(--sidebar-border);
+    display:flex; align-items:center; gap:10px; cursor:pointer;
   }
   .sidebar-logo {
-    width:36px; height:36px; flex-shrink:0; border-radius:10px; overflow:hidden;
+    width:32px; height:32px; flex-shrink:0; border-radius:8px; overflow:hidden;
     background:linear-gradient(135deg, #00a88a 0%, #007a63 100%);
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 2px 8px rgba(0,168,138,.3);
   }
-  .sidebar-logo svg { width:24px; height:24px; }
+  .sidebar-logo svg { width:20px; height:20px; }
   .sidebar-header h1 {
-    font-size:15px; font-weight:700; color:#fff; line-height:1.2; letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    font-size:14px; font-weight:700; color:#fff; line-height:1.15; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .sidebar-header h1 span { display:block; font-size:10px; font-weight:500; color:rgba(255,255,255,.45); margin-top:2px; letter-spacing:.02em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sidebar-header h1 span { display:block; font-size:10px; font-weight:400; color:rgba(255,255,255,.35); margin-top:1px; letter-spacing:.01em; text-transform:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sidebar-user {
     padding:10px 16px; font-size:12px; color:rgba(255,255,255,.5); border-bottom:1px solid var(--sidebar-border);
   }
 
   .sidebar-nav { flex:1; padding:6px 8px; overflow-y:auto; }
-  .nav-section { padding:16px 8px 6px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,.35); font-weight:600; }
+  .nav-section { padding:14px 10px 5px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,.3); font-weight:600; }
   .nav-item {
-    display:flex; align-items:center; gap:10px; padding:8px 12px;
-    font-size:13px; color:rgba(255,255,255,.7); cursor:pointer;
-    transition: all 0.12s; text-decoration:none; border:none; background:none; width:100%;
-    border-radius:6px; margin-bottom:1px;
+    display:flex; align-items:center; gap:10px; padding:7px 10px;
+    font-size:13.5px; font-weight:400; color:rgba(255,255,255,.6); cursor:pointer;
+    transition: all 0.1s; text-decoration:none; border:none; background:none; width:100%;
+    border-radius:6px; margin-bottom:0; position:relative;
   }
-  .nav-item:hover { background:var(--sidebar-hover); color:#fff; }
-  .nav-item.active { background:var(--sidebar-active); color:#fff; font-weight:600; }
-  .nav-item .icon { width:20px; text-align:center; font-size:14px; display:flex; align-items:center; justify-content:center; }
-  .nav-item .li { width:18px; height:18px; stroke:rgba(255,255,255,.55); stroke-width:1.75; }
-  .nav-item:hover .li { stroke:#fff; }
+  .nav-item:hover { background:var(--sidebar-hover); color:rgba(255,255,255,.85); }
+  .nav-item.active { background:transparent; color:#fff; font-weight:500; }
+  .nav-item.active::before { content:''; position:absolute; left:-6px; top:4px; bottom:4px; width:3px; background:#00a88a; border-radius:0 3px 3px 0; }
+  .nav-item .icon { width:22px; text-align:center; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .nav-item .li { width:20px; height:20px; stroke:rgba(255,255,255,.45); stroke-width:1.75; }
+  .nav-item:hover .li { stroke:rgba(255,255,255,.85); }
   .nav-item.active .li { stroke:#fff; }
-  .nav-item .badge { margin-left:auto; background:#dc3545; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; min-width:18px; text-align:center; }
+  .nav-item .badge { margin-left:auto; background:#dc3545; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center; }
 
   .sidebar-footer {
     padding:10px 16px; border-top:1px solid var(--sidebar-border);
@@ -435,12 +435,8 @@
       </div>
       <h1>Branch Manager <span>Second Nature Tree Service</span></h1>
     </div>
-    <div style="padding:12px 14px 6px;">
-      <button class="btn create-btn" style="width:100%;justify-content:center;padding:11px;font-size:13px;font-weight:600;border-radius:8px;background:linear-gradient(135deg,#00a88a 0%,#00836c 100%);color:#fff;border:none;box-shadow:0 2px 6px rgba(0,168,138,.25);transition:all .15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(0,168,138,.35)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 2px 6px rgba(0,168,138,.25)'" onclick="QuickCreate.show()">+ Create New</button>
-    </div>
-
     <div class="sidebar-nav">
-      <!-- Core navigation (Jobber order) -->
+      <!-- Core navigation -->
       <button class="nav-item active" data-page="dashboard"><span class="icon"><i data-lucide="layout-dashboard" class="li"></i></span> Home</button>
       <button class="nav-item" data-page="schedule"><span class="icon"><i data-lucide="calendar" class="li"></i></span> Schedule</button>
       <button class="nav-item" data-page="clients"><span class="icon"><i data-lucide="users" class="li"></i></span> Clients <span class="badge" id="badge-clients"></span></button>
@@ -449,45 +445,45 @@
       <button class="nav-item" data-page="jobs"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Jobs</button>
       <button class="nav-item" data-page="invoices"><span class="icon"><i data-lucide="receipt" class="li"></i></span> Invoices</button>
 
-      <div style="border-top:1px solid rgba(255,255,255,.08);margin:8px 12px;"></div>
+      <div style="border-top:1px solid rgba(255,255,255,.06);margin:6px 10px;"></div>
 
       <button class="nav-item" data-page="pipeline"><span class="icon"><i data-lucide="kanban" class="li"></i></span> Pipeline</button>
+      <button class="nav-item" data-page="dispatch"><span class="icon"><i data-lucide="truck" class="li"></i></span> Dispatch</button>
       <button class="nav-item" data-page="timesheet"><span class="icon"><i data-lucide="clock" class="li"></i></span> Timesheets</button>
       <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
       <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Reporting</button>
 
-      <div style="border-top:1px solid rgba(255,255,255,.08);margin:8px 12px;"></div>
+      <div style="border-top:1px solid rgba(255,255,255,.06);margin:6px 10px;"></div>
 
       <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team</button>
-      <button class="nav-item" data-page="automations"><span class="icon"><i data-lucide="puzzle" class="li"></i></span> Apps</button>
+      <button class="nav-item" data-page="automations"><span class="icon"><i data-lucide="zap" class="li"></i></span> Apps</button>
       <button class="nav-item" data-page="settings"><span class="icon"><i data-lucide="settings" class="li"></i></span> Settings</button>
 
-      <!-- Extra tools (expandable) -->
+      <!-- More tools -->
       <div class="nav-section" style="cursor:pointer;" onclick="var el=document.getElementById('more-nav');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.more-arrow').textContent=el.style.display==='none'?'▸':'▾';">More <span class="more-arrow" style="float:right;">▸</span></div>
       <div id="more-nav" style="display:none;">
         <button class="nav-item" data-page="calculators"><span class="icon"><i data-lucide="calculator" class="li"></i></span> Calculators</button>
-        <button class="nav-item" data-page="treemeasure"><span class="icon"><i data-lucide="ruler" class="li"></i></span> Tree Measure</button>
+        <button class="nav-item" data-page="treemeasure"><span class="icon"><i data-lucide="ruler" class="li"></i></span> Measure</button>
         <button class="nav-item" data-page="crewview"><span class="icon"><i data-lucide="shield" class="li"></i></span> Crew View</button>
         <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="wallet" class="li"></i></span> My Pay</button>
-        <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget Planner</button>
-        <button class="nav-item" data-page="dispatch"><span class="icon"><i data-lucide="truck" class="li"></i></span> Dispatch</button>
-        <button class="nav-item" data-page="clientmap"><span class="icon"><i data-lucide="map-pin" class="li"></i></span> Client Map</button>
-        <button class="nav-item" data-page="photomap"><span class="icon"><i data-lucide="camera" class="li"></i></span> Photo Map</button>
+        <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget</button>
+        <button class="nav-item" data-page="clientmap"><span class="icon"><i data-lucide="map-pin" class="li"></i></span> Map</button>
+        <button class="nav-item" data-page="photomap"><span class="icon"><i data-lucide="camera" class="li"></i></span> Photos</button>
         <button class="nav-item" data-page="messaging"><span class="icon"><i data-lucide="message-square" class="li"></i></span> Messages</button>
         <button class="nav-item" data-page="equipment"><span class="icon"><i data-lucide="cog" class="li"></i></span> Equipment</button>
-        <button class="nav-item" data-page="crewperformance"><span class="icon"><i data-lucide="trophy" class="li"></i></span> Crew Stats</button>
+        <button class="nav-item" data-page="crewperformance"><span class="icon"><i data-lucide="trophy" class="li"></i></span> Performance</button>
         <button class="nav-item" data-page="materials"><span class="icon"><i data-lucide="package" class="li"></i></span> Materials</button>
         <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
-        <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Job Costing</button>
-        <button class="nav-item" data-page="recurring"><span class="icon"><i data-lucide="repeat" class="li"></i></span> Recurring Jobs</button>
-        <button class="nav-item" data-page="notifications"><span class="icon"><i data-lucide="bell" class="li"></i></span> Activity Feed</button>
-        <button class="nav-item" data-page="profitloss"><span class="icon"><i data-lucide="line-chart" class="li"></i></span> Profit & Loss</button>
-        <button class="nav-item" data-page="weeklysummary"><span class="icon"><i data-lucide="clipboard-list" class="li"></i></span> Weekly Summary</button>
+        <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Costing</button>
+        <button class="nav-item" data-page="recurring"><span class="icon"><i data-lucide="repeat" class="li"></i></span> Recurring</button>
+        <button class="nav-item" data-page="notifications"><span class="icon"><i data-lucide="bell" class="li"></i></span> Activity</button>
+        <button class="nav-item" data-page="profitloss"><span class="icon"><i data-lucide="line-chart" class="li"></i></span> Profit/Loss</button>
+        <button class="nav-item" data-page="weeklysummary"><span class="icon"><i data-lucide="clipboard-list" class="li"></i></span> Summary</button>
         <button class="nav-item" data-page="reviews"><span class="icon"><i data-lucide="star" class="li"></i></span> Reviews</button>
         <button class="nav-item" data-page="reviewtools"><span class="icon"><i data-lucide="award" class="li"></i></span> Review Tools</button>
         <button class="nav-item" data-page="reports"><span class="icon"><i data-lucide="download" class="li"></i></span> Reports</button>
-        <button class="nav-item" data-page="onlinebooking"><span class="icon"><i data-lucide="globe" class="li"></i></span> Online Booking</button>
-        <button class="nav-item" data-page="import"><span class="icon"><i data-lucide="upload" class="li"></i></span> Import Data</button>
+        <button class="nav-item" data-page="onlinebooking"><span class="icon"><i data-lucide="globe" class="li"></i></span> Booking</button>
+        <button class="nav-item" data-page="import"><span class="icon"><i data-lucide="upload" class="li"></i></span> Import</button>
         <button class="nav-item" data-page="backup"><span class="icon"><i data-lucide="database" class="li"></i></span> Backup</button>
       </div>
     </div>
@@ -541,53 +537,53 @@
 </div>
 
 <!-- Module scripts -->
-<script src="src/auth.js?v=1775046563"></script>
-<script src="src/db.js?v=1775046563"></script>
-<script src="src/ui.js?v=1775046563"></script>
-<script src="src/pages/dashboard.js?v=1775046563"></script>
-<script src="src/pages/clients.js?v=1775046563"></script>
-<script src="src/pages/requests.js?v=1775046563"></script>
-<script src="src/pages/quotes.js?v=1775046563"></script>
-<script src="src/pages/jobs.js?v=1775046563"></script>
-<script src="src/pages/invoices.js?v=1775046563"></script>
-<script src="src/pages/schedule.js?v=1775046563"></script>
-<script src="src/pages/insights.js?v=1775046563"></script>
-<script src="src/geofence.js?v=1775046563"></script>
-<script src="src/weather.js?v=1775046563"></script>
-<script src="src/pages/comms.js?v=1775046563"></script>
-<script src="src/pages/messaging.js?v=1775046563"></script>
-<script src="src/pages/profitloss.js?v=1775046563"></script>
-<script src="src/photos.js?v=1775046563"></script>
-<script src="src/pages/clientmap.js?v=1775046563"></script>
-<script src="src/pages/photomap.js?v=1775046563"></script>
-<script src="src/pages/crewview.js?v=1775046563"></script>
-<script src="src/pages/employeecenter.js?v=1775046563"></script>
-<script src="src/pages/budget.js?v=1775046563"></script>
-<script src="src/pages/equipment.js?v=1775046563"></script>
-<script src="src/pages/jobcosting.js?v=1775046563"></script>
-<script src="src/pages/dispatch.js?v=1775046563"></script>
-<script src="src/pages/recurring.js?v=1775046563"></script>
-<script src="src/pages/notifications.js?v=1775046563"></script>
-<script src="src/pages/expenses.js?v=1775046563"></script>
-<script src="src/email.js?v=1775046563"></script>
-<script src="src/pages/reports.js?v=1775046563"></script>
-<script src="src/pages/reviewtools.js?v=1775046563"></script>
-<script src="src/pages/weeklysummary.js?v=1775046563"></script>
-<script src="src/pages/backup.js?v=1775046563"></script>
-<script src="src/pages/onlinebooking.js?v=1775046563"></script>
-<script src="src/pages/import.js?v=1775046563"></script>
-<script src="src/pages/settings.js?v=1775046563"></script>
-<script src="src/pages/propertymap.js?v=1775046563"></script>
-<script src="src/pages/estimator.js?v=1775046563"></script>
-<script src="src/pages/treemeasure.js?v=1775046563"></script>
-<script src="src/stripe.js?v=1775046563"></script>
-<script src="src/pages/search.js?v=1775046563"></script>
-<script src="src/pages/clienthub.js?v=1775046563"></script>
-<script src="src/pages/team.js?v=1775046563"></script>
-<script src="src/pages/automations.js?v=1775046563"></script>
-<script src="src/pages/pipeline.js?v=1775046563"></script>
-<script src="src/sendjim.js?v=1775046563"></script>
-<script src="src/supabase.js?v=1775046563"></script>
+<script src="src/auth.js"></script>
+<script src="src/db.js"></script>
+<script src="src/ui.js"></script>
+<script src="src/pages/dashboard.js"></script>
+<script src="src/pages/clients.js"></script>
+<script src="src/pages/requests.js"></script>
+<script src="src/pages/quotes.js"></script>
+<script src="src/pages/jobs.js"></script>
+<script src="src/pages/invoices.js"></script>
+<script src="src/pages/schedule.js"></script>
+<script src="src/pages/insights.js"></script>
+<script src="src/geofence.js"></script>
+<script src="src/weather.js"></script>
+<script src="src/pages/comms.js"></script>
+<script src="src/pages/messaging.js"></script>
+<script src="src/pages/profitloss.js"></script>
+<script src="src/photos.js"></script>
+<script src="src/pages/clientmap.js"></script>
+<script src="src/pages/photomap.js"></script>
+<script src="src/pages/crewview.js"></script>
+<script src="src/pages/employeecenter.js"></script>
+<script src="src/pages/budget.js"></script>
+<script src="src/pages/equipment.js"></script>
+<script src="src/pages/jobcosting.js"></script>
+<script src="src/pages/dispatch.js"></script>
+<script src="src/pages/recurring.js"></script>
+<script src="src/pages/notifications.js"></script>
+<script src="src/pages/expenses.js"></script>
+<script src="src/email.js"></script>
+<script src="src/pages/reports.js"></script>
+<script src="src/pages/reviewtools.js"></script>
+<script src="src/pages/weeklysummary.js"></script>
+<script src="src/pages/backup.js"></script>
+<script src="src/pages/onlinebooking.js"></script>
+<script src="src/pages/import.js"></script>
+<script src="src/pages/settings.js"></script>
+<script src="src/pages/propertymap.js"></script>
+<script src="src/pages/estimator.js"></script>
+<script src="src/pages/treemeasure.js"></script>
+<script src="src/stripe.js"></script>
+<script src="src/pages/search.js"></script>
+<script src="src/pages/clienthub.js"></script>
+<script src="src/pages/team.js"></script>
+<script src="src/pages/automations.js"></script>
+<script src="src/pages/pipeline.js"></script>
+<script src="src/sendjim.js"></script>
+<script src="src/supabase.js"></script>
 <script>
 // Auto-configure Supabase connection
 if (!localStorage.getItem('bm-supabase-url')) {
@@ -595,24 +591,24 @@ if (!localStorage.getItem('bm-supabase-url')) {
   localStorage.setItem('bm-supabase-key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI');
 }
 </script>
-<script src="src/pdf.js?v=1775046563"></script>
+<script src="src/pdf.js"></script>
 <!-- photos.js moved earlier, before photomap.js -->
-<script src="src/templates.js?v=1775046563"></script>
-<script src="src/supacloud.js?v=1775046563"></script>
-<script src="src/pages/payments.js?v=1775046563"></script>
-<script src="src/pages/workflow.js?v=1775046563"></script>
-<script src="src/pages/reviews.js?v=1775046563"></script>
-<script src="src/pages/timetrack.js?v=1775046563"></script>
-<script src="src/pages/checklists.js?v=1775046563"></script>
-<script src="src/pages/visits.js?v=1775046563"></script>
-<script src="src/pages/customfields.js?v=1775046563"></script>
-<script src="src/pages/commandpalette.js?v=1775046563"></script>
-<script src="src/pages/ai.js?v=1775046563"></script>
-<script src="src/pages/satisfaction.js?v=1775046563"></script>
-<script src="src/pages/emailtemplates.js?v=1775046563"></script>
-<script src="src/pages/crewperformance.js?v=1775046563"></script>
-<script src="src/pages/materials.js?v=1775046563"></script>
-<script src="src/pages/beforeafter.js?v=1775046563"></script>
+<script src="src/templates.js"></script>
+<script src="src/supacloud.js"></script>
+<script src="src/pages/payments.js"></script>
+<script src="src/pages/workflow.js"></script>
+<script src="src/pages/reviews.js"></script>
+<script src="src/pages/timetrack.js"></script>
+<script src="src/pages/checklists.js"></script>
+<script src="src/pages/visits.js"></script>
+<script src="src/pages/customfields.js"></script>
+<script src="src/pages/commandpalette.js"></script>
+<script src="src/pages/ai.js"></script>
+<script src="src/pages/satisfaction.js"></script>
+<script src="src/pages/emailtemplates.js"></script>
+<script src="src/pages/crewperformance.js"></script>
+<script src="src/pages/materials.js"></script>
+<script src="src/pages/beforeafter.js"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';

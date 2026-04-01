@@ -1,6 +1,6 @@
 // Branch Manager — Service Worker v9
 // Full offline support + push notifications
-var CACHE_NAME = 'branch-manager-v10';
+var CACHE_NAME = 'branch-manager-v11';
 var ASSETS = [
   './',
   './index.html',
@@ -67,7 +67,9 @@ var ASSETS = [
   './icons/apple-touch-icon.png',
   // Client-facing pages
   './approve.html',
-  './pay.html'
+  './pay.html',
+  './client.html',
+  './book.html'
 ];
 
 // Install — cache all assets

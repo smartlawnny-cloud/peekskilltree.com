@@ -201,18 +201,46 @@ var QuotesPage = {
     });
   },
 
+  // Default rates for common services (editable in settings)
+  _defaultRates: {
+    'Tree Removal': 0, 'Tree Pruning': 0, 'Stump Removal': 150, 'Bucket Truck': 600,
+    'Cabling': 300, 'Land Clearing': 0, 'Snow Removal': 0, 'Chipping Brush': 350,
+    'Haul Debris': 250, 'Labor': 400, 'Gutter Clean Out': 150, 'Arborist Letter': 350,
+    'Firewood Cord': 400, 'Firewood Bundle': 10, 'Free Woodchips': 0, 'Free Estimate': 0
+  },
+
   _itemRow: function(index, item, services) {
     var svcOptions = services.map(function(s) {
-      return '<option value="' + s.name + '"' + (item.service === s.name ? ' selected' : '') + '>' + s.name + '</option>';
+      return '<option value="' + s.name + '"' + (item.service === s.name ? ' selected' : '') + '>' + s.name + (s.type === 'product' ? ' (product)' : '') + '</option>';
     }).join('');
 
-    return '<div class="quote-item-row" style="display:grid;grid-template-columns:2fr 2fr 60px 90px 40px;gap:8px;align-items:end;margin-bottom:8px;">'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;">Service</label><select class="q-item-service" onchange="QuotesPage.calcTotal()"><option value="">Custom...</option>' + svcOptions + '</select></div>'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;">Description</label><input class="q-item-desc" value="' + (item.description || '') + '" placeholder="Details"></div>'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;">Qty</label><input type="number" class="q-item-qty" value="' + (item.qty || 1) + '" min="1" oninput="QuotesPage.calcTotal()"></div>'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;">Rate ($)</label><input type="number" class="q-item-rate" value="' + (item.rate || '') + '" step="0.01" placeholder="0.00" oninput="QuotesPage.calcTotal()"></div>'
-      + '<button type="button" style="background:none;border:none;font-size:18px;color:var(--red);cursor:pointer;padding-bottom:8px;" onclick="this.parentElement.remove();QuotesPage.calcTotal();">&times;</button>'
+    var lineTotal = ((item.qty || 1) * (item.rate || 0));
+
+    return '<div class="quote-item-row" style="display:grid;grid-template-columns:2fr 2fr 60px 90px 80px 36px;gap:8px;align-items:end;margin-bottom:8px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label><select class="q-item-service" onchange="QuotesPage._onServiceChange(this)" style="font-size:13px;"><option value="">— Select or type custom —</option>' + svcOptions + '</select></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Description</label><input class="q-item-desc" value="' + UI.esc(item.description || '') + '" placeholder="Work details..." style="font-size:13px;"></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Qty</label><input type="number" class="q-item-qty" value="' + (item.qty || 1) + '" min="1" oninput="QuotesPage.calcTotal()" style="font-size:13px;text-align:center;"></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Rate ($)</label><input type="number" class="q-item-rate" value="' + (item.rate || '') + '" step="0.01" placeholder="0.00" oninput="QuotesPage.calcTotal()" style="font-size:13px;"></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Amount</label><div class="q-item-amount" style="font-size:14px;font-weight:700;color:var(--green-dark);padding:8px 0;">' + UI.money(lineTotal) + '</div></div>'
+      + '<button type="button" style="background:none;border:none;font-size:20px;color:var(--red);cursor:pointer;padding-bottom:8px;opacity:.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" onclick="this.parentElement.remove();QuotesPage.calcTotal();">✕</button>'
       + '</div>';
+  },
+
+  _onServiceChange: function(sel) {
+    var row = sel.closest('.quote-item-row');
+    var svc = sel.value;
+    var rate = QuotesPage._defaultRates[svc];
+    if (rate && rate > 0) {
+      row.querySelector('.q-item-rate').value = rate;
+    }
+    // Auto-fill description from service catalog
+    var services = DB.services.getAll();
+    var match = services.find(function(s) { return s.name === svc; });
+    var descInput = row.querySelector('.q-item-desc');
+    if (match && match.description && !descInput.value) {
+      descInput.value = match.description;
+    }
+    QuotesPage.calcTotal();
   },
 
   addItem: function() {
@@ -222,6 +250,9 @@ var QuotesPage = {
     var div = document.createElement('div');
     div.innerHTML = QuotesPage._itemRow(index, {}, services);
     container.appendChild(div.firstChild);
+    // Focus the new service dropdown
+    var newRow = container.lastElementChild;
+    if (newRow) { var sel = newRow.querySelector('.q-item-service'); if (sel) sel.focus(); }
   },
 
   calcTotal: function() {
@@ -229,7 +260,10 @@ var QuotesPage = {
     document.querySelectorAll('.quote-item-row').forEach(function(row) {
       var qty = parseFloat(row.querySelector('.q-item-qty').value) || 0;
       var rate = parseFloat(row.querySelector('.q-item-rate').value) || 0;
-      total += qty * rate;
+      var lineTotal = qty * rate;
+      total += lineTotal;
+      var amountEl = row.querySelector('.q-item-amount');
+      if (amountEl) amountEl.textContent = UI.money(lineTotal);
     });
     var el = document.getElementById('q-total-display');
     if (el) el.textContent = UI.money(total);

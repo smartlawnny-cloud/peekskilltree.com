@@ -360,7 +360,7 @@ var ClientsPage = {
       + '<button class="cd-tab active" onclick="ClientsPage._tab(this,\'cd-jobs\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--accent);">Jobs (' + clientJobs.length + ')</button>'
       + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-quotes\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Quotes (' + clientQuotes.length + ')</button>'
       + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-invoices\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Invoices (' + clientInvoices.length + ')</button>'
-      + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-comms\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Activity</button>'
+      + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-activity\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Activity</button>'
       + '</div>'
 
       // Jobs tab
@@ -387,11 +387,72 @@ var ClientsPage = {
         }).join('') + '</tbody></table>' : UI.emptyState('💰', 'No invoices yet', 'Create an invoice for this client.'))
       + '</div>'
 
-      // Activity/Comms tab
-      + '<div id="cd-comms" class="cd-panel" style="display:none;">';
-    if (typeof CommsLog !== 'undefined') {
-      html += CommsLog.renderForClient(id);
+      // Activity timeline tab
+      + '<div id="cd-activity" class="cd-panel" style="display:none;">';
+
+    // Build timeline from all client data
+    var timeline = [];
+    clientQuotes.forEach(function(q) {
+      timeline.push({ date: q.createdAt, type: 'quote', icon: '📋', color: '#8b2252',
+        title: 'Quote #' + q.quoteNumber + ' created', detail: q.description || '', amount: q.total, status: q.status,
+        onclick: "QuotesPage.showDetail('" + q.id + "')" });
+      if (q.status === 'sent' || q.status === 'awaiting') {
+        timeline.push({ date: q.sentAt || q.createdAt, type: 'quote_sent', icon: '📤', color: '#1565c0',
+          title: 'Quote #' + q.quoteNumber + ' sent to client', detail: '', amount: q.total });
+      }
+      if (q.status === 'approved') {
+        timeline.push({ date: q.approvedAt || q.createdAt, type: 'quote_approved', icon: '✅', color: '#2e7d32',
+          title: 'Quote #' + q.quoteNumber + ' approved', detail: '', amount: q.total });
+      }
+    });
+    clientJobs.forEach(function(j) {
+      timeline.push({ date: j.createdAt, type: 'job', icon: '🔧', color: '#2e7d32',
+        title: 'Job #' + j.jobNumber + ' created', detail: j.description || '', amount: j.total, status: j.status,
+        onclick: "JobsPage.showDetail('" + j.id + "')" });
+      if (j.status === 'completed') {
+        timeline.push({ date: j.completedAt || j.scheduledDate || j.createdAt, type: 'job_done', icon: '✅', color: '#2e7d32',
+          title: 'Job #' + j.jobNumber + ' completed', detail: '' });
+      }
+    });
+    clientInvoices.forEach(function(inv) {
+      timeline.push({ date: inv.createdAt, type: 'invoice', icon: '💰', color: '#1565c0',
+        title: 'Invoice #' + inv.invoiceNumber + ' created', detail: inv.subject || '', amount: inv.total, status: inv.status,
+        onclick: "InvoicesPage.showDetail('" + inv.id + "')" });
+      if (inv.status === 'paid') {
+        timeline.push({ date: inv.paidAt || inv.createdAt, type: 'payment', icon: '💵', color: '#2e7d32',
+          title: 'Payment received — Invoice #' + inv.invoiceNumber, detail: '', amount: inv.total });
+      }
+    });
+    // Client notes
+    if (c.notes) {
+      timeline.push({ date: c.createdAt, type: 'note', icon: '📝', color: '#666',
+        title: 'Internal note added', detail: c.notes });
     }
+    // Client created
+    timeline.push({ date: c.createdAt, type: 'created', icon: '👤', color: '#999',
+      title: 'Client record created', detail: c.source ? 'Source: ' + c.source : '' });
+
+    timeline.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+
+    if (timeline.length > 0) {
+      html += '<div style="position:relative;padding-left:28px;">';
+      // Vertical line
+      html += '<div style="position:absolute;left:12px;top:8px;bottom:8px;width:2px;background:var(--border);"></div>';
+      timeline.forEach(function(ev) {
+        html += '<div style="position:relative;margin-bottom:16px;' + (ev.onclick ? 'cursor:pointer;' : '') + '"' + (ev.onclick ? ' onclick="' + ev.onclick + '"' : '') + '>'
+          + '<div style="position:absolute;left:-24px;top:2px;width:20px;height:20px;border-radius:50%;background:' + ev.color + ';display:flex;align-items:center;justify-content:center;font-size:10px;z-index:1;">' + ev.icon + '</div>'
+          + '<div style="font-size:11px;color:var(--text-light);margin-bottom:2px;">' + UI.dateRelative(ev.date) + '</div>'
+          + '<div style="font-weight:600;font-size:13px;">' + ev.title
+          + (ev.amount ? ' <span style="color:var(--green-dark);">' + UI.moneyInt(ev.amount) + '</span>' : '')
+          + (ev.status ? ' ' + UI.statusBadge(ev.status) : '') + '</div>'
+          + (ev.detail ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + UI.esc(ev.detail) + '</div>' : '')
+          + '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div style="text-align:center;padding:24px;color:var(--text-light);">No activity yet</div>';
+    }
+
     if (typeof Photos !== 'undefined') {
       html += Photos.renderGallery('client', id);
     }

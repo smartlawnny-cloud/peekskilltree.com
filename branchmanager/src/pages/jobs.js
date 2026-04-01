@@ -72,7 +72,8 @@ var JobsPage = {
     html += '<div id="job-bulk-bar" style="display:none;position:sticky;top:60px;z-index:50;background:var(--accent);color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:8px;justify-content:space-between;align-items:center;">'
       + '<span id="job-bulk-count" style="font-weight:700;">0 selected</span>'
       + '<div style="display:flex;gap:6px;">'
-      + '<button onclick="JobsPage._batchInvoice()" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Create Invoices</button>'
+      + '<button onclick="JobsPage._batchComplete()" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✅ Mark Complete</button>'
+      + '<button onclick="JobsPage._batchInvoice()" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">💰 Create Invoices</button>'
       + '<button onclick="JobsPage._selectAll(false)" style="background:none;color:rgba(255,255,255,.7);border:none;padding:6px 8px;font-size:12px;cursor:pointer;">Clear</button>'
       + '</div></div>';
 
@@ -139,6 +140,15 @@ var JobsPage = {
     var count = document.getElementById('job-bulk-count');
     if (bar) bar.style.display = selected.length > 0 ? 'flex' : 'none';
     if (count) count.textContent = selected.length + ' selected';
+  },
+  _batchComplete: function() {
+    var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });
+    if (ids.length === 0) return;
+    UI.confirm('Mark ' + ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' as completed?', function() {
+      ids.forEach(function(id) { DB.jobs.update(id, { status: 'completed' }); });
+      UI.toast(ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' marked complete');
+      loadPage('jobs');
+    });
   },
   _batchInvoice: function() {
     var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });

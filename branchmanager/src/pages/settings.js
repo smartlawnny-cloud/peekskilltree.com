@@ -99,8 +99,16 @@ var SettingsPage = {
         + '-- Allow anonymous clients to read non-draft invoices (for pay.html)\n'
         + 'CREATE POLICY "Anon read invoices"\n'
         + '  ON invoices FOR SELECT TO anon\n'
-        + '  USING (status &lt;&gt; \'draft\');</pre>'
-        + '<button onclick="navigator.clipboard.writeText(\'CREATE POLICY \\\"Anon read quotes\\\" ON quotes FOR SELECT TO anon USING (status <> \\\'draft\\\');\\n\\nCREATE POLICY \\\"Anon update quote status\\\" ON quotes FOR UPDATE TO anon USING (status IN (\\\'sent\\\', \\\'awaiting\\\')) WITH CHECK (status IN (\\\'approved\\\', \\\'awaiting\\\'));\\n\\nCREATE POLICY \\\"Anon read invoices\\\" ON invoices FOR SELECT TO anon USING (status <> \\\'draft\\\');\')" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
+        + '  USING (status &lt;&gt; \'draft\');\n\n'
+        + '-- Allow anonymous clients to read client portal data (for client.html)\n'
+        + 'CREATE POLICY "Anon read clients"\n'
+        + '  ON clients FOR SELECT TO anon\n'
+        + '  USING (true);\n\n'
+        + '-- Allow anonymous form submissions (for book.html)\n'
+        + 'CREATE POLICY "Anon insert requests"\n'
+        + '  ON requests FOR INSERT TO anon\n'
+        + '  WITH CHECK (true);</pre>'
+        + '<button onclick="navigator.clipboard.writeText(\'CREATE POLICY \\\"Anon read quotes\\\" ON quotes FOR SELECT TO anon USING (status <> \\\'draft\\\');\\n\\nCREATE POLICY \\\"Anon update quote status\\\" ON quotes FOR UPDATE TO anon USING (status IN (\\\'sent\\\', \\\'awaiting\\\')) WITH CHECK (status IN (\\\'approved\\\', \\\'awaiting\\\'));\\n\\nCREATE POLICY \\\"Anon read invoices\\\" ON invoices FOR SELECT TO anon USING (status <> \\\'draft\\\');\\n\\nCREATE POLICY \\\"Anon read clients\\\" ON clients FOR SELECT TO anon USING (true);\\n\\nCREATE POLICY \\\"Anon insert requests\\\" ON requests FOR INSERT TO anon WITH CHECK (true);\')" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
         + '</details>';
     } else {
       html += '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Connect to Supabase for cloud sync, multi-device access, and team features.</p>'

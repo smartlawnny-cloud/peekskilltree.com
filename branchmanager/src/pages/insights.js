@@ -136,6 +136,113 @@ var InsightsPage = {
     }
     html += '</div></div>';
 
+    // Revenue by Service Type (beyond Jobber)
+    var serviceRevenue = {};
+    allJobs.forEach(function(j) {
+      var desc = j.description || j.property || 'Other';
+      // Normalize service type from description
+      var serviceType = 'Other';
+      var descLower = desc.toLowerCase();
+      if (descLower.indexOf('removal') !== -1 || descLower.indexOf('remove') !== -1) serviceType = 'Tree Removal';
+      else if (descLower.indexOf('prun') !== -1 || descLower.indexOf('trim') !== -1) serviceType = 'Pruning/Trimming';
+      else if (descLower.indexOf('stump') !== -1) serviceType = 'Stump Grinding';
+      else if (descLower.indexOf('cable') !== -1 || descLower.indexOf('cabling') !== -1) serviceType = 'Cabling';
+      else if (descLower.indexOf('snow') !== -1) serviceType = 'Snow Removal';
+      else if (descLower.indexOf('clean') !== -1 || descLower.indexOf('debris') !== -1) serviceType = 'Clean Up';
+      else if (descLower.indexOf('firewood') !== -1 || descLower.indexOf('wood') !== -1) serviceType = 'Firewood';
+      else if (descLower.indexOf('fence') !== -1) serviceType = 'Fence Work';
+      else if (descLower.indexOf('consult') !== -1 || descLower.indexOf('assess') !== -1 || descLower.indexOf('arborist') !== -1) serviceType = 'Consultation';
+      if (!serviceRevenue[serviceType]) serviceRevenue[serviceType] = { count: 0, revenue: 0 };
+      serviceRevenue[serviceType].count++;
+      serviceRevenue[serviceType].revenue += (j.total || 0);
+    });
+    var serviceList = Object.keys(serviceRevenue).map(function(k) {
+      return { name: k, count: serviceRevenue[k].count, revenue: serviceRevenue[k].revenue };
+    }).sort(function(a, b) { return b.revenue - a.revenue; });
+    var maxServiceRev = serviceList.length > 0 ? serviceList[0].revenue : 1;
+    var svcColors = ['#2e7d32','#1565c0','#e65100','#6a1b9a','#c62828','#00838f','#4e342e','#37474f','#558b2f','#ad1457'];
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">';
+
+    // Revenue by service type
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+      + '<h3 style="margin-bottom:16px;">Revenue by Service Type</h3>';
+    if (serviceList.length === 0) {
+      html += '<div style="text-align:center;color:var(--text-light);padding:20px;">No job data yet</div>';
+    } else {
+      serviceList.slice(0, 8).forEach(function(s, idx) {
+        var pct = Math.round((s.revenue / maxServiceRev) * 100);
+        html += '<div style="margin-bottom:10px;">'
+          + '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;">'
+          + '<span style="font-weight:600;">' + UI.esc(s.name) + ' <span style="font-weight:400;color:var(--text-light);">(' + s.count + ' jobs)</span></span>'
+          + '<span style="font-weight:700;">' + UI.moneyInt(s.revenue) + '</span></div>'
+          + '<div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">'
+          + '<div style="height:100%;width:' + pct + '%;background:' + svcColors[idx % svcColors.length] + ';border-radius:4px;"></div>'
+          + '</div></div>';
+      });
+    }
+    html += '</div>';
+
+    // Top clients by revenue
+    var clientRevenue = {};
+    allJobs.forEach(function(j) {
+      var name = j.clientName || 'Unknown';
+      if (!clientRevenue[name]) clientRevenue[name] = { count: 0, revenue: 0 };
+      clientRevenue[name].count++;
+      clientRevenue[name].revenue += (j.total || 0);
+    });
+    var topClients = Object.keys(clientRevenue).map(function(k) {
+      return { name: k, count: clientRevenue[k].count, revenue: clientRevenue[k].revenue };
+    }).sort(function(a, b) { return b.revenue - a.revenue; });
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+      + '<h3 style="margin-bottom:16px;">Top Clients by Revenue</h3>';
+    if (topClients.length === 0) {
+      html += '<div style="text-align:center;color:var(--text-light);padding:20px;">No client data yet</div>';
+    } else {
+      topClients.slice(0, 10).forEach(function(c, idx) {
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;">'
+          + '<div style="width:24px;height:24px;border-radius:50%;background:' + svcColors[idx % svcColors.length] + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">' + (idx + 1) + '</div>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(c.name) + '</div>'
+          + '<div style="font-size:11px;color:var(--text-light);">' + c.count + ' job' + (c.count !== 1 ? 's' : '') + '</div>'
+          + '</div>'
+          + '<div style="font-weight:700;font-size:14px;">' + UI.moneyInt(c.revenue) + '</div>'
+          + '</div>';
+      });
+    }
+    html += '</div></div>';
+
+    // Conversion metrics
+    var avgJobValue = completedJobs > 0 ? allJobs.filter(function(j){return j.status==='completed';}).reduce(function(s,j){return s+(j.total||0);},0) / completedJobs : 0;
+    var avgQuoteValue = totalQuotes > 0 ? allQuotes.reduce(function(s,q){return s+(q.total||0);},0) / totalQuotes : 0;
+    var quotesToJobDays = [];
+    allJobs.forEach(function(j) {
+      if (j.quoteId) {
+        var quote = DB.quotes.getById(j.quoteId);
+        if (quote && quote.createdAt && j.createdAt) {
+          var days = Math.round((new Date(j.createdAt) - new Date(quote.createdAt)) / 86400000);
+          if (days >= 0 && days < 365) quotesToJobDays.push(days);
+        }
+      }
+    });
+    var avgConversionDays = quotesToJobDays.length > 0 ? Math.round(quotesToJobDays.reduce(function(s,d){return s+d;},0) / quotesToJobDays.length) : 0;
+
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;" class="stat-row">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
+      + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Avg Job Value</div>'
+      + '<div style="font-size:24px;font-weight:800;color:var(--green-dark);margin-top:4px;">' + UI.moneyInt(avgJobValue) + '</div></div>'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
+      + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Avg Quote Value</div>'
+      + '<div style="font-size:24px;font-weight:800;color:#1565c0;margin-top:4px;">' + UI.moneyInt(avgQuoteValue) + '</div></div>'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
+      + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Close Rate</div>'
+      + '<div style="font-size:24px;font-weight:800;color:#e65100;margin-top:4px;">' + closeRate + '%</div></div>'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
+      + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Quote → Job</div>'
+      + '<div style="font-size:24px;font-weight:800;color:#6a1b9a;margin-top:4px;">' + avgConversionDays + ' days</div></div>'
+      + '</div>';
+
     return html;
   }
 };

@@ -95,7 +95,9 @@ var JobsPage = {
           + '<td style="white-space:nowrap;">' + UI.dateShort(j.scheduledDate) + '</td>'
           + '<td>' + UI.statusBadge(j.status) + '</td>'
           + '<td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (j.crew ? j.crew.join(', ') : '—') + '</td>'
-          + '<td style="text-align:right;font-weight:600;">' + UI.money(j.total) + '</td>'
+          + '<td style="text-align:right;font-weight:600;">' + UI.money(j.total)
+          + (j.satisfaction && j.satisfaction.rating ? '<div style="font-size:10px;color:#ffc107;margin-top:2px;">' + Array(j.satisfaction.rating + 1).join('⭐') + '</div>' : '')
+          + '</td>'
           + '</tr>';
       });
     }
@@ -417,6 +419,16 @@ var JobsPage = {
     // Visits (multi-visit)
     if (typeof Visits !== 'undefined') {
       html += Visits.renderForJob(id);
+    }
+
+    // Materials used
+    if (typeof Materials !== 'undefined') {
+      html += Materials.renderForJob(id);
+    }
+
+    // Before/After photos
+    if (typeof BeforeAfter !== 'undefined') {
+      html += BeforeAfter.renderForJob(id);
     }
 
       // Photos

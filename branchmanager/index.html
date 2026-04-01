@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Branch Manager">
 <link rel="manifest" href="manifest.json">
-<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js?v=1775012797"></script>
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js?v=1775046563"></script>
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
@@ -476,6 +476,8 @@
         <button class="nav-item" data-page="messaging"><span class="icon"><i data-lucide="message-square" class="li"></i></span> Messages</button>
         <button class="nav-item" data-page="equipment"><span class="icon"><i data-lucide="cog" class="li"></i></span> Equipment</button>
         <button class="nav-item" data-page="crewperformance"><span class="icon"><i data-lucide="trophy" class="li"></i></span> Crew Stats</button>
+        <button class="nav-item" data-page="materials"><span class="icon"><i data-lucide="package" class="li"></i></span> Materials</button>
+        <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
         <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Job Costing</button>
         <button class="nav-item" data-page="recurring"><span class="icon"><i data-lucide="repeat" class="li"></i></span> Recurring Jobs</button>
         <button class="nav-item" data-page="notifications"><span class="icon"><i data-lucide="bell" class="li"></i></span> Activity Feed</button>
@@ -539,53 +541,53 @@
 </div>
 
 <!-- Module scripts -->
-<script src="src/auth.js?v=1775012797"></script>
-<script src="src/db.js?v=1775012797"></script>
-<script src="src/ui.js?v=1775012797"></script>
-<script src="src/pages/dashboard.js?v=1775012797"></script>
-<script src="src/pages/clients.js?v=1775012797"></script>
-<script src="src/pages/requests.js?v=1775012797"></script>
-<script src="src/pages/quotes.js?v=1775012797"></script>
-<script src="src/pages/jobs.js?v=1775012797"></script>
-<script src="src/pages/invoices.js?v=1775012797"></script>
-<script src="src/pages/schedule.js?v=1775012797"></script>
-<script src="src/pages/insights.js?v=1775012797"></script>
-<script src="src/geofence.js?v=1775012797"></script>
-<script src="src/weather.js?v=1775012797"></script>
-<script src="src/pages/comms.js?v=1775012797"></script>
-<script src="src/pages/messaging.js?v=1775012797"></script>
-<script src="src/pages/profitloss.js?v=1775012797"></script>
-<script src="src/photos.js?v=1775012797"></script>
-<script src="src/pages/clientmap.js?v=1775012797"></script>
-<script src="src/pages/photomap.js?v=1775012797"></script>
-<script src="src/pages/crewview.js?v=1775012797"></script>
-<script src="src/pages/employeecenter.js?v=1775012797"></script>
-<script src="src/pages/budget.js?v=1775012797"></script>
-<script src="src/pages/equipment.js?v=1775012797"></script>
-<script src="src/pages/jobcosting.js?v=1775012797"></script>
-<script src="src/pages/dispatch.js?v=1775012797"></script>
-<script src="src/pages/recurring.js?v=1775012797"></script>
-<script src="src/pages/notifications.js?v=1775012797"></script>
-<script src="src/pages/expenses.js?v=1775012797"></script>
-<script src="src/email.js?v=1775012797"></script>
-<script src="src/pages/reports.js?v=1775012797"></script>
-<script src="src/pages/reviewtools.js?v=1775012797"></script>
-<script src="src/pages/weeklysummary.js?v=1775012797"></script>
-<script src="src/pages/backup.js?v=1775012797"></script>
-<script src="src/pages/onlinebooking.js?v=1775012797"></script>
-<script src="src/pages/import.js?v=1775012797"></script>
-<script src="src/pages/settings.js?v=1775012797"></script>
-<script src="src/pages/propertymap.js?v=1775012797"></script>
-<script src="src/pages/estimator.js?v=1775012797"></script>
-<script src="src/pages/treemeasure.js?v=1775012797"></script>
-<script src="src/stripe.js?v=1775012797"></script>
-<script src="src/pages/search.js?v=1775012797"></script>
-<script src="src/pages/clienthub.js?v=1775012797"></script>
-<script src="src/pages/team.js?v=1775012797"></script>
-<script src="src/pages/automations.js?v=1775012797"></script>
-<script src="src/pages/pipeline.js?v=1775012797"></script>
-<script src="src/sendjim.js?v=1775012797"></script>
-<script src="src/supabase.js?v=1775012797"></script>
+<script src="src/auth.js?v=1775046563"></script>
+<script src="src/db.js?v=1775046563"></script>
+<script src="src/ui.js?v=1775046563"></script>
+<script src="src/pages/dashboard.js?v=1775046563"></script>
+<script src="src/pages/clients.js?v=1775046563"></script>
+<script src="src/pages/requests.js?v=1775046563"></script>
+<script src="src/pages/quotes.js?v=1775046563"></script>
+<script src="src/pages/jobs.js?v=1775046563"></script>
+<script src="src/pages/invoices.js?v=1775046563"></script>
+<script src="src/pages/schedule.js?v=1775046563"></script>
+<script src="src/pages/insights.js?v=1775046563"></script>
+<script src="src/geofence.js?v=1775046563"></script>
+<script src="src/weather.js?v=1775046563"></script>
+<script src="src/pages/comms.js?v=1775046563"></script>
+<script src="src/pages/messaging.js?v=1775046563"></script>
+<script src="src/pages/profitloss.js?v=1775046563"></script>
+<script src="src/photos.js?v=1775046563"></script>
+<script src="src/pages/clientmap.js?v=1775046563"></script>
+<script src="src/pages/photomap.js?v=1775046563"></script>
+<script src="src/pages/crewview.js?v=1775046563"></script>
+<script src="src/pages/employeecenter.js?v=1775046563"></script>
+<script src="src/pages/budget.js?v=1775046563"></script>
+<script src="src/pages/equipment.js?v=1775046563"></script>
+<script src="src/pages/jobcosting.js?v=1775046563"></script>
+<script src="src/pages/dispatch.js?v=1775046563"></script>
+<script src="src/pages/recurring.js?v=1775046563"></script>
+<script src="src/pages/notifications.js?v=1775046563"></script>
+<script src="src/pages/expenses.js?v=1775046563"></script>
+<script src="src/email.js?v=1775046563"></script>
+<script src="src/pages/reports.js?v=1775046563"></script>
+<script src="src/pages/reviewtools.js?v=1775046563"></script>
+<script src="src/pages/weeklysummary.js?v=1775046563"></script>
+<script src="src/pages/backup.js?v=1775046563"></script>
+<script src="src/pages/onlinebooking.js?v=1775046563"></script>
+<script src="src/pages/import.js?v=1775046563"></script>
+<script src="src/pages/settings.js?v=1775046563"></script>
+<script src="src/pages/propertymap.js?v=1775046563"></script>
+<script src="src/pages/estimator.js?v=1775046563"></script>
+<script src="src/pages/treemeasure.js?v=1775046563"></script>
+<script src="src/stripe.js?v=1775046563"></script>
+<script src="src/pages/search.js?v=1775046563"></script>
+<script src="src/pages/clienthub.js?v=1775046563"></script>
+<script src="src/pages/team.js?v=1775046563"></script>
+<script src="src/pages/automations.js?v=1775046563"></script>
+<script src="src/pages/pipeline.js?v=1775046563"></script>
+<script src="src/sendjim.js?v=1775046563"></script>
+<script src="src/supabase.js?v=1775046563"></script>
 <script>
 // Auto-configure Supabase connection
 if (!localStorage.getItem('bm-supabase-url')) {
@@ -593,22 +595,24 @@ if (!localStorage.getItem('bm-supabase-url')) {
   localStorage.setItem('bm-supabase-key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI');
 }
 </script>
-<script src="src/pdf.js?v=1775012797"></script>
+<script src="src/pdf.js?v=1775046563"></script>
 <!-- photos.js moved earlier, before photomap.js -->
-<script src="src/templates.js?v=1775012797"></script>
-<script src="src/supacloud.js?v=1775012797"></script>
-<script src="src/pages/payments.js?v=1775012797"></script>
-<script src="src/pages/workflow.js?v=1775012797"></script>
-<script src="src/pages/reviews.js?v=1775012797"></script>
-<script src="src/pages/timetrack.js?v=1775012797"></script>
-<script src="src/pages/checklists.js?v=1775012797"></script>
-<script src="src/pages/visits.js?v=1775012797"></script>
-<script src="src/pages/customfields.js?v=1775012797"></script>
-<script src="src/pages/commandpalette.js?v=1775012797"></script>
-<script src="src/pages/ai.js?v=1775012797"></script>
-<script src="src/pages/satisfaction.js?v=1775012797"></script>
-<script src="src/pages/emailtemplates.js?v=1775012797"></script>
-<script src="src/pages/crewperformance.js?v=1775012797"></script>
+<script src="src/templates.js?v=1775046563"></script>
+<script src="src/supacloud.js?v=1775046563"></script>
+<script src="src/pages/payments.js?v=1775046563"></script>
+<script src="src/pages/workflow.js?v=1775046563"></script>
+<script src="src/pages/reviews.js?v=1775046563"></script>
+<script src="src/pages/timetrack.js?v=1775046563"></script>
+<script src="src/pages/checklists.js?v=1775046563"></script>
+<script src="src/pages/visits.js?v=1775046563"></script>
+<script src="src/pages/customfields.js?v=1775046563"></script>
+<script src="src/pages/commandpalette.js?v=1775046563"></script>
+<script src="src/pages/ai.js?v=1775046563"></script>
+<script src="src/pages/satisfaction.js?v=1775046563"></script>
+<script src="src/pages/emailtemplates.js?v=1775046563"></script>
+<script src="src/pages/crewperformance.js?v=1775046563"></script>
+<script src="src/pages/materials.js?v=1775046563"></script>
+<script src="src/pages/beforeafter.js?v=1775046563"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';
@@ -675,7 +679,9 @@ var pageConfigs = {
   import: { title: 'Import Data', action: null },
   backup: { title: 'Backup & Restore', action: null },
   settings: { title: 'Settings', action: null },
-  crewperformance: { title: 'Crew Performance', action: null }
+  crewperformance: { title: 'Crew Performance', action: null },
+  materials: { title: 'Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
+  beforeafter: { title: 'Before & After', action: null }
 };
 
 var pageRenderers = {
@@ -714,6 +720,8 @@ var pageRenderers = {
   settings: function() { return SettingsPage.render(); },
   treemeasure: function() { return TreeMeasure.render(); },
   crewperformance: function() { return CrewPerformance.render(); },
+  materials: function() { return Materials.render(); },
+  beforeafter: function() { return BeforeAfter.render(); },
   calculators: function() {
     return '<div class="stat-grid">'
       + '<div class="stat-card" style="cursor:pointer;" onclick="Estimator.show()">'
@@ -1075,6 +1083,7 @@ document.addEventListener('keydown', function(e) {
   if (meta && e.key === 'k') { e.preventDefault(); if(typeof CommandPalette!=='undefined') CommandPalette.show(); else document.getElementById('globalSearch').focus(); }
   else if (meta && e.key === 'n') { e.preventDefault(); QuickCreate.show(); }
   else if (meta && e.key === 'd') { e.preventDefault(); toggleDarkMode(); }
+  else if (meta && e.key === 'j') { e.preventDefault(); if(typeof AI!=='undefined') AI.toggle(); }
   else if (e.key === '1') { loadPage('dashboard'); }
   else if (e.key === '2') { loadPage('schedule'); }
   else if (e.key === '3') { loadPage('clients'); }
@@ -1082,18 +1091,25 @@ document.addEventListener('keydown', function(e) {
   else if (e.key === '5') { loadPage('jobs'); }
   else if (e.key === '6') { loadPage('invoices'); }
   else if (e.key === '7') { loadPage('pipeline'); }
+  else if (e.key === '8') { loadPage('dispatch'); }
+  else if (e.key === '9') { loadPage('expenses'); }
+  else if (e.key === '0') { loadPage('settings'); }
   else if (e.key === '?') {
-    UI.showModal('Keyboard Shortcuts', '<div style="font-size:14px;line-height:2.2;">'
-      + '<div style="display:flex;justify-content:space-between;"><span>Search</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">⌘K</kbd></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span>Create New</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">⌘N</kbd></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span>Dashboard</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">1</kbd></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span>Schedule</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">2</kbd></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span>Clients</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">3</kbd></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span>Quotes</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">4</kbd></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span>Jobs</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">5</kbd></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span>Invoices</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">6</kbd></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span>Pipeline</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">7</kbd></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span>Help</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">?</kbd></div>'
+    var kbdStyle = 'background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;font-family:monospace;';
+    var row = function(label, key) { return '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>' + label + '</span><kbd style="' + kbdStyle + '">' + key + '</kbd></div>'; };
+    UI.showModal('Keyboard Shortcuts', '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 32px;font-size:14px;">'
+      + '<div>'
+      + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-light);padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px;">Navigation</div>'
+      + row('Dashboard', '1') + row('Schedule', '2') + row('Clients', '3') + row('Quotes', '4')
+      + row('Jobs', '5') + row('Invoices', '6') + row('Pipeline', '7') + row('Dispatch', '8')
+      + row('Expenses', '9') + row('Settings', '0')
+      + '</div><div>'
+      + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-light);padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px;">Actions</div>'
+      + row('Command Palette', '\u2318K') + row('Create New', '\u2318N') + row('Dark Mode', '\u2318D')
+      + row('AI Assistant', '\u2318J') + row('Help', '?')
+      + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-light);padding:12px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px;">Tips</div>'
+      + '<div style="font-size:12px;color:var(--text-light);line-height:1.6;padding-top:4px;">Drag jobs onto the calendar to schedule them. Click column headers to sort tables. Use the command palette for quick access to any feature.</div>'
+      + '</div></div>'
       + '</div>');
   }
 });

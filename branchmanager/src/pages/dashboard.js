@@ -306,6 +306,43 @@ var DashboardPage = {
       html += '</div>';
     }
 
+    // Lead Source Tracking (beyond Jobber — premium feature)
+    var sourceMap = {};
+    DB.requests.getAll().forEach(function(r) {
+      var src = r.source || 'Unknown';
+      if (!sourceMap[src]) sourceMap[src] = { count: 0, revenue: 0 };
+      sourceMap[src].count++;
+    });
+    // Also check clients for source field
+    DB.clients.getAll().forEach(function(c) {
+      if (c.source) {
+        if (!sourceMap[c.source]) sourceMap[c.source] = { count: 0, revenue: 0 };
+      }
+    });
+    var sourceEntries = Object.keys(sourceMap).map(function(k) { return { name: k, count: sourceMap[k].count }; });
+    sourceEntries.sort(function(a, b) { return b.count - a.count; });
+    var maxSourceCount = sourceEntries.length > 0 ? sourceEntries[0].count : 1;
+    var sourceColors = ['#2e7d32', '#1565c0', '#e65100', '#6a1b9a', '#c62828', '#00838f', '#4e342e', '#37474f'];
+
+    if (sourceEntries.length > 1) {
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+        + '<h3 style="font-size:16px;margin:0;">📊 Lead Sources</h3>'
+        + '<span style="font-size:12px;color:var(--text-light);">' + DB.requests.getAll().length + ' total requests</span></div>';
+      sourceEntries.slice(0, 8).forEach(function(s, idx) {
+        var pct = Math.round((s.count / maxSourceCount) * 100);
+        var color = sourceColors[idx % sourceColors.length];
+        html += '<div style="margin-bottom:8px;">'
+          + '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;">'
+          + '<span style="font-weight:600;">' + UI.esc(s.name) + '</span>'
+          + '<span style="color:var(--text-light);">' + s.count + ' requests</span></div>'
+          + '<div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">'
+          + '<div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:4px;transition:width .3s;"></div>'
+          + '</div></div>';
+      });
+      html += '</div>';
+    }
+
     // Quick Actions
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
       + '<h3 style="font-size:16px;margin-bottom:12px;">Quick Actions</h3>'

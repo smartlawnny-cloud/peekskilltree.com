@@ -2,7 +2,7 @@
  * Branch Manager — Invoices Page
  */
 var InvoicesPage = {
-  _page: 0, _perPage: 50, _search: '', _filter: 'all',
+  _page: 0, _perPage: 50, _search: '', _filter: 'all', _sortCol: 'invoiceNumber', _sortDir: 'desc',
 
   render: function() {
     var self = InvoicesPage;
@@ -60,7 +60,16 @@ var InvoicesPage = {
       + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All invoices</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
-      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="InvoicesPage._setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | All</button>'
+      + (function() {
+        var chips = [['all','All'],['draft','Draft'],['sent','Sent'],['past_due','Past Due'],['paid','Paid']];
+        var out = '';
+        for (var ci = 0; ci < chips.length; ci++) {
+          var val = chips[ci][0], label = chips[ci][1];
+          var isActive = self._filter === val;
+          out += '<button onclick="InvoicesPage._setFilter(\'' + val + '\')" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid ' + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';">' + label + '</button>';
+        }
+        return out;
+      })()
       + '</div>'
       + '<div class="search-box" style="min-width:200px;max-width:280px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
@@ -81,16 +90,16 @@ var InvoicesPage = {
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
       + '<th style="width:32px;"><input type="checkbox" onchange="InvoicesPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
-      + '<th>Client</th><th>#</th><th>Due</th><th>Subject</th><th>Status</th><th style="text-align:right;">Total</th><th style="text-align:right;">Balance</th>'
+      + self._sortTh('Client', 'clientName') + self._sortTh('#', 'invoiceNumber') + self._sortTh('Due', 'dueDate') + '<th>Subject</th>' + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;') + self._sortTh('Balance', 'balance', 'text-align:right;')
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
       html += '<tr><td colspan="8">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No invoices match "' + self._search + '"</div>' : UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.')) + '</td></tr>';
     } else {
       page.forEach(function(inv) {
-        html += '<tr style="cursor:pointer;">'
+        html += '<tr style="cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')">'
           + '<td onclick="event.stopPropagation()"><input type="checkbox" class="inv-check" value="' + inv.id + '" onchange="InvoicesPage._updateBulk()" style="width:16px;height:16px;"></td>'
-          + '<td onclick="InvoicesPage.showDetail(\'' + inv.id + '\')"><strong>' + UI.esc(inv.clientName || '—') + '</strong></td>'
+          + '<td><strong>' + UI.esc(inv.clientName || '—') + '</strong></td>'
           + '<td>#' + (inv.invoiceNumber || '') + '</td>'
           + '<td style="white-space:nowrap;">' + UI.dateShort(inv.dueDate) + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(inv.subject || '—') + '</td>'
@@ -120,13 +129,32 @@ var InvoicesPage = {
     var self = InvoicesPage;
     var all = DB.invoices.getAll();
     if (self._filter === 'unpaid') all = all.filter(function(i) { return i.status !== 'paid'; });
+    else if (self._filter === 'past_due') all = all.filter(function(i) { var now = new Date(); return i.status !== 'paid' && i.dueDate && new Date(i.dueDate) < now; });
     else if (self._filter !== 'all') all = all.filter(function(i) { return i.status === self._filter; });
     if (self._search && self._search.length >= 2) {
       var s = self._search.toLowerCase();
       all = all.filter(function(i) { return (i.clientName||'').toLowerCase().indexOf(s) >= 0 || (i.subject||'').toLowerCase().indexOf(s) >= 0 || String(i.invoiceNumber).indexOf(s) >= 0; });
     }
-    all.sort(function(a, b) { return (b.invoiceNumber || 0) - (a.invoiceNumber || 0); });
+    var col = self._sortCol;
+    var dir = self._sortDir === 'asc' ? 1 : -1;
+    all.sort(function(a, b) {
+      var va = a[col], vb = b[col];
+      if (col === 'invoiceNumber' || col === 'total' || col === 'balance') return ((va || 0) - (vb || 0)) * dir;
+      if (col === 'dueDate') return ((new Date(va || 0)).getTime() - (new Date(vb || 0)).getTime()) * dir;
+      va = (va || '').toString().toLowerCase(); vb = (vb || '').toString().toLowerCase();
+      return va < vb ? -1 * dir : va > vb ? 1 * dir : 0;
+    });
     return all;
+  },
+  _sortTh: function(label, col, extraStyle) {
+    var self = InvoicesPage;
+    var arrow = self._sortCol === col ? (self._sortDir === 'asc' ? ' &#9650;' : ' &#9660;') : '';
+    return '<th onclick="InvoicesPage._setSort(\'' + col + '\')" style="cursor:pointer;user-select:none;' + (extraStyle || '') + '"' + (self._sortCol === col ? ' class="sort-active"' : '') + '>' + label + arrow + '</th>';
+  },
+  _setSort: function(col) {
+    if (InvoicesPage._sortCol === col) { InvoicesPage._sortDir = InvoicesPage._sortDir === 'asc' ? 'desc' : 'asc'; }
+    else { InvoicesPage._sortCol = col; InvoicesPage._sortDir = 'asc'; }
+    InvoicesPage._page = 0; loadPage('invoices');
   },
   _setFilter: function(f) { InvoicesPage._filter = f; InvoicesPage._page = 0; loadPage('invoices'); },
   _goPage: function(p) { var t = Math.ceil(InvoicesPage._getFiltered().length / InvoicesPage._perPage); InvoicesPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('invoices'); },
@@ -363,5 +391,180 @@ var InvoicesPage = {
 
   markPaid: function(id) {
     InvoicesPage.setStatus(id, 'paid');
+  },
+
+  // ── New Invoice Form ──
+  showForm: function(invoiceId) {
+    var inv = invoiceId ? DB.invoices.getById(invoiceId) : {};
+    var items = inv.lineItems || [{ description: '', qty: 1, rate: 0 }];
+    var services = DB.services.getAll();
+
+    var allClients = [];
+    try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
+
+    var today = new Date();
+    var todayStr = today.toISOString().split('T')[0];
+    var due = new Date(today);
+    due.setDate(due.getDate() + 30);
+    var dueStr = due.toISOString().split('T')[0];
+
+    var html = '<form id="inv-form" onsubmit="InvoicesPage.save(event, \'' + (invoiceId || '') + '\')">';
+
+    // Client selector
+    if (inv.clientId) {
+      var client = DB.clients.getById(inv.clientId);
+      html += '<input type="hidden" id="inv-clientId" value="' + inv.clientId + '">'
+        + '<div class="form-group"><label>Client</label><div style="padding:8px 12px;background:var(--bg);border-radius:8px;font-weight:600;">' + UI.esc(inv.clientName || (client ? client.name : '')) + '</div></div>';
+    } else {
+      var clientOptions = allClients.map(function(c) { return { value: c.id, label: c.name + (c.address ? ' — ' + c.address : '') }; });
+      html += UI.formField('Client *', 'select', 'inv-clientId', '', { options: [{ value: '', label: 'Select a client...' }].concat(clientOptions) });
+    }
+
+    html += UI.formField('Subject', 'text', 'inv-subject', inv.subject || 'For Services Rendered', { placeholder: 'Invoice subject' });
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      + UI.formField('Issue Date', 'date', 'inv-issueDate', inv.issuedDate ? inv.issuedDate.split('T')[0] : todayStr)
+      + UI.formField('Due Date', 'date', 'inv-dueDate', inv.dueDate ? inv.dueDate.split('T')[0] : dueStr)
+      + '</div>';
+
+    // Line items
+    html += '<div style="margin:16px 0 8px;font-weight:700;">Line Items</div>'
+      + '<div id="inv-items">';
+    items.forEach(function(item, i) {
+      html += InvoicesPage._itemRow(i, item, services);
+    });
+    html += '</div>'
+      + '<button type="button" class="btn btn-outline" style="margin-top:8px;" onclick="InvoicesPage.addItem()">+ Add Line Item</button>';
+
+    // Total display
+    html += '<div style="margin-top:16px;padding:16px;background:var(--green-dark);color:var(--white);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">'
+      + '<span style="font-weight:600;">Total</span>'
+      + '<span id="inv-total-display" style="font-size:1.5rem;font-weight:800;">' + UI.money(inv.total || 0) + '</span>'
+      + '</div>';
+
+    html += UI.formField('Internal Notes', 'textarea', 'inv-notes', inv.notes || '', { placeholder: 'Notes (not shown to client)' })
+      + '</form>';
+
+    UI.showModal(invoiceId ? 'Edit Invoice #' + inv.invoiceNumber : 'New Invoice', html, {
+      wide: true,
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-outline" onclick="InvoicesPage.saveAs(\'draft\')">Save Draft</button>'
+        + ' <button class="btn btn-primary" onclick="InvoicesPage.saveAs(\'sent\')">Save & Send</button>'
+    });
+  },
+
+  _itemRow: function(index, item, services) {
+    var svcOptions = services.map(function(s) {
+      return '<option value="' + s.name + '"' + (item.service === s.name ? ' selected' : '') + '>' + s.name + (s.type === 'product' ? ' (product)' : '') + '</option>';
+    }).join('');
+
+    var lineTotal = ((item.qty || 1) * (item.rate || 0));
+
+    return '<div class="inv-item-row" style="display:grid;grid-template-columns:2fr 2fr 60px 90px 80px 36px;gap:8px;align-items:end;margin-bottom:8px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label><select class="inv-item-service" onchange="InvoicesPage._onServiceChange(this)" style="font-size:13px;"><option value="">— Select or type custom —</option>' + svcOptions + '</select></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Description</label><input class="inv-item-desc" value="' + UI.esc(item.description || '') + '" placeholder="Work details..." style="font-size:13px;"></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Qty</label><input type="number" class="inv-item-qty" value="' + (item.qty || 1) + '" min="1" oninput="InvoicesPage.calcTotal()" style="font-size:13px;text-align:center;"></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Rate ($)</label><input type="number" class="inv-item-rate" value="' + (item.rate || '') + '" step="0.01" placeholder="0.00" oninput="InvoicesPage.calcTotal()" style="font-size:13px;"></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Amount</label><div class="inv-item-amount" style="font-size:14px;font-weight:700;color:var(--green-dark);padding:8px 0;">' + UI.money(lineTotal) + '</div></div>'
+      + '<button type="button" style="background:none;border:none;font-size:20px;color:var(--red);cursor:pointer;padding-bottom:8px;opacity:.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" onclick="this.parentElement.remove();InvoicesPage.calcTotal();">&#10005;</button>'
+      + '</div>';
+  },
+
+  _onServiceChange: function(sel) {
+    var row = sel.closest('.inv-item-row');
+    var svc = sel.value;
+    var services = DB.services.getAll();
+    var match = null;
+    for (var i = 0; i < services.length; i++) {
+      if (services[i].name === svc) { match = services[i]; break; }
+    }
+    var descInput = row.querySelector('.inv-item-desc');
+    if (match && match.description && !descInput.value) {
+      descInput.value = match.description;
+    }
+    if (match && match.price) {
+      row.querySelector('.inv-item-rate').value = match.price;
+    }
+    InvoicesPage.calcTotal();
+  },
+
+  addItem: function() {
+    var container = document.getElementById('inv-items');
+    var index = container.children.length;
+    var services = DB.services.getAll();
+    var div = document.createElement('div');
+    div.innerHTML = InvoicesPage._itemRow(index, { description: '', qty: 1, rate: 0 }, services);
+    container.appendChild(div.firstChild);
+  },
+
+  calcTotal: function() {
+    var total = 0;
+    var rows = document.querySelectorAll('.inv-item-row');
+    rows.forEach(function(row) {
+      var qty = parseFloat(row.querySelector('.inv-item-qty').value) || 0;
+      var rate = parseFloat(row.querySelector('.inv-item-rate').value) || 0;
+      var amount = qty * rate;
+      total += amount;
+      var amountEl = row.querySelector('.inv-item-amount');
+      if (amountEl) amountEl.textContent = UI.money(amount);
+    });
+    var display = document.getElementById('inv-total-display');
+    if (display) display.textContent = UI.money(total);
+  },
+
+  saveAs: function(status) {
+    var form = document.getElementById('inv-form');
+    if (!form) return;
+    form.dataset.saveStatus = status;
+    form.requestSubmit();
+  },
+
+  save: function(e, invoiceId) {
+    e.preventDefault();
+    var clientId = document.getElementById('inv-clientId').value;
+    if (!clientId) { UI.toast('Select a client', 'error'); return; }
+    var client = DB.clients.getById(clientId);
+
+    var items = [];
+    var total = 0;
+    document.querySelectorAll('.inv-item-row').forEach(function(row) {
+      var service = row.querySelector('.inv-item-service').value;
+      var desc = row.querySelector('.inv-item-desc').value;
+      var qty = parseFloat(row.querySelector('.inv-item-qty').value) || 0;
+      var rate = parseFloat(row.querySelector('.inv-item-rate').value) || 0;
+      if (service || desc || rate) {
+        items.push({ service: service, description: desc, qty: qty, rate: rate, amount: qty * rate });
+        total += qty * rate;
+      }
+    });
+
+    var form = document.getElementById('inv-form');
+    var status = (form && form.dataset.saveStatus) ? form.dataset.saveStatus : 'draft';
+
+    var data = {
+      clientId: clientId,
+      clientName: client ? client.name : '',
+      clientPhone: client ? client.phone : '',
+      clientEmail: client ? client.email : '',
+      subject: document.getElementById('inv-subject').value.trim(),
+      issuedDate: document.getElementById('inv-issueDate').value,
+      dueDate: document.getElementById('inv-dueDate').value,
+      lineItems: items,
+      total: total,
+      balance: total,
+      notes: document.getElementById('inv-notes').value.trim(),
+      status: status
+    };
+
+    if (invoiceId) {
+      DB.invoices.update(invoiceId, data);
+      UI.toast('Invoice updated');
+    } else {
+      DB.invoices.create(data);
+      UI.toast('Invoice created');
+    }
+
+    UI.closeModal();
+    loadPage('invoices');
   }
 };

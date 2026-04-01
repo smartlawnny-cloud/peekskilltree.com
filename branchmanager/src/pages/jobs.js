@@ -2,7 +2,7 @@
  * Branch Manager — Jobs Page
  */
 var JobsPage = {
-  _page: 0, _perPage: 50, _search: '', _filter: 'all',
+  _page: 0, _perPage: 50, _search: '', _filter: 'all', _sortCol: 'jobNumber', _sortDir: 'desc',
 
   render: function() {
     var self = JobsPage;
@@ -61,7 +61,16 @@ var JobsPage = {
       + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All jobs</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
-      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="JobsPage._setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | All</button>'
+      + (function() {
+        var chips = [['all','All'],['scheduled','Scheduled'],['in_progress','In Progress'],['completed','Completed'],['late','Late'],['action_required','Action Required']];
+        var out = '';
+        for (var ci = 0; ci < chips.length; ci++) {
+          var val = chips[ci][0], label = chips[ci][1];
+          var isActive = self._filter === val;
+          out += '<button onclick="JobsPage._setFilter(\'' + val + '\')" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid ' + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';">' + label + '</button>';
+        }
+        return out;
+      })()
       + '</div>'
       + '<div class="search-box" style="min-width:200px;max-width:280px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
@@ -82,16 +91,16 @@ var JobsPage = {
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
       + '<th style="width:32px;"><input type="checkbox" onchange="JobsPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
-      + '<th>Client</th><th>Job number</th><th>Property</th><th>Schedule</th><th>Status</th><th>Crew</th><th style="text-align:right;">Total</th>'
+      + self._sortTh('Client', 'clientName') + self._sortTh('Job #', 'jobNumber') + '<th>Property</th>' + self._sortTh('Schedule', 'scheduledDate') + self._sortTh('Status', 'status') + '<th>Crew</th>' + self._sortTh('Total', 'total', 'text-align:right;')
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
       html += '<tr><td colspan="8">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No jobs match "' + self._search + '"</div>' : UI.emptyState('🔧', 'No jobs yet', 'Create a job from an approved quote.', '+ New Job', 'JobsPage.showForm()')) + '</td></tr>';
     } else {
       page.forEach(function(j) {
-        html += '<tr style="cursor:pointer;">'
+        html += '<tr style="cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
           + '<td onclick="event.stopPropagation()"><input type="checkbox" class="job-check" value="' + j.id + '" onchange="JobsPage._updateBulk()" style="width:16px;height:16px;"></td>'
-          + '<td onclick="JobsPage.showDetail(\'' + j.id + '\')"><strong>' + UI.esc(j.clientName || '—') + '</strong></td>'
+          + '<td><strong>' + UI.esc(j.clientName || '—') + '</strong></td>'
           + '<td>#' + (j.jobNumber || '') + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(j.description || '—') + '</td>'
           + '<td style="white-space:nowrap;">' + UI.dateShort(j.scheduledDate) + '</td>'
@@ -127,8 +136,26 @@ var JobsPage = {
       var s = self._search.toLowerCase();
       all = all.filter(function(j) { return (j.clientName||'').toLowerCase().indexOf(s) >= 0 || (j.description||'').toLowerCase().indexOf(s) >= 0 || (j.property||'').toLowerCase().indexOf(s) >= 0 || String(j.jobNumber).indexOf(s) >= 0; });
     }
-    all.sort(function(a, b) { return (b.jobNumber || 0) - (a.jobNumber || 0); });
+    var col = self._sortCol;
+    var dir = self._sortDir === 'asc' ? 1 : -1;
+    all.sort(function(a, b) {
+      var va = a[col], vb = b[col];
+      if (col === 'jobNumber' || col === 'total') return ((va || 0) - (vb || 0)) * dir;
+      if (col === 'scheduledDate') return ((new Date(va || 0)).getTime() - (new Date(vb || 0)).getTime()) * dir;
+      va = (va || '').toString().toLowerCase(); vb = (vb || '').toString().toLowerCase();
+      return va < vb ? -1 * dir : va > vb ? 1 * dir : 0;
+    });
     return all;
+  },
+  _sortTh: function(label, col, extraStyle) {
+    var self = JobsPage;
+    var arrow = self._sortCol === col ? (self._sortDir === 'asc' ? ' &#9650;' : ' &#9660;') : '';
+    return '<th onclick="JobsPage._setSort(\'' + col + '\')" style="cursor:pointer;user-select:none;' + (extraStyle || '') + '"' + (self._sortCol === col ? ' class="sort-active"' : '') + '>' + label + arrow + '</th>';
+  },
+  _setSort: function(col) {
+    if (JobsPage._sortCol === col) { JobsPage._sortDir = JobsPage._sortDir === 'asc' ? 'desc' : 'asc'; }
+    else { JobsPage._sortCol = col; JobsPage._sortDir = 'asc'; }
+    JobsPage._page = 0; loadPage('jobs');
   },
   _setFilter: function(f) { JobsPage._filter = f; JobsPage._page = 0; loadPage('jobs'); },
   _goPage: function(p) { var t = Math.ceil(JobsPage._getFiltered().length / JobsPage._perPage); JobsPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('jobs'); },

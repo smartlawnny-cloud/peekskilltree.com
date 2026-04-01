@@ -3,7 +3,7 @@
  * Quote list, builder with line items, status management
  */
 var QuotesPage = {
-  _page: 0, _perPage: 50, _search: '', _filter: 'all', _sort: 'createdAt', _sortDir: -1,
+  _page: 0, _perPage: 50, _search: '', _filter: 'all', _sortCol: 'quoteNumber', _sortDir: 'desc',
 
   render: function() {
     var self = QuotesPage;
@@ -58,7 +58,16 @@ var QuotesPage = {
       + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All quotes</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
-      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="QuotesPage._setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | All</button>'
+      + (function() {
+        var chips = [['all','All'],['draft','Draft'],['sent','Sent'],['awaiting','Awaiting Response'],['approved','Approved'],['converted','Converted'],['changes_requested','Changes Requested']];
+        var out = '';
+        for (var ci = 0; ci < chips.length; ci++) {
+          var val = chips[ci][0], label = chips[ci][1];
+          var isActive = self._filter === val;
+          out += '<button onclick="QuotesPage._setFilter(\'' + val + '\')" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid ' + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';">' + label + '</button>';
+        }
+        return out;
+      })()
       + '</div>'
       + '<div class="search-box" style="min-width:200px;max-width:280px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
@@ -67,7 +76,7 @@ var QuotesPage = {
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + '<th>Client</th><th>Quote number</th><th>Property</th><th>Created</th><th>Status</th><th style="text-align:right;">Total</th>'
+      + self._sortTh('Client', 'clientName') + self._sortTh('Quote #', 'quoteNumber') + '<th>Property</th>' + self._sortTh('Created', 'createdAt') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
@@ -115,12 +124,26 @@ var QuotesPage = {
         return (q.clientName || '').toLowerCase().indexOf(s) >= 0 || (q.description || '').toLowerCase().indexOf(s) >= 0 || (q.property || '').toLowerCase().indexOf(s) >= 0 || String(q.quoteNumber).indexOf(s) >= 0;
       });
     }
+    var col = self._sortCol;
+    var dir = self._sortDir === 'asc' ? 1 : -1;
     all.sort(function(a, b) {
-      var va = a[self._sort] || '', vb = b[self._sort] || '';
-      if (typeof va === 'number') return (va - vb) * self._sortDir;
-      return va.toString().localeCompare(vb.toString()) * self._sortDir;
+      var va = a[col], vb = b[col];
+      if (col === 'quoteNumber' || col === 'total') return ((va || 0) - (vb || 0)) * dir;
+      if (col === 'createdAt') return ((new Date(va || 0)).getTime() - (new Date(vb || 0)).getTime()) * dir;
+      va = (va || '').toString().toLowerCase(); vb = (vb || '').toString().toLowerCase();
+      return va < vb ? -1 * dir : va > vb ? 1 * dir : 0;
     });
     return all;
+  },
+  _sortTh: function(label, col, extraStyle) {
+    var self = QuotesPage;
+    var arrow = self._sortCol === col ? (self._sortDir === 'asc' ? ' &#9650;' : ' &#9660;') : '';
+    return '<th onclick="QuotesPage._setSort(\'' + col + '\')" style="cursor:pointer;user-select:none;' + (extraStyle || '') + '"' + (self._sortCol === col ? ' class="sort-active"' : '') + '>' + label + arrow + '</th>';
+  },
+  _setSort: function(col) {
+    if (QuotesPage._sortCol === col) { QuotesPage._sortDir = QuotesPage._sortDir === 'asc' ? 'desc' : 'asc'; }
+    else { QuotesPage._sortCol = col; QuotesPage._sortDir = 'asc'; }
+    QuotesPage._page = 0; loadPage('quotes');
   },
   _setFilter: function(f) { QuotesPage._filter = f; QuotesPage._page = 0; loadPage('quotes'); },
   _goPage: function(p) { var t = Math.ceil(QuotesPage._getFiltered().length / QuotesPage._perPage); QuotesPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('quotes'); },

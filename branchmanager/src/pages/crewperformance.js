@@ -9,7 +9,7 @@ var CrewPerformance = {
 
   render: function() {
     var self = CrewPerformance;
-    var team = DB.team.getAll().filter(function(m) { return m.status === 'active'; });
+    var team = JSON.parse(localStorage.getItem('bm-team') || '[]').filter(function(m) { return m.status === 'active'; });
     var allJobs = DB.jobs.getAll();
     var allEntries = JSON.parse(localStorage.getItem('bm-time-entries') || '[]');
 
@@ -299,7 +299,7 @@ var CrewPerformance = {
   // ── Show detail modal for a crew member ──
   _showDetail: function(memberId) {
     var self = CrewPerformance;
-    var team = DB.team.getAll();
+    var team = JSON.parse(localStorage.getItem('bm-team') || '[]');
     var member = null;
     for (var i = 0; i < team.length; i++) {
       if (team[i].id === memberId) { member = team[i]; break; }
@@ -465,7 +465,7 @@ var CrewPerformance = {
   // ── Dashboard widget: compact top 3 performers ──
   renderWidget: function() {
     var self = CrewPerformance;
-    var team = DB.team.getAll().filter(function(m) { return m.status === 'active'; });
+    var team = JSON.parse(localStorage.getItem('bm-team') || '[]').filter(function(m) { return m.status === 'active'; });
     var allJobs = DB.jobs.getAll();
     var allEntries = JSON.parse(localStorage.getItem('bm-time-entries') || '[]');
 

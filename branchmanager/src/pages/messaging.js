@@ -42,7 +42,8 @@ var MessagingPage = {
         + '<div><strong style="font-size:15px;">' + (client ? client.name : '') + '</strong>'
         + '<div style="font-size:12px;color:var(--text-light);">' + (client ? client.phone || '' : '') + '</div></div>'
         + '<div style="display:flex;gap:6px;">'
-        + '<a href="tel:' + (client ? (client.phone || '').replace(/\D/g, '') : '') + '" style="background:var(--green-bg);border:1px solid #c8e6c9;border-radius:6px;padding:6px 10px;font-size:12px;text-decoration:none;color:var(--green-dark);font-weight:600;">📞 Call</a>'
+        + '<button onclick="Dialpad.call(\'' + (client ? (client.phone || '') : '') + '\',\'' + selectedId + '\',\'' + (client ? (client.name || '').replace(/'/g, "\\'") : '') + '\')" style="background:var(--green-bg);border:1px solid #c8e6c9;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600;color:var(--green-dark);">📞 Call</button>'
+        + '<button onclick="Dialpad.showTextModal(\'' + selectedId + '\',\'' + (client ? (client.name || '').replace(/'/g, "\\'") : '') + '\',\'' + (client ? (client.phone || '') : '') + '\')" style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600;color:var(--green-dark);">💬 Text</button>'
         + '<button onclick="MessagingPage.showTemplates(\'' + selectedId + '\')" style="background:#e3f2fd;border:1px solid #bbdefb;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600;color:#1565c0;">📋 Templates</button>'
         + '</div></div>';
 
@@ -100,24 +101,35 @@ var MessagingPage = {
 
     var type = typeEl ? typeEl.value : 'text';
     var notes = input.value.trim();
+    var client = DB.clients.getById(clientId);
 
-    // Save to comms log
-    var key = 'bm-comms-' + clientId;
-    var all = [];
-    try { all = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
-    all.unshift({
-      id: Date.now().toString(36),
-      clientId: clientId,
-      type: type,
-      direction: 'outbound',
-      notes: notes,
-      date: new Date().toISOString(),
-      user: 'Doug'
-    });
-    localStorage.setItem(key, JSON.stringify(all));
+    if (type === 'text' && typeof Dialpad !== 'undefined') {
+      // Send via Dialpad (API or fallback to SMS app)
+      var phone = client ? client.phone : '';
+      Dialpad.sendSMS(phone, notes, clientId);
+    } else if (type === 'email' && typeof Email !== 'undefined' && client && client.email) {
+      // Send via SendGrid (API or fallback to mailto)
+      Email.send(client.email, 'Message from Second Nature Tree Service', notes);
+      Dialpad._logComm(clientId, 'email', 'outbound', notes);
+    } else {
+      // Save to comms log (call notes, internal notes)
+      var key = 'bm-comms-' + clientId;
+      var all = [];
+      try { all = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
+      all.unshift({
+        id: Date.now().toString(36),
+        clientId: clientId,
+        type: type,
+        direction: 'outbound',
+        notes: notes,
+        date: new Date().toISOString(),
+        user: 'Doug'
+      });
+      localStorage.setItem(key, JSON.stringify(all));
+      UI.toast(type === 'call' ? 'Call note saved' : 'Note saved');
+    }
 
     input.value = '';
-    UI.toast(type === 'text' ? 'Text queued (Dialpad SMS pending registration)' : type === 'email' ? 'Email logged' : 'Note saved');
     MessagingPage.selectClient(clientId);
   },
 

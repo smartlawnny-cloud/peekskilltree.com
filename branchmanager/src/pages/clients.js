@@ -390,6 +390,8 @@ var ClientsPage = {
 
       // Action buttons (right-aligned)
       + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px;">'
+      + (c.phone ? '<button class="btn" style="background:var(--green-dark);color:#fff;" onclick="Dialpad.call(\'' + c.phone.replace(/'/g, '') + '\',\'' + id + '\',\'' + (c.name || '').replace(/'/g, "\\'") + '\')">📞 Call</button>' : '')
+      + (c.phone ? '<button class="btn" style="background:#7c3aed;color:#fff;" onclick="Dialpad.showTextModal(\'' + id + '\',\'' + (c.name || '').replace(/'/g, "\\'") + '\',\'' + (c.phone || '').replace(/'/g, '') + '\')">💬 Text</button>' : '')
       + (c.email ? '<button class="btn btn-primary" onclick="window.location.href=\'mailto:' + c.email + '\'">✉️ Email</button>' : '')
       + '<button class="btn btn-outline" onclick="ClientsPage.showForm(\'' + id + '\')">✏️ Edit</button>'
       + '<button class="btn btn-outline">··· More Actions</button>'

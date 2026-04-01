@@ -33,6 +33,9 @@ var SettingsPage = {
     // Stripe Payments
     html += Stripe.renderSettings();
 
+    // Dialpad Calling & SMS
+    html += Dialpad.renderSettings();
+
     // SendJim Direct Mail
     html += SendJim.renderSettings();
 

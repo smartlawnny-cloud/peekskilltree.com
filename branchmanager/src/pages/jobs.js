@@ -53,6 +53,18 @@ var JobsPage = {
       + '</div>'
       + '</div>';
 
+    // Batch invoice banner for completed jobs without invoices
+    if (needsInvoicing.length > 0) {
+      var needsTotal = needsInvoicing.reduce(function(s, j) { return s + (j.total || 0); }, 0);
+      html += '<div id="batch-invoice-banner" style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(46,125,50,.3);">'
+        + '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<span style="font-size:22px;">💰</span>'
+        + '<span style="font-size:14px;font-weight:600;">' + needsInvoicing.length + ' completed job' + (needsInvoicing.length !== 1 ? 's' : '') + ' ready for invoicing &mdash; ' + UI.money(needsTotal) + ' total</span>'
+        + '</div>'
+        + '<button onclick="JobsPage._batchInvoiceAll()" style="background:#fff;color:#2e7d32;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);">Create All Invoices</button>'
+        + '</div>';
+    }
+
     var filtered = self._getFiltered();
     var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
@@ -196,6 +208,72 @@ var JobsPage = {
     });
     UI.toast(created + ' invoice' + (created !== 1 ? 's' : '') + ' created!');
     loadPage('invoices');
+  },
+  _batchInvoiceAll: function() {
+    var all = DB.jobs.getAll();
+    var needsInvoicing = all.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+    if (needsInvoicing.length === 0) { UI.toast('No jobs need invoicing'); return; }
+
+    var totalAmount = needsInvoicing.reduce(function(s, j) { return s + (j.total || 0); }, 0);
+
+    // Build confirmation modal listing all jobs
+    var listHtml = '<div style="margin-bottom:12px;font-size:14px;">The following <strong>' + needsInvoicing.length + '</strong> job' + (needsInvoicing.length !== 1 ? 's' : '') + ' will be invoiced:</div>'
+      + '<div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:16px;">'
+      + '<table style="width:100%;font-size:13px;border-collapse:collapse;">'
+      + '<thead><tr style="background:var(--bg);position:sticky;top:0;">'
+      + '<th style="text-align:left;padding:8px 12px;font-weight:600;">Client</th>'
+      + '<th style="text-align:left;padding:8px 12px;font-weight:600;">Job #</th>'
+      + '<th style="text-align:right;padding:8px 12px;font-weight:600;">Total</th>'
+      + '</tr></thead><tbody>';
+    for (var i = 0; i < needsInvoicing.length; i++) {
+      var nj = needsInvoicing[i];
+      listHtml += '<tr style="border-top:1px solid var(--border);">'
+        + '<td style="padding:8px 12px;">' + UI.esc(nj.clientName || '—') + '</td>'
+        + '<td style="padding:8px 12px;">#' + (nj.jobNumber || '') + '</td>'
+        + '<td style="padding:8px 12px;text-align:right;font-weight:600;">' + UI.money(nj.total) + '</td>'
+        + '</tr>';
+    }
+    listHtml += '</tbody></table></div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:2px solid var(--border);">'
+      + '<span style="font-size:15px;font-weight:700;">Total</span>'
+      + '<span style="font-size:18px;font-weight:800;color:#2e7d32;">' + UI.money(totalAmount) + '</span>'
+      + '</div>';
+
+    UI.showModal('Batch Create Invoices', listHtml, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="JobsPage._batchInvoiceConfirm()" style="background:#2e7d32;">Create ' + needsInvoicing.length + ' Invoice' + (needsInvoicing.length !== 1 ? 's' : '') + '</button>'
+    });
+  },
+  _batchInvoiceConfirm: function() {
+    var all = DB.jobs.getAll();
+    var needsInvoicing = all.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+    var today = new Date().toISOString().split('T')[0];
+    var dueDate = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+    var created = 0;
+    var totalAmount = 0;
+
+    for (var i = 0; i < needsInvoicing.length; i++) {
+      var job = needsInvoicing[i];
+      var inv = DB.invoices.create({
+        clientId: job.clientId,
+        clientName: job.clientName,
+        jobId: job.id,
+        subject: 'For Services Rendered',
+        lineItems: job.lineItems,
+        total: job.total || 0,
+        balance: job.total || 0,
+        status: 'draft',
+        issuedDate: today,
+        dueDate: dueDate
+      });
+      DB.jobs.update(job.id, { invoiceId: inv.id });
+      totalAmount += (job.total || 0);
+      created++;
+    }
+
+    UI.closeModal();
+    UI.toast('Created ' + created + ' invoice' + (created !== 1 ? 's' : '') + ' totaling ' + UI.money(totalAmount));
+    loadPage('jobs');
   },
   _batchAssignCrew: function() {
     var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });

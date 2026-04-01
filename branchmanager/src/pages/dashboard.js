@@ -36,6 +36,102 @@ var DashboardPage = {
       + '<h2 style="font-size:28px;font-weight:700;margin-top:2px;">' + greeting + ', ' + userName.split(' ')[0] + '</h2>'
       + '</div>';
 
+    // Smart Daily Briefing
+    var briefingDismissed = localStorage.getItem('bm-briefing-dismissed');
+    var briefingDateStr = now.getFullYear() + '-' + (now.getMonth() + 1 < 10 ? '0' : '') + (now.getMonth() + 1) + '-' + (now.getDate() < 10 ? '0' : '') + now.getDate();
+    if (briefingDismissed !== briefingDateStr) {
+      var briefingInsights = [];
+      var bOverdue = allInvoices.filter(function(i) { return i.status !== 'paid' && i.balance > 0 && i.dueDate && new Date(i.dueDate) < now; });
+      var bOverdueTotal = bOverdue.reduce(function(s, i) { return s + (i.balance || 0); }, 0);
+      if (bOverdue.length > 0) {
+        briefingInsights.push({
+          icon: '🔴',
+          text: 'You have ' + bOverdue.length + ' overdue invoice' + (bOverdue.length > 1 ? 's' : '') + ' worth ' + UI.money(bOverdueTotal) + ' — follow up today',
+          action: 'InvoicesPage._setFilter(\'overdue\');loadPage(\'invoices\');'
+        });
+      }
+      var bSevenAgo = new Date(now.getTime() - 7 * 86400000);
+      var bStaleQuotes = allQuotes.filter(function(q) { return q.status === 'sent' && q.createdAt && new Date(q.createdAt) < bSevenAgo; });
+      if (bStaleQuotes.length > 0) {
+        briefingInsights.push({
+          icon: '⏳',
+          text: bStaleQuotes.length + ' quote' + (bStaleQuotes.length > 1 ? 's' : '') + ' sent 7+ days ago need follow-up',
+          action: 'loadPage(\'quotes\');'
+        });
+      }
+      var bNeedsInvoicing = allJobs.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+      var bNeedsInvTotal = bNeedsInvoicing.reduce(function(s, j) { return s + (j.total || 0); }, 0);
+      if (bNeedsInvoicing.length > 0) {
+        briefingInsights.push({
+          icon: '💵',
+          text: bNeedsInvoicing.length + ' completed job' + (bNeedsInvoicing.length > 1 ? 's' : '') + ' haven\'t been invoiced yet — ' + UI.money(bNeedsInvTotal) + ' in revenue waiting',
+          action: 'loadPage(\'jobs\');'
+        });
+      }
+      var bTodayStr = briefingDateStr;
+      var bTodayJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0, 10) === bTodayStr && j.status !== 'completed'; });
+      if (bTodayJobs.length === 0) {
+        briefingInsights.push({
+          icon: '🌤',
+          text: 'No jobs scheduled today — good day for estimates',
+          action: 'loadPage(\'schedule\');'
+        });
+      } else {
+        briefingInsights.push({
+          icon: '📋',
+          text: bTodayJobs.length + ' job' + (bTodayJobs.length > 1 ? 's' : '') + ' on the schedule today — let\'s get after it',
+          action: 'loadPage(\'schedule\');'
+        });
+      }
+      var bNewRequests = DB.requests.getAll().filter(function(r) { return r.status === 'new'; });
+      if (bNewRequests.length > 0) {
+        briefingInsights.push({
+          icon: '📥',
+          text: bNewRequests.length + ' new request' + (bNewRequests.length > 1 ? 's' : '') + ' came in — respond within 2 hours for best conversion',
+          action: 'loadPage(\'requests\');'
+        });
+      }
+      var bThisMonth = allInvoices.filter(function(i) {
+        var d = new Date(i.createdAt);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && (i.status === 'paid' || i.status === 'collected');
+      }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+      var bLastMonth = allInvoices.filter(function(i) {
+        var lm = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        var ly = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        var d = new Date(i.createdAt);
+        return d.getMonth() === lm && d.getFullYear() === ly && (i.status === 'paid' || i.status === 'collected');
+      }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+      if (bThisMonth > 0 || bLastMonth > 0) {
+        var bAhead = bThisMonth >= bLastMonth;
+        briefingInsights.push({
+          icon: bAhead ? '📈' : '📉',
+          text: 'This month\'s revenue (' + UI.money(bThisMonth) + ') is ' + (bAhead ? 'ahead of' : 'behind') + ' last month (' + UI.money(bLastMonth) + ')',
+          action: 'loadPage(\'profitloss\');'
+        });
+      }
+
+      // Limit to 5 insights max
+      var bShow = briefingInsights.slice(0, 5);
+      if (bShow.length > 0) {
+        html += '<div id="daily-briefing" style="background:linear-gradient(135deg,#14331a 0%,#1e5428 50%,#1a3c12 100%);border-radius:12px;padding:20px;color:#fff;margin-bottom:20px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
+          + '<div style="display:flex;align-items:center;gap:8px;">'
+          + '<span style="font-size:18px;color:#8fe89f;">✦</span>'
+          + '<h3 style="font-size:16px;font-weight:700;margin:0;">Daily Briefing</h3></div>'
+          + '<a href="#" onclick="DashboardPage.dismissBriefing();return false;" style="font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;">Dismiss</a>'
+          + '</div>';
+        bShow.forEach(function(insight, idx) {
+          var borderTop = idx > 0 ? 'border-top:1px solid rgba(255,255,255,.1);' : '';
+          html += '<div onclick="' + insight.action + '" style="display:flex;align-items:center;gap:10px;padding:10px 0;cursor:pointer;' + borderTop + '">'
+            + '<span style="font-size:16px;flex-shrink:0;">' + insight.icon + '</span>'
+            + '<span style="font-size:13px;line-height:1.4;opacity:.95;">' + insight.text + '</span>'
+            + '<span style="margin-left:auto;font-size:14px;opacity:.4;flex-shrink:0;">›</span>'
+            + '</div>';
+        });
+        html += '</div>';
+      }
+    }
+
     // Jobber-style Workflow cards (2x2 grid)
     var overdueInvoices = unpaidInvoices.filter(function(i) { return i.dueDate && new Date(i.dueDate) < now; });
     var unapprovedQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
@@ -167,6 +263,67 @@ var DashboardPage = {
         + '</div>';
     });
     html += '</div></div>';
+
+    // Revenue Goals widget (not in Jobber!)
+    var goalsData = JSON.parse(localStorage.getItem('bm-revenue-goals') || '{"annual":300000,"monthly":25000}');
+    var currentMonthRev = chartData.length > 0 ? chartData[chartData.length - 1].value : 0;
+    var annualPct = goalsData.annual > 0 ? Math.round((ytdRevenue / goalsData.annual) * 100) : 0;
+    var monthlyPct = goalsData.monthly > 0 ? Math.round((currentMonthRev / goalsData.monthly) * 100) : 0;
+    var annualRemaining = goalsData.annual - ytdRevenue;
+    var monthlyRemaining = goalsData.monthly - currentMonthRev;
+    var annualBarColor = annualPct >= 100 ? 'linear-gradient(90deg,#e6a817,#f5c842)' : 'linear-gradient(90deg,#2e7d32,#4caf50)';
+    var monthlyBarColor = monthlyPct >= 100 ? 'linear-gradient(90deg,#e6a817,#f5c842)' : 'linear-gradient(90deg,#2e7d32,#4caf50)';
+    var annualPctColor = annualPct >= 100 ? '#e6a817' : 'var(--green-dark)';
+    var monthlyPctColor = monthlyPct >= 100 ? '#e6a817' : 'var(--green-dark)';
+
+    html += '<style>'
+      + '@keyframes bmGoalFill { from { width: 0%; } }'
+      + '.bm-goal-bar { animation: bmGoalFill 1s ease-out; }'
+      + '</style>';
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="font-size:16px;margin:0;">🎯 Revenue Goals</h3>'
+      + '<button onclick="DashboardPage.editGoals()" class="btn btn-outline" style="font-size:11px;padding:4px 10px;">Edit Goals</button>'
+      + '</div>';
+
+    // Annual goal bar
+    html += '<div style="margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+      + '<span style="font-size:13px;font-weight:600;">Annual Goal</span>'
+      + '<span style="font-size:13px;font-weight:700;color:' + annualPctColor + ';">' + annualPct + '%</span>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-bottom:4px;">'
+      + '<span>' + UI.moneyInt(ytdRevenue) + ' earned</span>'
+      + '<span>' + UI.moneyInt(goalsData.annual) + ' goal</span>'
+      + '</div>'
+      + '<div style="height:10px;background:#e8e8e8;border-radius:5px;overflow:hidden;">'
+      + '<div class="bm-goal-bar" style="height:100%;width:' + Math.min(annualPct, 100) + '%;background:' + annualBarColor + ';border-radius:5px;"></div>'
+      + '</div>'
+      + '<div style="font-size:12px;margin-top:4px;color:var(--text-light);">'
+      + (annualRemaining > 0 ? UI.moneyInt(annualRemaining) + ' remaining to reach goal' : '\uD83C\uDF89 Goal exceeded by ' + UI.moneyInt(Math.abs(annualRemaining)) + '!')
+      + '</div>'
+      + '</div>';
+
+    // Monthly goal bar
+    html += '<div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+      + '<span style="font-size:13px;font-weight:600;">Monthly Goal (' + monthNames[now.getMonth()] + ')</span>'
+      + '<span style="font-size:13px;font-weight:700;color:' + monthlyPctColor + ';">' + monthlyPct + '%</span>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-bottom:4px;">'
+      + '<span>' + UI.moneyInt(currentMonthRev) + ' earned</span>'
+      + '<span>' + UI.moneyInt(goalsData.monthly) + ' goal</span>'
+      + '</div>'
+      + '<div style="height:10px;background:#e8e8e8;border-radius:5px;overflow:hidden;">'
+      + '<div class="bm-goal-bar" style="height:100%;width:' + Math.min(monthlyPct, 100) + '%;background:' + monthlyBarColor + ';border-radius:5px;"></div>'
+      + '</div>'
+      + '<div style="font-size:12px;margin-top:4px;color:var(--text-light);">'
+      + (monthlyRemaining > 0 ? UI.moneyInt(monthlyRemaining) + ' remaining to reach goal' : '\uD83C\uDF89 Goal exceeded by ' + UI.moneyInt(Math.abs(monthlyRemaining)) + '!')
+      + '</div>'
+      + '</div>';
+
+    html += '</div>';
 
     // Revenue Forecast widget
     var openQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting' || q.status === 'draft'; });
@@ -497,6 +654,47 @@ var DashboardPage = {
       }
       UI.toast(total + ' records synced from cloud!');
     }
+    loadPage('dashboard');
+  },
+
+  dismissBriefing: function() {
+    var now = new Date();
+    var dateStr = now.getFullYear() + '-' + (now.getMonth() + 1 < 10 ? '0' : '') + (now.getMonth() + 1) + '-' + (now.getDate() < 10 ? '0' : '') + now.getDate();
+    localStorage.setItem('bm-briefing-dismissed', dateStr);
+    var el = document.getElementById('daily-briefing');
+    if (el) el.remove();
+  },
+
+  editGoals: function() {
+    var goals = JSON.parse(localStorage.getItem('bm-revenue-goals') || '{"annual":300000,"monthly":25000}');
+    var modal = '<div id="goals-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)this.remove();">'
+      + '<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:400px;">'
+      + '<h3 style="margin:0 0 16px 0;font-size:18px;">Set Revenue Goals</h3>'
+      + '<form onsubmit="event.preventDefault();DashboardPage.saveGoals(this);">'
+      + '<div style="margin-bottom:16px;">'
+      + '<label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Annual Revenue Goal ($)</label>'
+      + '<input type="number" name="annual" value="' + (goals.annual || 300000) + '" min="0" step="1000" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:15px;" />'
+      + '</div>'
+      + '<div style="margin-bottom:20px;">'
+      + '<label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Monthly Revenue Goal ($)</label>'
+      + '<input type="number" name="monthly" value="' + (goals.monthly || 25000) + '" min="0" step="500" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:15px;" />'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+      + '<button type="button" onclick="document.getElementById(\'goals-modal\').remove();" class="btn btn-outline" style="font-size:13px;">Cancel</button>'
+      + '<button type="submit" class="btn btn-primary" style="font-size:13px;">Save Goals</button>'
+      + '</div>'
+      + '</form>'
+      + '</div></div>';
+    document.body.insertAdjacentHTML('beforeend', modal);
+  },
+
+  saveGoals: function(form) {
+    var annual = parseFloat(form.annual.value) || 300000;
+    var monthly = parseFloat(form.monthly.value) || 25000;
+    localStorage.setItem('bm-revenue-goals', JSON.stringify({ annual: annual, monthly: monthly }));
+    var modal = document.getElementById('goals-modal');
+    if (modal) modal.remove();
+    UI.toast('Revenue goals updated!');
     loadPage('dashboard');
   }
 };

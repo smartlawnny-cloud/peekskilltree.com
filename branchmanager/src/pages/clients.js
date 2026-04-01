@@ -9,6 +9,7 @@ var ClientsPage = {
   _search: '',
   _sort: 'name',
   _sortDir: 1,
+  _tagFilter: '',
 
   render: function() {
     var self = ClientsPage;
@@ -54,13 +55,22 @@ var ClientsPage = {
       + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">Filtered clients</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + clients.length + ' results)</span>'
-      + '<button class="filter-btn" style="font-size:12px;padding:5px 12px;">Filter by tag +</button>'
+      + '<button class="filter-btn' + (self._tagFilter ? ' active' : '') + '" onclick="ClientsPage.showTagFilter()" style="font-size:12px;padding:5px 12px;">' + (self._tagFilter ? 'Tag: ' + UI.esc(self._tagFilter) + ' ✕' : 'Filter by tag +') + '</button>'
       + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="ClientsPage.setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | Leads and Active</button>'
       + '</div>'
       + '<div class="search-box" style="min-width:200px;max-width:280px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
       + '<input type="text" id="client-search" placeholder="Search clients..." value="' + UI.esc(self._search) + '" oninput="ClientsPage.setSearch(this.value)">'
       + '</div></div>';
+
+    // Active tag filter banner
+    if (self._tagFilter) {
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:8px;margin-bottom:12px;font-size:13px;">'
+        + '<span style="color:var(--green-dark);font-weight:600;">Showing clients tagged:</span>'
+        + '<span style="background:var(--green-dark);color:#fff;padding:3px 12px;border-radius:12px;font-weight:700;font-size:12px;">' + UI.esc(self._tagFilter) + '</span>'
+        + '<button onclick="ClientsPage._tagFilter=\'\';ClientsPage._page=0;loadPage(\'clients\')" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:13px;color:var(--green-dark);font-weight:600;">Clear ✕</button>'
+        + '</div>';
+    }
 
     // Paginated slice
     var pageClients = clients.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
@@ -80,7 +90,7 @@ var ClientsPage = {
     } else {
       pageClients.forEach(function(c) {
         html += '<tr onclick="ClientsPage.showDetail(\'' + c.id + '\')" style="cursor:pointer;" data-status="' + c.status + '">'
-          + '<td><strong>' + UI.esc(c.name || '') + '</strong>' + (c.company ? '<br><span style="font-size:12px;color:var(--text-light);">' + UI.esc(c.company) + '</span>' : '') + '</td>'
+          + '<td><strong>' + UI.esc(c.name || '') + '</strong>' + (c.company ? '<br><span style="font-size:12px;color:var(--text-light);">' + UI.esc(c.company) + '</span>' : '') + (c.tags && c.tags.length ? '<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px;">' + c.tags.slice(0, 3).map(function(t) { return '<span style="padding:1px 7px;background:var(--green-bg);border-radius:8px;font-size:10px;font-weight:600;color:var(--green-dark);">' + UI.esc(t) + '</span>'; }).join('') + (c.tags.length > 3 ? '<span style="font-size:10px;color:var(--text-light);">+' + (c.tags.length - 3) + '</span>' : '') + '</div>' : '') + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(c.address || '—') + '</td>'
           + '<td style="white-space:nowrap;">' + UI.phone(c.phone) + '</td>'
           + '<td style="font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(c.email || '—') + '</td>'
@@ -124,6 +134,14 @@ var ClientsPage = {
       clients = clients.filter(function(c) { return c.status === self._filter; });
     }
 
+    // Filter by tag
+    if (self._tagFilter) {
+      var tagQ = self._tagFilter.toLowerCase();
+      clients = clients.filter(function(c) {
+        return c.tags && c.tags.some(function(t) { return t.toLowerCase() === tagQ; });
+      });
+    }
+
     // Search
     if (self._search && self._search.length >= 2) {
       var q = self._search.toLowerCase();
@@ -161,6 +179,136 @@ var ClientsPage = {
 
   filter: function(status, btn) {
     ClientsPage.setFilter(status);
+  },
+
+  showTagFilter: function() {
+    // If already filtering by tag, clear it
+    if (ClientsPage._tagFilter) {
+      ClientsPage._tagFilter = '';
+      ClientsPage._page = 0;
+      loadPage('clients');
+      return;
+    }
+    // Collect all unique tags across all clients
+    var allTags = {};
+    DB.clients.getAll().forEach(function(c) {
+      if (c.tags && c.tags.length) {
+        c.tags.forEach(function(t) {
+          var key = t.toLowerCase().trim();
+          if (key) {
+            if (!allTags[key]) allTags[key] = { name: t.trim(), count: 0 };
+            allTags[key].count++;
+          }
+        });
+      }
+    });
+    var tagList = Object.keys(allTags).sort().map(function(k) { return allTags[k]; });
+
+    if (tagList.length === 0) {
+      UI.toast('No tags found — add tags to clients first');
+      return;
+    }
+
+    // Default tags to suggest
+    var defaultTags = ['VIP', 'Commercial', 'Residential', 'Repeat', 'Referral', 'Difficult Access', 'HOA', 'Property Manager', 'Emergency', 'Seasonal'];
+
+    var html = '<div style="margin-bottom:16px;">'
+      + '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;">Active Tags</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    tagList.forEach(function(t) {
+      html += '<button onclick="ClientsPage.setTagFilter(\'' + UI.esc(t.name).replace(/'/g, "\\'") + '\')" style="display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:var(--green-bg);border:1px solid #c8e6c9;border-radius:20px;font-size:13px;font-weight:600;color:var(--green-dark);cursor:pointer;">'
+        + UI.esc(t.name) + ' <span style="background:var(--green-dark);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + t.count + '</span></button>';
+    });
+    html += '</div></div>';
+
+    // Suggested tags section
+    var existingKeys = Object.keys(allTags);
+    var suggestions = defaultTags.filter(function(t) { return existingKeys.indexOf(t.toLowerCase()) === -1; });
+    if (suggestions.length) {
+      html += '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;margin-top:8px;">Suggested Tags</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      suggestions.forEach(function(t) {
+        html += '<span style="padding:6px 14px;background:var(--bg);border:1px dashed var(--border);border-radius:20px;font-size:13px;color:var(--text-light);">' + t + '</span>';
+      });
+      html += '</div>';
+    }
+
+    UI.showModal('Filter by Tag', html);
+  },
+
+  setTagFilter: function(tag) {
+    ClientsPage._tagFilter = tag;
+    ClientsPage._page = 0;
+    UI.closeModal();
+    loadPage('clients');
+  },
+
+  addTagToClient: function(clientId, tag) {
+    var c = DB.clients.getById(clientId);
+    if (!c) return;
+    var tags = c.tags || [];
+    var tagLower = tag.toLowerCase().trim();
+    var exists = tags.some(function(t) { return t.toLowerCase() === tagLower; });
+    if (!exists) {
+      tags.push(tag.trim());
+      DB.clients.update(clientId, { tags: tags });
+      UI.toast('Tag added: ' + tag);
+    }
+  },
+
+  removeTagFromClient: function(clientId, tag) {
+    var c = DB.clients.getById(clientId);
+    if (!c) return;
+    var tags = (c.tags || []).filter(function(t) { return t.toLowerCase() !== tag.toLowerCase(); });
+    DB.clients.update(clientId, { tags: tags });
+    UI.toast('Tag removed');
+    ClientsPage.showDetail(clientId);
+  },
+
+  showAddTagModal: function(clientId) {
+    var c = DB.clients.getById(clientId);
+    if (!c) return;
+    var existing = (c.tags || []).map(function(t) { return t.toLowerCase(); });
+
+    // Collect all tags used across all clients for suggestions
+    var allTags = {};
+    DB.clients.getAll().forEach(function(cl) {
+      if (cl.tags && cl.tags.length) {
+        cl.tags.forEach(function(t) {
+          var key = t.toLowerCase().trim();
+          if (key && existing.indexOf(key) === -1) {
+            allTags[key] = t.trim();
+          }
+        });
+      }
+    });
+
+    var defaultTags = ['VIP', 'Commercial', 'Residential', 'Repeat', 'Referral', 'Difficult Access', 'HOA', 'Property Manager', 'Emergency', 'Seasonal'];
+    var suggestTags = defaultTags.filter(function(t) { return existing.indexOf(t.toLowerCase()) === -1; });
+    // Add any custom tags from other clients
+    Object.keys(allTags).forEach(function(k) {
+      if (suggestTags.map(function(s) { return s.toLowerCase(); }).indexOf(k) === -1) {
+        suggestTags.push(allTags[k]);
+      }
+    });
+
+    var html = '<div style="margin-bottom:16px;">'
+      + '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">New Tag</label>'
+      + '<div style="display:flex;gap:8px;">'
+      + '<input type="text" id="new-tag-input" placeholder="Enter tag name..." style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<button class="btn btn-primary" onclick="var v=document.getElementById(\'new-tag-input\').value.trim();if(v){ClientsPage.addTagToClient(\'' + clientId + '\',v);UI.closeModal();ClientsPage.showDetail(\'' + clientId + '\');}">Add</button>'
+      + '</div></div>';
+
+    if (suggestTags.length) {
+      html += '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;">Quick Add</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      suggestTags.forEach(function(t) {
+        html += '<button onclick="ClientsPage.addTagToClient(\'' + clientId + '\',\'' + t.replace(/'/g, "\\'") + '\');UI.closeModal();ClientsPage.showDetail(\'' + clientId + '\');" style="padding:6px 14px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;font-weight:500;">' + UI.esc(t) + '</button>';
+      });
+      html += '</div>';
+    }
+
+    UI.showModal('Add Tag to ' + UI.esc(c.name), html);
   },
 
   showForm: function(id) {
@@ -334,9 +482,9 @@ var ClientsPage = {
       + '<div style="margin-bottom:16px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
       + '<h3 style="font-size:18px;font-weight:700;">Tags</h3>'
-      + '<button class="btn btn-outline" style="font-size:12px;padding:4px 10px;" onclick="ClientsPage.showForm(\'' + id + '\')">+ New Tag</button>'
+      + '<button class="btn btn-outline" style="font-size:12px;padding:4px 10px;" onclick="ClientsPage.showAddTagModal(\'' + id + '\')">+ Add Tag</button>'
       + '</div>'
-      + (c.tags && c.tags.length ? '<div style="display:flex;gap:4px;flex-wrap:wrap;">' + c.tags.map(function(t) { return '<span style="display:inline-block;padding:4px 12px;background:var(--bg);border-radius:12px;font-size:12px;font-weight:600;color:var(--text-light);">' + UI.esc(t) + '</span>'; }).join('') + '</div>' : '<div style="font-size:13px;color:var(--text-light);font-style:italic;">This client has no tags</div>')
+      + (c.tags && c.tags.length ? '<div style="display:flex;gap:4px;flex-wrap:wrap;">' + c.tags.map(function(t) { return '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px 4px 12px;background:var(--green-bg);border:1px solid #c8e6c9;border-radius:20px;font-size:12px;font-weight:600;color:var(--green-dark);">' + UI.esc(t) + '<button onclick="event.stopPropagation();ClientsPage.removeTagFromClient(\'' + id + '\',\'' + t.replace(/'/g, "\\'") + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-light);padding:0 2px;line-height:1;" title="Remove tag">×</button></span>'; }).join('') + '</div>' : '<div style="font-size:13px;color:var(--text-light);font-style:italic;">No tags — add tags to organize clients</div>')
       + '</div>';
 
     // Custom fields

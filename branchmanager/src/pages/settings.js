@@ -48,6 +48,19 @@ var SettingsPage = {
         + '</div>';
     }
 
+    // Email Templates
+    if (typeof EmailTemplates !== 'undefined') {
+      html += EmailTemplates.renderSettings();
+    }
+
+    // Crew Performance link
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+      + '<div><h3 style="margin-bottom:4px;">Crew Performance</h3>'
+      + '<p style="font-size:13px;color:var(--text-light);margin:0;">View crew metrics, leaderboards, and productivity stats</p></div>'
+      + '<button class="btn btn-outline" onclick="loadPage(\'crewperformance\')">View Dashboard →</button>'
+      + '</div></div>';
+
     // Sync from Cloud
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;">'
@@ -109,8 +122,8 @@ var SettingsPage = {
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
       + '<h3 style="margin-bottom:12px;">About Branch Manager</h3>'
       + '<div style="font-size:13px;color:var(--text-light);line-height:1.8;">'
-      + '<div><strong>Version:</strong> 1.0.0</div>'
-      + '<div><strong>Pages:</strong> 35 modules</div>'
+      + '<div><strong>Version:</strong> 2.0.0</div>'
+      + '<div><strong>Pages:</strong> 50 modules</div>'
       + '<div><strong>Stack:</strong> Vanilla JS + Supabase + Stripe + MapLibre</div>'
       + '<div><strong>Storage:</strong> localStorage + Supabase cloud sync</div>'
       + '<div><strong>PWA:</strong> Installable, offline capable</div>'

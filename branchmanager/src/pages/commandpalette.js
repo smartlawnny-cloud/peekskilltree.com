@@ -24,6 +24,7 @@ var CommandPalette = {
     { category: 'Navigate', label: 'Go to Team', icon: '👷', action: function() { loadPage('team'); }, keywords: 'crew employees staff' },
     { category: 'Navigate', label: 'Go to Settings', icon: '⚙️', action: function() { loadPage('settings'); }, keywords: 'preferences config' },
     { category: 'Navigate', label: 'Go to Dispatch', icon: '🗺️', action: function() { loadPage('dispatch'); }, keywords: 'route map driving' },
+    { category: 'Navigate', label: 'Go to Crew Performance', icon: '🏆', action: function() { loadPage('crewperformance'); }, keywords: 'leaderboard stats metrics' },
     { category: 'Navigate', label: 'Go to Messages', icon: '💬', action: function() { loadPage('messaging'); }, keywords: 'sms email text' },
 
     // Create

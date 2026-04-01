@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Branch Manager">
 <link rel="manifest" href="manifest.json">
-<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js?v=1775010971"></script>
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js?v=1775011857"></script>
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
@@ -475,6 +475,7 @@
         <button class="nav-item" data-page="photomap"><span class="icon"><i data-lucide="camera" class="li"></i></span> Photo Map</button>
         <button class="nav-item" data-page="messaging"><span class="icon"><i data-lucide="message-square" class="li"></i></span> Messages</button>
         <button class="nav-item" data-page="equipment"><span class="icon"><i data-lucide="cog" class="li"></i></span> Equipment</button>
+        <button class="nav-item" data-page="crewperformance"><span class="icon"><i data-lucide="trophy" class="li"></i></span> Crew Stats</button>
         <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Job Costing</button>
         <button class="nav-item" data-page="recurring"><span class="icon"><i data-lucide="repeat" class="li"></i></span> Recurring Jobs</button>
         <button class="nav-item" data-page="notifications"><span class="icon"><i data-lucide="bell" class="li"></i></span> Activity Feed</button>
@@ -538,53 +539,53 @@
 </div>
 
 <!-- Module scripts -->
-<script src="src/auth.js?v=1775010971"></script>
-<script src="src/db.js?v=1775010971"></script>
-<script src="src/ui.js?v=1775010971"></script>
-<script src="src/pages/dashboard.js?v=1775010971"></script>
-<script src="src/pages/clients.js?v=1775010971"></script>
-<script src="src/pages/requests.js?v=1775010971"></script>
-<script src="src/pages/quotes.js?v=1775010971"></script>
-<script src="src/pages/jobs.js?v=1775010971"></script>
-<script src="src/pages/invoices.js?v=1775010971"></script>
-<script src="src/pages/schedule.js?v=1775010971"></script>
-<script src="src/pages/insights.js?v=1775010971"></script>
-<script src="src/geofence.js?v=1775010971"></script>
-<script src="src/weather.js?v=1775010971"></script>
-<script src="src/pages/comms.js?v=1775010971"></script>
-<script src="src/pages/messaging.js?v=1775010971"></script>
-<script src="src/pages/profitloss.js?v=1775010971"></script>
-<script src="src/photos.js?v=1775010971"></script>
-<script src="src/pages/clientmap.js?v=1775010971"></script>
-<script src="src/pages/photomap.js?v=1775010971"></script>
-<script src="src/pages/crewview.js?v=1775010971"></script>
-<script src="src/pages/employeecenter.js?v=1775010971"></script>
-<script src="src/pages/budget.js?v=1775010971"></script>
-<script src="src/pages/equipment.js?v=1775010971"></script>
-<script src="src/pages/jobcosting.js?v=1775010971"></script>
-<script src="src/pages/dispatch.js?v=1775010971"></script>
-<script src="src/pages/recurring.js?v=1775010971"></script>
-<script src="src/pages/notifications.js?v=1775010971"></script>
-<script src="src/pages/expenses.js?v=1775010971"></script>
-<script src="src/email.js?v=1775010971"></script>
-<script src="src/pages/reports.js?v=1775010971"></script>
-<script src="src/pages/reviewtools.js?v=1775010971"></script>
-<script src="src/pages/weeklysummary.js?v=1775010971"></script>
-<script src="src/pages/backup.js?v=1775010971"></script>
-<script src="src/pages/onlinebooking.js?v=1775010971"></script>
-<script src="src/pages/import.js?v=1775010971"></script>
-<script src="src/pages/settings.js?v=1775010971"></script>
-<script src="src/pages/propertymap.js?v=1775010971"></script>
-<script src="src/pages/estimator.js?v=1775010971"></script>
-<script src="src/pages/treemeasure.js?v=1775010971"></script>
-<script src="src/stripe.js?v=1775010971"></script>
-<script src="src/pages/search.js?v=1775010971"></script>
-<script src="src/pages/clienthub.js?v=1775010971"></script>
-<script src="src/pages/team.js?v=1775010971"></script>
-<script src="src/pages/automations.js?v=1775010971"></script>
-<script src="src/pages/pipeline.js?v=1775010971"></script>
-<script src="src/sendjim.js?v=1775010971"></script>
-<script src="src/supabase.js?v=1775010971"></script>
+<script src="src/auth.js?v=1775011857"></script>
+<script src="src/db.js?v=1775011857"></script>
+<script src="src/ui.js?v=1775011857"></script>
+<script src="src/pages/dashboard.js?v=1775011857"></script>
+<script src="src/pages/clients.js?v=1775011857"></script>
+<script src="src/pages/requests.js?v=1775011857"></script>
+<script src="src/pages/quotes.js?v=1775011857"></script>
+<script src="src/pages/jobs.js?v=1775011857"></script>
+<script src="src/pages/invoices.js?v=1775011857"></script>
+<script src="src/pages/schedule.js?v=1775011857"></script>
+<script src="src/pages/insights.js?v=1775011857"></script>
+<script src="src/geofence.js?v=1775011857"></script>
+<script src="src/weather.js?v=1775011857"></script>
+<script src="src/pages/comms.js?v=1775011857"></script>
+<script src="src/pages/messaging.js?v=1775011857"></script>
+<script src="src/pages/profitloss.js?v=1775011857"></script>
+<script src="src/photos.js?v=1775011857"></script>
+<script src="src/pages/clientmap.js?v=1775011857"></script>
+<script src="src/pages/photomap.js?v=1775011857"></script>
+<script src="src/pages/crewview.js?v=1775011857"></script>
+<script src="src/pages/employeecenter.js?v=1775011857"></script>
+<script src="src/pages/budget.js?v=1775011857"></script>
+<script src="src/pages/equipment.js?v=1775011857"></script>
+<script src="src/pages/jobcosting.js?v=1775011857"></script>
+<script src="src/pages/dispatch.js?v=1775011857"></script>
+<script src="src/pages/recurring.js?v=1775011857"></script>
+<script src="src/pages/notifications.js?v=1775011857"></script>
+<script src="src/pages/expenses.js?v=1775011857"></script>
+<script src="src/email.js?v=1775011857"></script>
+<script src="src/pages/reports.js?v=1775011857"></script>
+<script src="src/pages/reviewtools.js?v=1775011857"></script>
+<script src="src/pages/weeklysummary.js?v=1775011857"></script>
+<script src="src/pages/backup.js?v=1775011857"></script>
+<script src="src/pages/onlinebooking.js?v=1775011857"></script>
+<script src="src/pages/import.js?v=1775011857"></script>
+<script src="src/pages/settings.js?v=1775011857"></script>
+<script src="src/pages/propertymap.js?v=1775011857"></script>
+<script src="src/pages/estimator.js?v=1775011857"></script>
+<script src="src/pages/treemeasure.js?v=1775011857"></script>
+<script src="src/stripe.js?v=1775011857"></script>
+<script src="src/pages/search.js?v=1775011857"></script>
+<script src="src/pages/clienthub.js?v=1775011857"></script>
+<script src="src/pages/team.js?v=1775011857"></script>
+<script src="src/pages/automations.js?v=1775011857"></script>
+<script src="src/pages/pipeline.js?v=1775011857"></script>
+<script src="src/sendjim.js?v=1775011857"></script>
+<script src="src/supabase.js?v=1775011857"></script>
 <script>
 // Auto-configure Supabase connection
 if (!localStorage.getItem('bm-supabase-url')) {
@@ -592,20 +593,22 @@ if (!localStorage.getItem('bm-supabase-url')) {
   localStorage.setItem('bm-supabase-key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI');
 }
 </script>
-<script src="src/pdf.js?v=1775010971"></script>
+<script src="src/pdf.js?v=1775011857"></script>
 <!-- photos.js moved earlier, before photomap.js -->
-<script src="src/templates.js?v=1775010971"></script>
-<script src="src/supacloud.js?v=1775010971"></script>
-<script src="src/pages/payments.js?v=1775010971"></script>
-<script src="src/pages/workflow.js?v=1775010971"></script>
-<script src="src/pages/reviews.js?v=1775010971"></script>
-<script src="src/pages/timetrack.js?v=1775010971"></script>
-<script src="src/pages/checklists.js?v=1775010971"></script>
-<script src="src/pages/visits.js?v=1775010971"></script>
-<script src="src/pages/customfields.js?v=1775010971"></script>
-<script src="src/pages/commandpalette.js?v=1775010971"></script>
-<script src="src/pages/ai.js?v=1775010971"></script>
-<script src="src/pages/satisfaction.js?v=1775010971"></script>
+<script src="src/templates.js?v=1775011857"></script>
+<script src="src/supacloud.js?v=1775011857"></script>
+<script src="src/pages/payments.js?v=1775011857"></script>
+<script src="src/pages/workflow.js?v=1775011857"></script>
+<script src="src/pages/reviews.js?v=1775011857"></script>
+<script src="src/pages/timetrack.js?v=1775011857"></script>
+<script src="src/pages/checklists.js?v=1775011857"></script>
+<script src="src/pages/visits.js?v=1775011857"></script>
+<script src="src/pages/customfields.js?v=1775011857"></script>
+<script src="src/pages/commandpalette.js?v=1775011857"></script>
+<script src="src/pages/ai.js?v=1775011857"></script>
+<script src="src/pages/satisfaction.js?v=1775011857"></script>
+<script src="src/pages/emailtemplates.js?v=1775011857"></script>
+<script src="src/pages/crewperformance.js?v=1775011857"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';
@@ -671,7 +674,8 @@ var pageConfigs = {
   onlinebooking: { title: 'Online Booking', action: null },
   import: { title: 'Import Data', action: null },
   backup: { title: 'Backup & Restore', action: null },
-  settings: { title: 'Settings', action: null }
+  settings: { title: 'Settings', action: null },
+  crewperformance: { title: 'Crew Performance', action: null }
 };
 
 var pageRenderers = {
@@ -709,6 +713,7 @@ var pageRenderers = {
   backup: function() { return BackupPage.render(); },
   settings: function() { return SettingsPage.render(); },
   treemeasure: function() { return TreeMeasure.render(); },
+  crewperformance: function() { return CrewPerformance.render(); },
   calculators: function() {
     return '<div class="stat-grid">'
       + '<div class="stat-card" style="cursor:pointer;" onclick="Estimator.show()">'

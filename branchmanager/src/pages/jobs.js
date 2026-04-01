@@ -399,8 +399,23 @@ var JobsPage = {
     }
     html += '</div>'
 
+    // Custom fields
+    if (typeof CustomFields !== 'undefined') {
+      html += CustomFields.renderDisplay('job', id);
+    }
+
+    // Job Checklist
+    if (typeof Checklists !== 'undefined') {
+      html += Checklists.renderForJob(id);
+    }
+
+    // Visits (multi-visit)
+    if (typeof Visits !== 'undefined') {
+      html += Visits.renderForJob(id);
+    }
+
       // Photos
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Photos</h4>';
     if (typeof Photos !== 'undefined') {
       html += Photos.renderGallery('job', id);

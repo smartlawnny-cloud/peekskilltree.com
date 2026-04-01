@@ -592,6 +592,10 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script src="src/pages/workflow.js"></script>
 <script src="src/pages/reviews.js"></script>
 <script src="src/pages/timetrack.js"></script>
+<script src="src/pages/checklists.js"></script>
+<script src="src/pages/visits.js"></script>
+<script src="src/pages/customfields.js"></script>
+<script src="src/pages/commandpalette.js"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';
@@ -1053,8 +1057,9 @@ document.addEventListener('keydown', function(e) {
 
   var meta = e.metaKey || e.ctrlKey;
 
-  if (meta && e.key === 'k') { e.preventDefault(); document.getElementById('globalSearch').focus(); }
+  if (meta && e.key === 'k') { e.preventDefault(); if(typeof CommandPalette!=='undefined') CommandPalette.show(); else document.getElementById('globalSearch').focus(); }
   else if (meta && e.key === 'n') { e.preventDefault(); QuickCreate.show(); }
+  else if (meta && e.key === 'd') { e.preventDefault(); toggleDarkMode(); }
   else if (e.key === '1') { loadPage('dashboard'); }
   else if (e.key === '2') { loadPage('schedule'); }
   else if (e.key === '3') { loadPage('clients'); }

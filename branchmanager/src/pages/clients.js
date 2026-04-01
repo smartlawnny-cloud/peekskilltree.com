@@ -337,10 +337,15 @@ var ClientsPage = {
       + '<button class="btn btn-outline" style="font-size:12px;padding:4px 10px;" onclick="ClientsPage.showForm(\'' + id + '\')">+ New Tag</button>'
       + '</div>'
       + (c.tags && c.tags.length ? '<div style="display:flex;gap:4px;flex-wrap:wrap;">' + c.tags.map(function(t) { return '<span style="display:inline-block;padding:4px 12px;background:var(--bg);border-radius:12px;font-size:12px;font-weight:600;color:var(--text-light);">' + UI.esc(t) + '</span>'; }).join('') + '</div>' : '<div style="font-size:13px;color:var(--text-light);font-style:italic;">This client has no tags</div>')
-      + '</div>'
+      + '</div>';
 
-      // Internal notes
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+    // Custom fields
+    if (typeof CustomFields !== 'undefined') {
+      html += CustomFields.renderDisplay('client', id);
+    }
+
+    html += // Internal notes
+        '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
       + '<h3 style="font-size:18px;font-weight:700;margin-bottom:4px;">Internal notes</h3>'
       + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Internal notes will only be seen by your team</div>'
       + (c.notes ? '<div style="font-size:13px;color:var(--text);line-height:1.6;padding:8px;background:var(--bg);border-radius:6px;">' + UI.esc(c.notes) + '</div>' : '<textarea placeholder="Note details" style="width:100%;height:80px;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:13px;resize:vertical;" readonly></textarea>')

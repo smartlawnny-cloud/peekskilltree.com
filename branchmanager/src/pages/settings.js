@@ -36,6 +36,18 @@ var SettingsPage = {
     // SendJim Direct Mail
     html += SendJim.renderSettings();
 
+    // Custom Fields
+    if (typeof CustomFields !== 'undefined') {
+      html += CustomFields.renderSettings();
+    }
+
+    // Checklist Templates
+    if (typeof Checklists !== 'undefined') {
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+        + Checklists.renderTemplateManager()
+        + '</div>';
+    }
+
     // Sync from Cloud
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;">'

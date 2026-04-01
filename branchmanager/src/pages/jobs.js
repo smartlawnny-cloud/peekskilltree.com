@@ -68,14 +68,16 @@ var JobsPage = {
       + '<input type="text" placeholder="Search jobs..." value="' + UI.esc(self._search) + '" oninput="JobsPage._search=this.value;JobsPage._page=0;loadPage(\'jobs\')">'
       + '</div></div>';
 
-    // Bulk action bar
-    html += '<div id="job-bulk-bar" style="display:none;position:sticky;top:60px;z-index:50;background:var(--accent);color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:8px;justify-content:space-between;align-items:center;">'
-      + '<span id="job-bulk-count" style="font-weight:700;">0 selected</span>'
-      + '<div style="display:flex;gap:6px;">'
-      + '<button onclick="JobsPage._batchComplete()" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✅ Mark Complete</button>'
-      + '<button onclick="JobsPage._batchInvoice()" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">💰 Create Invoices</button>'
-      + '<button onclick="JobsPage._selectAll(false)" style="background:none;color:rgba(255,255,255,.7);border:none;padding:6px 8px;font-size:12px;cursor:pointer;">Clear</button>'
-      + '</div></div>';
+    // Floating batch action bar (fixed to bottom)
+    html += '<div id="job-bulk-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,240px);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);animation:batchSlideUp .25s ease-out;">'
+      + '<span id="job-bulk-count" style="font-weight:700;font-size:14px;">0 selected</span>'
+      + '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<button onclick="JobsPage._batchComplete()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Mark Complete</button>'
+      + '<button onclick="JobsPage._batchAssignCrew()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Assign Crew</button>'
+      + '<button onclick="JobsPage._batchExport()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Export</button>'
+      + '<button onclick="JobsPage._selectAll(false)" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
+      + '</div></div>'
+      + '<style>@keyframes batchSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
@@ -131,9 +133,11 @@ var JobsPage = {
   _setFilter: function(f) { JobsPage._filter = f; JobsPage._page = 0; loadPage('jobs'); },
   _goPage: function(p) { var t = Math.ceil(JobsPage._getFiltered().length / JobsPage._perPage); JobsPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('jobs'); },
 
-  // Batch invoicing
+  // Batch actions
   _selectAll: function(checked) {
     document.querySelectorAll('.job-check').forEach(function(cb) { cb.checked = checked; });
+    var headerCheck = document.querySelector('th input[type="checkbox"]');
+    if (headerCheck) headerCheck.checked = checked;
     JobsPage._updateBulk();
   },
   _updateBulk: function() {
@@ -165,6 +169,74 @@ var JobsPage = {
     });
     UI.toast(created + ' invoice' + (created !== 1 ? 's' : '') + ' created!');
     loadPage('invoices');
+  },
+  _batchAssignCrew: function() {
+    var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });
+    if (ids.length === 0) return;
+    var team = [];
+    try { team = JSON.parse(localStorage.getItem('bm-team') || '[]'); } catch(e) {}
+    var options = '';
+    team.forEach(function(t) {
+      options += '<option value="' + UI.esc(t.name) + '">' + UI.esc(t.name) + '</option>';
+    });
+    var html = '<div style="padding:8px 0;">'
+      + '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Select crew member to assign to ' + ids.length + ' job' + (ids.length > 1 ? 's' : '') + ':</label>'
+      + '<select id="batch-crew-select" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
+      + '<option value="">-- Select --</option>'
+      + options
+      + '</select>'
+      + '<div style="margin-top:8px;"><input type="text" id="batch-crew-other" placeholder="Or type a name..." style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
+      + '</div>';
+    UI.showModal('Assign Crew', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="JobsPage._batchAssignCrewConfirm()">Assign</button>'
+    });
+  },
+  _batchAssignCrewConfirm: function() {
+    var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });
+    var sel = document.getElementById('batch-crew-select');
+    var other = document.getElementById('batch-crew-other');
+    var name = (sel && sel.value) ? sel.value : (other ? other.value.trim() : '');
+    if (!name) { UI.toast('Please select or enter a crew member'); return; }
+    ids.forEach(function(id) {
+      var job = DB.jobs.getById(id);
+      var crew = (job && job.crew) ? job.crew.slice() : [];
+      if (crew.indexOf(name) < 0) { crew.push(name); }
+      DB.jobs.update(id, { crew: crew });
+    });
+    UI.toast(ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' assigned to ' + name);
+    UI.closeModal();
+    loadPage('jobs');
+  },
+  _batchExport: function() {
+    var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });
+    if (ids.length === 0) return;
+    var rows = ['Job #,Client,Property,Scheduled,Status,Crew,Total'];
+    ids.forEach(function(id) {
+      var j = DB.jobs.getById(id);
+      if (!j) return;
+      var crew = (j.crew && j.crew.length) ? j.crew.join('; ') : '';
+      rows.push(
+        '"' + (j.jobNumber || '') + '",'
+        + '"' + (j.clientName || '').replace(/"/g, '""') + '",'
+        + '"' + (j.property || '').replace(/"/g, '""') + '",'
+        + '"' + (j.scheduledDate || '') + '",'
+        + '"' + (j.status || '') + '",'
+        + '"' + crew.replace(/"/g, '""') + '",'
+        + '"' + (j.total || 0) + '"'
+      );
+    });
+    var csv = rows.join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'jobs-export-' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    UI.toast(ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' exported');
   },
 
   showForm: function(jobId) {

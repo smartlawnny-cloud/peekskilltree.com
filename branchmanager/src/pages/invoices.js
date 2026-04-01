@@ -67,13 +67,16 @@ var InvoicesPage = {
       + '<input type="text" placeholder="Search invoices..." value="' + UI.esc(self._search) + '" oninput="InvoicesPage._search=this.value;InvoicesPage._page=0;loadPage(\'invoices\')">'
       + '</div></div>';
 
-    // Batch action bar (hidden until selections made)
-    html += '<div id="inv-batch-bar" style="display:none;background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:8px 16px;margin-bottom:12px;align-items:center;gap:8px;">'
-      + '<span id="inv-batch-count" style="font-weight:700;font-size:13px;">0 selected</span>'
-      + '<button class="btn btn-primary" onclick="InvoicesPage._batchPaid()" style="font-size:12px;padding:5px 12px;">Mark Paid</button>'
-      + '<button class="btn btn-outline" onclick="InvoicesPage._batchReminder()" style="font-size:12px;padding:5px 12px;">Send Reminders</button>'
-      + '<button class="btn btn-outline" onclick="InvoicesPage._batchClear()" style="font-size:12px;padding:5px 12px;">Clear</button>'
-      + '</div>';
+    // Floating batch action bar (fixed to bottom)
+    html += '<div id="inv-batch-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,240px);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);animation:invBatchSlideUp .25s ease-out;">'
+      + '<span id="inv-batch-count" style="font-weight:700;font-size:14px;">0 selected</span>'
+      + '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<button onclick="InvoicesPage._batchPaid()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Mark Paid</button>'
+      + '<button onclick="InvoicesPage._batchSendAll()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Send All</button>'
+      + '<button onclick="InvoicesPage._batchExport()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Export</button>'
+      + '<button onclick="InvoicesPage._batchClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
+      + '</div></div>'
+      + '<style>@keyframes invBatchSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
@@ -174,8 +177,55 @@ var InvoicesPage = {
     UI.toast('Reminders queued for ' + sent + ' invoice' + (sent !== 1 ? 's' : ''));
     loadPage('invoices');
   },
+  _batchSendAll: function() {
+    var ids = InvoicesPage._getSelected();
+    if (ids.length === 0) return;
+    UI.confirm('Mark ' + ids.length + ' invoice' + (ids.length > 1 ? 's' : '') + ' as sent?', function() {
+      var count = 0;
+      ids.forEach(function(id) {
+        var inv = DB.invoices.getById(id);
+        if (inv && inv.status !== 'paid') {
+          DB.invoices.update(id, { status: 'sent' });
+          count++;
+        }
+      });
+      UI.toast(count + ' invoice' + (count > 1 ? 's' : '') + ' marked sent');
+      loadPage('invoices');
+    });
+  },
+  _batchExport: function() {
+    var ids = InvoicesPage._getSelected();
+    if (ids.length === 0) return;
+    var rows = ['Invoice #,Client,Subject,Status,Due Date,Total,Balance'];
+    ids.forEach(function(id) {
+      var inv = DB.invoices.getById(id);
+      if (!inv) return;
+      rows.push(
+        '"' + (inv.invoiceNumber || '') + '",'
+        + '"' + (inv.clientName || '').replace(/"/g, '""') + '",'
+        + '"' + (inv.subject || '').replace(/"/g, '""') + '",'
+        + '"' + (inv.status || '') + '",'
+        + '"' + (inv.dueDate || '') + '",'
+        + '"' + (inv.total || 0) + '",'
+        + '"' + (inv.balance || 0) + '"'
+      );
+    });
+    var csv = rows.join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'invoices-export-' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    UI.toast(ids.length + ' invoice' + (ids.length > 1 ? 's' : '') + ' exported');
+  },
   _batchClear: function() {
     document.querySelectorAll('.inv-check').forEach(function(cb) { cb.checked = false; });
+    var headerCheck = document.querySelector('th input[type="checkbox"]');
+    if (headerCheck) headerCheck.checked = false;
     InvoicesPage._updateBatchBar();
   },
 

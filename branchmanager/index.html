@@ -414,6 +414,72 @@
   .avatar-menu button:hover { background:var(--bg); }
   .avatar-menu hr { border:none; border-top:1px solid var(--border); margin:0; }
 
+  /* ── Notification Dropdown ── */
+  .notif-dropdown {
+    display:none; position:absolute; top:44px; right:0; width:380px;
+    background:var(--white); border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,.18);
+    border:1px solid var(--border); z-index:400; overflow:hidden;
+  }
+  .notif-dropdown.open { display:block; }
+  .notif-dropdown-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; border-bottom:1px solid var(--border);
+  }
+  .notif-dropdown-header h3 {
+    font-size:15px; font-weight:700; color:var(--text); margin:0;
+  }
+  .notif-dropdown-header a {
+    font-size:12px; color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;
+  }
+  .notif-dropdown-header a:hover { text-decoration:underline; }
+  .notif-dropdown-list {
+    max-height:420px; overflow-y:auto;
+  }
+  .notif-dropdown-item {
+    display:flex; align-items:flex-start; gap:10px; padding:12px 16px;
+    cursor:pointer; border-bottom:1px solid var(--border); transition:background .1s;
+  }
+  .notif-dropdown-item:last-child { border-bottom:none; }
+  .notif-dropdown-item:hover { background:var(--bg); }
+  .notif-dropdown-item.unread { background:var(--green-bg); }
+  .notif-dropdown-item.unread:hover { background:#e2f5ea; }
+  [data-theme="dark"] .notif-dropdown-item.unread:hover { background:#243b2e; }
+  .notif-dropdown-icon {
+    width:32px; height:32px; border-radius:8px; display:flex; align-items:center;
+    justify-content:center; flex-shrink:0; font-size:15px;
+  }
+  .notif-dropdown-body { flex:1; min-width:0; }
+  .notif-dropdown-msg {
+    font-size:13px; color:var(--text); line-height:1.35; margin:0 0 2px;
+  }
+  .notif-dropdown-time {
+    font-size:11px; color:var(--text-light); margin:0;
+  }
+  .notif-dropdown-dot {
+    width:8px; height:8px; border-radius:50%; background:var(--accent);
+    flex-shrink:0; margin-top:6px;
+  }
+  .notif-dropdown-empty {
+    padding:40px 16px; text-align:center; color:var(--text-light); font-size:13px;
+  }
+  .notif-dropdown-footer {
+    padding:10px 16px; border-top:1px solid var(--border); text-align:center;
+  }
+  .notif-dropdown-footer a {
+    font-size:13px; color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600;
+  }
+  .notif-dropdown-footer a:hover { text-decoration:underline; }
+  .notif-badge {
+    position:absolute; top:2px; right:2px; min-width:16px; height:16px;
+    background:var(--red); border-radius:8px; display:none; border:2px solid var(--white);
+    font-size:10px; font-weight:700; color:#fff; text-align:center; line-height:12px;
+    padding:0 3px;
+  }
+  .notif-badge.active { display:block; }
+  @media (max-width:600px) {
+    .notif-dropdown { width:calc(100vw - 24px); right:-60px; }
+  }
+
   /* ── Filter buttons ── */
   .client-filter.active { background:var(--green-dark) !important; color:var(--white) !important; border-color:var(--green-dark) !important; }
 </style>
@@ -508,7 +574,7 @@
           <div id="searchDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.15);max-height:70vh;overflow-y:auto;z-index:999;min-width:400px;"></div>
         </div>
         <div class="topbar-icons">
-          <button class="topbar-icon" onclick="loadPage('notifications')" title="Notifications"><i data-lucide="bell" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i><span class="topbar-dot" id="notif-dot"></span></button>
+          <div style="position:relative;"><button class="topbar-icon" id="notif-bell-btn" onclick="NotifCenter.toggle(event)" title="Notifications"><i data-lucide="bell" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i><span class="notif-badge" id="notif-badge"></span></button><div class="notif-dropdown" id="notif-dropdown"></div></div>
           <button class="topbar-icon" onclick="loadPage('messaging')" title="Messages"><i data-lucide="message-square" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i></button>
           <button class="topbar-icon" onclick="QuickCreate.show()" title="Create New"><i data-lucide="plus" style="width:20px;height:20px;stroke:var(--accent);stroke-width:2.5;"></i></button>
           <button class="topbar-icon" onclick="AI.toggle()" title="Claude AI Assistant" style="font-size:16px;position:relative;">✦<span style="position:absolute;top:2px;right:2px;width:7px;height:7px;background:#D4A574;border-radius:50%;border:1.5px solid var(--white);"></span></button>
@@ -1161,6 +1227,279 @@ document.addEventListener('keydown', function(e) {
     </div>
   </div>
 </nav>
+<script>
+/* ── Notification Center Dropdown ── */
+var NotifCenter = (function() {
+  var STORAGE_KEY = 'bm-notif-read';
+
+  function getReadIds() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { return []; }
+  }
+
+  function setReadIds(ids) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ids)); } catch(e) {}
+  }
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return '';
+    var now = new Date();
+    var then = new Date(dateStr);
+    var diff = Math.floor((now - then) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return Math.floor(diff / 604800) + 'w ago';
+  }
+
+  function getClientName(clientId) {
+    if (!clientId || typeof DB === 'undefined') return 'Unknown';
+    var client = DB.clients.getById(clientId);
+    return client ? (client.name || client.firstName + ' ' + (client.lastName || '')) : 'Unknown';
+  }
+
+  function buildNotifications() {
+    if (typeof DB === 'undefined') return [];
+    var items = [];
+    var now = new Date();
+    var sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    // New requests (last 7 days)
+    var requests = DB.requests.getAll();
+    for (var i = 0; i < requests.length; i++) {
+      var r = requests[i];
+      if (r.createdAt && r.createdAt >= sevenDaysAgo) {
+        items.push({
+          id: 'req-' + r.id,
+          icon: '📥',
+          iconBg: '#e8f5e9',
+          msg: 'New request from ' + getClientName(r.clientId || r.client),
+          time: r.createdAt,
+          page: 'requests',
+          recordId: r.id
+        });
+      }
+    }
+
+    // Quotes sent
+    var quotes = DB.quotes.getAll();
+    for (var i = 0; i < quotes.length; i++) {
+      var q = quotes[i];
+      if (q.status === 'sent' && q.updatedAt && q.updatedAt >= sevenDaysAgo) {
+        items.push({
+          id: 'qsent-' + q.id,
+          icon: '📤',
+          iconBg: '#e3f2fd',
+          msg: 'Quote #' + (q.quoteNumber || '?') + ' sent to ' + getClientName(q.clientId || q.client),
+          time: q.updatedAt || q.createdAt,
+          page: 'quotes',
+          recordId: q.id
+        });
+      }
+      // Quotes approved
+      if (q.status === 'approved' && q.updatedAt && q.updatedAt >= sevenDaysAgo) {
+        items.push({
+          id: 'qappr-' + q.id,
+          icon: '✅',
+          iconBg: '#e8f5e9',
+          msg: 'Quote #' + (q.quoteNumber || '?') + ' approved by ' + getClientName(q.clientId || q.client),
+          time: q.updatedAt || q.createdAt,
+          page: 'quotes',
+          recordId: q.id
+        });
+      }
+    }
+
+    // Jobs completed (last 7 days)
+    var jobs = DB.jobs.getAll();
+    for (var i = 0; i < jobs.length; i++) {
+      var j = jobs[i];
+      if (j.status === 'completed' && j.updatedAt && j.updatedAt >= sevenDaysAgo) {
+        items.push({
+          id: 'jdone-' + j.id,
+          icon: '🔧',
+          iconBg: '#fff3e0',
+          msg: 'Job #' + (j.jobNumber || '?') + ' completed',
+          time: j.updatedAt || j.createdAt,
+          page: 'jobs',
+          recordId: j.id
+        });
+      }
+    }
+
+    // Invoices paid (last 7 days) + past due
+    var invoices = DB.invoices.getAll();
+    for (var i = 0; i < invoices.length; i++) {
+      var inv = invoices[i];
+      if (inv.status === 'paid' && (inv.paidDate || inv.updatedAt || '') >= sevenDaysAgo) {
+        items.push({
+          id: 'ipaid-' + inv.id,
+          icon: '💰',
+          iconBg: '#e8f5e9',
+          msg: 'Invoice #' + (inv.invoiceNumber || '?') + ' paid',
+          time: inv.paidDate || inv.updatedAt || inv.createdAt,
+          page: 'invoices',
+          recordId: inv.id
+        });
+      }
+      if (inv.status !== 'paid' && inv.status !== 'draft' && inv.dueDate) {
+        var due = new Date(inv.dueDate);
+        if (due < now) {
+          items.push({
+            id: 'idue-' + inv.id,
+            icon: '⚠️',
+            iconBg: '#fce4ec',
+            msg: 'Invoice #' + (inv.invoiceNumber || '?') + ' past due',
+            time: inv.dueDate,
+            page: 'invoices',
+            recordId: inv.id
+          });
+        }
+      }
+    }
+
+    // Sort by time descending
+    items.sort(function(a, b) {
+      return (b.time || '').localeCompare(a.time || '');
+    });
+
+    return items.slice(0, 30);
+  }
+
+  function render() {
+    var dropdown = document.getElementById('notif-dropdown');
+    if (!dropdown) return;
+
+    var items = buildNotifications();
+    var readIds = getReadIds();
+
+    var html = '<div class="notif-dropdown-header">'
+      + '<h3>Notifications</h3>'
+      + '<a onclick="NotifCenter.markAllRead()">Mark all read</a>'
+      + '</div>';
+
+    html += '<div class="notif-dropdown-list">';
+    if (items.length === 0) {
+      html += '<div class="notif-dropdown-empty">No recent notifications</div>';
+    } else {
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var isRead = readIds.indexOf(item.id) >= 0;
+        html += '<div class="notif-dropdown-item' + (isRead ? '' : ' unread') + '" onclick="NotifCenter.clickItem(\'' + item.page + '\',\'' + item.recordId + '\',\'' + item.id + '\')">'
+          + '<div class="notif-dropdown-icon" style="background:' + item.iconBg + ';">' + item.icon + '</div>'
+          + '<div class="notif-dropdown-body">'
+          + '<p class="notif-dropdown-msg">' + item.msg + '</p>'
+          + '<p class="notif-dropdown-time">' + timeAgo(item.time) + '</p>'
+          + '</div>'
+          + (isRead ? '' : '<div class="notif-dropdown-dot"></div>')
+          + '</div>';
+      }
+    }
+    html += '</div>';
+
+    html += '<div class="notif-dropdown-footer">'
+      + '<a onclick="NotifCenter.close();loadPage(\'notifications\');">View all activity &rarr;</a>'
+      + '</div>';
+
+    dropdown.innerHTML = html;
+  }
+
+  function updateBadge() {
+    var badge = document.getElementById('notif-badge');
+    if (!badge) return;
+    var items = buildNotifications();
+    var readIds = getReadIds();
+    var unread = 0;
+    for (var i = 0; i < items.length; i++) {
+      if (readIds.indexOf(items[i].id) < 0) unread++;
+    }
+    if (unread > 0) {
+      badge.textContent = unread > 99 ? '99+' : unread;
+      badge.className = 'notif-badge active';
+    } else {
+      badge.textContent = '';
+      badge.className = 'notif-badge';
+    }
+  }
+
+  function toggle(e) {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    var dropdown = document.getElementById('notif-dropdown');
+    if (!dropdown) return;
+    var isOpen = dropdown.classList.contains('open');
+    if (isOpen) {
+      close();
+    } else {
+      render();
+      dropdown.classList.add('open');
+    }
+  }
+
+  function close() {
+    var dropdown = document.getElementById('notif-dropdown');
+    if (dropdown) dropdown.classList.remove('open');
+  }
+
+  function clickItem(page, recordId, notifId) {
+    // Mark as read
+    var readIds = getReadIds();
+    if (readIds.indexOf(notifId) < 0) {
+      readIds.push(notifId);
+      setReadIds(readIds);
+    }
+    close();
+    updateBadge();
+    // Navigate to page
+    if (typeof loadPage === 'function') {
+      loadPage(page);
+    }
+  }
+
+  function markAllRead() {
+    var items = buildNotifications();
+    var readIds = getReadIds();
+    for (var i = 0; i < items.length; i++) {
+      if (readIds.indexOf(items[i].id) < 0) {
+        readIds.push(items[i].id);
+      }
+    }
+    setReadIds(readIds);
+    render();
+    updateBadge();
+    if (typeof UI !== 'undefined' && UI.toast) UI.toast('All notifications marked as read');
+  }
+
+  // Close on outside click
+  document.addEventListener('click', function(e) {
+    var dropdown = document.getElementById('notif-dropdown');
+    var bell = document.getElementById('notif-bell-btn');
+    if (!dropdown || !dropdown.classList.contains('open')) return;
+    if (!dropdown.contains(e.target) && (!bell || !bell.contains(e.target))) {
+      close();
+    }
+  });
+
+  // Update badge periodically
+  function init() {
+    updateBadge();
+    setInterval(updateBadge, 60000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 500);
+  }
+
+  return {
+    toggle: toggle,
+    close: close,
+    clickItem: clickItem,
+    markAllRead: markAllRead,
+    updateBadge: updateBadge
+  };
+})();
+</script>
 <script>
 // Initialize Lucide icons after DOM is ready
 if (typeof lucide !== 'undefined') lucide.createIcons();

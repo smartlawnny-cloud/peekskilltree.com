@@ -250,6 +250,83 @@ var DashboardPage = {
       html += '</div>';
     }
 
+    // Today's Schedule (Jobber-style day view)
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+    var todayStr = now.getFullYear() + '-' + pad2(now.getMonth()+1) + '-' + pad2(now.getDate());
+    var todayScheduled = allJobs.filter(function(j) {
+      return j.scheduledDate && j.scheduledDate.substring(0,10) === todayStr && j.status !== 'completed';
+    });
+    var todayCompleted = allJobs.filter(function(j) {
+      return j.scheduledDate && j.scheduledDate.substring(0,10) === todayStr && j.status === 'completed';
+    });
+    var teamMembers = JSON.parse(localStorage.getItem('bm-team') || '[]');
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="font-size:16px;margin:0;">📅 Today\'s Schedule</h3>'
+      + '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<span style="font-size:12px;color:var(--text-light);">' + todayScheduled.length + ' remaining · ' + todayCompleted.length + ' done</span>'
+      + '<button onclick="loadPage(\'schedule\')" class="btn btn-outline" style="font-size:11px;padding:4px 10px;">View Calendar</button>'
+      + '</div></div>';
+
+    if (todayScheduled.length > 0 || todayCompleted.length > 0) {
+      // Time slots from 7am to 5pm
+      var allToday = todayScheduled.concat(todayCompleted);
+      allToday.sort(function(a, b) {
+        var at = a.scheduledTime || a.startTime || '08:00';
+        var bt = b.scheduledTime || b.startTime || '08:00';
+        return at.localeCompare(bt);
+      });
+      allToday.forEach(function(j) {
+        var time = j.scheduledTime || j.startTime || '8:00 AM';
+        var isDone = j.status === 'completed';
+        var crew = j.assignedTo || j.crew || '';
+        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f5f5f5;cursor:pointer;' + (isDone ? 'opacity:.6;' : '') + '">'
+          + '<div style="width:60px;font-size:12px;font-weight:600;color:var(--text-light);padding-top:2px;">' + UI.esc(time) + '</div>'
+          + '<div style="width:4px;border-radius:2px;background:' + (isDone ? '#c8e6c9' : 'var(--green-dark)') + ';flex-shrink:0;"></div>'
+          + '<div style="flex:1;">'
+          + '<div style="font-weight:600;font-size:14px;' + (isDone ? 'text-decoration:line-through;' : '') + '">' + UI.esc(j.clientName) + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + UI.esc(j.description || j.property || '') + '</div>'
+          + (crew ? '<div style="font-size:11px;color:var(--accent);margin-top:3px;">👷 ' + UI.esc(crew) + '</div>' : '')
+          + '</div>'
+          + '<div style="text-align:right;">'
+          + (isDone ? '<span style="font-size:11px;color:var(--green-dark);font-weight:600;">✓ Done</span>' : UI.statusBadge(j.status))
+          + (j.total ? '<div style="font-size:12px;font-weight:600;margin-top:4px;">' + UI.money(j.total) + '</div>' : '')
+          + '</div></div>';
+      });
+    } else {
+      html += '<div style="text-align:center;padding:24px;color:var(--text-light);">'
+        + '<div style="font-size:24px;margin-bottom:8px;">🌤</div>'
+        + '<div style="font-size:14px;">No jobs scheduled today</div>'
+        + '<button onclick="loadPage(\'schedule\')" class="btn btn-primary" style="margin-top:12px;font-size:12px;">Schedule a Job</button>'
+        + '</div>';
+    }
+    html += '</div>';
+
+    // This Week overview strip
+    var weekDays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Monday
+    html += '<div style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<h3 style="font-size:14px;margin:0 0 12px 0;color:var(--text-light);font-weight:600;">THIS WEEK</h3>'
+      + '<div style="display:flex;gap:4px;">';
+    for (var wd = 0; wd < 7; wd++) {
+      var weekDay = new Date(startOfWeek);
+      weekDay.setDate(startOfWeek.getDate() + wd);
+      var wdStr = weekDay.getFullYear() + '-' + pad2(weekDay.getMonth()+1) + '-' + pad2(weekDay.getDate());
+      var wdJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === wdStr; });
+      var isToday = wdStr === todayStr;
+      var isPast = weekDay < now && !isToday;
+      html += '<div onclick="loadPage(\'schedule\')" style="flex:1;text-align:center;padding:8px 4px;border-radius:8px;cursor:pointer;'
+        + (isToday ? 'background:var(--green-dark);color:#fff;' : isPast ? 'opacity:.5;' : '') + '">'
+        + '<div style="font-size:10px;font-weight:600;' + (isToday ? '' : 'color:var(--text-light);') + '">' + weekDays[(weekDay.getDay())] + '</div>'
+        + '<div style="font-size:16px;font-weight:700;margin:2px 0;">' + weekDay.getDate() + '</div>'
+        + '<div style="font-size:10px;' + (isToday ? 'color:rgba(255,255,255,.8);' : 'color:var(--text-light);') + '">'
+        + (wdJobs.length > 0 ? wdJobs.length + ' job' + (wdJobs.length > 1 ? 's' : '') : '—')
+        + '</div></div>';
+    }
+    html += '</div></div>';
+
     // Weather + Time clock
     if (typeof Weather !== 'undefined') html += Weather.renderWidget();
     html += TimeTrackPage.renderClockWidget();

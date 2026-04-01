@@ -33,6 +33,11 @@ var SettingsPage = {
     // Stripe Payments
     html += Stripe.renderSettings();
 
+    // Email (SendGrid)
+    if (typeof Email !== 'undefined') {
+      html += Email.renderSettings();
+    }
+
     // Dialpad Calling & SMS
     html += Dialpad.renderSettings();
 
@@ -78,7 +83,25 @@ var SettingsPage = {
       + '<h3 style="margin-bottom:8px;">Database Connection</h3>';
     if (isConnected) {
       html += '<div style="display:inline-block;padding:6px 12px;background:#e8f5e9;border-radius:8px;font-size:13px;font-weight:600;color:#2e7d32;margin-bottom:12px;">Connected to Supabase</div>'
-        + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Project: ltpivkqahvplapyagljt (West US Oregon)</p>';
+        + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Project: ltpivkqahvplapyagljt (West US Oregon)</p>'
+        + '<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--green-dark);margin-bottom:8px;">🔒 Client-facing RLS Policies (required for approve.html &amp; pay.html)</summary>'
+        + '<p style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Run this SQL once in your <a href="https://supabase.com/dashboard/project/ltpivkqahvplapyagljt/sql" target="_blank" style="color:var(--green-dark);">Supabase SQL Editor</a> to allow clients to view &amp; approve quotes and pay invoices:</p>'
+        + '<pre style="background:#1e2128;color:#a8d8a8;padding:14px;border-radius:8px;font-size:11px;overflow:auto;white-space:pre;line-height:1.6;">'
+        + '-- Allow anonymous clients to read non-draft quotes (for approve.html)\n'
+        + 'CREATE POLICY "Anon read quotes"\n'
+        + '  ON quotes FOR SELECT TO anon\n'
+        + '  USING (status &lt;&gt; \'draft\');\n\n'
+        + '-- Allow anonymous clients to approve/request changes on sent quotes\n'
+        + 'CREATE POLICY "Anon update quote status"\n'
+        + '  ON quotes FOR UPDATE TO anon\n'
+        + '  USING (status IN (\'sent\', \'awaiting\'))\n'
+        + '  WITH CHECK (status IN (\'approved\', \'awaiting\'));\n\n'
+        + '-- Allow anonymous clients to read non-draft invoices (for pay.html)\n'
+        + 'CREATE POLICY "Anon read invoices"\n'
+        + '  ON invoices FOR SELECT TO anon\n'
+        + '  USING (status &lt;&gt; \'draft\');</pre>'
+        + '<button onclick="navigator.clipboard.writeText(\'CREATE POLICY \\\"Anon read quotes\\\" ON quotes FOR SELECT TO anon USING (status <> \\\'draft\\\');\\n\\nCREATE POLICY \\\"Anon update quote status\\\" ON quotes FOR UPDATE TO anon USING (status IN (\\\'sent\\\', \\\'awaiting\\\')) WITH CHECK (status IN (\\\'approved\\\', \\\'awaiting\\\'));\\n\\nCREATE POLICY \\\"Anon read invoices\\\" ON invoices FOR SELECT TO anon USING (status <> \\\'draft\\\');\')" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
+        + '</details>';
     } else {
       html += '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Connect to Supabase for cloud sync, multi-device access, and team features.</p>'
         + '<div style="display:inline-block;padding:6px 12px;background:#fff3e0;border-radius:8px;font-size:13px;font-weight:600;color:#e65100;margin-bottom:12px;">Local Storage Mode — data lives on this device only</div>'

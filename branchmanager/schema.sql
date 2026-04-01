@@ -211,6 +211,21 @@ CREATE POLICY "Allow all for authenticated" ON notes FOR ALL USING (true);
 CREATE POLICY "Allow all for authenticated" ON automation_log FOR ALL USING (true);
 
 -- ══════════════════════════════════════
+-- CLIENT-FACING PAGE POLICIES (anon access)
+-- Run these in Supabase SQL Editor to enable approve.html and pay.html
+-- ══════════════════════════════════════
+
+-- Allow anonymous users to read non-draft quotes (for approve.html)
+CREATE POLICY "Anon read quotes" ON quotes FOR SELECT TO anon USING (status <> 'draft');
+-- Allow anonymous users to approve or request changes on sent quotes
+CREATE POLICY "Anon update quote status" ON quotes FOR UPDATE TO anon
+  USING (status IN ('sent', 'awaiting'))
+  WITH CHECK (status IN ('approved', 'awaiting'));
+
+-- Allow anonymous users to read non-draft invoices (for pay.html)
+CREATE POLICY "Anon read invoices" ON invoices FOR SELECT TO anon USING (status <> 'draft');
+
+-- ══════════════════════════════════════
 -- SEED SERVICES CATALOG
 -- ══════════════════════════════════════
 INSERT INTO services (name, description, type) VALUES

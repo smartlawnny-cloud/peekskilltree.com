@@ -1,21 +1,53 @@
 /**
  * Branch Manager — Team Management
- * Add/edit team members, assign roles, view hours
+ * Add/edit team members, assign roles, view hours, ISA cert tracking
  */
 var TeamPage = {
   render: function() {
     var members = TeamPage.getMembers();
-    var entries = DB.timeEntries.getAll();
+    var now = new Date();
+    var today = now.toISOString().split('T')[0];
+    var in30 = new Date(now.getTime() + 30 * 86400000).toISOString().split('T')[0];
+
+    var certified = members.filter(function(m) {
+      return m.isaCertNumber && m.isaCertExpiry && m.isaCertExpiry >= today;
+    });
+    var expiringSoon = members.filter(function(m) {
+      return m.isaCertNumber && m.isaCertExpiry && m.isaCertExpiry >= today && m.isaCertExpiry <= in30;
+    });
+    var expired = members.filter(function(m) {
+      return m.isaCertNumber && m.isaCertExpiry && m.isaCertExpiry < today;
+    });
 
     var html = '<div class="stat-grid">'
-      + UI.statCard('Team Size', members.length.toString(), 'Active members', '', '')
+      + UI.statCard('Team Size', members.filter(function(m){return m.active;}).length.toString(), 'Active members', '', '')
       + UI.statCard('Hours This Week', TeamPage.weekHours().toFixed(1), 'All members', '', '')
+      + UI.statCard('ISA Certified', certified.length.toString(), 'Valid credentials', certified.length > 0 ? 'up' : '', '')
+      + (expiringSoon.length > 0 || expired.length > 0
+          ? UI.statCard('⚠️ Cert Alerts', (expiringSoon.length + expired.length).toString(), expiringSoon.length + ' expiring · ' + expired.length + ' expired', 'down', '')
+          : UI.statCard('Cert Status', 'All Clear', 'No expirations pending', 'up', ''))
       + '</div>';
 
-    // Team list
+    // Expiry alert banner
+    if (expired.length > 0) {
+      html += '<div style="background:#fde8e8;border:1px solid #f5c6cb;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">'
+        + '<span style="font-size:18px;">🚨</span>'
+        + '<div><strong style="color:#842029;">ISA Certification Expired</strong><div style="font-size:13px;color:#6b2430;margin-top:2px;">'
+        + expired.map(function(m){return m.name + ' (' + TeamPage._certLabel(m.isaCertType) + ' #' + m.isaCertNumber + ', expired ' + UI.dateShort(m.isaCertExpiry) + ')';}).join(' · ')
+        + '</div></div></div>';
+    }
+    if (expiringSoon.length > 0) {
+      html += '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">'
+        + '<span style="font-size:18px;">⏰</span>'
+        + '<div><strong style="color:#664d03;">Certification Expiring Soon</strong><div style="font-size:13px;color:#664d03;margin-top:2px;">'
+        + expiringSoon.map(function(m){return m.name + ' — expires ' + UI.dateShort(m.isaCertExpiry);}).join(' · ')
+        + '</div></div></div>';
+    }
+
+    // Team table
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + '<th>Name</th><th>Role</th><th>Phone</th><th>Email</th><th>Hours (Week)</th><th>Status</th>'
+      + '<th>Name</th><th>Role</th><th>Certification</th><th>Phone</th><th>Hours (Week)</th><th>Status</th>'
       + '</tr></thead><tbody>';
 
     if (members.length === 0) {
@@ -23,11 +55,12 @@ var TeamPage = {
     } else {
       members.forEach(function(m) {
         var weekHrs = TeamPage.memberWeekHours(m.name);
+        var certBadge = TeamPage._certBadge(m);
         html += '<tr onclick="TeamPage.showDetail(\'' + m.id + '\')">'
           + '<td><strong>' + m.name + '</strong></td>'
           + '<td>' + UI.statusBadge(m.role) + '</td>'
+          + '<td>' + certBadge + '</td>'
           + '<td>' + UI.phone(m.phone) + '</td>'
-          + '<td style="font-size:13px;">' + (m.email || '—') + '</td>'
           + '<td style="font-weight:600;">' + weekHrs.toFixed(1) + ' hrs</td>'
           + '<td>' + (m.active ? '<span style="color:var(--green-dark);">Active</span>' : '<span style="color:var(--text-light);">Inactive</span>') + '</td>'
           + '</tr>';
@@ -38,10 +71,41 @@ var TeamPage = {
     return html;
   },
 
+  _certLabel: function(type) {
+    var labels = {
+      'isa_arborist': 'ISA Certified Arborist',
+      'isa_bcma': 'ISA Board Certified Master Arborist',
+      'isa_mu': 'ISA Municipal Specialist',
+      'isa_uu': 'ISA Utility Specialist',
+      'tcia': 'TCIA Accredited',
+      'other': 'Certified'
+    };
+    return labels[type] || type || 'Certified';
+  },
+
+  _certBadge: function(m) {
+    if (!m.isaCertNumber) {
+      return '<span style="font-size:12px;color:var(--text-light);">—</span>';
+    }
+    var now = new Date().toISOString().split('T')[0];
+    var in30 = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+    var isExpired = m.isaCertExpiry && m.isaCertExpiry < now;
+    var isExpiringSoon = !isExpired && m.isaCertExpiry && m.isaCertExpiry <= in30;
+
+    var label = TeamPage._certLabel(m.isaCertType);
+    var shortLabel = label.replace('ISA ', '').replace('Board Certified ', '');
+    if (isExpired) {
+      return '<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#fde8e8;color:#842029;border-radius:10px;font-size:11px;font-weight:600;">🚨 ' + shortLabel + ' — Expired</span>';
+    } else if (isExpiringSoon) {
+      return '<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#fff3cd;color:#664d03;border-radius:10px;font-size:11px;font-weight:600;">⏰ ' + shortLabel + ' — Expiring Soon</span>';
+    } else {
+      return '<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#e6f9f2;color:#00836c;border-radius:10px;font-size:11px;font-weight:600;">✓ ' + shortLabel + '</span>';
+    }
+  },
+
   getMembers: function() {
     var stored = JSON.parse(localStorage.getItem('bm-team') || '[]');
     if (stored.length === 0) {
-      // Seed with default team from Jobber
       stored = [
         { id: 'owner', name: 'Doug Brown', role: 'owner', phone: '(914) 391-5233', email: 'info@peekskilltree.com', active: true },
         { id: 'ryan', name: 'Ryan Knapp', role: 'crew_lead', phone: '', email: '', active: true },
@@ -90,6 +154,7 @@ var TeamPage = {
 
   showForm: function(id) {
     var m = id ? TeamPage.getMembers().find(function(mem) { return mem.id === id; }) : {};
+    if (!m) m = {};
     var title = id ? 'Edit Team Member' : 'Add Team Member';
 
     var html = '<form id="team-form" onsubmit="TeamPage.save(event, \'' + (id || '') + '\')">'
@@ -103,6 +168,24 @@ var TeamPage = {
           { value: 'crew_lead', label: 'Crew Lead — Jobs, schedule, clients' },
           { value: 'crew', label: 'Crew Member — Clock in/out, today\'s jobs' }
         ]})
+
+      // ISA Certification section
+      + '<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">ISA / TCIA Certification</div>'
+      + UI.formField('Certification Type', 'select', 'tm-cert-type', m.isaCertType || '', { options: [
+          { value: '', label: 'None / Not certified' },
+          { value: 'isa_arborist', label: 'ISA Certified Arborist' },
+          { value: 'isa_bcma', label: 'ISA Board Certified Master Arborist' },
+          { value: 'isa_mu', label: 'ISA Municipal Specialist' },
+          { value: 'isa_uu', label: 'ISA Utility Specialist' },
+          { value: 'tcia', label: 'TCIA Accredited' },
+          { value: 'other', label: 'Other certification' }
+        ]})
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      + UI.formField('Credential / Badge #', 'text', 'tm-cert-number', m.isaCertNumber, { placeholder: 'e.g. SO-10897TX' })
+      + UI.formField('Expiration Date', 'date', 'tm-cert-expiry', m.isaCertExpiry, {})
+      + '</div>'
+      + '</div>'
       + '</form>';
 
     UI.showModal(title, html, {
@@ -120,9 +203,17 @@ var TeamPage = {
       phone: document.getElementById('tm-phone').value.trim(),
       email: document.getElementById('tm-email').value.trim(),
       role: document.getElementById('tm-role').value,
+      isaCertType: document.getElementById('tm-cert-type').value,
+      isaCertNumber: document.getElementById('tm-cert-number').value.trim(),
+      isaCertExpiry: document.getElementById('tm-cert-expiry').value,
       active: true
     };
     if (!data.name) { UI.toast('Name is required', 'error'); return; }
+    // Preserve existing active state if editing
+    if (id) {
+      var existing = TeamPage.getMembers().find(function(m) { return m.id === id; });
+      if (existing) data.active = existing.active;
+    }
     TeamPage.saveMember(data);
     UI.toast(id ? 'Member updated' : 'Member added');
     UI.closeModal();
@@ -142,6 +233,11 @@ var TeamPage = {
     var m = TeamPage.getMembers().find(function(mem) { return mem.id === id; });
     if (!m) return;
 
+    var now = new Date().toISOString().split('T')[0];
+    var in30 = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+    var certExpired = m.isaCertNumber && m.isaCertExpiry && m.isaCertExpiry < now;
+    var certExpiringSoon = m.isaCertNumber && m.isaCertExpiry && !certExpired && m.isaCertExpiry <= in30;
+
     var html = '<div style="text-align:center;margin-bottom:20px;">'
       + '<div style="font-size:48px;margin-bottom:8px;">👷</div>'
       + '<h2>' + m.name + '</h2>'
@@ -153,10 +249,34 @@ var TeamPage = {
       + '<div>⏱️ Hours this week: <strong>' + TeamPage.memberWeekHours(m.name).toFixed(1) + '</strong></div>'
       + '</div>';
 
+    // ISA Certification card
+    html += '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:16px;margin-bottom:16px;">'
+      + '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light);margin-bottom:12px;">Certification</div>';
+
+    if (!m.isaCertNumber) {
+      html += '<div style="font-size:13px;color:var(--text-light);">No certification on file — <a href="#" onclick="UI.closeModal();TeamPage.showForm(\'' + id + '\');return false;" style="color:var(--accent);">Add certification</a></div>';
+    } else {
+      var certStatusBg = certExpired ? '#fde8e8' : certExpiringSoon ? '#fff3cd' : '#e6f9f2';
+      var certStatusColor = certExpired ? '#842029' : certExpiringSoon ? '#664d03' : '#00836c';
+      var certStatusLabel = certExpired ? '🚨 EXPIRED' : certExpiringSoon ? '⏰ EXPIRING SOON' : '✓ VALID';
+
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+        + '<div><div style="font-size:11px;color:var(--text-light);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Type</div>'
+        + '<div style="font-size:14px;font-weight:600;">' + TeamPage._certLabel(m.isaCertType) + '</div></div>'
+        + '<div><div style="font-size:11px;color:var(--text-light);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Credential #</div>'
+        + '<div style="font-size:14px;font-weight:600;">' + UI.esc(m.isaCertNumber) + '</div></div>'
+        + '<div><div style="font-size:11px;color:var(--text-light);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Expires</div>'
+        + '<div style="font-size:14px;font-weight:600;">' + (m.isaCertExpiry ? UI.dateShort(m.isaCertExpiry) : '—') + '</div></div>'
+        + '<div><div style="font-size:11px;color:var(--text-light);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Status</div>'
+        + '<div style="display:inline-block;padding:2px 10px;background:' + certStatusBg + ';color:' + certStatusColor + ';border-radius:10px;font-size:12px;font-weight:700;">' + certStatusLabel + '</div></div>'
+        + '</div>';
+    }
+    html += '</div>';
+
     // Recent time entries
     var entries = DB.timeEntries.getAll().filter(function(t) { return t.userId === m.name; }).slice(0, 10);
     if (entries.length > 0) {
-      html += '<h4 style="margin-top:16px;margin-bottom:8px;">Recent Time Entries</h4>';
+      html += '<h4 style="margin-top:4px;margin-bottom:8px;">Recent Time Entries</h4>';
       entries.forEach(function(t) {
         var job = t.jobId ? DB.jobs.getById(t.jobId) : null;
         html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'

@@ -57,6 +57,7 @@ var ClientsPage = {
       + '<span style="font-size:13px;color:var(--text-light);">(' + clients.length + ' results)</span>'
       + '<button class="filter-btn' + (self._tagFilter ? ' active' : '') + '" onclick="ClientsPage.showTagFilter()" style="font-size:12px;padding:5px 12px;">' + (self._tagFilter ? 'Tag: ' + UI.esc(self._tagFilter) + ' ✕' : 'Filter by tag +') + '</button>'
       + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="ClientsPage.setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | Leads and Active</button>'
+      + '<button class="filter-btn' + (self._filter==='no-email'?' active':'') + '" onclick="ClientsPage.setFilter(\'no-email\')" style="font-size:12px;padding:5px 12px;" title="Clients missing email — automations can\'t reach them">📧 Missing email (' + DB.clients.getAll().filter(function(c){return !c.email;}).length + ')</button>'
       + '</div>'
       + '<div class="search-box" style="min-width:200px;max-width:280px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
@@ -129,8 +130,10 @@ var ClientsPage = {
     var self = ClientsPage;
     var clients = DB.clients.getAll();
 
-    // Filter by status
-    if (self._filter !== 'all') {
+    // Filter by status (or special filters)
+    if (self._filter === 'no-email') {
+      clients = clients.filter(function(c) { return !c.email; });
+    } else if (self._filter !== 'all') {
       clients = clients.filter(function(c) { return c.status === self._filter; });
     }
 
@@ -516,13 +519,14 @@ var ClientsPage = {
       + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-quotes\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Quotes (' + clientQuotes.length + ')</button>'
       + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-invoices\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Invoices (' + clientInvoices.length + ')</button>'
       + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-activity\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Activity</button>'
+      + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-trees\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">🌳 Trees (' + TreeInventory.getForClient(id).length + ')</button>'
       + '</div>'
 
       // Jobs tab
       + '<div id="cd-jobs" class="cd-panel">'
       + (clientJobs.length ? '<table class="data-table"><thead><tr><th>#</th><th>Description</th><th>Date</th><th>Status</th><th>Total</th></tr></thead><tbody>'
         + clientJobs.map(function(j) {
-          return '<tr><td><strong>' + (j.jobNumber || '—') + '</strong></td><td>' + (j.description || '—') + '</td><td>' + (j.scheduledDate || '—') + '</td><td>' + UI.statusBadge(j.status) + '</td><td style="font-weight:600;">' + UI.moneyInt(j.total) + '</td></tr>';
+          return '<tr style="cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')"><td><strong>' + (j.jobNumber || '—') + '</strong></td><td>' + UI.esc(j.description || '—') + '</td><td>' + UI.dateShort(j.scheduledDate) + '</td><td>' + UI.statusBadge(j.status) + '</td><td style="font-weight:600;">' + UI.moneyInt(j.total) + '</td></tr>';
         }).join('') + '</tbody></table>' : UI.emptyState('🔧', 'No jobs yet', 'Create a job for this client.', '+ New Job', 'JobsPage.showForm()'))
       + '</div>'
 
@@ -530,15 +534,15 @@ var ClientsPage = {
       + '<div id="cd-quotes" class="cd-panel" style="display:none;">'
       + (clientQuotes.length ? '<table class="data-table"><thead><tr><th>#</th><th>Description</th><th>Status</th><th>Total</th></tr></thead><tbody>'
         + clientQuotes.map(function(q) {
-          return '<tr><td><strong>' + (q.quoteNumber || '—') + '</strong></td><td>' + (q.description || '—') + '</td><td>' + UI.statusBadge(q.status) + '</td><td style="font-weight:600;">' + UI.money(q.total) + '</td></tr>';
+          return '<tr style="cursor:pointer;" onclick="QuotesPage.showDetail(\'' + q.id + '\')"><td><strong>' + (q.quoteNumber || '—') + '</strong></td><td>' + UI.esc(q.description || '—') + '</td><td>' + UI.statusBadge(q.status) + '</td><td style="font-weight:600;">' + UI.money(q.total) + '</td></tr>';
         }).join('') + '</tbody></table>' : UI.emptyState('📋', 'No quotes yet', 'Create a quote for this client.', '+ New Quote', 'QuotesPage.showForm()'))
       + '</div>'
 
       // Invoices tab
       + '<div id="cd-invoices" class="cd-panel" style="display:none;">'
-      + (clientInvoices.length ? '<table class="data-table"><thead><tr><th>#</th><th>Subject</th><th>Date</th><th>Status</th><th>Total</th></tr></thead><tbody>'
+      + (clientInvoices.length ? '<table class="data-table"><thead><tr><th>#</th><th>Subject</th><th>Due</th><th>Status</th><th>Balance</th></tr></thead><tbody>'
         + clientInvoices.map(function(inv) {
-          return '<tr><td><strong>' + (inv.invoiceNumber || '—') + '</strong></td><td>' + (inv.subject || '—') + '</td><td>' + (inv.issuedDate || '—') + '</td><td>' + UI.statusBadge(inv.status) + '</td><td style="font-weight:600;">' + UI.money(inv.total) + '</td></tr>';
+          return '<tr style="cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')"><td><strong>' + (inv.invoiceNumber || '—') + '</strong></td><td>' + UI.esc(inv.subject || '—') + '</td><td>' + UI.dateShort(inv.dueDate) + '</td><td>' + UI.statusBadge(inv.status) + '</td><td style="font-weight:600;' + ((inv.balance||0) > 0 ? 'color:var(--red)' : 'color:var(--green-dark)') + ';">' + UI.money(inv.balance || 0) + '</td></tr>';
         }).join('') + '</tbody></table>' : UI.emptyState('💰', 'No invoices yet', 'Create an invoice for this client.'))
       + '</div>'
 
@@ -637,7 +641,58 @@ var ClientsPage = {
     if (typeof Photos !== 'undefined') {
       html += Photos.renderGallery('client', id);
     }
-    html += '</div></div></div>';
+    html += '</div>';
+
+    // Trees tab panel
+    html += '<div id="cd-trees" class="cd-panel" style="display:none;">';
+    var clientTrees = TreeInventory.getForClient(id);
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
+      + '<div style="font-size:13px;color:var(--text-light);">' + clientTrees.length + ' tree' + (clientTrees.length !== 1 ? 's' : '') + ' on record</div>'
+      + '<button class="btn btn-primary" style="font-size:12px;padding:6px 14px;" onclick="TreeInventory.showForm(\'' + id + '\')">+ Add Tree</button>'
+      + '</div>';
+    if (clientTrees.length === 0) {
+      html += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">'
+        + '<div style="font-size:40px;margin-bottom:10px;">🌳</div>'
+        + '<h3 style="font-size:16px;color:var(--text);margin-bottom:6px;">No trees logged yet</h3>'
+        + '<p style="font-size:13px;max-width:320px;margin:0 auto 16px;">Record trees on this property — species, DBH, condition, and work needed. Helpful for quoting and risk assessment.</p>'
+        + '<button class="btn btn-primary" onclick="TreeInventory.showForm(\'' + id + '\')">+ Log First Tree</button>'
+        + '</div>';
+    } else {
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'
+        + '<table class="data-table"><thead><tr>'
+        + '<th>#</th><th>Species</th><th>DBH</th><th>Est. Height</th><th>Condition</th><th>Work Needed</th><th style="width:36px;"></th>'
+        + '</tr></thead><tbody>';
+      clientTrees.forEach(function(t, idx) {
+        var condColor = { 'Excellent': '#00836c', 'Good': '#2e7d32', 'Fair': '#e6a817', 'Poor': '#e07c24', 'Hazard': '#dc3545' }[t.condition] || 'var(--text-light)';
+        html += '<tr onclick="TreeInventory.showDetail(\'' + t.id + '\')" style="cursor:pointer;">'
+          + '<td style="font-weight:600;color:var(--text-light);">' + (idx + 1) + '</td>'
+          + '<td><strong>' + UI.esc(t.species || 'Unknown') + '</strong>'
+          + (t.location ? '<br><span style="font-size:11px;color:var(--text-light);">📍 ' + UI.esc(t.location) + '</span>' : '')
+          + '</td>'
+          + '<td style="font-weight:600;">' + (t.dbh ? t.dbh + '"' : '—') + '</td>'
+          + '<td>' + (t.height ? '~' + t.height + ' ft' : '—') + '</td>'
+          + '<td><span style="font-weight:600;color:' + condColor + ';">' + UI.esc(t.condition || '—') + '</span></td>'
+          + '<td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(t.workNeeded || '—') + '</td>'
+          + '<td><button onclick="event.stopPropagation();TreeInventory.showForm(\'' + id + '\',\'' + t.id + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-light);" title="Edit">✏️</button></td>'
+          + '</tr>';
+      });
+      html += '</tbody></table></div>';
+
+      // Summary stats
+      var withWork = clientTrees.filter(function(t){return t.workNeeded && t.workNeeded.trim();});
+      var hazards = clientTrees.filter(function(t){return t.condition === 'Hazard';});
+      var poor = clientTrees.filter(function(t){return t.condition === 'Poor';});
+      if (withWork.length || hazards.length) {
+        html += '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">';
+        if (hazards.length) html += '<div style="flex:1;min-width:140px;background:#fde8e8;border-radius:8px;padding:10px 14px;"><div style="font-size:11px;font-weight:600;color:#842029;text-transform:uppercase;letter-spacing:.05em;">⚠️ Hazard Trees</div><div style="font-size:24px;font-weight:700;color:#842029;">' + hazards.length + '</div></div>';
+        if (poor.length) html += '<div style="flex:1;min-width:140px;background:#fff3e0;border-radius:8px;padding:10px 14px;"><div style="font-size:11px;font-weight:600;color:#e07c24;text-transform:uppercase;letter-spacing:.05em;">Poor Condition</div><div style="font-size:24px;font-weight:700;color:#e07c24;">' + poor.length + '</div></div>';
+        if (withWork.length) html += '<div style="flex:1;min-width:140px;background:#e8f5e9;border-radius:8px;padding:10px 14px;"><div style="font-size:11px;font-weight:600;color:#2e7d32;text-transform:uppercase;letter-spacing:.05em;">Work Needed</div><div style="font-size:24px;font-weight:700;color:#2e7d32;">' + withWork.length + '</div></div>';
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+
+    html += '</div></div>';
 
     // Render as full page
     document.getElementById('pageTitle').textContent = c.name;
@@ -669,6 +724,165 @@ var ClientsPage = {
     UI.showModal(c.name, '<p>Use full-page view instead.</p>', {
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
         + ' <button class="btn btn-primary" onclick="UI.closeModal();QuotesPage.showForm(null, \'' + id + '\')">Create Quote</button>'
+    });
+  }
+};
+
+/**
+ * Tree Inventory — per-client tree records
+ * Stored in localStorage as bm-tree-inventory
+ */
+var TreeInventory = {
+  _key: 'bm-tree-inventory',
+
+  getAll: function() {
+    try { return JSON.parse(localStorage.getItem(TreeInventory._key) || '[]'); } catch(e) { return []; }
+  },
+
+  getForClient: function(clientId) {
+    return TreeInventory.getAll().filter(function(t) { return t.clientId === clientId; });
+  },
+
+  getById: function(id) {
+    return TreeInventory.getAll().find(function(t) { return t.id === id; }) || null;
+  },
+
+  save: function(tree) {
+    var all = TreeInventory.getAll();
+    var idx = all.findIndex(function(t) { return t.id === tree.id; });
+    if (idx >= 0) { all[idx] = tree; } else { all.push(tree); }
+    localStorage.setItem(TreeInventory._key, JSON.stringify(all));
+  },
+
+  remove: function(id) {
+    var all = TreeInventory.getAll().filter(function(t) { return t.id !== id; });
+    localStorage.setItem(TreeInventory._key, JSON.stringify(all));
+  },
+
+  showForm: function(clientId, treeId) {
+    var c = DB.clients.getById(clientId);
+    var t = treeId ? TreeInventory.getById(treeId) : {};
+    if (!t) t = {};
+    var title = treeId ? 'Edit Tree' : 'Add Tree to ' + (c ? c.name : 'Client');
+
+    var commonSpecies = [
+      '', 'Oak (Red)', 'Oak (White)', 'Oak (Pin)', 'Oak (Scarlet)', 'Maple (Red)', 'Maple (Sugar)',
+      'Maple (Silver)', 'Maple (Norway)', 'Ash (White)', 'Ash (Green)', 'Elm (American)', 'Elm (Siberian)',
+      'Pine (White)', 'Pine (Red)', 'Spruce (Norway)', 'Spruce (Blue)', 'Fir (Douglas)', 'Hemlock (Eastern)',
+      'Cedar (Eastern Red)', 'Birch (White)', 'Birch (River)', 'Poplar', 'Linden', 'Locust (Black)',
+      'Locust (Honey)', 'Walnut (Black)', 'Cherry', 'Apple', 'Pear', 'Dogwood', 'Other'
+    ];
+
+    var html = '<form id="tree-form" onsubmit="TreeInventory.saveForm(event,\'' + clientId + '\',\'' + (treeId || '') + '\')">'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      + '<div class="form-group"><label>Species *</label>'
+      + '<select id="tree-species-select" onchange="var v=this.value;if(v===\'Other\'){document.getElementById(\'tree-species-custom\').style.display=\'block\';}else{document.getElementById(\'tree-species-custom\').style.display=\'none\';}" style="width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + commonSpecies.map(function(s) { return '<option value="' + UI.esc(s) + '"' + (t.species === s ? ' selected' : '') + '>' + (s || '— Select species —') + '</option>'; }).join('')
+      + '</select>'
+      + '<input type="text" id="tree-species-custom" placeholder="Enter species name..." value="' + UI.esc(commonSpecies.indexOf(t.species) === -1 ? (t.species || '') : '') + '" style="width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;margin-top:6px;' + (commonSpecies.indexOf(t.species) === -1 && t.species ? '' : 'display:none;') + '">'
+      + '</div>'
+      + '<div class="form-group"><label>Location on Property</label><input type="text" id="tree-location" value="' + UI.esc(t.location || '') + '" placeholder="e.g. Front yard, back left corner" style="width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">'
+      + '<div class="form-group"><label>DBH (inches)</label><input type="number" id="tree-dbh" value="' + (t.dbh || '') + '" placeholder="e.g. 18" min="1" max="300" style="width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;" oninput="TreeInventory._updatePriceHint()"></div>'
+      + '<div class="form-group"><label>Est. Height (ft)</label><input type="number" id="tree-height" value="' + (t.height || '') + '" placeholder="e.g. 60" min="1" max="300" style="width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>'
+      + '<div class="form-group"><label>Condition</label><select id="tree-condition" style="width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + ['', 'Excellent', 'Good', 'Fair', 'Poor', 'Hazard'].map(function(c_) { return '<option value="' + c_ + '"' + (t.condition === c_ ? ' selected' : '') + '>' + (c_ || '— Select —') + '</option>'; }).join('')
+      + '</select></div>'
+      + '</div>'
+      + '<div id="tree-price-hint" style="display:none;background:#e8f5e9;border-radius:8px;padding:8px 12px;margin:-4px 0 12px;font-size:12px;color:#2e7d32;font-weight:600;"></div>'
+      + '<div class="form-group"><label>Work Needed</label><input type="text" id="tree-work" value="' + UI.esc(t.workNeeded || '') + '" placeholder="e.g. Remove, Prune crown, Cable, Monitor" style="width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>'
+      + '<div class="form-group"><label>Notes</label><textarea id="tree-notes" placeholder="Hazard notes, access issues, history..." style="width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;height:72px;resize:vertical;">' + UI.esc(t.notes || '') + '</textarea></div>'
+      + '</form>';
+
+    UI.showModal(title, html, {
+      footer: (treeId ? '<button class="btn btn-danger" style="margin-right:auto;" onclick="TreeInventory.confirmRemove(\'' + treeId + '\',\'' + clientId + '\')">Remove</button>' : '')
+        + '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="document.getElementById(\'tree-form\').requestSubmit()">Save Tree</button>'
+    });
+
+    // Set up price hint
+    setTimeout(function() { TreeInventory._updatePriceHint(); }, 50);
+  },
+
+  _updatePriceHint: function() {
+    var dbhEl = document.getElementById('tree-dbh');
+    var hintEl = document.getElementById('tree-price-hint');
+    if (!dbhEl || !hintEl) return;
+    var dbh = parseFloat(dbhEl.value);
+    if (dbh > 0) {
+      var estimate = Math.round(dbh * 100 / 50) * 50;
+      hintEl.style.display = 'block';
+      hintEl.textContent = '💡 Estimated removal price: ' + UI.money(estimate) + ' (based on ' + dbh + '" DBH × $100)';
+    } else {
+      hintEl.style.display = 'none';
+    }
+  },
+
+  saveForm: function(e, clientId, treeId) {
+    e.preventDefault();
+    var speciesSel = document.getElementById('tree-species-select').value;
+    var speciesCustom = document.getElementById('tree-species-custom').value.trim();
+    var species = speciesSel === 'Other' ? speciesCustom : speciesSel;
+    if (!species) { UI.toast('Species is required', 'error'); return; }
+
+    var tree = {
+      id: treeId || ('tr-' + Date.now().toString(36)),
+      clientId: clientId,
+      species: species,
+      location: document.getElementById('tree-location').value.trim(),
+      dbh: parseFloat(document.getElementById('tree-dbh').value) || null,
+      height: parseFloat(document.getElementById('tree-height').value) || null,
+      condition: document.getElementById('tree-condition').value,
+      workNeeded: document.getElementById('tree-work').value.trim(),
+      notes: document.getElementById('tree-notes').value.trim(),
+      addedAt: treeId ? (TreeInventory.getById(treeId) || {}).addedAt : new Date().toISOString()
+    };
+
+    TreeInventory.save(tree);
+    UI.toast(treeId ? 'Tree updated' : 'Tree added');
+    UI.closeModal();
+    ClientsPage.showDetail(clientId);
+  },
+
+  showDetail: function(treeId) {
+    var t = TreeInventory.getById(treeId);
+    if (!t) return;
+    var condColor = { 'Excellent': '#00836c', 'Good': '#2e7d32', 'Fair': '#e6a817', 'Poor': '#e07c24', 'Hazard': '#dc3545' }[t.condition] || 'var(--text-light)';
+    var estimate = t.dbh ? Math.round(t.dbh * 100 / 50) * 50 : null;
+
+    var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
+    html += TreeInventory._detailRow('Species', t.species || '—');
+    html += TreeInventory._detailRow('Location', t.location || '—');
+    html += TreeInventory._detailRow('DBH', t.dbh ? t.dbh + '"' : '—');
+    html += TreeInventory._detailRow('Est. Height', t.height ? '~' + t.height + ' ft' : '—');
+    html += TreeInventory._detailRow('Condition', '<span style="font-weight:700;color:' + condColor + ';">' + (t.condition || '—') + '</span>');
+    if (estimate) html += TreeInventory._detailRow('Est. Removal Price', '<span style="font-weight:700;color:var(--green-dark);">' + UI.money(estimate) + '</span>');
+    html += '</div>';
+    if (t.workNeeded) html += '<div style="margin-top:12px;padding:10px 14px;background:#fff3e0;border-radius:8px;"><strong>Work Needed:</strong> ' + UI.esc(t.workNeeded) + '</div>';
+    if (t.notes) html += '<div style="margin-top:10px;padding:10px 14px;background:var(--bg);border-radius:8px;font-size:13px;">' + UI.esc(t.notes) + '</div>';
+
+    var c = DB.clients.getById(t.clientId);
+    UI.showModal((t.species || 'Tree') + (t.location ? ' — ' + t.location : ''), html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
+        + (c ? ' <button class="btn btn-outline" onclick="UI.closeModal();QuotesPage.showForm(null,\'' + t.clientId + '\')" title="Start a quote using this tree">📋 Quote This Tree</button>' : '')
+        + ' <button class="btn btn-primary" onclick="UI.closeModal();TreeInventory.showForm(\'' + t.clientId + '\',\'' + treeId + '\')">Edit</button>'
+    });
+  },
+
+  _detailRow: function(label, value) {
+    return '<div>'
+      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light);margin-bottom:4px;">' + label + '</div>'
+      + '<div style="font-size:15px;">' + value + '</div>'
+      + '</div>';
+  },
+
+  confirmRemove: function(treeId, clientId) {
+    UI.confirm('Remove this tree from the inventory?', function() {
+      TreeInventory.remove(treeId);
+      UI.toast('Tree removed');
+      UI.closeModal();
+      ClientsPage.showDetail(clientId);
     });
   }
 };

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Payment — Second Nature Tree Service</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f4f0; color: #1d1d1f; min-height: 100vh; }
+    .page { max-width: 640px; margin: 0 auto; padding: 20px; }
+    .header { background: #1a3c12; color: #fff; padding: 20px 24px; border-radius: 12px 12px 0 0; }
+    .header-logo { font-size: 13px; opacity: .75; margin-bottom: 6px; }
+    .header h1 { font-size: 22px; font-weight: 700; }
+    .card { background: #fff; padding: 24px; box-shadow: 0 2px 20px rgba(0,0,0,.08); margin-bottom: 16px; }
+    .card:last-of-type { border-radius: 0 0 12px 12px; }
+    .card-mid { border-top: 1px solid #f0f0f0; }
+    .section-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; margin-bottom: 6px; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .badge-sent { background: rgba(255,255,255,.2); color: #fff; border: 1px solid rgba(255,255,255,.4); }
+    .badge-overdue { background: #ffebee; color: #c62828; }
+    .badge-paid { background: #e8f5e9; color: #2e7d32; }
+    .line-table { width: 100%; border-collapse: collapse; }
+    .line-table th { font-size: 11px; color: #999; font-weight: 600; text-transform: uppercase; padding: 6px 0; border-bottom: 2px solid #e8e8e8; text-align: left; }
+    .line-table th:last-child { text-align: right; }
+    .line-table td { padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    .line-table td:last-child { text-align: right; font-weight: 600; }
+    .total-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 0 0; border-top: 2px solid #e8e8e8; margin-top: 4px; }
+    .total-bar .label { font-size: 15px; font-weight: 600; color: #666; }
+    .total-bar .amount { font-size: 28px; font-weight: 800; color: #1a3c12; }
+    .pay-methods { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+    .pay-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px 20px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all .15s; }
+    .pay-btn:active { transform: scale(.98); }
+    .pay-btn-stripe { background: #635bff; color: #fff; }
+    .pay-btn-stripe:hover { background: #5144e8; }
+    .pay-btn-venmo { background: #3d95ce; color: #fff; }
+    .pay-btn-venmo:hover { background: #2d7fb3; }
+    .pay-btn-zelle { background: #6d1ed4; color: #fff; }
+    .pay-btn-zelle:hover { background: #5c18b3; }
+    .pay-btn-call { background: #fff; color: #1a3c12; border: 2px solid #1a3c12; }
+    .pay-btn-call:hover { background: #f0f7f0; }
+    .pay-btn-icon { font-size: 20px; flex-shrink: 0; }
+    .pay-btn-text { flex: 1; text-align: left; }
+    .pay-btn-text .sub { font-size: 12px; opacity: .8; font-weight: 400; }
+    .already-paid { text-align: center; padding: 32px 20px; }
+    .meta-table { width: 100%; font-size: 14px; border-collapse: collapse; }
+    .meta-table td { padding: 7px 0; border-bottom: 1px solid #f5f5f5; }
+    .meta-table td:first-child { color: #888; width: 100px; }
+    .meta-table td:last-child { font-weight: 500; text-align: right; }
+    .meta-table tr:last-child td { border-bottom: none; }
+    .stripe-form { display: none; padding: 16px; background: #f8f8f8; border-radius: 10px; margin-top: 8px; }
+    .stripe-note { font-size: 12px; color: #888; text-align: center; margin-top: 8px; }
+    .loader { text-align: center; padding: 80px 20px; }
+    .loader .icon { font-size: 48px; margin-bottom: 16px; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .footer { text-align: center; font-size: 12px; color: #999; padding: 8px 0 20px; }
+    .footer a { color: #1a3c12; text-decoration: none; }
+    @media (max-width: 480px) { .page { padding: 10px; } .total-bar .amount { font-size: 24px; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div id="app">
+      <div class="loader">
+        <div class="icon">🌳</div>
+        <div style="color:#666;font-size:15px;">Loading your invoice...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script>
+    var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
+    var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+    var STRIPE_PK = 'pk_live_51TDawDBGJHz1j102gKSfimIBsbD7OtFgtKtEG7wRjSEIRM0IEsyV3gBSXs5ESx8eRIK9EXfGYJk3lgKKyB5fFeJP00Zwn4B4ED';
+
+    var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    var params = new URLSearchParams(window.location.search);
+    var invoiceId = params.get('id');
+
+    function el(id) { return document.getElementById(id); }
+    function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function money(n) { return '$' + (+(n||0)).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+    function dateShort(d) { if (!d) return '—'; var dt = new Date(d); return (dt.getMonth()+1) + '/' + dt.getDate() + '/' + dt.getFullYear(); }
+
+    async function loadInvoice() {
+      if (!invoiceId) { showError('Invalid link — please check your email for the correct link.'); return; }
+      try {
+        var result = await sb.from('invoices').select('*').eq('id', invoiceId).single();
+        if (result.error) throw result.error;
+        renderInvoice(result.data);
+      } catch(e) {
+        showError('Invoice not found. The link may be expired or incorrect.');
+      }
+    }
+
+    function renderInvoice(inv) {
+      window._inv = inv;
+      var isPaid = inv.status === 'paid';
+      var balance = inv.balance || 0;
+      var now = new Date();
+      var isOverdue = !isPaid && inv.due_date && new Date(inv.due_date) < now;
+
+      var statusBadge = isPaid
+        ? '<span class="badge badge-paid">✓ Paid</span>'
+        : isOverdue
+          ? '<span class="badge badge-overdue">Past Due</span>'
+          : '<span class="badge badge-sent">Payment Due</span>';
+
+      // Line items
+      var items = inv.line_items || [];
+      var lineRows = items.length ? items.map(function(item) {
+        var amt = item.amount || ((item.qty||1) * (item.rate||0));
+        return '<tr><td><strong>' + esc(item.service || 'Service') + '</strong><br><span style="font-size:12px;color:#888;">' + esc(item.description||'') + '</span></td><td>' + money(amt) + '</td></tr>';
+      }).join('') : '<tr><td colspan="2" style="color:#999;font-size:13px;">No line items</td></tr>';
+
+      // Payment section
+      var paySection = '';
+      if (isPaid) {
+        paySection = '<div class="already-paid">'
+          + '<div style="font-size:40px;margin-bottom:12px;">✅</div>'
+          + '<h2 style="color:#2e7d32;margin-bottom:8px;">Paid — Thank You!</h2>'
+          + '<p style="color:#666;font-size:14px;">Payment has been received. We appreciate your business!</p>'
+          + '</div>';
+      } else {
+        paySection = '<div class="section-label" style="margin-bottom:14px;">Choose How to Pay</div>'
+          + '<div class="pay-methods">'
+          // Stripe card payment
+          + '<a class="pay-btn pay-btn-stripe" href="#" onclick="payByCard(event)">'
+          + '<span class="pay-btn-icon">💳</span>'
+          + '<div class="pay-btn-text">Pay by Credit / Debit Card<div class="sub">Visa, Mastercard, Amex — secure via Stripe</div></div>'
+          + '<span>›</span></a>'
+          // Venmo
+          + '<a class="pay-btn pay-btn-venmo" href="https://venmo.com/SecondNatureTree" target="_blank">'
+          + '<span class="pay-btn-icon">📱</span>'
+          + '<div class="pay-btn-text">Pay via Venmo<div class="sub">@SecondNatureTree · include invoice #' + esc(inv.invoice_number||'') + '</div></div>'
+          + '<span>›</span></a>'
+          // Zelle
+          + '<a class="pay-btn pay-btn-zelle" href="https://enroll.zellepay.com/qr-codes?data=ewogICJuYW1lIiA6ICJEb3VnIEJyb3duIiwKICAiYWN0aW9uIiA6ICJwYXltZW50IiwKICAidG9rZW4iIDogIjkxNDM5MTUyMzMiCn0=" target="_blank">'
+          + '<span class="pay-btn-icon">🏦</span>'
+          + '<div class="pay-btn-text">Pay via Zelle<div class="sub">Send to (914) 391-5233 · include invoice #' + esc(inv.invoice_number||'') + '</div></div>'
+          + '<span>›</span></a>'
+          // Call
+          + '<a class="pay-btn pay-btn-call" href="tel:9143915233">'
+          + '<span class="pay-btn-icon">📞</span>'
+          + '<div class="pay-btn-text">Call to Pay by Check or Cash<div class="sub" style="color:#666;">(914) 391-5233 · Mon–Sat 7am–6pm</div></div>'
+          + '<span>›</span></a>'
+          + '</div>'
+          + '<div class="stripe-note">Payments are applied within 1 business day · Questions? info@peekskilltree.com</div>';
+      }
+
+      el('app').innerHTML = ''
+        + '<div class="header">'
+        + '<div class="header-logo">🌳 Second Nature Tree Service</div>'
+        + '<h1>Invoice #' + esc(inv.invoice_number || '') + '</h1>'
+        + '<div style="margin-top:8px;">' + statusBadge + '</div>'
+        + '</div>'
+        + '<div class="card">'
+        + '<table class="meta-table">'
+        + '<tr><td>Client</td><td>' + esc(inv.client_name || '—') + '</td></tr>'
+        + (inv.subject ? '<tr><td>Job</td><td>' + esc(inv.subject) + '</td></tr>' : '')
+        + '<tr><td>Issued</td><td>' + dateShort(inv.issued_date || inv.created_at) + '</td></tr>'
+        + '<tr><td>Due</td><td' + (isOverdue ? ' style="color:#c62828;font-weight:600;"' : '') + '>' + dateShort(inv.due_date) + (isOverdue ? ' (Overdue)' : '') + '</td></tr>'
+        + '</table>'
+        + '</div>'
+        + '<div class="card card-mid">'
+        + '<div class="section-label" style="margin-bottom:12px;">Services</div>'
+        + '<table class="line-table"><thead><tr><th>Service</th><th>Amount</th></tr></thead><tbody>' + lineRows + '</tbody></table>'
+        + (!isPaid && balance > 0 ? '<div class="total-bar"><div class="label">Balance Due</div><div class="amount">' + money(balance) + '</div></div>' : '<div class="total-bar"><div class="label">Total</div><div class="amount">' + money(inv.total) + '</div></div>')
+        + '</div>'
+        + '<div class="card card-mid">' + paySection + '</div>'
+        + '<div class="footer">Second Nature Tree Service · <a href="tel:9143915233">(914) 391-5233</a> · <a href="https://peekskilltree.com">peekskilltree.com</a><br>Licensed &amp; Insured — WC-32079 · PC-50644</div>';
+    }
+
+    async function payByCard(e) {
+      e.preventDefault();
+      var inv = window._inv;
+      if (!inv) return;
+
+      // Redirect to Stripe Payment Link if one is stored on the invoice
+      if (inv.stripe_payment_url) {
+        window.location.href = inv.stripe_payment_url;
+        return;
+      }
+
+      // Fallback: email Doug to request a payment link
+      var subject = 'Online Payment Request — Invoice #' + (inv.invoice_number || '');
+      var body = 'Hi, I\'d like to pay Invoice #' + (inv.invoice_number || '') + ' for ' + ('$' + (inv.balance || inv.total || 0)) + ' by credit card. Please send me a secure payment link. Thank you.';
+      window.location.href = 'mailto:info@peekskilltree.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    }
+
+    function showError(msg) {
+      el('app').innerHTML = '<div class="card card-standalone" style="border-radius:12px;margin-top:20px;">'
+        + '<div style="text-align:center;padding:40px 20px;">'
+        + '<div style="font-size:40px;margin-bottom:16px;">⚠️</div>'
+        + '<h2 style="margin-bottom:8px;">Not Found</h2>'
+        + '<p style="color:#666;">' + msg + '</p>'
+        + '<p style="margin-top:20px;"><a href="tel:9143915233" style="color:#1a3c12;font-weight:700;text-decoration:none;">📞 (914) 391-5233</a></p>'
+        + '</div></div>'
+        + '<div class="footer"><a href="https://peekskilltree.com">peekskilltree.com</a></div>';
+    }
+
+    window.addEventListener('load', loadInvoice);
+  </script>
+</body>
+</html>

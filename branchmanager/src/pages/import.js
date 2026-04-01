@@ -133,8 +133,8 @@ var ImportPage = {
         statusEl.style.color = '#4caf50';
         UI.toast(imported + ' ' + type + ' imported to Supabase!');
       } else {
-        // Local storage fallback
-        mapped.forEach(function(row) { DB[type].create(row); });
+        // Local storage fallback — convert snake_case keys to camelCase so DB reads work
+        mapped.forEach(function(row) { DB[type].create(ImportPage._toCamel(row)); });
         statusEl.textContent = '✅ ' + mapped.length + ' imported (local)';
         statusEl.style.color = '#4caf50';
         UI.toast(mapped.length + ' ' + type + ' imported locally');
@@ -286,6 +286,15 @@ var ImportPage = {
       if (current.length > 1 || current[0] !== '') rows.push(current);
     }
     return rows;
+  },
+
+  _toCamel: function(obj) {
+    var n = {};
+    Object.keys(obj).forEach(function(k) {
+      var camel = k.replace(/_([a-z])/g, function(m, p) { return p.toUpperCase(); });
+      n[camel] = obj[k];
+    });
+    return n;
   },
 
   _uuid: function() {

@@ -412,20 +412,8 @@ var QuotesPage = {
         + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Description</h4>'
         + '<p style="font-size:14px;line-height:1.6;margin:0;">' + UI.esc(q.description) + '</p></div>' : '')
 
-      // Line items (Product / Service)
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);"><h4 style="font-size:15px;font-weight:700;margin:0;">Product / Service</h4><button onclick="QuotesPage.showForm(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-light);">✏️</button></div>';
-    if (q.lineItems && q.lineItems.length) {
-      html += '<table class="data-table" style="border:none;border-radius:0;"><thead><tr><th>Line Item</th><th>Quantity</th><th style="text-align:right;">Unit Price</th><th style="text-align:right;">Total</th></tr></thead><tbody>';
-      q.lineItems.forEach(function(item) {
-        html += '<tr><td><strong>' + (item.service || 'Custom') + '</strong>' + (item.description ? '<br><span style="color:var(--text-light);font-size:12px;">' + item.description + '</span>' : '') + '</td><td>' + item.qty + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || item.qty * item.rate) + '</td></tr>';
-      });
-      html += '<tr style="background:var(--green-bg);"><td colspan="3" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:800;font-size:15px;color:var(--accent);">' + UI.money(q.total) + '</td></tr>';
-      html += '</tbody></table>';
-    } else {
-      html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">No line items</div>';
-    }
-    html += '</div>'
+      // Line items (Product / Service) — inline editor
+      + QuotesPage.renderLineItems(q, id)
 
       // Photos + Notes + Actions in bottom section
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="detail-grid">'
@@ -568,6 +556,326 @@ var QuotesPage = {
     if (totalEl) totalEl.textContent = UI.money(total);
 
     UI.toast('Estimate applied — ' + items.length + ' line items, ' + UI.money(total));
+  },
+
+  // --- Inline Line Item Editor for Detail View ---
+
+  renderLineItems: function(q, id) {
+    var services = DB.services.getAll();
+    var items = q.lineItems || [];
+    var subtotal = 0;
+    items.forEach(function(item) { subtotal += (item.qty || 0) * (item.rate || 0); });
+    var discount = q.discount || 0;
+    var grandTotal = subtotal - discount;
+
+    var html = '<div id="li-section" style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);">'
+      + '<h4 style="font-size:15px;font-weight:700;margin:0;">Product / Service</h4>'
+      + '<div style="display:flex;gap:6px;">'
+      + '<button class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="QuotesPage.addLineItem(\'' + id + '\')">+ Add Line Item</button>'
+      + '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="QuotesPage.addLineItem(\'' + id + '\', true)">+ Custom Item</button>'
+      + '</div></div>';
+
+    if (items.length > 0) {
+      html += '<table class="data-table" style="border:none;border-radius:0;"><thead><tr>'
+        + '<th>Service / Description</th><th style="width:70px;">Qty</th>'
+        + '<th style="text-align:right;width:100px;">Unit Price</th>'
+        + '<th style="text-align:right;width:90px;">Total</th>'
+        + '<th style="width:40px;"></th>'
+        + '</tr></thead><tbody id="li-tbody">';
+      items.forEach(function(item, idx) {
+        var lineTotal = (item.qty || 0) * (item.rate || 0);
+        html += '<tr id="li-row-' + idx + '">'
+          + '<td>'
+          + '<strong class="li-name" onclick="QuotesPage.editLineItem(\'' + id + '\',' + idx + ')" style="cursor:pointer;" title="Click to edit">' + UI.esc(item.service || item.name || 'Custom') + '</strong>'
+          + (item.description ? '<br><span style="color:var(--text-light);font-size:12px;">' + UI.esc(item.description) + '</span>' : '')
+          + '</td>'
+          + '<td class="li-qty" onclick="QuotesPage.editLineItem(\'' + id + '\',' + idx + ')" style="cursor:pointer;" title="Click to edit">' + (item.qty || 1) + '</td>'
+          + '<td class="li-rate" style="text-align:right;cursor:pointer;" onclick="QuotesPage.editLineItem(\'' + id + '\',' + idx + ')" title="Click to edit">' + UI.money(item.rate || 0) + '</td>'
+          + '<td style="text-align:right;font-weight:600;">' + UI.money(lineTotal) + '</td>'
+          + '<td style="text-align:center;"><button onclick="QuotesPage.removeLineItem(\'' + id + '\',' + idx + ')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--red);opacity:.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" title="Delete line item">🗑️</button></td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>';
+
+      // Subtotal / Discount / Grand Total
+      html += '<div style="padding:12px 16px;border-top:1px solid var(--border);">'
+        + '<div style="display:flex;justify-content:flex-end;">'
+        + '<table style="font-size:14px;min-width:260px;">'
+        + '<tr><td style="padding:4px 16px 4px 0;text-align:right;color:var(--text-light);">Subtotal</td><td style="padding:4px 0;text-align:right;font-weight:600;">' + UI.money(subtotal) + '</td></tr>';
+      html += '<tr><td style="padding:4px 16px 4px 0;text-align:right;color:var(--text-light);">Discount</td>'
+        + '<td style="padding:4px 0;text-align:right;">'
+        + '<input type="number" id="li-discount" value="' + discount + '" min="0" step="0.01" style="width:90px;text-align:right;font-size:13px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;" onchange="QuotesPage.updateDiscount(\'' + id + '\',this.value)">'
+        + '</td></tr>';
+      html += '<tr style="border-top:2px solid var(--border);"><td style="padding:8px 16px 4px 0;text-align:right;font-weight:700;font-size:15px;">Total</td>'
+        + '<td style="padding:8px 0 4px;text-align:right;font-weight:800;font-size:16px;color:var(--accent);">' + UI.money(grandTotal) + '</td></tr>';
+      html += '</table></div></div>';
+    } else {
+      // No line items — check if services exist
+      if (services.length === 0) {
+        html += '<div style="padding:24px;text-align:center;color:var(--text-light);font-size:13px;">'
+          + '<div style="font-size:24px;margin-bottom:8px;">📦</div>'
+          + 'No services in catalog. Add services in <strong>Settings → Products & Services</strong>'
+          + '</div>';
+      } else {
+        html += '<div style="padding:24px;text-align:center;color:var(--text-light);font-size:13px;">'
+          + '<div style="font-size:24px;margin-bottom:8px;">📋</div>'
+          + 'No line items yet. Click <strong>+ Add Line Item</strong> to get started.'
+          + '</div>';
+      }
+    }
+
+    // Add-row area (hidden by default, shown when adding)
+    html += '<div id="li-add-row" style="display:none;"></div>';
+    html += '</div>';
+    return html;
+  },
+
+  addLineItem: function(quoteId, isCustom) {
+    var services = DB.services.getAll();
+    var container = document.getElementById('li-add-row');
+    if (!container) return;
+
+    // Build category-grouped options
+    var optionsHtml = '<option value="">-- Select a service --</option>';
+    if (!isCustom && services.length > 0) {
+      var categories = {};
+      services.forEach(function(s) {
+        var cat = s.category || 'Other';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(s);
+      });
+      var catKeys = Object.keys(categories).sort();
+      catKeys.forEach(function(cat) {
+        optionsHtml += '<optgroup label="' + UI.esc(cat) + '">';
+        categories[cat].forEach(function(s) {
+          optionsHtml += '<option value="' + s.id + '" data-name="' + UI.esc(s.name) + '" data-desc="' + UI.esc(s.description || '') + '" data-price="' + (s.unitPrice || 0) + '">' + UI.esc(s.name) + (s.unitPrice ? ' — ' + UI.money(s.unitPrice) : '') + '</option>';
+        });
+        optionsHtml += '</optgroup>';
+      });
+    }
+
+    var rowHtml = '<div style="padding:12px 16px;border-top:1px solid var(--border);background:#f9fafb;">'
+      + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">' + (isCustom ? 'Add Custom Item' : 'Add Service from Catalog') + '</div>'
+      + '<div style="display:grid;grid-template-columns:2fr 2fr 70px 100px 90px;gap:8px;align-items:end;">';
+
+    if (isCustom) {
+      rowHtml += '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Name</label>'
+        + '<input type="text" id="li-new-name" placeholder="Item name..." style="font-size:13px;"></div>';
+    } else {
+      rowHtml += '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label>'
+        + '<select id="li-new-service" onchange="QuotesPage._onNewServiceSelect()" style="font-size:13px;">' + optionsHtml + '</select></div>';
+    }
+
+    rowHtml += '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Description</label>'
+      + '<input type="text" id="li-new-desc" placeholder="Work details..." style="font-size:13px;"></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Qty</label>'
+      + '<input type="number" id="li-new-qty" value="1" min="1" style="font-size:13px;text-align:center;" oninput="QuotesPage._calcNewLineTotal()"></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Unit Price ($)</label>'
+      + '<input type="number" id="li-new-rate" value="" step="0.01" placeholder="0.00" style="font-size:13px;" oninput="QuotesPage._calcNewLineTotal()"></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Total</label>'
+      + '<div id="li-new-total" style="font-size:14px;font-weight:700;color:var(--green-dark);padding:8px 0;">$0.00</div></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:6px;margin-top:10px;">'
+      + '<button class="btn btn-primary" style="font-size:12px;padding:5px 14px;" onclick="QuotesPage.saveLineItem(\'' + quoteId + '\',' + (isCustom ? 'true' : 'false') + ')">Save</button>'
+      + '<button class="btn btn-outline" style="font-size:12px;padding:5px 14px;" onclick="document.getElementById(\'li-add-row\').style.display=\'none\';">Cancel</button>'
+      + '</div></div>';
+
+    container.innerHTML = rowHtml;
+    container.style.display = 'block';
+
+    // Focus the first input
+    setTimeout(function() {
+      var el = document.getElementById(isCustom ? 'li-new-name' : 'li-new-service');
+      if (el) el.focus();
+    }, 50);
+  },
+
+  _onNewServiceSelect: function() {
+    var sel = document.getElementById('li-new-service');
+    if (!sel) return;
+    var opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) return;
+    var descEl = document.getElementById('li-new-desc');
+    var rateEl = document.getElementById('li-new-rate');
+    if (descEl && opt.dataset.desc) descEl.value = opt.dataset.desc;
+    if (rateEl && opt.dataset.price) rateEl.value = opt.dataset.price;
+    QuotesPage._calcNewLineTotal();
+  },
+
+  _calcNewLineTotal: function() {
+    var qty = parseFloat((document.getElementById('li-new-qty') || {}).value) || 0;
+    var rate = parseFloat((document.getElementById('li-new-rate') || {}).value) || 0;
+    var el = document.getElementById('li-new-total');
+    if (el) el.textContent = UI.money(qty * rate);
+  },
+
+  saveLineItem: function(quoteId, isCustom) {
+    var q = DB.quotes.getById(quoteId);
+    if (!q) return;
+    var items = q.lineItems ? q.lineItems.slice() : [];
+
+    var name, description, qty, rate, serviceId;
+    if (isCustom) {
+      name = (document.getElementById('li-new-name') || {}).value || '';
+      if (!name.trim()) { UI.toast('Enter an item name', 'error'); return; }
+    } else {
+      var sel = document.getElementById('li-new-service');
+      if (!sel || !sel.value) { UI.toast('Select a service', 'error'); return; }
+      var opt = sel.options[sel.selectedIndex];
+      serviceId = sel.value;
+      name = opt.dataset.name || opt.textContent;
+    }
+    description = (document.getElementById('li-new-desc') || {}).value || '';
+    qty = parseFloat((document.getElementById('li-new-qty') || {}).value) || 1;
+    rate = parseFloat((document.getElementById('li-new-rate') || {}).value) || 0;
+
+    var newItem = {
+      id: 'li-' + Date.now(),
+      serviceId: serviceId || null,
+      service: name,
+      name: name,
+      description: description,
+      qty: qty,
+      rate: rate,
+      amount: qty * rate
+    };
+    items.push(newItem);
+
+    var total = 0;
+    items.forEach(function(it) { total += (it.qty || 0) * (it.rate || 0); });
+    total = total - (q.discount || 0);
+
+    DB.quotes.update(quoteId, { lineItems: items, total: total });
+    UI.toast('Line item added');
+    QuotesPage.showDetail(quoteId);
+  },
+
+  editLineItem: function(quoteId, itemIdx) {
+    var q = DB.quotes.getById(quoteId);
+    if (!q || !q.lineItems || !q.lineItems[itemIdx]) return;
+    var item = q.lineItems[itemIdx];
+    var services = DB.services.getAll();
+
+    // Build category-grouped options
+    var optionsHtml = '<option value="">-- Select or keep current --</option>';
+    var categories = {};
+    services.forEach(function(s) {
+      var cat = s.category || 'Other';
+      if (!categories[cat]) categories[cat] = [];
+      categories[cat].push(s);
+    });
+    var catKeys = Object.keys(categories).sort();
+    catKeys.forEach(function(cat) {
+      optionsHtml += '<optgroup label="' + UI.esc(cat) + '">';
+      categories[cat].forEach(function(s) {
+        var selected = (item.serviceId === s.id || item.service === s.name) ? ' selected' : '';
+        optionsHtml += '<option value="' + s.id + '" data-name="' + UI.esc(s.name) + '" data-desc="' + UI.esc(s.description || '') + '" data-price="' + (s.unitPrice || 0) + '"' + selected + '>' + UI.esc(s.name) + '</option>';
+      });
+      optionsHtml += '</optgroup>';
+    });
+
+    var lineTotal = (item.qty || 0) * (item.rate || 0);
+
+    var rowHtml = '<tr id="li-edit-row" style="background:#fffde7;">'
+      + '<td><select id="li-edit-service" style="font-size:13px;margin-bottom:4px;width:100%;" onchange="QuotesPage._onEditServiceSelect()">' + optionsHtml + '</select>'
+      + '<input type="text" id="li-edit-name" value="' + UI.esc(item.service || item.name || '') + '" placeholder="Item name" style="font-size:12px;margin-bottom:4px;width:100%;">'
+      + '<input type="text" id="li-edit-desc" value="' + UI.esc(item.description || '') + '" placeholder="Description" style="font-size:12px;width:100%;"></td>'
+      + '<td><input type="number" id="li-edit-qty" value="' + (item.qty || 1) + '" min="1" style="font-size:13px;text-align:center;width:55px;" oninput="QuotesPage._calcEditLineTotal()"></td>'
+      + '<td style="text-align:right;"><input type="number" id="li-edit-rate" value="' + (item.rate || 0) + '" step="0.01" style="font-size:13px;text-align:right;width:85px;" oninput="QuotesPage._calcEditLineTotal()"></td>'
+      + '<td style="text-align:right;font-weight:600;" id="li-edit-total">' + UI.money(lineTotal) + '</td>'
+      + '<td style="text-align:center;">'
+      + '<button class="btn btn-primary" style="font-size:11px;padding:3px 8px;margin-bottom:2px;display:block;width:100%;" onclick="QuotesPage._saveEditedItem(\'' + quoteId + '\',' + itemIdx + ')">Save</button>'
+      + '<button class="btn btn-outline" style="font-size:11px;padding:3px 8px;display:block;width:100%;" onclick="QuotesPage.showDetail(\'' + quoteId + '\')">Cancel</button>'
+      + '</td></tr>';
+
+    // Replace the row
+    var existingRow = document.getElementById('li-row-' + itemIdx);
+    if (existingRow) {
+      existingRow.outerHTML = rowHtml;
+    }
+  },
+
+  _onEditServiceSelect: function() {
+    var sel = document.getElementById('li-edit-service');
+    if (!sel) return;
+    var opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) return;
+    var nameEl = document.getElementById('li-edit-name');
+    var descEl = document.getElementById('li-edit-desc');
+    var rateEl = document.getElementById('li-edit-rate');
+    if (nameEl && opt.dataset.name) nameEl.value = opt.dataset.name;
+    if (descEl && opt.dataset.desc) descEl.value = opt.dataset.desc;
+    if (rateEl && opt.dataset.price && parseFloat(opt.dataset.price) > 0) rateEl.value = opt.dataset.price;
+    QuotesPage._calcEditLineTotal();
+  },
+
+  _calcEditLineTotal: function() {
+    var qty = parseFloat((document.getElementById('li-edit-qty') || {}).value) || 0;
+    var rate = parseFloat((document.getElementById('li-edit-rate') || {}).value) || 0;
+    var el = document.getElementById('li-edit-total');
+    if (el) el.textContent = UI.money(qty * rate);
+  },
+
+  _saveEditedItem: function(quoteId, itemIdx) {
+    var q = DB.quotes.getById(quoteId);
+    if (!q || !q.lineItems || !q.lineItems[itemIdx]) return;
+    var items = q.lineItems.slice();
+
+    var sel = document.getElementById('li-edit-service');
+    var serviceId = sel ? sel.value : null;
+    var name = (document.getElementById('li-edit-name') || {}).value || '';
+    var description = (document.getElementById('li-edit-desc') || {}).value || '';
+    var qty = parseFloat((document.getElementById('li-edit-qty') || {}).value) || 1;
+    var rate = parseFloat((document.getElementById('li-edit-rate') || {}).value) || 0;
+
+    items[itemIdx] = {
+      id: items[itemIdx].id || ('li-' + Date.now()),
+      serviceId: serviceId || items[itemIdx].serviceId || null,
+      service: name,
+      name: name,
+      description: description,
+      qty: qty,
+      rate: rate,
+      amount: qty * rate
+    };
+
+    var total = 0;
+    items.forEach(function(it) { total += (it.qty || 0) * (it.rate || 0); });
+    total = total - (q.discount || 0);
+
+    DB.quotes.update(quoteId, { lineItems: items, total: total });
+    UI.toast('Line item updated');
+    QuotesPage.showDetail(quoteId);
+  },
+
+  removeLineItem: function(quoteId, itemIdx) {
+    UI.confirm('Delete this line item?', function() {
+      var q = DB.quotes.getById(quoteId);
+      if (!q || !q.lineItems) return;
+      var items = q.lineItems.slice();
+      items.splice(itemIdx, 1);
+
+      var total = 0;
+      items.forEach(function(it) { total += (it.qty || 0) * (it.rate || 0); });
+      total = total - (q.discount || 0);
+
+      DB.quotes.update(quoteId, { lineItems: items, total: total });
+      UI.toast('Line item removed');
+      QuotesPage.showDetail(quoteId);
+    });
+  },
+
+  updateDiscount: function(quoteId, val) {
+    var q = DB.quotes.getById(quoteId);
+    if (!q) return;
+    var discount = parseFloat(val) || 0;
+    var subtotal = 0;
+    (q.lineItems || []).forEach(function(it) { subtotal += (it.qty || 0) * (it.rate || 0); });
+    var total = subtotal - discount;
+    if (total < 0) total = 0;
+    DB.quotes.update(quoteId, { discount: discount, total: total });
+    QuotesPage.showDetail(quoteId);
   },
 
   convertToJob: function(quoteId) {

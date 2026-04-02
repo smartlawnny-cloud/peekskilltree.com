@@ -3,6 +3,55 @@
  * Record partial payments, deposits, payment history per invoice
  */
 var Payments = {
+  render: function() {
+    // Collect all payments across all invoices
+    var allPayments = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('bm-payments-')) {
+        try {
+          var items = JSON.parse(localStorage.getItem(k)) || [];
+          items.forEach(function(p) { allPayments.push(p); });
+        } catch(e) {}
+      }
+    }
+    allPayments.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+
+    var total = allPayments.reduce(function(s, p) { return s + (p.amount || 0); }, 0);
+    var thisMonth = new Date(); thisMonth.setDate(1); thisMonth.setHours(0,0,0,0);
+    var monthTotal = allPayments.filter(function(p) { return new Date(p.date) >= thisMonth; })
+      .reduce(function(s, p) { return s + (p.amount || 0); }, 0);
+
+    var html = '<div style="max-width:800px;">'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">'
+      + '<div class="stat-card"><div class="stat-label">This Month</div><div class="stat-value">' + UI.money(monthTotal) + '</div></div>'
+      + '<div class="stat-card"><div class="stat-label">All Time</div><div class="stat-value">' + UI.money(total) + '</div></div>'
+      + '<div class="stat-card"><div class="stat-label">Payments</div><div class="stat-value">' + allPayments.length + '</div></div>'
+      + '</div>';
+
+    if (!allPayments.length) {
+      html += '<div class="empty-state"><div class="empty-icon">💵</div><h3>No payments recorded</h3><p>Record payments from the Invoice detail view.</p><button class="btn btn-primary" style="margin-top:16px;" onclick="loadPage(\'invoices\')">Go to Invoices</button></div>';
+    } else {
+      var methodIcons = { cash: '💵', check: '📝', venmo: '📱', zelle: '📱', card: '💳', stripe: '💳', deposit: '🏦', other: '💰' };
+      allPayments.slice(0, 100).forEach(function(p) {
+        var inv = p.invoiceId ? DB.invoices.getById(p.invoiceId) : null;
+        html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;">'
+          + '<div style="display:flex;align-items:center;gap:10px;">'
+          + '<div style="font-size:24px;">' + (methodIcons[p.method] || '💰') + '</div>'
+          + '<div>'
+          + '<div style="font-weight:600;font-size:14px;text-transform:capitalize;">' + (p.method || 'payment')
+          + (p.note ? ' <span style="font-weight:400;color:var(--text-light);">— ' + UI.esc(p.note) + '</span>' : '') + '</div>'
+          + (inv ? '<div style="font-size:12px;color:var(--text-light);">' + UI.esc(inv.clientName || '') + (inv.invoiceNumber ? ' · Invoice #' + inv.invoiceNumber : '') + '</div>' : '')
+          + '</div></div>'
+          + '<div style="text-align:right;">'
+          + '<div style="font-weight:700;font-size:16px;color:var(--green-dark);">+' + UI.money(p.amount) + '</div>'
+          + '<div style="font-size:11px;color:var(--text-light);">' + UI.dateShort(p.date) + '</div>'
+          + '</div></div>';
+      });
+    }
+    html += '</div>';
+    return html;
+  },
   // Render payment history for an invoice
   renderForInvoice: function(invoiceId) {
     var payments = Payments.getAll(invoiceId);

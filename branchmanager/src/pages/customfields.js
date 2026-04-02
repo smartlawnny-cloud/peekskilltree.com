@@ -3,6 +3,7 @@
  * Add custom fields to clients, jobs, quotes, invoices
  */
 var CustomFields = {
+  render: function() { return CustomFields.renderSettings(); },
   // Field types
   TYPES: ['text', 'number', 'date', 'dropdown', 'checkbox', 'textarea', 'phone', 'email', 'url'],
 

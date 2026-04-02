@@ -7,6 +7,7 @@
  * Merge fields: {{clientName}}, {{jobNumber}}, {{quoteTotal}}, etc.
  */
 var EmailTemplates = {
+  render: function() { return EmailTemplates.renderSettings(); },
 
   STORAGE_KEY: 'bm-email-templates',
 

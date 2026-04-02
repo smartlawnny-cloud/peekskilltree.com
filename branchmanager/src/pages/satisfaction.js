@@ -158,6 +158,67 @@ var Satisfaction = {
     };
   },
 
+  // Full page — NPS dashboard + list of all rated jobs
+  render: function() {
+    var nps = Satisfaction.getNPS();
+    var jobs = DB.jobs.getAll().filter(function(j) { return j.satisfaction && j.satisfaction.rating; });
+    jobs.sort(function(a, b) { return new Date(b.satisfaction.ratedAt) - new Date(a.satisfaction.ratedAt); });
+
+    var html = '<div style="max-width:800px;">';
+
+    // NPS widget at top
+    if (nps.total > 0) {
+      html += Satisfaction.renderNPSWidget();
+    } else {
+      html += '<div class="empty-state"><div class="empty-icon">😊</div>'
+        + '<h3>No ratings yet</h3>'
+        + '<p>Rate clients from the job detail view after completing jobs.</p>'
+        + '<button class="btn btn-primary" style="margin-top:16px;" onclick="loadPage(\'jobs\')">Go to Jobs</button></div>';
+      html += '</div>';
+      return html;
+    }
+
+    // Ratings breakdown
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;margin-bottom:12px;">Rating Breakdown</h4>'
+      + '<div style="display:flex;flex-direction:column;gap:6px;">';
+    for (var r = 5; r >= 1; r--) {
+      var count = jobs.filter(function(j) { return j.satisfaction.rating === r; }).length;
+      var pct = nps.total > 0 ? Math.round(count / nps.total * 100) : 0;
+      var stars = '';
+      for (var s = 1; s <= 5; s++) stars += s <= r ? '⭐' : '☆';
+      html += '<div style="display:flex;align-items:center;gap:8px;font-size:13px;">'
+        + '<span style="width:80px;font-size:11px;">' + stars + '</span>'
+        + '<div style="flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">'
+        + '<div style="height:100%;width:' + pct + '%;background:#4caf50;border-radius:4px;"></div></div>'
+        + '<span style="width:30px;text-align:right;color:var(--text-light);">' + count + '</span>'
+        + '</div>';
+    }
+    html += '</div></div>';
+
+    // Recent rated jobs list
+    html += '<h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">Recent Ratings</h4>';
+    jobs.slice(0, 30).forEach(function(j) {
+      var stars = '';
+      for (var i = 1; i <= 5; i++) stars += i <= j.satisfaction.rating ? '⭐' : '☆';
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;cursor:pointer;" onclick="loadPage(\'jobs\');JobsPage.showDetail(\'' + j.id + '\')">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">'
+        + '<div>'
+        + '<div style="font-weight:600;font-size:14px;">' + UI.esc(j.clientName || '—') + '</div>'
+        + '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + UI.esc(j.description || '') + '</div>'
+        + '</div>'
+        + '<div style="text-align:right;">'
+        + '<div style="font-size:18px;">' + stars + '</div>'
+        + '<div style="font-size:11px;color:var(--text-light);">' + UI.dateRelative(j.satisfaction.ratedAt) + '</div>'
+        + '</div></div>'
+        + (j.satisfaction.comment ? '<div style="font-size:13px;color:var(--text-light);margin-top:8px;font-style:italic;background:var(--bg);padding:8px 12px;border-radius:8px;">"' + UI.esc(j.satisfaction.comment) + '"</div>' : '')
+        + '</div>';
+    });
+
+    html += '</div>';
+    return html;
+  },
+
   // Render NPS widget for dashboard/reports
   renderNPSWidget: function() {
     var nps = Satisfaction.getNPS();

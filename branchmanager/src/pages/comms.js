@@ -109,5 +109,53 @@ var CommsLog = {
     }
     all.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
     return all.slice(0, limit);
+  },
+
+  // Full page — recent comms feed across all clients
+  render: function() {
+    var recent = CommsLog.getRecent(50);
+    var icons = { call: '📞', text: '💬', email: '📧', note: '📌', visit: '🏠', voicemail: '📱' };
+
+    var html = '<div style="max-width:720px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">'
+      + '<div><h2 style="margin:0;font-size:22px;">Communication Log</h2><p style="margin:4px 0 0;color:var(--text-light);font-size:13px;">All calls, texts, emails, and notes across clients</p></div>'
+      + '</div>';
+
+    if (!recent.length) {
+      html += '<div class="empty-state"><div class="empty-icon">💬</div>'
+        + '<h3>No communications logged</h3>'
+        + '<p>Open a client record to log calls, texts, emails, or notes.</p></div>';
+    } else {
+      var byDate = {};
+      recent.forEach(function(c) {
+        var d = c.date ? c.date.split('T')[0] : 'unknown';
+        if (!byDate[d]) byDate[d] = [];
+        byDate[d].push(c);
+      });
+      Object.keys(byDate).sort(function(a,b) { return b.localeCompare(a); }).forEach(function(date) {
+        html += '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;">' + UI.dateShort(date) + '</div>';
+        byDate[date].forEach(function(c) {
+          var client = c.clientId ? DB.clients.getById(c.clientId) : null;
+          var clientName = client ? client.name : (c.clientId ? 'Unknown Client' : '');
+          var icon = icons[c.type] || '📋';
+          var dirColor = c.direction === 'inbound' ? '#2980b9' : '#27ae60';
+          var dirLabel = c.direction === 'inbound' ? '← In' : '→ Out';
+          html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;">'
+            + '<div style="flex-shrink:0;width:36px;height:36px;background:' + (c.type === 'note' ? '#fff3e0' : '#e8f5e9') + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">' + icon + '</div>'
+            + '<div style="flex:1;min-width:0;">'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">'
+            + '<span style="font-weight:600;font-size:13px;text-transform:capitalize;">' + c.type
+            + ' <span style="font-size:11px;color:' + dirColor + ';font-weight:400;">' + dirLabel + '</span>'
+            + (clientName ? ' <span style="font-size:12px;color:var(--text-light);font-weight:400;">— <a href="#" onclick="loadPage(\'clients\');return false;" style="color:var(--accent);text-decoration:none;">' + UI.esc(clientName) + '</a></span>' : '')
+            + '</span>'
+            + '<span style="font-size:11px;color:var(--text-light);">' + UI.timeAgo(c.date) + '</span>'
+            + '</div>'
+            + (c.notes ? '<div style="font-size:13px;color:var(--text-light);margin-top:4px;white-space:pre-wrap;">' + UI.esc(c.notes) + '</div>' : '')
+            + '</div></div>';
+        });
+      });
+    }
+    html += '</div>';
+    return html;
   }
 };

@@ -3,6 +3,7 @@
  * Pre-job and post-job inspection checklists per job type
  */
 var Checklists = {
+  render: function() { return Checklists.renderTemplateManager(); },
   // Default checklist templates by service type
   _templates: {
     'Tree Removal': {

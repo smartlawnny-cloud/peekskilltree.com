@@ -637,7 +637,7 @@
 <script src="src/pages/insights.js?v=3"></script>
 <script src="src/geofence.js"></script>
 <script src="src/weather.js"></script>
-<script src="src/pages/comms.js"></script>
+<script src="src/pages/comms.js?v=2"></script>
 <script src="src/pages/messaging.js?v=3"></script>
 <script src="src/pages/profitloss.js"></script>
 <script src="src/photos.js"></script>
@@ -684,17 +684,17 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <!-- photos.js moved earlier, before photomap.js -->
 <script src="src/templates.js"></script>
 <script src="src/supacloud.js"></script>
-<script src="src/pages/payments.js"></script>
+<script src="src/pages/payments.js?v=2"></script>
 <script src="src/pages/workflow.js?v=7"></script>
 <script src="src/pages/reviews.js"></script>
 <script src="src/pages/timetrack.js?v=2"></script>
-<script src="src/pages/checklists.js"></script>
+<script src="src/pages/checklists.js?v=2"></script>
 <script src="src/pages/visits.js"></script>
-<script src="src/pages/customfields.js"></script>
+<script src="src/pages/customfields.js?v=2"></script>
 <script src="src/pages/commandpalette.js"></script>
 <script src="src/pages/ai.js"></script>
-<script src="src/pages/satisfaction.js"></script>
-<script src="src/pages/emailtemplates.js"></script>
+<script src="src/pages/satisfaction.js?v=2"></script>
+<script src="src/pages/emailtemplates.js?v=2"></script>
 <script src="src/pages/crewperformance.js"></script>
 <script src="src/pages/materials.js"></script>
 <script src="src/pages/beforeafter.js?v=2"></script>
@@ -768,7 +768,13 @@ var pageConfigs = {
   crewperformance: { title: 'Crew Performance', action: null },
   materials: { title: 'Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
   beforeafter: { title: 'Before & After', action: null },
-  reminders: { title: 'Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' }
+  reminders: { title: 'Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' },
+  comms: { title: 'Communication Log', action: null },
+  satisfaction: { title: 'Client Satisfaction', action: null },
+  emailtemplates: { title: 'Email Templates', action: '+ New Template', actionFn: 'EmailTemplates._showNewTemplateForm()' },
+  customfields: { title: 'Custom Fields', action: null },
+  checklists: { title: 'Checklists', action: null },
+  payments: { title: 'Payment History', action: null }
 };
 
 var pageRenderers = {
@@ -811,6 +817,12 @@ var pageRenderers = {
   materials: function() { return Materials.render(); },
   beforeafter: function() { return BeforeAfter.render(); },
   reminders: function() { return Reminders.render(); },
+  comms: function() { return CommsLog.render(); },
+  satisfaction: function() { return Satisfaction.render(); },
+  emailtemplates: function() { return EmailTemplates.render(); },
+  customfields: function() { return CustomFields.render(); },
+  checklists: function() { return Checklists.render(); },
+  payments: function() { return Payments.render(); },
   calculators: function() {
     return '<div class="stat-grid">'
       + '<div class="stat-card" style="cursor:pointer;" onclick="Estimator.show()">'

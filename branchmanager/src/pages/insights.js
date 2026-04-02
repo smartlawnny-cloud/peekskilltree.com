@@ -3,6 +3,8 @@
  * Revenue charts, funnel metrics, marketing source breakdown
  */
 var InsightsPage = {
+  _year: null, // null = current year
+
   render: function() {
     var allInvoices = DB.invoices.getAll();
     var allJobs = DB.jobs.getAll();
@@ -11,9 +13,15 @@ var InsightsPage = {
     var allClients = DB.clients.getAll();
 
     var now = new Date();
-    var year = now.getFullYear();
+    var year = InsightsPage._year || now.getFullYear();
 
-    // Revenue by month (current year)
+    // Find available years from invoice data
+    var yearsSet = {};
+    allInvoices.forEach(function(inv) { yearsSet[new Date(inv.createdAt).getFullYear()] = true; });
+    var availableYears = Object.keys(yearsSet).map(Number).sort().reverse();
+    if (availableYears.indexOf(now.getFullYear()) === -1) availableYears.unshift(now.getFullYear());
+
+    // Revenue by month (selected year)
     var monthlyRev = [];
     var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     for (var m = 0; m < 12; m++) {
@@ -65,12 +73,25 @@ var InsightsPage = {
 
     var html = '';
 
+    // Year picker
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h2 style="font-size:18px;font-weight:700;">Insights</h2>'
+      + '<div style="display:flex;gap:4px;background:var(--bg);border-radius:8px;padding:3px;">';
+    availableYears.forEach(function(y) {
+      var active = y === year;
+      html += '<button onclick="InsightsPage._year=' + y + ';loadPage(\'insights\')" style="border:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;'
+        + (active ? 'background:var(--green-dark);color:#fff;' : 'background:transparent;color:var(--text);') + '">' + y + '</button>';
+    });
+    html += '</div></div>';
+
     // Revenue stats
+    var yearInvoices = allInvoices.filter(function(i) { return new Date(i.createdAt).getFullYear() === year; });
+    var yearAvgInv = yearInvoices.length > 0 ? yearInvoices.reduce(function(s,i){return s+i.total;},0) / yearInvoices.length : 0;
     html += '<div class="stat-grid">'
-      + UI.statCard('Revenue (' + year + ')', UI.moneyInt(totalRevYear), 'Year to date', '', '')
-      + UI.statCard('Receivables', UI.moneyInt(totalReceivable), 'Outstanding', totalReceivable > 0 ? 'down' : '', '')
-      + UI.statCard('Total Jobs', totalJobs.toString(), completedJobs + ' completed', '', '')
-      + UI.statCard('Avg Invoice', allInvoices.length > 0 ? UI.moneyInt(allInvoices.reduce(function(s,i){return s+i.total;},0) / allInvoices.length) : '$0', allInvoices.length + ' invoices', '', '')
+      + UI.statCard('Revenue ' + year, UI.moneyInt(totalRevYear), 'Paid invoices', totalRevYear > 0 ? 'up' : '', '')
+      + UI.statCard('Receivables', UI.moneyInt(totalReceivable), 'Outstanding balance', totalReceivable > 0 ? 'down' : '', '')
+      + UI.statCard('Jobs', totalJobs.toString(), completedJobs + ' completed', '', '')
+      + UI.statCard('Avg Invoice', yearAvgInv > 0 ? UI.moneyInt(yearAvgInv) : '$0', yearInvoices.length + ' invoices ' + year, '', '')
       + '</div>';
 
     // Revenue bar chart

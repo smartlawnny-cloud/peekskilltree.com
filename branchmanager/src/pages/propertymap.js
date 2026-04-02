@@ -4,6 +4,56 @@
  * Uses MapLibre GL + ESRI satellite tiles (free)
  */
 var PropertyMap = {
+  render: function() {
+    var jobs = DB.jobs.getAll().filter(function(j) { return j.property || j.clientName; });
+    jobs.sort(function(a, b) { return new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0); });
+
+    var html = '<div style="max-width:800px;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;">'
+      + '<div style="font-weight:700;font-size:15px;margin-bottom:8px;">🗺 Property Map</div>'
+      + '<div style="font-size:13px;color:var(--text-light);margin-bottom:14px;line-height:1.6;">Open a satellite map for any address and drag equipment icons (bucket truck, chipper, crane, crew) to plan job logistics. Save the layout with a quote or job.</div>'
+      + '<div style="display:flex;gap:8px;">'
+      + '<input type="text" id="propmap-address-input" placeholder="Enter any address to open map..." style="flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:14px;" onkeydown="if(event.key===\'Enter\')PropertyMap._openFromInput();">'
+      + '<button class="btn btn-primary" onclick="PropertyMap._openFromInput()">Open Map</button>'
+      + '</div>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">';
+
+    PropertyMap.equipmentList.forEach(function(eq) {
+      html += '<div style="font-size:11px;padding:4px 10px;background:' + eq.color + '22;color:' + eq.color + ';border-radius:12px;font-weight:600;border:1px solid ' + eq.color + '44;">' + eq.label + '</div>';
+    });
+    html += '</div></div>';
+
+    // Recent jobs
+    if (jobs.length) {
+      html += '<div style="font-weight:700;font-size:13px;margin-bottom:10px;">Recent Jobs</div>';
+      jobs.slice(0, 30).forEach(function(j) {
+        var address = j.property || '';
+        var hasSavedMap = j.mapMarkers && j.mapMarkers.length > 0;
+        html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+          + '<div style="min-width:0;">'
+          + '<div style="font-weight:600;font-size:14px;">' + UI.esc(j.clientName || '') + (j.jobNumber ? ' · Job #' + j.jobNumber : '') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(address || 'No address') + '</div>'
+          + '</div>'
+          + '<div style="display:flex;gap:6px;flex-shrink:0;">'
+          + (hasSavedMap ? '<span style="font-size:11px;color:var(--green-dark);padding:3px 8px;background:#e8f5e9;border-radius:10px;font-weight:600;">📍 Saved</span>' : '')
+          + (address ? '<button onclick="PropertyMap.show(\'' + address.replace(/'/g, "\\'") + '\',' + (hasSavedMap ? 'DB.jobs.getById(\'' + j.id + '\').mapMarkers' : 'null') + ');" style="background:var(--accent);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Open Map</button>' : '')
+          + '</div></div>';
+      });
+    } else {
+      html += '<div class="empty-state"><div class="empty-icon">🗺</div><h3>No jobs yet</h3><p>Property maps open per job. Start by entering an address above or opening a job.</p></div>';
+    }
+
+    html += '</div>';
+    return html;
+  },
+
+  _openFromInput: function() {
+    var input = document.getElementById('propmap-address-input');
+    var address = input ? input.value.trim() : '';
+    if (!address) { UI.toast('Enter an address first', 'error'); return; }
+    PropertyMap.show(address, null);
+  },
+
   map: null,
   markers: [],
   // Equipment with relative dimensions (w x h in feet) for scaled rectangles on map

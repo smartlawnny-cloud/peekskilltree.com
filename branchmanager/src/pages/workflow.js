@@ -3,6 +3,96 @@
  * One-click conversions between pipeline stages
  */
 var Workflow = {
+  render: function() {
+    var requests = DB.requests ? DB.requests.getAll() : [];
+    var quotes = DB.quotes.getAll();
+    var jobs = DB.jobs.getAll();
+    var invoices = DB.invoices.getAll();
+
+    var openRequests = requests.filter(function(r) { return r.status !== 'converted' && r.status !== 'cancelled'; }).length;
+    var openQuotes = quotes.filter(function(q) { return q.status === 'draft' || q.status === 'sent' || q.status === 'awaiting'; }).length;
+    var activeJobs = jobs.filter(function(j) { return j.status === 'scheduled' || j.status === 'in_progress'; }).length;
+    var unpaidInvoices = invoices.filter(function(i) { return i.status !== 'paid' && (i.balance || 0) > 0; });
+    var unpaidTotal = unpaidInvoices.reduce(function(s, i) { return s + (i.balance || 0); }, 0);
+
+    var html = '<div style="max-width:900px;">'
+      // Pipeline flow
+      + '<div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:0;align-items:center;margin-bottom:28px;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px;overflow:hidden;">'
+      + Workflow._stageBox('📥', 'Requests', openRequests, 'requests', '#1565c0')
+      + '<div style="font-size:20px;color:var(--border);font-weight:300;">→</div>'
+      + Workflow._stageBox('📋', 'Quotes', openQuotes, 'quotes', '#ff9800')
+      + '<div style="font-size:20px;color:var(--border);font-weight:300;">→</div>'
+      + Workflow._stageBox('🔨', 'Active Jobs', activeJobs, 'jobs', 'var(--green-dark)')
+      + '<div style="font-size:20px;color:var(--border);font-weight:300;">→</div>'
+      + Workflow._stageBox('💰', 'Unpaid', UI.money(unpaidTotal), 'invoices', 'var(--red)')
+      + '</div>';
+
+    // Quotes ready to convert
+    var approvedQuotes = quotes.filter(function(q) { return q.status === 'approved' && !q.convertedJobId; });
+    if (approvedQuotes.length) {
+      html += '<div style="margin-bottom:20px;"><div style="font-weight:700;font-size:13px;color:var(--green-dark);margin-bottom:10px;">✅ Quotes Ready to Convert → Job (' + approvedQuotes.length + ')</div>';
+      approvedQuotes.slice(0, 10).forEach(function(q) {
+        html += '<div style="background:var(--white);border:1px solid #c8e6c9;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;">'
+          + '<div>'
+          + '<div style="font-weight:600;font-size:14px;">' + UI.esc(q.clientName || '') + (q.quoteNumber ? ' · Quote #' + q.quoteNumber : '') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">' + (q.description || '').substr(0, 60) + ' · ' + UI.money(q.total) + '</div>'
+          + '</div>'
+          + '<button onclick="var j=Workflow.quoteToJob(\'' + q.id + '\');if(j){loadPage(\'jobs\');setTimeout(function(){JobsPage.showDetail(j.id);},100);}" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">→ Create Job</button>'
+          + '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Jobs ready to invoice
+    var completedNoInvoice = jobs.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+    if (completedNoInvoice.length) {
+      html += '<div style="margin-bottom:20px;"><div style="font-weight:700;font-size:13px;color:#e65100;margin-bottom:10px;">🔔 Completed Jobs Needing Invoice (' + completedNoInvoice.length + ')</div>';
+      completedNoInvoice.slice(0, 10).forEach(function(j) {
+        html += '<div style="background:var(--white);border:1px solid #ffe0b2;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;">'
+          + '<div>'
+          + '<div style="font-weight:600;font-size:14px;">' + UI.esc(j.clientName || '') + (j.jobNumber ? ' · Job #' + j.jobNumber : '') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">' + (j.description || '').substr(0, 60) + ' · ' + UI.money(j.total) + '</div>'
+          + '</div>'
+          + '<button onclick="var inv=Workflow.jobToInvoice(\'' + j.id + '\');if(inv){loadPage(\'invoices\');setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);}" style="background:#e65100;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">→ Create Invoice</button>'
+          + '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Overdue invoices
+    var today = new Date().toISOString().split('T')[0];
+    var overdueInvoices = unpaidInvoices.filter(function(i) { return i.dueDate && i.dueDate < today; });
+    if (overdueInvoices.length) {
+      html += '<div><div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:10px;">⚠ Overdue Invoices (' + overdueInvoices.length + ')</div>';
+      overdueInvoices.slice(0, 10).forEach(function(inv) {
+        var daysOverdue = Math.floor((new Date() - new Date(inv.dueDate)) / 86400000);
+        html += '<div style="background:var(--white);border:1px solid var(--red);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;">'
+          + '<div>'
+          + '<div style="font-weight:600;font-size:14px;">' + UI.esc(inv.clientName || '') + (inv.invoiceNumber ? ' · Invoice #' + inv.invoiceNumber : '') + '</div>'
+          + '<div style="font-size:12px;color:var(--red);">' + daysOverdue + ' days overdue · ' + UI.money(inv.balance) + ' due</div>'
+          + '</div>'
+          + '<button onclick="loadPage(\'invoices\');setTimeout(function(){InvoicesPage.showDetail(\'' + inv.id + '\');},100);" style="background:var(--red);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">View Invoice</button>'
+          + '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (!approvedQuotes.length && !completedNoInvoice.length && !overdueInvoices.length) {
+      html += '<div class="empty-state"><div class="empty-icon">✅</div><h3>All caught up!</h3><p>No quotes to convert, no jobs waiting on invoices, no overdue invoices.</p></div>';
+    }
+
+    html += '</div>';
+    return html;
+  },
+
+  _stageBox: function(icon, label, value, page, color) {
+    return '<div style="text-align:center;cursor:pointer;padding:8px 16px;" onclick="loadPage(\'' + page + '\')">'
+      + '<div style="font-size:24px;margin-bottom:4px;">' + icon + '</div>'
+      + '<div style="font-size:22px;font-weight:800;color:' + color + ';">' + value + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">' + label + '</div>'
+      + '</div>';
+  },
+
   // Convert a quote to a job
   quoteToJob: function(quoteId) {
     var quote = DB.quotes.getById(quoteId);

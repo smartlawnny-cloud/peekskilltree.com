@@ -3,6 +3,111 @@
  * Built-in AI powered by Claude for estimates, client comms, business insights
  */
 var AI = {
+  render: function() {
+    AI.init();
+    var containerStyle = 'max-width:700px;height:calc(100vh - 140px);min-height:500px;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;';
+    return '<div style="' + containerStyle + '" id="ai-inline-container">' + AI._renderPanelInline() + '</div>';
+  },
+
+  _renderPanelInline: function() {
+    var html = ''
+      + '<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
+      + '<div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#D4A574 0%,#C4956A 100%);display:flex;align-items:center;justify-content:center;">'
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+      + '<div><div style="font-weight:700;font-size:15px;">Claude AI Assistant</div>'
+      + '<div style="font-size:11px;color:var(--text-light);">Your tree service business assistant</div></div></div>'
+      + '<button onclick="AI._clearHistory();AI._refreshInline();" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-light);padding:4px 8px;" title="Clear chat">🗑️ Clear</button>'
+      + '</div>';
+
+    if (!AI._apiKey) {
+      html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;">'
+        + '<div style="text-align:center;max-width:340px;">'
+        + '<div style="font-size:48px;margin-bottom:16px;">🤖</div>'
+        + '<h3 style="margin-bottom:8px;">Connect Claude AI</h3>'
+        + '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;line-height:1.6;">Enter your Anthropic API key to enable AI-powered estimates, client emails, and business insights. Your key is stored locally — never sent to anyone but Anthropic.</p>'
+        + '<input type="password" id="ai-key-input" placeholder="sk-ant-api03-..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:12px;">'
+        + '<button class="btn btn-primary" onclick="AI._saveKey();AI._refreshInline();" style="width:100%;">Connect</button>'
+        + '<p style="font-size:11px;color:var(--text-light);margin-top:12px;">Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a></p>'
+        + '</div></div>';
+      return html;
+    }
+
+    html += '<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;background:var(--bg);">'
+      + '<button onclick="AI._inlineAsk(\'Write a professional quote description for a large oak tree removal near power lines\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">✍️ Quote description</button>'
+      + '<button onclick="AI._inlineAsk(\'Draft a friendly follow-up email to a client whose quote has been pending for a week\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">📧 Follow-up email</button>'
+      + '<button onclick="AI._inlineAsk(\'Give me a business summary with total revenue, active jobs, open quotes, and recommendations\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">📊 Business summary</button>'
+      + '<button onclick="AI._inlineAsk(\'What should I charge for removing a 24-inch DBH oak, 60 feet tall, tight backyard, no bucket truck access?\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">💰 Price estimate</button>'
+      + '</div>';
+
+    html += '<div id="ai-messages" style="flex:1;overflow-y:auto;padding:16px;">';
+    if (AI._messages.length === 0) {
+      html += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">'
+        + '<div style="font-size:40px;margin-bottom:12px;">🌳</div>'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:8px;">How can I help?</div>'
+        + '<div style="font-size:13px;line-height:1.8;">I can help you:<br>'
+        + '• Price jobs & write estimates<br>'
+        + '• Draft client emails and texts<br>'
+        + '• Summarize your business performance<br>'
+        + '• Answer tree care questions<br>'
+        + '• Suggest upsells and follow-ups</div></div>';
+    } else {
+      AI._messages.forEach(function(msg) { html += AI._renderMessage(msg); });
+    }
+    html += '</div>';
+
+    html += '<div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;">'
+      + '<div style="display:flex;gap:8px;align-items:flex-end;">'
+      + '<textarea id="ai-input" rows="1" placeholder="Ask Claude anything about your business..." '
+      + 'style="flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:12px;font-size:14px;resize:none;max-height:100px;font-family:inherit;line-height:1.4;" '
+      + 'onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();AI._inlineSend();}" '
+      + 'oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,100)+\'px\'"></textarea>'
+      + '<button onclick="AI._inlineSend()" style="background:linear-gradient(135deg,#D4A574 0%,#C4956A 100%);color:#fff;border:none;border-radius:12px;width:44px;height:44px;cursor:pointer;font-size:18px;flex-shrink:0;">↑</button>'
+      + '</div>'
+      + '<div style="font-size:10px;color:var(--text-light);text-align:center;margin-top:6px;">Powered by Claude · Anthropic</div>'
+      + '</div>';
+    return html;
+  },
+
+  _inlineAsk: function(question) {
+    var input = document.getElementById('ai-input');
+    if (input) { input.value = question; }
+    AI._inlineSend();
+  },
+
+  _inlineSend: function() {
+    var input = document.getElementById('ai-input');
+    if (!input) { AI.send(); return; }
+    var text = input.value.trim();
+    if (!text || AI._loading) return;
+    AI._messages.push({ role: 'user', content: text });
+    input.value = ''; input.style.height = 'auto';
+    AI._refreshMessages();
+    AI._scrollToBottom();
+    var context = AI._buildContext();
+    AI._loading = true;
+    AI._showTyping();
+    AI._callClaude(context, text).then(function(response) {
+      AI._loading = false;
+      AI._removeTyping();
+      AI._messages.push({ role: 'assistant', content: response });
+      AI._refreshMessages();
+      AI._scrollToBottom();
+      AI._saveHistory();
+    }).catch(function(err) {
+      AI._loading = false;
+      AI._removeTyping();
+      AI._messages.push({ role: 'assistant', content: 'Error: ' + (err.message || 'Could not reach Claude API. Check your key in Settings.') });
+      AI._refreshMessages();
+      AI._scrollToBottom();
+    });
+  },
+
+  _refreshInline: function() {
+    var container = document.getElementById('ai-inline-container');
+    if (container) { AI.init(); container.innerHTML = AI._renderPanelInline(); }
+  },
+
   _visible: false,
   _messages: [],
   _apiKey: '',

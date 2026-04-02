@@ -11,6 +11,64 @@
  * (In production, this will be a separate page with its own auth)
  */
 var ClientHub = {
+  render: function() {
+    var clients = DB.clients.getAll().slice(0, 200);
+    clients.sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
+
+    var html = '<div style="max-width:800px;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;">'
+      + '<div style="font-size:32px;">🌳</div>'
+      + '<div><div style="font-weight:700;font-size:15px;">Client Portal</div>'
+      + '<div style="font-size:13px;color:var(--text-light);">Each client gets a private link to view quotes, approve work, pay invoices, and submit requests.</div></div>'
+      + '</div>'
+      + '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<div style="font-size:12px;color:var(--text-light);padding:6px 12px;background:var(--bg);border-radius:20px;">✅ View & approve quotes</div>'
+      + '<div style="font-size:12px;color:var(--text-light);padding:6px 12px;background:var(--bg);border-radius:20px;">💰 Pay invoices online</div>'
+      + '<div style="font-size:12px;color:var(--text-light);padding:6px 12px;background:var(--bg);border-radius:20px;">📅 See appointments</div>'
+      + '<div style="font-size:12px;color:var(--text-light);padding:6px 12px;background:var(--bg);border-radius:20px;">📥 Submit requests</div>'
+      + '</div></div>';
+
+    html += '<div style="margin-bottom:12px;"><input type="text" id="clienthub-search" placeholder="Search clients..." oninput="ClientHub._filterList(this.value)" style="width:100%;max-width:360px;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>';
+    html += '<div id="clienthub-list">';
+
+    clients.forEach(function(c) {
+      var allInvoices = DB.invoices.getAll().filter(function(i) { return i.clientId === c.id || (i.clientName || '').toLowerCase() === (c.name || '').toLowerCase(); });
+      var allQuotes = DB.quotes.getAll().filter(function(q) { return q.clientId === c.id || (q.clientName || '').toLowerCase() === (c.name || '').toLowerCase(); });
+      var unpaidCount = allInvoices.filter(function(i) { return i.status !== 'paid' && i.balance > 0; }).length;
+      var pendingQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).length;
+      var link = ClientHub.getLink(c.id);
+
+      html += '<div class="client-hub-row" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+        + '<div style="display:flex;align-items:center;gap:10px;min-width:0;">'
+        + '<div style="width:36px;height:36px;border-radius:50%;background:var(--accent-light);color:var(--accent);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">'
+        + (c.name || '?').charAt(0).toUpperCase() + '</div>'
+        + '<div style="min-width:0;">'
+        + '<div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(c.name || '') + '</div>'
+        + '<div style="font-size:12px;color:var(--text-light);">'
+        + (c.email || '') + (c.email && c.phone ? ' · ' : '') + (c.phone || '')
+        + '</div></div></div>'
+        + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">'
+        + (unpaidCount > 0 ? '<span style="font-size:11px;background:#fff3e0;color:#e65100;padding:3px 8px;border-radius:10px;font-weight:600;">' + unpaidCount + ' unpaid</span>' : '')
+        + (pendingQuotes > 0 ? '<span style="font-size:11px;background:#e3f2fd;color:#1565c0;padding:3px 8px;border-radius:10px;font-weight:600;">' + pendingQuotes + ' quote' + (pendingQuotes > 1 ? 's' : '') + '</span>' : '')
+        + '<button onclick="ClientHub.showForClient(\'' + c.id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">View Portal</button>'
+        + '<button onclick="navigator.clipboard.writeText(\'' + link + '\').then(function(){UI.toast(\'Link copied!\');})" style="background:none;border:1px solid var(--border);padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;" title="Copy link">🔗</button>'
+        + '</div></div>';
+    });
+
+    html += '</div></div>';
+    return html;
+  },
+
+  _filterList: function(query) {
+    var rows = document.querySelectorAll('.client-hub-row');
+    var q = (query || '').toLowerCase().trim();
+    rows.forEach(function(row) {
+      var text = row.textContent.toLowerCase();
+      row.style.display = (!q || text.indexOf(q) > -1) ? '' : 'none';
+    });
+  },
+
   // Generate a shareable client portal link
   getLink: function(clientId) {
     return window.location.origin + window.location.pathname.replace('index.html', '') + 'client.html?id=' + clientId;

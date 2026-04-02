@@ -3,6 +3,81 @@
  * Track multiple visits/appointments per job (like Jobber)
  */
 var Visits = {
+  render: function() {
+    var allJobs = DB.jobs.getAll();
+    var allVisits = [];
+    allJobs.forEach(function(job) {
+      if (job.visits && job.visits.length) {
+        job.visits.forEach(function(v) {
+          allVisits.push({ visit: v, job: job });
+        });
+      }
+    });
+
+    var now = new Date();
+    var upcoming = allVisits.filter(function(x) { return x.visit.status !== 'completed' && new Date(x.visit.date) >= new Date(now.toDateString()); });
+    var overdue = allVisits.filter(function(x) { return x.visit.status !== 'completed' && new Date(x.visit.date) < new Date(now.toDateString()); });
+    var recent = allVisits.filter(function(x) { return x.visit.status === 'completed'; });
+
+    upcoming.sort(function(a, b) { return new Date(a.visit.date) - new Date(b.visit.date); });
+    overdue.sort(function(a, b) { return new Date(a.visit.date) - new Date(b.visit.date); });
+    recent.sort(function(a, b) { return new Date(b.visit.completedAt || b.visit.date) - new Date(a.visit.completedAt || a.visit.date); });
+
+    var html = '<div style="max-width:800px;">'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">'
+      + '<div class="stat-card"><div class="stat-label">Upcoming</div><div class="stat-value">' + upcoming.length + '</div></div>'
+      + '<div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value" style="color:var(--red);">' + overdue.length + '</div></div>'
+      + '<div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value">' + recent.length + '</div></div>'
+      + '</div>';
+
+    function renderVisitRow(x, highlight) {
+      var v = x.visit; var job = x.job;
+      var isComplete = v.status === 'completed';
+      var isPast = !isComplete && new Date(v.date) < now;
+      var color = isComplete ? 'var(--green-dark)' : isPast ? 'var(--red)' : 'var(--accent)';
+      return '<div style="background:var(--white);border:1px solid ' + (highlight || 'var(--border)') + ';border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'
+        + '<div style="display:flex;gap:10px;align-items:flex-start;">'
+        + '<div style="width:40px;height:40px;border-radius:8px;background:' + color + '18;color:' + color + ';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + (isComplete ? '✓' : isPast ? '⚠' : '📅') + '</div>'
+        + '<div>'
+        + '<div style="font-weight:600;font-size:14px;">' + UI.esc(v.title || 'Visit') + '</div>'
+        + '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">'
+        + '<a href="#" onclick="loadPage(\'jobs\');setTimeout(function(){JobsPage.showDetail(\'' + job.id + '\');},100);return false;" style="color:var(--accent);text-decoration:none;">' + UI.esc(job.clientName || '') + '</a>'
+        + (job.description ? ' · ' + UI.esc(job.description).substr(0, 40) : '')
+        + '</div>'
+        + '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + UI.dateShort(v.date) + (v.time ? ' at ' + v.time : '') + (v.duration ? ' · ' + v.duration + 'hr' : '') + '</div>'
+        + (v.crew && v.crew.length ? '<div style="font-size:11px;color:var(--text-light);">👷 ' + v.crew.join(', ') + '</div>' : '')
+        + '</div></div>'
+        + '<div style="flex-shrink:0;">'
+        + (!isComplete ? '<button onclick="Visits.completeVisit(\'' + job.id + '\',\'' + v.id + '\');" style="background:var(--green-dark);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✓ Done</button>' : '')
+        + '</div></div>';
+    }
+
+    if (overdue.length > 0) {
+      html += '<div style="margin-bottom:16px;"><div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;">⚠ Overdue (' + overdue.length + ')</div>';
+      overdue.forEach(function(x) { html += renderVisitRow(x, 'var(--red)'); });
+      html += '</div>';
+    }
+
+    if (upcoming.length > 0) {
+      html += '<div style="margin-bottom:16px;"><div style="font-weight:700;font-size:13px;margin-bottom:8px;">📅 Upcoming (' + upcoming.length + ')</div>';
+      upcoming.forEach(function(x) { html += renderVisitRow(x, null); });
+      html += '</div>';
+    }
+
+    if (recent.length > 0) {
+      html += '<div><div style="font-weight:700;font-size:13px;margin-bottom:8px;">✅ Recently Completed</div>';
+      recent.slice(0, 20).forEach(function(x) { html += renderVisitRow(x, null); });
+      html += '</div>';
+    }
+
+    if (!allVisits.length) {
+      html += '<div class="empty-state"><div class="empty-icon">📅</div><h3>No visits yet</h3><p>Multi-visit jobs show up here. Add a follow-up visit from any job detail page.</p><button class="btn btn-primary" style="margin-top:16px;" onclick="loadPage(\'jobs\')">Go to Jobs</button></div>';
+    }
+
+    html += '</div>';
+    return html;
+  },
+
   // Get visits for a job
   getForJob: function(jobId) {
     var j = DB.jobs.getById(jobId);

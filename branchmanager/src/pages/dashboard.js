@@ -12,6 +12,77 @@ var DashboardPage = {
     // Show sync banner if no local data but Supabase is connected
     var localClients = JSON.parse(localStorage.getItem('bm-clients') || '[]');
     var html = '';
+
+    // === MONEY ON THE TABLE widget ===
+    var now0 = new Date();
+    var todayDateStr = now0.getFullYear() + '-' + (now0.getMonth()+1<10?'0':'') + (now0.getMonth()+1) + '-' + (now0.getDate()<10?'0':'') + now0.getDate();
+    var mottDismissKey = 'bm-mott-dismissed-' + todayDateStr;
+    if (!localStorage.getItem(mottDismissKey)) {
+      var mottAllInvoices = DB.invoices.getAll();
+      var mottAllQuotes = DB.quotes.getAll();
+      var mottAllJobs = DB.jobs.getAll();
+      var mott20Ago = new Date(now0.getTime() - 20 * 86400000);
+
+      // Stale quotes: status sent/awaiting AND createdAt > 20 days ago
+      var mottStaleQuotes = mottAllQuotes.filter(function(q) {
+        return (q.status === 'sent' || q.status === 'awaiting') && q.createdAt && new Date(q.createdAt) < mott20Ago;
+      });
+      var mottStaleValue = mottStaleQuotes.reduce(function(s,q) { return s + (q.total||0); }, 0);
+
+      // Overdue invoices: not paid, dueDate < today, balance > 0
+      var mottOverdueInv = mottAllInvoices.filter(function(i) {
+        return i.status !== 'paid' && i.balance > 0 && i.dueDate && new Date(i.dueDate) < now0;
+      });
+      var mottOverdueTotal = mottOverdueInv.reduce(function(s,i) { return s + (i.balance||0); }, 0);
+
+      // Completed jobs with no linked invoice
+      var mottInvoicedJobIds = {};
+      mottAllInvoices.forEach(function(i) { if (i.jobId) mottInvoicedJobIds[i.jobId] = true; });
+      var mottUninvoiced = mottAllJobs.filter(function(j) {
+        return j.status === 'completed' && !j.invoiceId && !mottInvoicedJobIds[j.id];
+      });
+
+      var mottCards = [];
+      if (mottStaleQuotes.length > 0) {
+        mottCards.push('<div style="flex:1;min-width:200px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px 16px;position:relative;">'
+          + '<div style="font-size:11px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Stale Quotes</div>'
+          + '<div style="font-size:26px;font-weight:800;color:#e65100;">' + mottStaleQuotes.length + ' <span style="font-size:15px;font-weight:600;">' + UI.moneyInt(mottStaleValue) + '</span></div>'
+          + '<div style="font-size:12px;color:#bf360c;margin-bottom:10px;">Sent 20+ days ago, no response</div>'
+          + '<button onclick="loadPage(\'quotes\')" style="background:#e65100;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Follow Up</button>'
+          + '</div>');
+      }
+      if (mottOverdueInv.length > 0) {
+        mottCards.push('<div style="flex:1;min-width:200px;background:#fce4ec;border:1px solid #f48fb1;border-radius:10px;padding:14px 16px;position:relative;">'
+          + '<div style="font-size:11px;font-weight:700;color:#c62828;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Overdue Invoices</div>'
+          + '<div style="font-size:26px;font-weight:800;color:#c62828;">' + mottOverdueInv.length + ' <span style="font-size:15px;font-weight:600;">' + UI.moneyInt(mottOverdueTotal) + '</span></div>'
+          + '<div style="font-size:12px;color:#b71c1c;margin-bottom:10px;">Past due, unpaid balance</div>'
+          + '<button onclick="loadPage(\'invoices\')" style="background:#c62828;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Send Reminders</button>'
+          + '</div>');
+      }
+      if (mottUninvoiced.length > 0) {
+        mottCards.push('<div style="flex:1;min-width:200px;background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:14px 16px;position:relative;">'
+          + '<div style="font-size:11px;font-weight:700;color:#0d47a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Completed, Not Invoiced</div>'
+          + '<div style="font-size:26px;font-weight:800;color:#0d47a1;">' + mottUninvoiced.length + ' <span style="font-size:15px;font-weight:600;color:#1565c0;">job' + (mottUninvoiced.length!==1?'s':'') + '</span></div>'
+          + '<div style="font-size:12px;color:#0d47a1;margin-bottom:10px;">Completed with no invoice yet</div>'
+          + '<button onclick="loadPage(\'jobs\')" style="background:#0d47a1;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">View Jobs</button>'
+          + '</div>');
+      }
+
+      if (mottCards.length > 0) {
+        html += '<div style="background:#fffde7;border:2px solid #f9a825;border-radius:12px;padding:16px;margin-bottom:16px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+          + '<div><strong style="font-size:15px;color:#e65100;">Money on the Table</strong>'
+          + '<span style="font-size:12px;color:#bf360c;margin-left:8px;">— take action now</span></div>'
+          + '<span onclick="localStorage.setItem(\'' + mottDismissKey + '\',\'1\');loadPage(\'dashboard\');" style="cursor:pointer;font-size:20px;color:#999;line-height:1;padding:0 4px;" title="Dismiss for today">×</span>'
+          + '</div>'
+          + '<div style="display:flex;flex-wrap:wrap;gap:12px;">'
+          + mottCards.join('')
+          + '</div>'
+          + '</div>';
+      }
+    }
+    // === END MONEY ON THE TABLE ===
+
     if (localClients.length === 0 && SupabaseDB && SupabaseDB.DEFAULT_URL) {
       html += '<div style="padding:16px;background:#e3f2fd;border-radius:10px;border-left:4px solid #1976d2;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">'
         + '<div><strong style="color:#1565c0;">Your data is in the cloud</strong>'

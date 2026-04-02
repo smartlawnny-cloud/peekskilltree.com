@@ -5,7 +5,8 @@
 var RecurringJobs = {
   render: function() {
     var recurring = RecurringJobs.getAll();
-    var html = '<div class="section-header"><h2>Recurring Jobs</h2>'
+    var activeCount = recurring.filter(function(r) { return r.active; }).length;
+    var html = '<div class="section-header"><h2>Recurring Jobs' + (activeCount > 0 ? ' <span style="font-size:14px;font-weight:600;background:#e8f5e9;color:#2e7d32;padding:2px 10px;border-radius:12px;vertical-align:middle;">' + activeCount + ' active</span>' : '') + '</h2>'
       + '<p style="color:var(--text-light);margin-top:4px;">Jobs that repeat automatically on a schedule.</p></div>';
 
     // Add new recurring job
@@ -50,26 +51,29 @@ var RecurringJobs = {
       + '<h3 style="font-size:15px;margin-bottom:12px;">Active Recurring Jobs (' + recurring.length + ')</h3>';
 
     if (recurring.length) {
+      var dueSoonCutoff = new Date(Date.now() + 7 * 86400000);
       recurring.forEach(function(r) {
         var freqLabels = { weekly: 'Weekly', biweekly: 'Every 2 Weeks', monthly: 'Monthly', quarterly: 'Quarterly', biannual: 'Every 6 Months', annual: 'Annually' };
         var nextDate = RecurringJobs._getNextDate(r);
         var statusColor = r.active ? '#4caf50' : '#999';
+        var isDueSoon = r.active && new Date(nextDate) <= dueSoonCutoff;
 
         html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f0f0f0;">'
           + '<div style="flex:1;">'
-          + '<div style="display:flex;align-items:center;gap:8px;">'
+          + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
           + '<span style="width:8px;height:8px;border-radius:50%;background:' + statusColor + ';flex-shrink:0;"></span>'
           + '<strong style="font-size:14px;">' + r.clientName + '</strong>'
           + '<span style="font-size:12px;background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:4px;">' + (freqLabels[r.frequency] || r.frequency) + '</span>'
+          + (isDueSoon ? '<span style="font-size:11px;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;padding:2px 8px;border-radius:4px;font-weight:700;">Due Soon</span>' : '')
           + '</div>'
           + '<div style="font-size:13px;color:var(--text-light);margin-top:3px;margin-left:16px;">'
           + r.service.replace(/_/g, ' ') + (r.notes ? ' — ' + r.notes : '') + '</div>'
-          + '<div style="font-size:12px;color:var(--text-light);margin-left:16px;">Next: <strong>' + UI.dateShort(nextDate) + '</strong></div>'
+          + '<div style="font-size:12px;color:' + (isDueSoon ? '#e65100' : 'var(--text-light)') + ';margin-left:16px;">Next: <strong>' + UI.dateShort(nextDate) + '</strong></div>'
           + '</div>'
           + '<div style="display:flex;align-items:center;gap:8px;">'
           + '<span style="font-weight:700;color:var(--green-dark);font-size:15px;">' + UI.money(r.price) + '</span>'
           + '<button onclick="RecurringJobs.toggle(\'' + r.id + '\')" style="background:' + (r.active ? '#fff3e0' : '#e8f5e9') + ';border:none;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">' + (r.active ? 'Pause' : 'Resume') + '</button>'
-          + '<button onclick="RecurringJobs.generateJob(\'' + r.id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">Create Job</button>'
+          + '<button onclick="RecurringJobs.generateJob(\'' + r.id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">Generate Job</button>'
           + '</div></div>';
       });
     } else {

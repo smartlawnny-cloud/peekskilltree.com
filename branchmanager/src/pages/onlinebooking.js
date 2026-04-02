@@ -15,7 +15,7 @@ var OnlineBooking = {
       + '<div style="background:#1d1d1f;border-radius:8px;padding:16px;overflow-x:auto;">'
       + '<code style="color:#4caf50;font-size:12px;white-space:pre;">&lt;iframe src="https://peekskilltree.com/branchmanager/book.html"\n  width="100%" height="600" frameborder="0"\n  style="border-radius:12px;border:1px solid #e0e0e0;"&gt;\n&lt;/iframe&gt;</code>'
       + '</div>'
-      + '<button onclick="navigator.clipboard.writeText(\'<iframe src=\\\"https://peekskilltree.com/branchmanager/book.html\\\" width=\\\"100%\\\" height=\\\"600\\\" frameborder=\\\"0\\\" style=\\\"border-radius:12px;border:1px solid #e0e0e0;\\\"></iframe>\');UI.toast(\'Copied!\')" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;margin-top:8px;">📋 Copy Code</button>'
+      + '<button onclick="OnlineBooking._copyEmbed()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;margin-top:8px;">📋 Copy Code</button>'
       + '</div>';
 
     // Direct link
@@ -82,6 +82,11 @@ var OnlineBooking = {
       + '<button style="background:#1a3c12;color:#fff;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">Submit Request</button>'
       + '<p style="font-size:11px;color:#999;text-align:center;">We typically respond within 2 hours during business hours.</p>'
       + '</div>';
+  },
+
+  _copyEmbed: function() {
+    var code = '<iframe src="https://peekskilltree.com/branchmanager/book.html" width="100%" height="600" frameborder="0" style="border-radius:12px;border:1px solid #e0e0e0;"></iframe>';
+    navigator.clipboard.writeText(code).then(function() { UI.toast('Copied!'); });
   },
 
   toggleService: function(service) {

@@ -108,7 +108,7 @@ var SettingsPage = {
         + 'CREATE POLICY "Anon insert requests"\n'
         + '  ON requests FOR INSERT TO anon\n'
         + '  WITH CHECK (true);</pre>'
-        + '<button onclick="navigator.clipboard.writeText(\'CREATE POLICY \\\"Anon read quotes\\\" ON quotes FOR SELECT TO anon USING (status <> \\\'draft\\\');\\n\\nCREATE POLICY \\\"Anon update quote status\\\" ON quotes FOR UPDATE TO anon USING (status IN (\\\'sent\\\', \\\'awaiting\\\')) WITH CHECK (status IN (\\\'approved\\\', \\\'awaiting\\\'));\\n\\nCREATE POLICY \\\"Anon read invoices\\\" ON invoices FOR SELECT TO anon USING (status <> \\\'draft\\\');\\n\\nCREATE POLICY \\\"Anon read clients\\\" ON clients FOR SELECT TO anon USING (true);\\n\\nCREATE POLICY \\\"Anon insert requests\\\" ON requests FOR INSERT TO anon WITH CHECK (true);\')" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
+        + '<button onclick="SettingsPage._copyRlsSql()" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
         + '</details>'
         + '<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--green-dark);margin-bottom:8px;">🗄️ Add Missing Columns (run once on live DB)</summary>'
         + '<p style="font-size:12px;color:var(--text-light);margin-bottom:8px;">If your Supabase tables were created before these columns were added, run this SQL to add them (safe — IF NOT EXISTS means it won\'t fail if already present):</p>'
@@ -136,7 +136,7 @@ var SettingsPage = {
         + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_paid BOOLEAN DEFAULT false;\n'
         + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;\n'
         + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_changes TEXT;</pre>'
-        + '<button onclick="navigator.clipboard.writeText(\'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS client_email TEXT;\\nALTER TABLE invoices ADD COLUMN IF NOT EXISTS client_phone TEXT;\\nALTER TABLE invoices ADD COLUMN IF NOT EXISTS amount_paid DECIMAL(10,2) DEFAULT 0;\\nALTER TABLE invoices ADD COLUMN IF NOT EXISTS issued_date DATE;\\nALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_payment_url TEXT;\\nALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_link_sent TIMESTAMPTZ;\\nALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_link_email TEXT;\\nALTER TABLE invoices ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;\\nALTER TABLE jobs ADD COLUMN IF NOT EXISTS client_email TEXT;\\nALTER TABLE jobs ADD COLUMN IF NOT EXISTS client_phone TEXT;\\nALTER TABLE jobs ADD COLUMN IF NOT EXISTS invoice_id TEXT;\\nALTER TABLE jobs ADD COLUMN IF NOT EXISTS completed_date DATE;\\nALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_email TEXT;\\nALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_phone TEXT;\\nALTER TABLE quotes ADD COLUMN IF NOT EXISTS expires_at DATE;\\nALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_required BOOLEAN DEFAULT false;\\nALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_due DECIMAL(10,2) DEFAULT 0;\\nALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_paid BOOLEAN DEFAULT false;\\nALTER TABLE quotes ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;\\nALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_changes TEXT;\')" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
+        + '<button onclick="SettingsPage._copyColumnSql()" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
         + '</details>';
     } else {
       html += '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Connect to Supabase for cloud sync, multi-device access, and team features.</p>'
@@ -326,5 +326,38 @@ var SettingsPage = {
     }
     if (btn) { btn.textContent = 'Sync Now'; btn.disabled = false; }
     loadPage('settings');
+  },
+
+  _copyRlsSql: function() {
+    var sql = 'CREATE POLICY "Anon read quotes" ON quotes FOR SELECT TO anon USING (status <> \'draft\');\n\n'
+      + 'CREATE POLICY "Anon update quote status" ON quotes FOR UPDATE TO anon USING (status IN (\'sent\', \'awaiting\')) WITH CHECK (status IN (\'approved\', \'awaiting\'));\n\n'
+      + 'CREATE POLICY "Anon read invoices" ON invoices FOR SELECT TO anon USING (status <> \'draft\');\n\n'
+      + 'CREATE POLICY "Anon read clients" ON clients FOR SELECT TO anon USING (true);\n\n'
+      + 'CREATE POLICY "Anon insert requests" ON requests FOR INSERT TO anon WITH CHECK (true);';
+    navigator.clipboard.writeText(sql).then(function() { UI.toast('RLS SQL copied!'); });
+  },
+
+  _copyColumnSql: function() {
+    var sql = 'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS client_email TEXT;\n'
+      + 'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS client_phone TEXT;\n'
+      + 'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS amount_paid DECIMAL(10,2) DEFAULT 0;\n'
+      + 'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS issued_date DATE;\n'
+      + 'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_payment_url TEXT;\n'
+      + 'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_link_sent TIMESTAMPTZ;\n'
+      + 'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_link_email TEXT;\n'
+      + 'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;\n'
+      + 'ALTER TABLE jobs ADD COLUMN IF NOT EXISTS client_email TEXT;\n'
+      + 'ALTER TABLE jobs ADD COLUMN IF NOT EXISTS client_phone TEXT;\n'
+      + 'ALTER TABLE jobs ADD COLUMN IF NOT EXISTS invoice_id TEXT;\n'
+      + 'ALTER TABLE jobs ADD COLUMN IF NOT EXISTS completed_date DATE;\n'
+      + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_email TEXT;\n'
+      + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_phone TEXT;\n'
+      + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS expires_at DATE;\n'
+      + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_required BOOLEAN DEFAULT false;\n'
+      + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_due DECIMAL(10,2) DEFAULT 0;\n'
+      + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_paid BOOLEAN DEFAULT false;\n'
+      + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;\n'
+      + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_changes TEXT;';
+    navigator.clipboard.writeText(sql).then(function() { UI.toast('Column SQL copied!'); });
   }
 };

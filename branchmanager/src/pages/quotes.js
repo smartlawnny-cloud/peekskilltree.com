@@ -188,7 +188,26 @@ var QuotesPage = {
     var q = DB.quotes.getById(id);
     if (!q) return;
     DB.quotes.update(id, { lastFollowUp: new Date().toISOString() });
-    UI.toast('Follow-up logged for ' + UI.esc(q.clientName || 'client') + ' — Quote #' + q.quoteNumber);
+
+    // Try to send email if Email module is available and client has email
+    var client = q.clientId ? DB.clients.getById(q.clientId) : null;
+    var email = q.clientEmail || (client && client.email) || '';
+    if (email && typeof Email !== 'undefined') {
+      var firstName = (q.clientName || '').split(' ')[0] || 'there';
+      var subject = 'Following up on your quote from Second Nature Tree Service';
+      var body = 'Hi ' + firstName + ',\n\n'
+        + 'I wanted to follow up on the quote I sent over for ' + (q.description || 'tree services') + '.\n\n'
+        + 'Quote #' + q.quoteNumber + ' — ' + UI.money(q.total) + '\n\n'
+        + 'Do you have any questions or would you like to move forward? Just reply to this email or give me a call at (914) 391-5233.\n\n'
+        + 'Thanks,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+      Email.send(email, subject, body).then(function() {
+        UI.toast('Follow-up sent to ' + email);
+      }).catch(function() {
+        UI.toast('Follow-up logged (email send failed — check SendGrid key in Settings)');
+      });
+    } else {
+      UI.toast('Follow-up logged for ' + UI.esc(q.clientName || 'client') + (email ? '' : ' — no email on file'));
+    }
   },
   _batchFollowUp: function() {
     var ids = QuotesPage._getSelected();

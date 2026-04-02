@@ -40,6 +40,7 @@ var Workflow = {
       clientId: job.clientId || '',
       clientEmail: job.clientEmail || '',
       clientPhone: job.clientPhone || '',
+      property: job.property || '',
       subject: job.description || 'Job #' + (job.jobNumber || ''),
       total: job.total || 0,
       balance: job.total || 0,
@@ -47,8 +48,7 @@ var Workflow = {
       status: 'draft',
       jobId: jobId,
       lineItems: job.lineItems || [],
-      invoiceNumber: DB.invoices.getAll().length + 1,
-      dueDate: new Date(Date.now() + 30 * 86400000).toISOString() // Net 30
+      dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
     });
 
     // Update job status
@@ -108,10 +108,10 @@ var Workflow = {
       html += '<button onclick="DB.jobs.update(\'' + jobId + '\',{status:\'in_progress\',startedAt:new Date().toISOString()});UI.toast(\'Job started\');loadPage(\'jobs\');" style="background:#ff9800;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">▶ Start Job</button>';
     }
     if (job.status === 'in_progress') {
-      html += '<button onclick="Workflow.jobToInvoice(\'' + jobId + '\');loadPage(\'invoices\');" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">✅ Complete & Invoice</button>';
+      html += '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + jobId + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">✅ Complete & Invoice</button>';
     }
     if (job.status === 'completed' && !job.invoiceId) {
-      html += '<button onclick="Workflow.jobToInvoice(\'' + jobId + '\');loadPage(\'invoices\');" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">💰 Create Invoice</button>';
+      html += '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + jobId + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">💰 Create Invoice</button>';
     }
 
     html += '<button onclick="PDFGen.generateJobSheet(\'' + jobId + '\')" style="background:#6a1b9a;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">📄 Job Sheet PDF</button>';

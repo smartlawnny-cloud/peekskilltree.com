@@ -74,22 +74,39 @@ var QuotesPage = {
       + '<input type="text" placeholder="Search quotes..." value="' + UI.esc(self._search) + '" oninput="QuotesPage._search=this.value;QuotesPage._page=0;loadPage(\'quotes\')">'
       + '</div></div>';
 
+    // Batch action bar
+    html += '<div id="q-batch-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,240px);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);">'
+      + '<span id="q-batch-count" style="font-weight:700;font-size:14px;">0 selected</span>'
+      + '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<button onclick="QuotesPage._batchFollowUp()" style="background:#e6a817;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📬 Send Follow-up</button>'
+      + '<button onclick="QuotesPage._batchDecline()" style="background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✗ Mark Declined</button>'
+      + '<button onclick="QuotesPage._batchClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
+      + '</div></div>';
+
+    var now7ago = new Date(Date.now() - 7 * 86400000);
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + self._sortTh('Client', 'clientName') + self._sortTh('Quote #', 'quoteNumber') + '<th>Property</th>' + self._sortTh('Created', 'createdAt') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
+      + '<th style="width:32px;"><input type="checkbox" onchange="QuotesPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
+      + self._sortTh('Client', 'clientName') + self._sortTh('Quote #', 'quoteNumber') + '<th>Property</th>' + self._sortTh('Created', 'createdAt') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;') + '<th></th>'
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
-      html += '<tr><td colspan="6">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No quotes match "' + self._search + '"</div>' : UI.emptyState('📋', 'No quotes yet', 'Create your first quote.', '+ New Quote', 'QuotesPage.showForm()')) + '</td></tr>';
+      html += '<tr><td colspan="8">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No quotes match "' + self._search + '"</div>' : UI.emptyState('📋', 'No quotes yet', 'Create your first quote.', '+ New Quote', 'QuotesPage.showForm()')) + '</td></tr>';
     } else {
       page.forEach(function(q) {
-        html += '<tr onclick="QuotesPage.showDetail(\'' + q.id + '\')" style="cursor:pointer;">'
-          + '<td><strong>' + UI.esc(q.clientName || '—') + '</strong></td>'
+        var isStale = (q.status === 'sent' || q.status === 'awaiting') && q.createdAt && new Date(q.createdAt) < now7ago;
+        var rowStyle = 'cursor:pointer;' + (isStale ? 'background:#fffbf0;' : '');
+        html += '<tr onclick="QuotesPage.showDetail(\'' + q.id + '\')" style="' + rowStyle + '">'
+          + '<td onclick="event.stopPropagation()"><input type="checkbox" class="q-check" value="' + q.id + '" onchange="QuotesPage._updateBulk()" style="width:16px;height:16px;"></td>'
+          + '<td><strong>' + UI.esc(q.clientName || '—') + '</strong>' + (isStale ? ' <span title="Sent 7+ days ago" style="font-size:10px;color:#e6a817;font-weight:700;background:#fff3cd;padding:1px 5px;border-radius:3px;">FOLLOW UP</span>' : '') + '</td>'
           + '<td>#' + (q.quoteNumber || '') + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(q.property || '—') + '</td>'
           + '<td>' + UI.dateShort(q.createdAt) + '</td>'
           + '<td>' + UI.statusBadge(q.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(q.total) + '</td>'
+          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:12px;">'
+          + (isStale ? '<button onclick="event.stopPropagation();QuotesPage._quickFollowUp(\'' + q.id + '\')" style="font-size:11px;padding:3px 8px;background:#e6a817;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">📬 Follow up</button>' : '')
+          + '</td>'
           + '</tr>';
       });
     }
@@ -147,6 +164,51 @@ var QuotesPage = {
   },
   _setFilter: function(f) { QuotesPage._filter = f; QuotesPage._page = 0; loadPage('quotes'); },
   _goPage: function(p) { var t = Math.ceil(QuotesPage._getFiltered().length / QuotesPage._perPage); QuotesPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('quotes'); },
+
+  _selectAll: function(checked) {
+    document.querySelectorAll('.q-check').forEach(function(cb) { cb.checked = checked; });
+    QuotesPage._updateBatchBar();
+  },
+  _updateBulk: function() { QuotesPage._updateBatchBar(); },
+  _updateBatchBar: function() {
+    var selected = document.querySelectorAll('.q-check:checked');
+    var bar = document.getElementById('q-batch-bar');
+    var count = document.getElementById('q-batch-count');
+    if (bar) bar.style.display = selected.length > 0 ? 'flex' : 'none';
+    if (count) count.textContent = selected.length + ' selected';
+  },
+  _getSelected: function() {
+    return Array.from(document.querySelectorAll('.q-check:checked')).map(function(cb) { return cb.value; });
+  },
+  _batchClear: function() {
+    document.querySelectorAll('.q-check').forEach(function(cb) { cb.checked = false; });
+    var bar = document.getElementById('q-batch-bar'); if (bar) bar.style.display = 'none';
+  },
+  _quickFollowUp: function(id) {
+    var q = DB.quotes.getById(id);
+    if (!q) return;
+    DB.quotes.update(id, { lastFollowUp: new Date().toISOString() });
+    UI.toast('Follow-up logged for ' + UI.esc(q.clientName || 'client') + ' — Quote #' + q.quoteNumber);
+  },
+  _batchFollowUp: function() {
+    var ids = QuotesPage._getSelected();
+    if (ids.length === 0) return;
+    ids.forEach(function(id) {
+      DB.quotes.update(id, { lastFollowUp: new Date().toISOString() });
+    });
+    UI.toast(ids.length + ' follow-up' + (ids.length > 1 ? 's' : '') + ' logged');
+    QuotesPage._batchClear();
+    loadPage('quotes');
+  },
+  _batchDecline: function() {
+    var ids = QuotesPage._getSelected();
+    if (ids.length === 0) return;
+    UI.confirm('Mark ' + ids.length + ' quote' + (ids.length > 1 ? 's' : '') + ' as declined?', function() {
+      ids.forEach(function(id) { DB.quotes.update(id, { status: 'declined' }); });
+      UI.toast(ids.length + ' quote' + (ids.length > 1 ? 's' : '') + ' marked declined');
+      loadPage('quotes');
+    });
+  },
 
   showForm: function(quoteId, clientId) {
     var q = quoteId ? DB.quotes.getById(quoteId) : {};

@@ -510,7 +510,7 @@ var JobsPage = {
       + '</div>'
       + '<div style="display:flex;gap:6px;">'
       + '<button class="btn btn-outline" onclick="JobsPage.showForm(\'' + id + '\')">··· More</button>'
-      + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');">Create Invoice</button>' : '<button class="btn btn-primary" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>')
+      + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');UI.closeModal();loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()">💰 Create Invoice</button>' : '<button class="btn btn-primary" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>')
       + '</div></div>'
 
       // Title

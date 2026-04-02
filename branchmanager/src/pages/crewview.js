@@ -205,7 +205,7 @@ var CrewView = {
   },
 
   completeJob: function(jobId) {
-    DB.jobs.update(jobId, { status: 'completed', completedDate: new Date().toISOString() });
+    DB.jobs.update(jobId, { status: 'completed', completedAt: new Date().toISOString() });
     UI.toast('Job completed! ✅');
     loadPage('crewview');
   }

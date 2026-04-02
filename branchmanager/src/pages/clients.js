@@ -757,8 +757,14 @@ var ClientsPage = {
       html += CommsLog.renderForClient(id);
     }
 
+    html += '</div>';
+
+    // Photos tab panel
+    html += '<div id="cd-photos" class="cd-panel" style="display:none;">';
     if (typeof Photos !== 'undefined') {
       html += Photos.renderGallery('client', id);
+    } else {
+      html += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">No photo module loaded</div>';
     }
     html += '</div>';
 

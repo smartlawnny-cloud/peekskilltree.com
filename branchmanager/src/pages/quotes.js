@@ -517,12 +517,10 @@ var QuotesPage = {
       + '<div style="height:4px;background:' + statusColor + ';margin:-24px -24px 16px -24px;"></div>'
 
       // Status + action buttons
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
-      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
       + '<span style="font-size:20px;">💰</span>'
       + '<span>' + UI.statusBadge(q.status) + '</span>'
-      + '</div>'
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;">'
       + '<button class="btn btn-outline" onclick="QuotesPage.showForm(\'' + id + '\')">··· More</button>'
       + '<button class="btn btn-outline" onclick="QuotesPage._copyApprovalLink(\'' + id + '\')" style="font-size:12px;">🔗 Copy Link</button>'
       + '<button class="btn btn-primary" onclick="QuotesPage._sendQuote(\'' + id + '\')">📧 Send Quote</button>'

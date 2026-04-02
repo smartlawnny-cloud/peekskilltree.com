@@ -347,17 +347,15 @@ var InvoicesPage = {
     var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">'
       // Colored status bar
       + '<div style="height:4px;background:' + statusColor + ';margin:-24px -24px 16px -24px;border-radius:12px 12px 0 0;"></div>'
-      // Status + actions row
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
-      + '<div style="display:flex;align-items:center;gap:10px;">'
-      + '<button class="btn btn-outline" onclick="loadPage(\'invoices\')" style="padding:6px 12px;font-size:12px;">← Back</button>'
+      // Status + actions row — single row on desktop, stacks gracefully on mobile
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'invoices\')" style="padding:6px 12px;font-size:12px;flex-shrink:0;">← Back</button>'
       + UI.statusBadge(inv.status)
-      + '</div>'
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-      + '<button class="btn btn-outline" onclick="PDF.generateInvoice(\'' + id + '\')" style="font-size:12px;">PDF</button>'
+      + '<div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
+      + '<button class="btn btn-outline" onclick="PDF.generateInvoice(\'' + id + '\')" style="font-size:12px;">📄 PDF</button>'
       + (inv.status !== 'paid' ? '<button class="btn btn-outline" onclick="InvoicesPage._copyPayLink(\'' + id + '\')" style="font-size:12px;">🔗 Pay Link</button>' : '')
       + (inv.status !== 'paid' ? '<button class="btn btn-outline" onclick="if(typeof Workflow!==\'undefined\')Workflow.sendInvoice(\'' + id + '\');else InvoicesPage._sendInvoiceEmail(\'' + id + '\')" style="font-size:12px;">📧 Send</button>' : '')
-      + (inv.status !== 'paid' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.showMarkPaid(\'' + id + '\');" style="font-size:12px;">💵 Mark Paid</button>' : '')
+      + (inv.status !== 'paid' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.showMarkPaid(\'' + id + '\');" style="font-size:12px;font-weight:700;">💵 Mark Paid</button>' : '<span style="font-size:12px;color:var(--green-dark);font-weight:700;">✓ Paid</span>')
       + '</div></div>'
       // Title
       + '<h2 style="font-size:24px;font-weight:700;margin-bottom:4px;">Invoice for ' + UI.esc(inv.clientName || 'Client') + '</h2>'

@@ -30,30 +30,26 @@ var SettingsPage = {
       + '<div class="stat-card"><div class="stat-label">Quotes</div><div class="stat-value">' + DB.quotes.count() + '</div></div>'
       + '</div></div>';
 
-    // Stripe Payments
-    html += Stripe.renderSettings();
-
-    // Email (SendGrid) — always render inline so it's never hidden
+    // Email (SendGrid) — inline, always first integration shown
     var sgKey = localStorage.getItem('bm-sendgrid-key') || '';
     var sgOk = sgKey.length > 10;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (sgOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
       + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
       + '<div style="width:40px;height:40px;background:#1a82e2;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;">SG</div>'
       + '<div><h3 style="margin:0;">SendGrid Email</h3>'
-      + '<div style="font-size:12px;color:' + (sgOk ? 'var(--green-dark)' : 'var(--text-light)') + ';">' + (sgOk ? '✅ Connected — emails send automatically' : '⚪ Not connected — emails open in mail app') + '</div>'
+      + '<div style="font-size:12px;color:' + (sgOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (sgOk ? '✅ Connected — automated emails active' : '⚠️ Not connected — paste your key below') + '</div>'
       + '</div></div>'
-      + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Paste your SendGrid API key to enable automated emails. Free tier: 100 emails/day.</p>'
-      + '<div style="margin-bottom:8px;"><input type="text" id="sendgrid-key" value="' + sgKey + '" placeholder="SG.xxxxxxxxxxxxxxx..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div style="margin-bottom:8px;"><input type="text" id="sendgrid-key" value="' + sgKey + '" placeholder="SG.xxxxxxxxxxxxxxx..." style="width:100%;padding:10px;border:2px solid ' + (sgOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      + '<button onclick="var k=document.getElementById(\'sendgrid-key\').value.trim();if(!k){return;}localStorage.setItem(\'bm-sendgrid-key\',k);if(typeof Email!==\'undefined\'){Email.apiKey=k;}UI.toast(\'SendGrid connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Save Key</button>'
-      + (sgOk ? '<button onclick="if(typeof Email!==\'undefined\'){Email.testSend();}else{UI.toast(\'Email module loading...\',\'error\');}" style="background:#1a82e2;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Test Send</button>' : '')
-      + (sgOk ? '<button onclick="localStorage.removeItem(\'bm-sendgrid-key\');UI.toast(\'Key removed\');loadPage(\'settings\');" style="background:none;border:1px solid var(--border);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + '<button onclick="var k=document.getElementById(\'sendgrid-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-sendgrid-key\',k);if(typeof Email!==\'undefined\'){Email.apiKey=k;}UI.toast(\'SendGrid connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
+      + (sgOk ? '<button onclick="if(typeof Email!==\'undefined\'){Email.testSend();}else{Email={apiKey:localStorage.getItem(\'bm-sendgrid-key\')};fetch(\'https://api.sendgrid.com/v3/mail/send\',{method:\'POST\',headers:{\'Content-Type\':\'application/json\',\'Authorization\':\'Bearer \'+Email.apiKey},body:JSON.stringify({personalizations:[{to:[{email:\'info@peekskilltree.com\'}]}],from:{email:\'info@peekskilltree.com\',name:\'Branch Manager\'},subject:\'Test Email\',content:[{type:\'text/plain\',value:\'SendGrid is connected!\'}]})}).then(function(r){UI.toast(r.ok||r.status===202?\'Test sent! Check info@peekskilltree.com\':\'Failed: \'+r.status,r.ok||r.status===202?\'success\':\'error\');})}" style="background:#1a82e2;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Send Test Email</button>' : '')
+      + (sgOk ? '<button onclick="localStorage.removeItem(\'bm-sendgrid-key\');UI.toast(\'Key removed\');loadPage(\'settings\');" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" style="color:var(--green-dark);">app.sendgrid.com</a>. Create key with "Mail Send" permission only.</p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Enables: automated quote follow-ups, invoice reminders, visit reminders, review requests. Free: 100 emails/day.</p>'
       + '</div>';
-    if (typeof Email !== 'undefined') {
-      // keep Email object in sync if already loaded
-    }
+
+    // Stripe Payments
+    html += Stripe.renderSettings();
 
     // Dialpad Calling & SMS
     html += Dialpad.renderSettings();

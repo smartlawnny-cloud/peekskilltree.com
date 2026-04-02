@@ -440,6 +440,10 @@ var AI = {
     }, 100);
   },
 
+  _saveHistory: function() {
+    localStorage.setItem('bm-ai-history', JSON.stringify(AI._messages.slice(-30)));
+  },
+
   _clearHistory: function() {
     AI._messages = [];
     localStorage.removeItem('bm-ai-history');

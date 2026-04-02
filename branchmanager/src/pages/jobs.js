@@ -14,7 +14,20 @@ var JobsPage = {
 
     // Jobber-style stat cards row
     var activeJobs = all.filter(function(j) { return j.status === 'in_progress' || j.status === 'scheduled'; });
-    var needsInvoicing = all.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+    var cutoff60 = new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0];
+    var cutoff7 = new Date(Date.now() - 7 * 86400000).toISOString();
+    // Recent = jobs with scheduledDate in last 60 days (excludes old Jobber imports)
+    var recentNeedsInvoicing = all.filter(function(j) {
+      return j.status === 'completed' && !j.invoiceId
+        && ((j.scheduledDate && j.scheduledDate >= cutoff60)
+        || (!j.scheduledDate && (j.createdAt || '') > cutoff7));
+    });
+    var legacyNeedsInvoicing = all.filter(function(j) {
+      return j.status === 'completed' && !j.invoiceId
+        && !(j.scheduledDate && j.scheduledDate >= cutoff60)
+        && !(!j.scheduledDate && (j.createdAt || '') > cutoff7);
+    });
+    var needsInvoicing = recentNeedsInvoicing; // used for Overview stat
     var actionReq = all.filter(function(j) { return j.status === 'action_required'; });
     var unscheduled = all.filter(function(j) { return !j.scheduledDate; });
     var recentVisits = all.filter(function(j) { var d = new Date(j.scheduledDate); var ago = new Date(); ago.setDate(ago.getDate()-30); return d >= ago && d <= new Date(); });
@@ -53,19 +66,23 @@ var JobsPage = {
       + '</div>'
       + '</div>';
 
-    // Batch invoice banner for completed jobs without invoices
-    if (needsInvoicing.length > 0) {
-      var needsTotal = needsInvoicing.reduce(function(s, j) { return s + (j.total || 0); }, 0);
-      html += '<div id="batch-invoice-banner" style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:0 2px 8px rgba(46,125,50,.3);">'
+    // Batch invoice banner — recent jobs only (actionable)
+    if (recentNeedsInvoicing.length > 0) {
+      var needsTotal = recentNeedsInvoicing.reduce(function(s, j) { return s + (j.total || 0); }, 0);
+      html += '<div id="batch-invoice-banner" style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:0 2px 8px rgba(46,125,50,.3);">'
         + '<div style="display:flex;align-items:center;gap:10px;">'
         + '<span style="font-size:22px;">💰</span>'
-        + '<div><div style="font-size:14px;font-weight:600;">' + needsInvoicing.length + ' completed job' + (needsInvoicing.length !== 1 ? 's' : '') + ' ready for invoicing &mdash; ' + UI.money(needsTotal) + '</div>'
-        + '<div style="font-size:12px;opacity:.85;margin-top:2px;">Click "Create Invoices" for new jobs, or "Mark as Invoiced" for old Jobber jobs already paid.</div></div>'
+        + '<div><div style="font-size:14px;font-weight:600;">' + recentNeedsInvoicing.length + ' recent completed job' + (recentNeedsInvoicing.length !== 1 ? 's' : '') + ' need invoicing &mdash; ' + UI.money(needsTotal) + '</div>'
+        + '<div style="font-size:12px;opacity:.85;margin-top:2px;">Jobs completed in the last 60 days without an invoice.</div></div>'
         + '</div>'
-        + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-        + '<button onclick="JobsPage._markAllLegacyInvoiced()" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.5);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Already Invoiced (Jobber)</button>'
         + '<button onclick="JobsPage._batchInvoiceAll()" style="background:#fff;color:#2e7d32;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);">Create Invoices</button>'
-        + '</div>'
+        + '</div>';
+    }
+    // Legacy Jobber jobs banner (dismissible)
+    if (legacyNeedsInvoicing.length > 0) {
+      html += '<div style="background:#f5f5f5;border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">'
+        + '<div style="font-size:13px;color:var(--text-light);">📦 <strong>' + legacyNeedsInvoicing.length + ' older Jobber jobs</strong> were already invoiced before migration — click to dismiss.</div>'
+        + '<button onclick="JobsPage._markAllLegacyInvoiced()" style="background:var(--border);color:var(--text);border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Mark as Invoiced (Jobber)</button>'
         + '</div>';
     }
 

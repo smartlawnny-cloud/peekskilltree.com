@@ -125,7 +125,7 @@ serve(async (req: Request) => {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              personalizations: [{ to: [{ email: 'info@peekskilltree.com', name: 'Doug Brown' }] }],
+              personalizations: [{ to: [{ email: 'info@peekskilltree.com', name: 'Team' }] }],
               from: { email: 'info@peekskilltree.com', name: 'Second Nature Tree Service' },
               subject: `💳 Payment received — Invoice #${invoiceNumber} — $${amountDollars.toFixed(2)}`,
               content: [{

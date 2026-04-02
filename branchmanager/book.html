@@ -130,33 +130,43 @@ function submitRequest(e) {
   var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
 
-  fetch(SUPABASE_URL + '/rest/v1/requests', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify({
-      client_name: data.name,
-      client_email: data.email,
-      client_phone: data.phone,
-      property: data.address,
-      source: data.service,
-      notes: data.details,
-      status: 'new',
-      created_at: data.submitted,
-      updated_at: data.submitted
-    })
-  }).then(function() {
+  var NOTIFY_URL = 'https://ltpivkqahvplapyagljt.supabase.co/functions/v1/request-notify';
+
+  // Insert into Supabase and send notification emails in parallel
+  Promise.all([
+    fetch(SUPABASE_URL + '/rest/v1/requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        client_name: data.name,
+        client_email: data.email,
+        client_phone: data.phone,
+        property: data.address,
+        source: data.service,
+        notes: data.details,
+        status: 'new',
+        created_at: data.submitted,
+        updated_at: data.submitted
+      })
+    }).catch(function(err) { console.warn('Supabase insert:', err); }),
+
+    fetch(NOTIFY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).catch(function(err) { console.warn('Notify call:', err); })
+
+  ]).then(function() {
     document.getElementById('form-view').style.display = 'none';
     document.getElementById('success-view').style.display = 'block';
-  }).catch(function(err) {
-    // Still show success — form data can be emailed as fallback
+  }).catch(function() {
     document.getElementById('form-view').style.display = 'none';
     document.getElementById('success-view').style.display = 'block';
-    console.warn('Supabase insert failed:', err);
   });
 }
 </script>

@@ -86,54 +86,89 @@ var TimeTrackPage = {
 
   renderTimesheet: function() {
     var entries = DB.timeEntries.getAll();
-    var today = new Date();
+    var today = new Date().toISOString().split('T')[0];
 
-    // Group by date
-    var byDate = {};
-    entries.forEach(function(t) {
+    // Current week: Mon through today
+    var now = new Date();
+    var dayOfWeek = now.getDay(); // 0=Sun
+    var daysFromMon = (dayOfWeek + 6) % 7;
+    var weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - daysFromMon);
+    var weekStartStr = weekStart.toISOString().split('T')[0];
+
+    // Split entries into this week vs history
+    var weekEntries = entries.filter(function(t) {
       var d = t.date || (t.clockIn ? t.clockIn.split('T')[0] : '');
-      if (!byDate[d]) byDate[d] = [];
-      byDate[d].push(t);
+      return d >= weekStartStr;
+    });
+    var historyEntries = entries.filter(function(t) {
+      var d = t.date || (t.clockIn ? t.clockIn.split('T')[0] : '');
+      return d && d < weekStartStr;
     });
 
-    var dates = Object.keys(byDate).sort().reverse();
-    var totalWeekHours = 0;
-
-    var html = '<h3 style="margin-bottom:16px;">Weekly Timesheet</h3>';
-    html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">';
-    html += '<table class="data-table"><thead><tr><th>Date</th><th>Job</th><th>Clock In</th><th>Clock Out</th><th style="text-align:right;">Hours</th></tr></thead><tbody>';
-
-    if (dates.length === 0) {
-      html += '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:30px;">No time entries yet. Use the clock widget on the dashboard.</td></tr>';
-    } else {
-      dates.slice(0, 7).forEach(function(date) {
-        var dayEntries = byDate[date];
-        var dayTotal = 0;
-        dayEntries.forEach(function(t, i) {
-          var job = t.jobId ? DB.jobs.getById(t.jobId) : null;
-          var hours = t.hours || 0;
-          dayTotal += hours;
-          totalWeekHours += hours;
-          html += '<tr>'
-            + '<td>' + (i === 0 ? '<strong>' + UI.dateShort(date) + '</strong>' : '') + '</td>'
-            + '<td>' + (job ? job.clientName + ' #' + job.jobNumber : 'General') + '</td>'
-            + '<td>' + (t.clockIn ? new Date(t.clockIn).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '—') + '</td>'
-            + '<td>' + (t.clockOut ? new Date(t.clockOut).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'active') + '</td>'
-            + '<td style="text-align:right;font-weight:600;">' + hours.toFixed(1) + '</td>'
-            + '</tr>';
-        });
-        // Day total row
-        html += '<tr style="background:var(--bg);"><td colspan="4" style="text-align:right;font-weight:600;font-size:12px;">Day Total</td><td style="text-align:right;font-weight:700;">' + dayTotal.toFixed(1) + '</td></tr>';
+    var renderSection = function(sectionEntries, label) {
+      var byDate = {};
+      sectionEntries.forEach(function(t) {
+        var d = t.date || (t.clockIn ? t.clockIn.split('T')[0] : '');
+        if (!byDate[d]) byDate[d] = [];
+        byDate[d].push(t);
       });
-    }
+      var dates = Object.keys(byDate).sort().reverse();
+      var totalHours = 0;
 
-    html += '</tbody></table></div>';
+      var html = '<h3 style="margin-bottom:12px;margin-top:20px;">' + label + '</h3>';
+      html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">';
+      html += '<table class="data-table"><thead><tr><th>Date</th><th>Job</th><th>Clock In</th><th>Clock Out</th><th style="text-align:right;">Hours</th></tr></thead><tbody>';
 
-    if (totalWeekHours > 0) {
-      html += '<div style="margin-top:12px;padding:16px;background:var(--green-dark);border-radius:10px;color:#fff;display:flex;justify-content:space-between;align-items:center;">'
-        + '<span style="font-weight:600;">Week Total</span>'
-        + '<span style="font-size:1.5rem;font-weight:800;">' + totalWeekHours.toFixed(1) + ' hours</span>'
-        + '</div>';
+      if (dates.length === 0) {
+        html += '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:24px;">No entries this week.</td></tr>';
+      } else {
+        dates.forEach(function(date) {
+          var dayEntries = byDate[date];
+          var dayTotal = 0;
+          dayEntries.forEach(function(t, i) {
+            var job = t.jobId ? DB.jobs.getById(t.jobId) : null;
+            var isActiveToday = !t.clockOut && date === today;
+            var hours = isActiveToday
+              ? (Date.now() - new Date(t.clockIn).getTime()) / 3600000
+              : (t.hours || 0);
+            dayTotal += hours;
+            totalHours += hours;
+            var clockOutDisplay = t.clockOut
+              ? new Date(t.clockOut).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+              : (isActiveToday ? '<span style="color:var(--green-dark);font-weight:600;">active</span>' : '—');
+            html += '<tr>'
+              + '<td>' + (i === 0 ? '<strong>' + UI.dateShort(date) + '</strong>' : '') + '</td>'
+              + '<td>' + (job ? job.clientName + ' #' + job.jobNumber : 'General') + '</td>'
+              + '<td>' + (t.clockIn ? new Date(t.clockIn).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '—') + '</td>'
+              + '<td>' + clockOutDisplay + '</td>'
+              + '<td style="text-align:right;font-weight:600;">' + hours.toFixed(1) + '</td>'
+              + '</tr>';
+          });
+          html += '<tr style="background:var(--bg);"><td colspan="4" style="text-align:right;font-weight:600;font-size:12px;">Day Total</td><td style="text-align:right;font-weight:700;">' + dayTotal.toFixed(1) + '</td></tr>';
+        });
+      }
+
+      html += '</tbody></table></div>';
+      if (totalHours > 0) {
+        html += '<div style="margin-top:8px;padding:12px 16px;background:var(--green-dark);border-radius:10px;color:#fff;display:flex;justify-content:space-between;align-items:center;">'
+          + '<span style="font-weight:600;">' + (label.includes('Week') ? 'Week' : 'History') + ' Total</span>'
+          + '<span style="font-size:1.4rem;font-weight:800;">' + totalHours.toFixed(1) + ' hours</span>'
+          + '</div>';
+      }
+      return html;
+    };
+
+    var html = renderSection(weekEntries, 'This Week');
+
+    if (historyEntries.length > 0) {
+      // Show last 30 history entries
+      var recent = historyEntries.sort(function(a, b) {
+        var da = a.date || (a.clockIn ? a.clockIn.split('T')[0] : '');
+        var db = b.date || (b.clockIn ? b.clockIn.split('T')[0] : '');
+        return db.localeCompare(da);
+      }).slice(0, 30);
+      html += renderSection(recent, 'History');
     }
 
     return html;

@@ -1092,7 +1092,7 @@ var QuotesPage = {
       total: q.total,
       quoteId: quoteId,
       status: 'scheduled',
-      scheduledDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+      scheduledDate: null
     });
     DB.quotes.update(quoteId, { status: 'converted', jobId: job.id });
     if (q.clientId) DB.clients.update(q.clientId, { status: 'active' });

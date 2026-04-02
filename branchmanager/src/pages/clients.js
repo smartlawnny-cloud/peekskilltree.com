@@ -512,7 +512,23 @@ var ClientsPage = {
       });
       html += '</table>';
     } else {
-      html += '<div style="color:var(--text-light);font-size:13px;">No pricing history</div>';
+      // Fall back to recent completed jobs as pricing reference
+      var recentJobs = clientJobs.filter(function(j) { return j.status === 'completed' && j.total > 0; })
+        .sort(function(a, b) { return (b.scheduledDate || b.createdAt || '') > (a.scheduledDate || a.createdAt || '') ? 1 : -1; })
+        .slice(0, 5);
+      if (recentJobs.length) {
+        html += '<table style="width:100%;font-size:13px;border-collapse:collapse;">'
+          + '<tr style="text-transform:uppercase;font-size:10px;font-weight:600;color:var(--text-light);letter-spacing:.05em;"><td style="padding:6px 0;">Job</td><td style="padding:6px 0;">Date</td><td style="padding:6px 0;text-align:right;">Total</td></tr>';
+        recentJobs.forEach(function(j) {
+          var dateStr = j.scheduledDate ? new Date(j.scheduledDate).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : '—';
+          html += '<tr><td style="padding:5px 0;">' + UI.esc(j.description || 'Job #' + j.jobNumber) + '</td>'
+            + '<td style="padding:5px 0;color:var(--text-light);">' + dateStr + '</td>'
+            + '<td style="padding:5px 0;text-align:right;font-weight:600;">' + UI.moneyInt(j.total) + '</td></tr>';
+        });
+        html += '</table>';
+      } else {
+        html += '<div style="color:var(--text-light);font-size:13px;">No pricing history</div>';
+      }
     }
     html += '</div></div>'
 

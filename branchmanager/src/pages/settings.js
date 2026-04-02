@@ -137,6 +137,32 @@ var SettingsPage = {
         + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;\n'
         + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_changes TEXT;</pre>'
         + '<button onclick="SettingsPage._copyColumnSql()" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
+        + '</details>'
+        + '<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--green-dark);margin-bottom:8px;">💸 Create Expenses Table (run once)</summary>'
+        + '<p style="font-size:12px;color:var(--text-light);margin-bottom:8px;">If you haven\'t run the full schema yet, run this to create the expenses table and enable cloud sync for expenses:</p>'
+        + '<pre id="expenses-sql-block" style="background:#1e2128;color:#a8d8a8;padding:14px;border-radius:8px;font-size:11px;overflow:auto;white-space:pre;line-height:1.6;">'
+        + 'CREATE TABLE IF NOT EXISTS expenses (\n'
+        + '  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,\n'
+        + '  date TIMESTAMPTZ DEFAULT now(),\n'
+        + '  amount NUMERIC(10,2) DEFAULT 0,\n'
+        + '  category TEXT,\n'
+        + '  description TEXT,\n'
+        + '  vendor TEXT,\n'
+        + '  job TEXT,\n'
+        + '  job_id TEXT,\n'
+        + '  receipt_url TEXT,\n'
+        + '  notes TEXT,\n'
+        + '  employee TEXT,\n'
+        + '  created_at TIMESTAMPTZ DEFAULT now(),\n'
+        + '  updated_at TIMESTAMPTZ DEFAULT now()\n'
+        + ');\n\n'
+        + 'ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;\n\n'
+        + 'CREATE POLICY "Allow all for authenticated"\n'
+        + '  ON expenses FOR ALL\n'
+        + '  USING (true);\n\n'
+        + 'CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);\n'
+        + 'CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);</pre>'
+        + '<button onclick="SettingsPage._copyExpensesSql()" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
         + '</details>';
     } else {
       html += '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Connect to Supabase for cloud sync, multi-device access, and team features.</p>'
@@ -379,5 +405,11 @@ var SettingsPage = {
       + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;\n'
       + 'ALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_changes TEXT;';
     navigator.clipboard.writeText(sql).then(function() { UI.toast('Column SQL copied!'); });
+  },
+
+  _copyExpensesSql: function() {
+    var el = document.getElementById('expenses-sql-block');
+    var sql = el ? el.textContent : '';
+    navigator.clipboard.writeText(sql).then(function() { UI.toast('Expenses SQL copied — paste into Supabase SQL Editor!'); });
   }
 };

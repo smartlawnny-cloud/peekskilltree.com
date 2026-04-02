@@ -428,6 +428,10 @@ var ClientsPage = {
     var clientQuotes = DB.quotes.getAll().filter(function(q) { return q.clientId === id || (q.clientName || '').trim().toLowerCase() === cName; });
     var totalRevenue = clientInvoices.filter(function(i) { return i.status === 'paid'; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
     var totalOutstanding = clientInvoices.filter(function(i) { return i.status !== 'paid'; }).reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0);
+    var totalInvoiced = clientInvoices.reduce(function(s, i) { return s + (i.total || 0); }, 0);
+    var completedJobs = clientJobs.filter(function(j) { return j.status === 'completed'; });
+    var sortedJobsByDate = clientJobs.slice().sort(function(a, b) { return (b.scheduledDate || b.createdAt || '') > (a.scheduledDate || a.createdAt || '') ? 1 : -1; });
+    var lastJobDate = sortedJobsByDate.length ? (sortedJobsByDate[0].scheduledDate || sortedJobsByDate[0].createdAt) : null;
 
     // Jobber-style client detail
     var html = ''
@@ -446,9 +450,36 @@ var ClientsPage = {
       + '</div>'
 
       // Client name (big, like Jobber)
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">'
       + '<div style="width:48px;height:48px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text-light);">👤</div>'
       + '<h2 style="font-size:28px;font-weight:700;">' + UI.esc(c.name) + '</h2>'
+      + '</div>'
+
+      // Quick Stats row
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--white);margin-bottom:16px;">'
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Total Jobs</div>'
+      + '<div style="font-size:26px;font-weight:700;margin-top:4px;">' + clientJobs.length + '</div>'
+      + '</div>'
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Total Invoiced</div>'
+      + '<div style="font-size:26px;font-weight:700;margin-top:4px;">' + UI.moneyInt(totalInvoiced) + '</div>'
+      + '</div>'
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Balance Due</div>'
+      + '<div style="font-size:26px;font-weight:700;margin-top:4px;' + (totalOutstanding > 0 ? 'color:var(--red);' : 'color:var(--green-dark);') + '">' + UI.moneyInt(totalOutstanding) + '</div>'
+      + '</div>'
+      + '<div style="padding:14px 16px;">'
+      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Last Job</div>'
+      + '<div style="font-size:16px;font-weight:700;margin-top:6px;">' + (lastJobDate ? UI.dateShort(lastJobDate) : '<span style="color:var(--text-light);font-size:13px;">None</span>') + '</div>'
+      + '</div>'
+      + '</div>'
+
+      // Quick Actions bar
+      + '<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">'
+      + '<button class="btn btn-primary" style="font-size:13px;" onclick="QuotesPage.showForm(null,\'' + id + '\')">+ New Quote</button>'
+      + '<button class="btn btn-primary" style="font-size:13px;" onclick="JobsPage.showForm(null,\'' + id + '\')">+ New Job</button>'
+      + '<button class="btn btn-primary" style="font-size:13px;" onclick="InvoicesPage.showForm(null,\'' + id + '\')">+ New Invoice</button>'
       + '</div>'
 
       // Two column: Properties (left) + Contact info (right)
@@ -582,15 +613,28 @@ var ClientsPage = {
       + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-quotes\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Quotes (' + clientQuotes.length + ')</button>'
       + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-invoices\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Invoices (' + clientInvoices.length + ')</button>'
       + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-activity\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Activity</button>'
+      + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-photos\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">📷 Photos</button>'
       + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-trees\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">🌳 Trees (' + TreeInventory.getForClient(id).length + ')</button>'
       + '</div>'
 
-      // Jobs tab
+      // Jobs tab — last 10, sorted newest first
       + '<div id="cd-jobs" class="cd-panel">'
-      + (clientJobs.length ? '<table class="data-table"><thead><tr><th>#</th><th>Description</th><th>Date</th><th>Status</th><th>Total</th></tr></thead><tbody>'
-        + clientJobs.map(function(j) {
-          return '<tr style="cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')"><td><strong>' + (j.jobNumber || '—') + '</strong></td><td>' + UI.esc(j.description || '—') + '</td><td>' + UI.dateShort(j.scheduledDate) + '</td><td>' + UI.statusBadge(j.status) + '</td><td style="font-weight:600;">' + UI.moneyInt(j.total) + '</td></tr>';
-        }).join('') + '</tbody></table>' : UI.emptyState('🔧', 'No jobs yet', 'Create a job for this client.', '+ New Job', 'JobsPage.showForm()'))
+      + (clientJobs.length ? (function() {
+          var sorted = clientJobs.slice().sort(function(a,b){ return (b.scheduledDate||b.createdAt||'') > (a.scheduledDate||a.createdAt||'') ? 1 : -1; });
+          var shown = sorted.slice(0, 10);
+          var moreCount = sorted.length - shown.length;
+          return '<table class="data-table"><thead><tr><th>Date</th><th>Description</th><th>Status</th><th style="text-align:right;">Value</th></tr></thead><tbody>'
+            + shown.map(function(j) {
+              return '<tr style="cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
+                + '<td style="white-space:nowrap;color:var(--text-light);font-size:12px;">' + UI.dateShort(j.scheduledDate) + '</td>'
+                + '<td>' + UI.esc(j.description || 'Job #' + (j.jobNumber || '—')) + '</td>'
+                + '<td>' + UI.statusBadge(j.status) + '</td>'
+                + '<td style="text-align:right;font-weight:600;">' + UI.moneyInt(j.total) + '</td>'
+                + '</tr>';
+            }).join('')
+            + '</tbody></table>'
+            + (moreCount > 0 ? '<div style="text-align:center;padding:10px;font-size:13px;color:var(--text-light);">Showing 10 of ' + sorted.length + ' jobs — <a onclick="ClientsPage._tab(document.querySelector(\'.cd-tab[onclick*=cd-jobs]\'),\'cd-jobs\')" style="color:var(--accent);cursor:pointer;">view all in Jobs page</a></div>' : '');
+        })() : UI.emptyState('🔧', 'No jobs yet', 'Create a job for this client.', '+ New Job', 'JobsPage.showForm(null,\'' + id + '\')'))
       + '</div>'
 
       // Quotes tab
@@ -598,15 +642,27 @@ var ClientsPage = {
       + (clientQuotes.length ? '<table class="data-table"><thead><tr><th>#</th><th>Description</th><th>Status</th><th>Total</th></tr></thead><tbody>'
         + clientQuotes.map(function(q) {
           return '<tr style="cursor:pointer;" onclick="QuotesPage.showDetail(\'' + q.id + '\')"><td><strong>' + (q.quoteNumber || '—') + '</strong></td><td>' + UI.esc(q.description || '—') + '</td><td>' + UI.statusBadge(q.status) + '</td><td style="font-weight:600;">' + UI.money(q.total) + '</td></tr>';
-        }).join('') + '</tbody></table>' : UI.emptyState('📋', 'No quotes yet', 'Create a quote for this client.', '+ New Quote', 'QuotesPage.showForm()'))
+        }).join('') + '</tbody></table>' : UI.emptyState('📋', 'No quotes yet', 'Create a quote for this client.', '+ New Quote', 'QuotesPage.showForm(null,\'' + id + '\')'))
       + '</div>'
 
-      // Invoices tab
+      // Invoices tab — last 10, sorted newest first
       + '<div id="cd-invoices" class="cd-panel" style="display:none;">'
-      + (clientInvoices.length ? '<table class="data-table"><thead><tr><th>#</th><th>Subject</th><th>Due</th><th>Status</th><th>Balance</th></tr></thead><tbody>'
-        + clientInvoices.map(function(inv) {
-          return '<tr style="cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')"><td><strong>' + (inv.invoiceNumber || '—') + '</strong></td><td>' + UI.esc(inv.subject || '—') + '</td><td>' + UI.dateShort(inv.dueDate) + '</td><td>' + UI.statusBadge(inv.status) + '</td><td style="font-weight:600;' + ((inv.balance||0) > 0 ? 'color:var(--red)' : 'color:var(--green-dark)') + ';">' + UI.money(inv.balance || 0) + '</td></tr>';
-        }).join('') + '</tbody></table>' : UI.emptyState('💰', 'No invoices yet', 'Create an invoice for this client.'))
+      + (clientInvoices.length ? (function() {
+          var sorted = clientInvoices.slice().sort(function(a,b){ return (b.createdAt||b.issueDate||'') > (a.createdAt||a.issueDate||'') ? 1 : -1; });
+          var shown = sorted.slice(0, 10);
+          var moreCount = sorted.length - shown.length;
+          return '<table class="data-table"><thead><tr><th>#</th><th>Date</th><th>Status</th><th style="text-align:right;">Amount</th></tr></thead><tbody>'
+            + shown.map(function(inv) {
+              return '<tr style="cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')">'
+                + '<td><strong>' + (inv.invoiceNumber || '—') + '</strong></td>'
+                + '<td style="white-space:nowrap;color:var(--text-light);font-size:12px;">' + UI.dateShort(inv.issueDate || inv.createdAt) + '</td>'
+                + '<td>' + UI.statusBadge(inv.status) + '</td>'
+                + '<td style="text-align:right;font-weight:600;' + ((inv.balance||0) > 0 ? 'color:var(--red)' : 'color:var(--green-dark)') + ';">' + UI.money(inv.total || 0) + '</td>'
+                + '</tr>';
+            }).join('')
+            + '</tbody></table>'
+            + (moreCount > 0 ? '<div style="text-align:center;padding:10px;font-size:13px;color:var(--text-light);">Showing 10 of ' + sorted.length + ' invoices</div>' : '');
+        })() : UI.emptyState('💰', 'No invoices yet', 'Create an invoice for this client.', '+ New Invoice', 'InvoicesPage.showForm(null,\'' + id + '\')'))
       + '</div>'
 
       // Activity timeline tab

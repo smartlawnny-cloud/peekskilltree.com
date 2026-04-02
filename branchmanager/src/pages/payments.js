@@ -138,7 +138,7 @@ var Payments = {
     DB.invoices.update(invoiceId, {
       amountPaid: depositAmount,
       balance: inv.total - depositAmount,
-      status: 'deposit_collected'
+      status: 'partial'
     });
 
     UI.toast('Deposit collected: ' + UI.money(depositAmount));

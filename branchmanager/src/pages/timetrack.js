@@ -4,7 +4,7 @@
  * Accessible from dashboard for crew members
  */
 var TimeTrackPage = {
-  currentUser: 'Doug Brown', // Will be from auth
+  get currentUser() { return (typeof Auth !== 'undefined' && Auth.user && Auth.user.name) ? Auth.user.name : 'Doug Brown'; },
 
   renderClockWidget: function() {
     var today = new Date().toISOString().split('T')[0];

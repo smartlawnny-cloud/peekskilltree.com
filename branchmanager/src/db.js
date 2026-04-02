@@ -213,13 +213,18 @@ var DB = (function() {
     getByJob: function(jobId) { return getAll(KEYS.timeEntries).filter(function(t) { return t.jobId === jobId; }); },
     getByUser: function(userId, date) {
       return getAll(KEYS.timeEntries).filter(function(t) {
-        if (t.userId !== userId) return false;
-        if (date && t.date !== date) return false;
+        // Support both 'userId' (DB clockIn) and 'user' (crewview clockOut) field names
+        var entryUser = t.userId || t.user || '';
+        if (entryUser !== userId) return false;
+        if (date) {
+          var entryDate = (t.date || t.clockIn || '').substring(0, 10);
+          if (entryDate !== date) return false;
+        }
         return true;
       });
     },
     clockIn: function(userId, jobId) {
-      return create(KEYS.timeEntries, { userId: userId, jobId: jobId, date: new Date().toISOString().split('T')[0], clockIn: _now(), clockOut: null, hours: 0 });
+      return create(KEYS.timeEntries, { userId: userId, user: userId, jobId: jobId, date: new Date().toISOString().split('T')[0], clockIn: _now(), clockOut: null, hours: 0 });
     },
     clockOut: function(entryId) {
       var entry = getById(KEYS.timeEntries, entryId);

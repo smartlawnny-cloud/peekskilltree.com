@@ -680,6 +680,21 @@ var JobsPage = {
     }
     html += '</div>'
 
+      // Notes — inline editable
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin:0;">Notes</h4>'
+      + '<button onclick="JobsPage._editNote(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--accent);font-weight:600;">✏️ Edit</button>'
+      + '</div>'
+      + '<div id="job-note-view-' + id + '" style="font-size:13px;color:' + (j.notes ? 'var(--text)' : 'var(--text-light)') + ';line-height:1.6;min-height:32px;">' + (j.notes ? UI.esc(j.notes) : 'No notes. Tap Edit to add.') + '</div>'
+      + '<div id="job-note-edit-' + id + '" style="display:none;">'
+      + '<textarea id="job-note-ta-' + id + '" style="width:100%;height:80px;border:2px solid var(--accent);border-radius:6px;padding:8px;font-size:13px;resize:vertical;">' + UI.esc(j.notes || '') + '</textarea>'
+      + '<div style="display:flex;gap:6px;margin-top:6px;">'
+      + '<button onclick="JobsPage._saveNote(\'' + id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Save</button>'
+      + '<button onclick="JobsPage._cancelNote(\'' + id + '\')" style="background:none;border:1px solid var(--border);padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Cancel</button>'
+      + '</div></div>'
+      + '</div>'
+
       // Quick actions
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Quick Actions</h4>'
@@ -718,6 +733,37 @@ var JobsPage = {
     document.getElementById('pageAction').style.display = 'none';
     if (typeof lucide !== 'undefined') lucide.createIcons();
     return;
+  },
+
+  // Inline note editing
+  _editNote: function(jobId) {
+    var v = document.getElementById('job-note-view-' + jobId);
+    var e = document.getElementById('job-note-edit-' + jobId);
+    if (v) v.style.display = 'none';
+    if (e) e.style.display = 'block';
+    var ta = document.getElementById('job-note-ta-' + jobId);
+    if (ta) ta.focus();
+  },
+  _cancelNote: function(jobId) {
+    var v = document.getElementById('job-note-view-' + jobId);
+    var e = document.getElementById('job-note-edit-' + jobId);
+    if (v) v.style.display = 'block';
+    if (e) e.style.display = 'none';
+  },
+  _saveNote: function(jobId) {
+    var ta = document.getElementById('job-note-ta-' + jobId);
+    if (!ta) return;
+    var notes = ta.value.trim();
+    DB.jobs.update(jobId, { notes: notes });
+    var v = document.getElementById('job-note-view-' + jobId);
+    if (v) {
+      v.textContent = notes || 'No notes. Tap Edit to add.';
+      v.style.color = notes ? 'var(--text)' : 'var(--text-light)';
+      v.style.display = 'block';
+    }
+    var e = document.getElementById('job-note-edit-' + jobId);
+    if (e) e.style.display = 'none';
+    UI.toast('Notes saved');
   },
 
   // Legacy modal (not used)

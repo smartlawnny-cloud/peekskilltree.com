@@ -709,6 +709,7 @@ var QuotesPage = {
 
     var subject = document.getElementById('send-subject').value;
     var body = document.getElementById('send-body').value;
+    var q = DB.quotes.getById(id);
 
     // Disable button to prevent double-send
     var sendBtn = document.querySelector('.modal-footer .btn-primary');
@@ -716,9 +717,50 @@ var QuotesPage = {
 
     UI.closeModal();
 
-    // Use Email.send() — handles SendGrid if configured, falls back to mailto
+    // Build branded HTML email
+    var approvalLink = QuotesPage._getApprovalLink(id);
+    var firstName = (q && q.clientName ? q.clientName.split(' ')[0] : 'there');
+
+    var lineItemsHtml = '';
+    if (q && q.lineItems && q.lineItems.length) {
+      lineItemsHtml = '<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">'
+        + '<tr style="background:#f0f9f4;"><th style="padding:8px 12px;text-align:left;font-size:12px;color:#555;font-weight:600;border-bottom:2px solid #c8e6c9;">SERVICE</th><th style="padding:8px 12px;text-align:right;font-size:12px;color:#555;font-weight:600;border-bottom:2px solid #c8e6c9;">AMOUNT</th></tr>';
+      q.lineItems.forEach(function(item) {
+        var amt = item.amount || ((item.qty||1) * (item.rate||0));
+        lineItemsHtml += '<tr><td style="padding:8px 12px;border-bottom:1px solid #e0e0e0;">' + (item.service||item.description||'Service') + '</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #e0e0e0;font-weight:600;">' + UI.money(amt) + '</td></tr>';
+      });
+      lineItemsHtml += '<tr style="background:#f0f9f4;"><td style="padding:10px 12px;font-weight:700;">Quote Total</td><td style="padding:10px 12px;text-align:right;font-weight:800;color:#00836c;font-size:16px;">' + UI.money(q.total) + '</td></tr>';
+      lineItemsHtml += '</table>';
+    }
+
+    var htmlBody = '<div style="background:#f5f6f8;padding:24px 0;">'
+      + '<div style="max-width:520px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;">'
+      + '<div style="background:linear-gradient(135deg,#1a3c12 0%,#00836c 100%);border-radius:12px 12px 0 0;padding:24px 28px;color:#fff;">'
+      + '<div style="font-size:13px;opacity:.8;margin-bottom:4px;">🌳 Second Nature Tree Service</div>'
+      + '<div style="font-size:24px;font-weight:900;letter-spacing:-.5px;">Quote #' + (q ? q.quoteNumber : '') + '</div>'
+      + '<div style="font-size:38px;font-weight:900;margin:6px 0 4px;letter-spacing:-1px;">' + UI.money(q ? q.total : 0) + '</div>'
+      + '<div style="font-size:13px;opacity:.75;">' + (q && q.property ? '📍 ' + q.property : '') + '</div>'
+      + '</div>'
+      + '<div style="background:#fff;border-radius:0 0 12px 12px;padding:24px 28px;">'
+      + '<p style="font-size:15px;color:#2d3748;margin-bottom:12px;">Hi ' + firstName + ',</p>'
+      + '<p style="font-size:14px;color:#4a5568;line-height:1.6;margin-bottom:16px;">Thanks for reaching out to Second Nature Tree Service! Here\'s the quote for the work we discussed. You can approve it online — no login required.</p>'
+      + (q && q.description ? '<p style="font-size:13px;color:#718096;background:#f7fafc;padding:10px 12px;border-radius:6px;margin-bottom:16px;"><strong>Scope:</strong> ' + q.description + '</p>' : '')
+      + lineItemsHtml
+      + '<div style="text-align:center;margin:24px 0;">'
+      + '<a href="' + approvalLink + '" style="display:inline-block;background:linear-gradient(135deg,#00836c,#1a3c12);color:#fff;padding:16px 36px;border-radius:10px;font-size:17px;font-weight:800;text-decoration:none;box-shadow:0 4px 14px rgba(0,131,108,.35);">✅ View & Approve Quote</a>'
+      + '</div>'
+      + '<p style="font-size:12px;color:#a0aec0;text-align:center;margin-bottom:20px;">This quote is valid for 30 days. Click above to approve or request changes.</p>'
+      + '<p style="font-size:13px;color:#718096;">Questions? Reply to this email or call/text <strong>(914) 391-5233</strong>.</p>'
+      + '<p style="font-size:13px;color:#2d3748;margin-top:12px;">Thanks,<br><strong>Doug Brown</strong><br>Second Nature Tree Service<br>Licensed & Insured — WC-32079 / PC-50644</p>'
+      + '</div></div></div>';
+
     if (typeof Email !== 'undefined') {
-      await Email.send(to, subject, body);
+      var result = await Email.send(to, subject, body, { htmlBody: htmlBody });
+      if (result && result.ok) {
+        UI.toast('Quote sent to ' + to + ' ✓');
+      } else {
+        UI.toast('Email sent (check for errors)', 'warning');
+      }
     } else {
       window.open('mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
     }

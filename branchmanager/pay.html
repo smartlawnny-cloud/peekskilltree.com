@@ -247,19 +247,28 @@
     payWithCard: function() {
       var inv = state.invoice;
       if (!inv) return;
-      var stripeLink = inv.stripe_payment_url || inv.stripePaymentUrl || '';
-      if (!stripeLink) return;
       var balance = parseFloat(inv.balance || inv.total || 0);
       var grandTotal = balance + state.tip;
-      // Go directly to Stripe Payment Link
-      // Tip amount is not automatically added — Stripe link has fixed amount.
-      // To handle tips: create a Stripe Payment Link with "Let customers choose price" OR
-      // use separate tip payment links. For now, we open Stripe and note the tip.
-      if (state.tip > 0) {
-        var ok = confirm('Your total is ' + fmt(grandTotal) + ' (including ' + fmt(state.tip) + ' gratuity). On the Stripe page, please pay ' + fmt(grandTotal) + '. Thank you!');
-        if (!ok) return;
+
+      // Get payment link: invoice-specific OR base link from URL param
+      var stripeLink = inv.stripe_payment_url || inv.stripePaymentUrl || '';
+
+      // Fall back to base link passed as URL param (set by admin when generating pay link)
+      if (!stripeLink) {
+        stripeLink = params.get('stripe') || '';
       }
-      window.location.href = stripeLink;
+
+      if (!stripeLink) {
+        alert('Online card payment is not available for this invoice yet.\n\nAlternate ways to pay:\n• Venmo: @SecondNatureTree\n• Zelle: info@peekskilltree.com\n• Check: 1 Highland Industrial Park, Peekskill NY 10566\n• Call: (914) 391-5233');
+        return;
+      }
+
+      // Append prefilled_quantity in CENTS so Stripe pre-fills the exact amount.
+      // This works when the Stripe Payment Link product is priced at $0.01 per unit
+      // with "Let customers adjust quantity" enabled.
+      var cents = Math.round(grandTotal * 100);
+      var sep = stripeLink.indexOf('?') >= 0 ? '&' : '?';
+      window.location.href = stripeLink + sep + 'prefilled_quantity=' + cents;
     }
   };
 

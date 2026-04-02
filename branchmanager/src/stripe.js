@@ -135,6 +135,24 @@ var Stripe = {
       + UI.formField('Base Payment Link URL', 'text', 'stripe-base-link', baseLink, { placeholder: 'https://buy.stripe.com/...' })
       + (baseLink ? '<div style="font-size:11px;color:#059669;margin-top:-8px;">✅ Configured — all invoices will use this link with pre-filled amounts</div>' : '')
       + '</div>'
+      // Webhook auto-mark-paid section
+      + '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;margin-bottom:12px;">'
+      + '<div style="font-size:13px;font-weight:700;color:#14532d;margin-bottom:6px;">🔔 Auto-Mark Paid (Webhook)</div>'
+      + '<div style="font-size:12px;color:#166534;margin-bottom:8px;">When a client pays, the invoice automatically flips to <strong>Paid</strong> and you get an email — no manual work.</div>'
+      + '<div style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11px;color:#374151;margin-bottom:8px;font-family:monospace;word-break:break-all;">'
+      + '📡 Webhook URL:<br>'
+      + '<strong>https://ltpivkqahvplapyagljt.supabase.co/functions/v1/stripe-webhook</strong>'
+      + '</div>'
+      + '<div style="font-size:11px;color:#166534;margin-bottom:6px;"><strong>One-time setup steps:</strong></div>'
+      + '<ol style="font-size:11px;color:#166534;margin:0 0 8px 16px;line-height:1.7;">'
+      + '<li><a href="https://dashboard.stripe.com/webhooks/create" target="_blank" style="color:#059669;">Stripe → Developers → Webhooks → Add endpoint</a></li>'
+      + '<li>Paste the URL above → Events: <code>checkout.session.completed</code></li>'
+      + '<li>Copy the "Signing secret" (whsec_...) — paste in terminal:<br>'
+      + '<code style="background:#dcfce7;padding:2px 4px;border-radius:3px;">supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...</code></li>'
+      + '<li>Set Payment Link success URL → <code>https://peekskilltree.com/branchmanager/paid.html</code></li>'
+      + '</ol>'
+      + '<div style="font-size:11px;color:#6b7280;">Also deploy the Edge Function: <code>supabase functions deploy stripe-webhook --no-verify-jwt</code></div>'
+      + '</div>'
       // Action buttons
       + '<div style="display:flex;gap:8px;">'
       + '<button class="btn btn-primary" onclick="Stripe.saveSettings()">Save Settings</button>'

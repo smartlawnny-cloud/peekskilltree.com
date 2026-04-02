@@ -34,13 +34,13 @@ var CommandPalette = {
     { category: 'Create', label: 'New Job', icon: '➕', action: function() { JobsPage.showForm(); }, keywords: 'add work order' },
     { category: 'Create', label: 'New Invoice', icon: '➕', action: function() { if(typeof InvoicesPage!=='undefined') InvoicesPage.showForm(); }, keywords: 'add bill' },
     { category: 'Create', label: 'Quick Estimate', icon: '🧮', action: function() { if(typeof Estimator!=='undefined') Estimator.show(); }, keywords: 'calculator price' },
-    { category: 'Create', label: 'Log Expense', icon: '💸', action: function() { if(typeof ExpensesPage!=='undefined') ExpensesPage.showForm(); }, keywords: 'add cost receipt' },
-    { category: 'Create', label: 'Clock In', icon: '⏱', action: function() { if(typeof TimeClock!=='undefined') TimeClock.clockIn(); }, keywords: 'start time punch' },
+    { category: 'Create', label: 'Log Expense', icon: '💸', action: function() { loadPage('expenses'); }, keywords: 'add cost receipt' },
+    { category: 'Create', label: 'Clock In', icon: '⏱', action: function() { if(typeof TimeTrackPage!=='undefined') TimeTrackPage.clockIn(null); else loadPage('timetrack'); }, keywords: 'start time punch' },
 
     // Actions
     { category: 'Actions', label: 'Toggle Dark Mode', icon: '🌙', action: function() { toggleDarkMode(); }, keywords: 'theme night light' },
-    { category: 'Actions', label: 'Sync to Cloud', icon: '☁️', action: function() { if(typeof SupaCloud!=='undefined') SupaCloud.push(); }, keywords: 'upload backup save' },
-    { category: 'Actions', label: 'Export All Data', icon: '📦', action: function() { if(typeof DB!=='undefined' && DB.exportAll) DB.exportAll(); }, keywords: 'download backup' },
+    { category: 'Actions', label: 'Sync to Cloud', icon: '☁️', action: function() { if(typeof CloudSync!=='undefined') CloudSync.refresh(); loadPage('backup'); }, keywords: 'upload backup save' },
+    { category: 'Actions', label: 'Export All Data', icon: '📦', action: function() { if(typeof BackupPage!=='undefined') BackupPage.downloadBackup(); }, keywords: 'download backup' },
     { category: 'Actions', label: 'Show Keyboard Shortcuts', icon: '⌨️', action: function() { CommandPalette._showShortcuts(); }, keywords: 'hotkeys keys help' },
     { category: 'Actions', label: 'View Property Map', icon: '🗺️', action: function() { loadPage('propertymap'); }, keywords: 'satellite aerial equipment' },
     { category: 'Actions', label: 'Open Online Booking Settings', icon: '🌐', action: function() { loadPage('onlinebooking'); }, keywords: 'widget embed website' },

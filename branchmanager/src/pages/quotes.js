@@ -31,20 +31,20 @@ var QuotesPage = {
       // Conversion rate
       + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
       + '<div style="font-size:14px;font-weight:700;">Conversion rate</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">All time</div>'
       + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + convRate + '%</div>'
       + '</div>'
-      // Sent
+      // Sent (currently awaiting)
       + '<div onclick="QuotesPage._setFilter(\'sent\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;">Sent</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:14px;font-weight:700;">Awaiting Response</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Open quotes</div>'
       + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + sent + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(sentTotal) + '</div>'
       + '</div>'
       // Converted
       + '<div onclick="QuotesPage._setFilter(\'converted\')" style="padding:14px 16px;cursor:pointer;">'
       + '<div style="font-size:14px;font-weight:700;">Converted</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">All time</div>'
       + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + converted.length + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(convertedTotal) + '</div>'
       + '</div>'

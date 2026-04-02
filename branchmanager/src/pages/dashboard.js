@@ -51,7 +51,12 @@ var DashboardPage = {
         });
       }
       var bSevenAgo = new Date(now.getTime() - 7 * 86400000);
-      var bStaleQuotes = allQuotes.filter(function(q) { return q.status === 'sent' && q.createdAt && new Date(q.createdAt) < bSevenAgo; });
+      var b180Ago = new Date(now.getTime() - 180 * 86400000);
+      var bStaleQuotes = allQuotes.filter(function(q) {
+        return q.status === 'sent' && q.createdAt
+          && new Date(q.createdAt) < bSevenAgo
+          && new Date(q.createdAt) > b180Ago; // only last 6 months
+      });
       if (bStaleQuotes.length > 0) {
         briefingInsights.push({
           icon: '⏳',
@@ -59,10 +64,12 @@ var DashboardPage = {
           action: 'loadPage(\'quotes\');'
         });
       }
-      var ago90 = new Date(now.getTime() - 90 * 86400000);
+      var cutoff60str = new Date(now.getTime() - 60 * 86400000).toISOString().split('T')[0];
+      var cutoff7str = new Date(now.getTime() - 7 * 86400000).toISOString();
       var bNeedsInvoicing = allJobs.filter(function(j) {
         if (j.status !== 'completed' || j.invoiceId) return false;
-        return j.createdAt && new Date(j.createdAt) > ago90;
+        return (j.scheduledDate && j.scheduledDate >= cutoff60str)
+            || (!j.scheduledDate && (j.createdAt || '') > cutoff7str);
       });
       var bNeedsInvTotal = bNeedsInvoicing.reduce(function(s, j) { return s + (j.total || 0); }, 0);
       if (bNeedsInvoicing.length > 0) {

@@ -13,8 +13,20 @@ var PipelinePage = {
     { id: 'lost', label: 'Lost', color: '#9e9e9e', icon: '❌' }
   ],
 
+  _filterRecent: true,
+
   render: function() {
-    var deals = PipelinePage.getDeals();
+    var allDeals = PipelinePage.getDeals();
+    var sixMonthsAgo = new Date(Date.now() - 180 * 86400000);
+
+    // Filter: when recent mode, hide old assessment/quote_sent deals (Jobber import noise)
+    var deals = PipelinePage._filterRecent
+      ? allDeals.filter(function(d) {
+          if (d.stage === 'won' || d.stage === 'lost' || d.stage === 'new_lead' || d.stage === 'follow_up') return true;
+          return !d.createdAt || new Date(d.createdAt) > sixMonthsAgo;
+        })
+      : allDeals;
+
     var stageStats = {};
     PipelinePage.stages.forEach(function(s) { stageStats[s.id] = { count: 0, value: 0 }; });
     deals.forEach(function(d) {
@@ -32,6 +44,7 @@ var PipelinePage = {
     var activeDeals = deals.filter(function(d) { return d.stage !== 'won' && d.stage !== 'lost'; });
     var activeValue = activeDeals.reduce(function(s,d){ return s + (d.value||0); }, 0);
     var lostCount = stageStats.lost ? stageStats.lost.count : 0;
+    var hiddenOld = allDeals.length - deals.length;
 
     var html = '<div class="stat-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
       + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
@@ -58,6 +71,13 @@ var PipelinePage = {
       + '<div style="font-size:28px;font-weight:800;margin-top:8px;color:' + (winRate >= 50 ? 'var(--green-dark)' : '#e07c24') + ';">' + winRate + '%</div>'
       + '<div style="font-size:12px;color:var(--text-light);">' + lostCount + ' lost</div>'
       + '</div></div>';
+
+    // Filter bar
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'
+      + '<button class="btn ' + (PipelinePage._filterRecent ? 'btn-primary' : 'btn-outline') + '" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage._filterRecent=true;loadPage(\'pipeline\')">6 Months</button>'
+      + '<button class="btn ' + (!PipelinePage._filterRecent ? 'btn-primary' : 'btn-outline') + '" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage._filterRecent=false;loadPage(\'pipeline\')">All Time</button>'
+      + (hiddenOld > 0 ? '<span style="font-size:12px;color:var(--text-light);">' + hiddenOld + ' older Jobber deals hidden</span>' : '')
+      + '</div>';
 
     // Kanban board
     html += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:16px;">'

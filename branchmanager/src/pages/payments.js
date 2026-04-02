@@ -3,8 +3,23 @@
  * Record partial payments, deposits, payment history per invoice
  */
 var Payments = {
+  _filterMethod: 'all',
+  _filterPeriod: 'month',
+
+  setFilter: function(type, value) {
+    if (type === 'method') Payments._filterMethod = value;
+    if (type === 'period') Payments._filterPeriod = value;
+    var el = document.getElementById('payments-main');
+    if (el) el.innerHTML = Payments._renderContent();
+  },
+
   render: function() {
-    // Collect all payments across all invoices
+    return '<div style="max-width:860px;" id="payments-page">'
+      + Payments._renderContent()
+      + '</div>';
+  },
+
+  _getAllPayments: function() {
     var allPayments = [];
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
@@ -16,42 +31,220 @@ var Payments = {
       }
     }
     allPayments.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+    return allPayments;
+  },
 
-    var total = allPayments.reduce(function(s, p) { return s + (p.amount || 0); }, 0);
-    var thisMonth = new Date(); thisMonth.setDate(1); thisMonth.setHours(0,0,0,0);
-    var monthTotal = allPayments.filter(function(p) { return new Date(p.date) >= thisMonth; })
+  _filterByPeriod: function(payments, period) {
+    var now = new Date();
+    var cutoff;
+    if (period === 'month') {
+      cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (period === 'lastmonth') {
+      cutoff = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      var endCutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+      return payments.filter(function(p) {
+        var d = new Date(p.date);
+        return d >= cutoff && d < endCutoff;
+      });
+    } else if (period === '3months') {
+      cutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    } else {
+      return payments; // all time
+    }
+    return payments.filter(function(p) { return new Date(p.date) >= cutoff; });
+  },
+
+  _renderContent: function() {
+    var allPayments = Payments._getAllPayments();
+
+    // Stats for header cards (always unfiltered except for period)
+    var now = new Date();
+    var thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    var ytdStart = new Date(now.getFullYear(), 0, 1);
+
+    var thisMonthTotal = allPayments.filter(function(p) { return new Date(p.date) >= thisMonthStart; })
       .reduce(function(s, p) { return s + (p.amount || 0); }, 0);
+    var lastMonthTotal = allPayments.filter(function(p) {
+      var d = new Date(p.date);
+      return d >= lastMonthStart && d < thisMonthStart;
+    }).reduce(function(s, p) { return s + (p.amount || 0); }, 0);
+    var ytdTotal = allPayments.filter(function(p) { return new Date(p.date) >= ytdStart; })
+      .reduce(function(s, p) { return s + (p.amount || 0); }, 0);
+    var allTimeTotal = allPayments.reduce(function(s, p) { return s + (p.amount || 0); }, 0);
 
-    var html = '<div style="max-width:800px;">'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">'
-      + '<div class="stat-card"><div class="stat-label">This Month</div><div class="stat-value">' + UI.money(monthTotal) + '</div></div>'
-      + '<div class="stat-card"><div class="stat-label">All Time</div><div class="stat-value">' + UI.money(total) + '</div></div>'
-      + '<div class="stat-card"><div class="stat-label">Payments</div><div class="stat-value">' + allPayments.length + '</div></div>'
+    // Apply filters to list
+    var filtered = Payments._filterByPeriod(allPayments, Payments._filterPeriod);
+    if (Payments._filterMethod !== 'all') {
+      filtered = filtered.filter(function(p) { return (p.method || 'other') === Payments._filterMethod; });
+    }
+
+    // Stats row
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">'
+      + '<div class="stat-card"><div class="stat-label">This Month</div><div class="stat-value">' + UI.money(thisMonthTotal) + '</div></div>'
+      + '<div class="stat-card"><div class="stat-label">Last Month</div><div class="stat-value">' + UI.money(lastMonthTotal) + '</div></div>'
+      + '<div class="stat-card"><div class="stat-label">YTD</div><div class="stat-value">' + UI.money(ytdTotal) + '</div></div>'
+      + '<div class="stat-card"><div class="stat-label">All Time</div><div class="stat-value">' + UI.money(allTimeTotal) + '</div></div>'
       + '</div>';
 
-    if (!allPayments.length) {
-      html += '<div class="empty-state"><div class="empty-icon">💵</div><h3>No payments recorded</h3><p>Record payments from the Invoice detail view.</p><button class="btn btn-primary" style="margin-top:16px;" onclick="loadPage(\'invoices\')">Go to Invoices</button></div>';
-    } else {
-      var methodIcons = { cash: '💵', check: '📝', venmo: '📱', zelle: '📱', card: '💳', stripe: '💳', deposit: '🏦', other: '💰' };
-      allPayments.slice(0, 100).forEach(function(p) {
-        var inv = p.invoiceId ? DB.invoices.getById(p.invoiceId) : null;
-        html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;">'
-          + '<div style="display:flex;align-items:center;gap:10px;">'
-          + '<div style="font-size:24px;">' + (methodIcons[p.method] || '💰') + '</div>'
-          + '<div>'
-          + '<div style="font-weight:600;font-size:14px;text-transform:capitalize;">' + (p.method || 'payment')
-          + (p.note ? ' <span style="font-weight:400;color:var(--text-light);">— ' + UI.esc(p.note) + '</span>' : '') + '</div>'
-          + (inv ? '<div style="font-size:12px;color:var(--text-light);">' + UI.esc(inv.clientName || '') + (inv.invoiceNumber ? ' · Invoice #' + inv.invoiceNumber : '') + '</div>' : '')
-          + '</div></div>'
-          + '<div style="text-align:right;">'
-          + '<div style="font-weight:700;font-size:16px;color:var(--green-dark);">+' + UI.money(p.amount) + '</div>'
-          + '<div style="font-size:11px;color:var(--text-light);">' + UI.dateShort(p.date) + '</div>'
-          + '</div></div>';
-      });
-    }
+    // Payment method breakdown
+    var methods = ['cash','check','venmo','zelle','card','stripe','deposit','other'];
+    var methodTotals = {};
+    methods.forEach(function(m) { methodTotals[m] = 0; });
+    allPayments.forEach(function(p) {
+      var m = p.method || 'other';
+      if (!methodTotals[m]) methodTotals[m] = 0;
+      methodTotals[m] += (p.amount || 0);
+    });
+    var methodMax = Math.max.apply(null, methods.map(function(m) { return methodTotals[m] || 0; })) || 1;
+    var methodIcons = { cash: '💵', check: '📝', venmo: '📱', zelle: '⚡', card: '💳', stripe: '🔵', deposit: '🏦', other: '💰' };
+
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;">'
+      + '<h4 style="font-size:13px;margin-bottom:12px;font-weight:700;">Payment Method Breakdown</h4>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;">';
+
+    methods.forEach(function(m) {
+      var amt = methodTotals[m] || 0;
+      if (amt === 0) return;
+      var pct = Math.round((amt / methodMax) * 100);
+      var pctOfTotal = allTimeTotal > 0 ? Math.round((amt / allTimeTotal) * 100) : 0;
+      html += '<div style="background:var(--bg);border-radius:8px;padding:10px;">'
+        + '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">'
+        + '<span style="font-weight:600;text-transform:capitalize;">' + methodIcons[m] + ' ' + m + '</span>'
+        + '<span style="color:var(--text-light);">' + pctOfTotal + '%</span>'
+        + '</div>'
+        + '<div style="height:6px;background:var(--border);border-radius:3px;margin-bottom:4px;overflow:hidden;">'
+        + '<div style="height:100%;width:' + pct + '%;background:var(--green-dark);border-radius:3px;"></div>'
+        + '</div>'
+        + '<div style="font-size:13px;font-weight:700;">' + UI.money(amt) + '</div>'
+        + '</div>';
+    });
+
+    html += '</div></div>';
+
+    // Filter bar
+    var periodFilters = [
+      { val: 'month', label: 'This Month' },
+      { val: 'lastmonth', label: 'Last Month' },
+      { val: '3months', label: 'Last 3 Mo' },
+      { val: 'all', label: 'All Time' }
+    ];
+    var methodFilters = ['all','cash','check','venmo','zelle','card','stripe','deposit','other'];
+
+    var filterBtnStyle = function(active) {
+      return 'padding:6px 12px;border-radius:6px;border:1.5px solid ' + (active ? 'var(--green-dark)' : 'var(--border)') + ';background:' + (active ? 'var(--green-dark)' : 'var(--white)') + ';color:' + (active ? '#fff' : 'var(--text)') + ';cursor:pointer;font-size:12px;font-weight:600;';
+    };
+
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">'
+      + '<span style="font-size:12px;font-weight:600;color:var(--text-light);margin-right:4px;">Period:</span>';
+    periodFilters.forEach(function(f) {
+      html += '<button style="' + filterBtnStyle(Payments._filterPeriod === f.val) + '" onclick="Payments.setFilter(\'period\',\'' + f.val + '\')">' + f.label + '</button>';
+    });
+    html += '<span style="font-size:12px;font-weight:600;color:var(--text-light);margin-left:8px;margin-right:4px;">Method:</span>';
+    methodFilters.forEach(function(m) {
+      var label = m === 'all' ? 'All' : ((methodIcons[m] || '') + ' ' + m.charAt(0).toUpperCase() + m.slice(1));
+      html += '<button style="' + filterBtnStyle(Payments._filterMethod === m) + '" onclick="Payments.setFilter(\'method\',\'' + m + '\')">' + label + '</button>';
+    });
+
+    // Export CSV button
+    html += '<button onclick="Payments.exportCSV()" class="btn btn-outline" style="margin-left:auto;font-size:12px;padding:6px 12px;">Export CSV</button>';
     html += '</div>';
+
+    // Wrap list in updatable div
+    html += '<div id="payments-main">';
+    html += Payments._renderList(filtered);
+    html += '</div>';
+
     return html;
   },
+
+  _renderList: function(filtered) {
+    if (!filtered.length) {
+      return '<div class="empty-state"><div class="empty-icon">💵</div><h3>No payments match this filter</h3><p>Try a different date range or payment method.</p><button class="btn btn-primary" style="margin-top:16px;" onclick="loadPage(\'invoices\')">Go to Invoices</button></div>';
+    }
+
+    var methodIcons = { cash: '💵', check: '📝', venmo: '📱', zelle: '⚡', card: '💳', stripe: '🔵', deposit: '🏦', other: '💰' };
+    var html = '';
+    filtered.slice(0, 150).forEach(function(p) {
+      var inv = p.invoiceId ? DB.invoices.getById(p.invoiceId) : null;
+      var clientName = inv ? (inv.clientName || '') : '';
+      var invNum = inv ? (inv.invoiceNumber || '') : '';
+      var clientEmail = inv ? (inv.clientEmail || '') : '';
+
+      // Build mailto for receipt
+      var receiptSubject = encodeURIComponent('Payment Receipt' + (invNum ? ' — Invoice #' + invNum : ''));
+      var receiptBody = encodeURIComponent(
+        'Hi' + (clientName ? ' ' + clientName.split(' ')[0] : '') + ',\n\n'
+        + 'Thank you for your payment.\n\n'
+        + 'Amount: ' + UI.money(p.amount) + '\n'
+        + 'Method: ' + (p.method || 'payment') + '\n'
+        + 'Date: ' + UI.dateShort(p.date) + '\n'
+        + (invNum ? 'Invoice #: ' + invNum + '\n' : '')
+        + (p.note ? 'Note: ' + p.note + '\n' : '')
+        + '\nThank you for choosing Second Nature Tree Service!\n\n'
+        + 'Second Nature Tree Service\n(914) 391-5233\ninfo@peekskilltree.com'
+      );
+      var mailtoHref = 'mailto:' + (clientEmail || '') + '?subject=' + receiptSubject + '&body=' + receiptBody;
+
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;">'
+        + '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<div style="font-size:24px;">' + (methodIcons[p.method] || '💰') + '</div>'
+        + '<div>'
+        + '<div style="font-weight:600;font-size:14px;text-transform:capitalize;">' + (p.method || 'payment')
+        + (p.note ? ' <span style="font-weight:400;color:var(--text-light);">— ' + UI.esc(p.note) + '</span>' : '') + '</div>'
+        + (inv ? '<div style="font-size:12px;color:var(--text-light);">' + UI.esc(clientName) + (invNum ? ' · Invoice #' + invNum : '') + '</div>' : '')
+        + '</div></div>'
+        + '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<div style="text-align:right;">'
+        + '<div style="font-weight:700;font-size:16px;color:var(--green-dark);">+' + UI.money(p.amount) + '</div>'
+        + '<div style="font-size:11px;color:var(--text-light);">' + UI.dateShort(p.date) + '</div>'
+        + '</div>'
+        + '<a href="' + mailtoHref + '" title="Send Receipt" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text);text-decoration:none;white-space:nowrap;">✉️ Receipt</a>'
+        + '</div></div>';
+    });
+
+    return html;
+  },
+
+  exportCSV: function() {
+    var allPayments = Payments._getAllPayments();
+    var filtered = Payments._filterByPeriod(allPayments, Payments._filterPeriod);
+    if (Payments._filterMethod !== 'all') {
+      filtered = filtered.filter(function(p) { return (p.method || 'other') === Payments._filterMethod; });
+    }
+
+    var rows = [['Date','Client','Invoice #','Method','Amount','Note']];
+    filtered.forEach(function(p) {
+      var inv = p.invoiceId ? DB.invoices.getById(p.invoiceId) : null;
+      rows.push([
+        UI.dateShort(p.date),
+        inv ? (inv.clientName || '') : '',
+        inv ? (inv.invoiceNumber || '') : '',
+        p.method || '',
+        (p.amount || 0).toFixed(2),
+        p.note || ''
+      ]);
+    });
+
+    var csv = rows.map(function(row) {
+      return row.map(function(cell) {
+        var s = String(cell).replace(/"/g, '""');
+        return /[,"\n]/.test(s) ? '"' + s + '"' : s;
+      }).join(',');
+    }).join('\r\n');
+
+    var blob = new Blob([csv], {type: 'text/csv'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'payments-' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    UI.toast('CSV exported (' + filtered.length + ' payments)');
+  },
+
   // Render payment history for an invoice
   renderForInvoice: function(invoiceId) {
     var payments = Payments.getAll(invoiceId);
@@ -77,7 +270,7 @@ var Payments = {
     // Payment list
     if (payments.length) {
       payments.forEach(function(p) {
-        var methodIcons = { cash: '💵', check: '📝', venmo: '📱', zelle: '📱', card: '💳', stripe: '💳', deposit: '🏦', other: '💰' };
+        var methodIcons = { cash: '💵', check: '📝', venmo: '📱', zelle: '⚡', card: '💳', stripe: '🔵', deposit: '🏦', other: '💰' };
         html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'
           + '<div><span>' + (methodIcons[p.method] || '💰') + '</span> '
           + '<span style="text-transform:capitalize;font-weight:600;">' + (p.method || 'payment') + '</span>'

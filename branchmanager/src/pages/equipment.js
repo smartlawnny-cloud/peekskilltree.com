@@ -7,10 +7,21 @@ var EquipmentPage = {
     var equipment = EquipmentPage.getAll();
     var needsMaint = equipment.filter(function(e) { return EquipmentPage._needsMaintenance(e); });
 
+    // Total maintenance cost from all history
+    var totalMaintCost = 0;
+    equipment.forEach(function(e) {
+      var histKey = 'bm-equipment-history-' + e.id;
+      try {
+        var hist = JSON.parse(localStorage.getItem(histKey)) || [];
+        hist.forEach(function(h) { totalMaintCost += (h.cost || 0); });
+      } catch(err) {}
+    });
+
     var html = '<div class="stat-grid">'
       + UI.statCard('Equipment', equipment.length.toString(), 'Total items tracked', '', '')
       + UI.statCard('Needs Service', needsMaint.length.toString(), needsMaint.length > 0 ? '⚠️ Overdue' : 'All good ✅', needsMaint.length > 0 ? 'down' : 'up', '')
       + UI.statCard('Total Value', UI.moneyInt(equipment.reduce(function(s, e) { return s + (e.value || 0); }, 0)), 'Replacement cost', '', '')
+      + UI.statCard('Maintenance Cost', UI.moneyInt(totalMaintCost), 'All logged service costs', '', '')
       + '</div>';
 
     // Maintenance alerts
@@ -44,14 +55,17 @@ var EquipmentPage = {
         + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:4px;">' + cat + '</h4>';
       categories[cat].forEach(function(e) {
         var statusColor = e.status === 'active' ? '#4caf50' : e.status === 'repair' ? '#f44336' : '#999';
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f5;cursor:pointer;" onclick="EquipmentPage.showDetail(\'' + e.id + '\')">'
-          + '<div style="display:flex;align-items:center;gap:8px;">'
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f5;">'
+          + '<div style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;" onclick="EquipmentPage.showDetail(\'' + e.id + '\')">'
           + '<span style="width:8px;height:8px;border-radius:50%;background:' + statusColor + ';flex-shrink:0;"></span>'
           + '<div><strong style="font-size:14px;">' + e.name + '</strong>'
           + '<div style="font-size:12px;color:var(--text-light);">' + (e.make || '') + ' ' + (e.model || '') + (e.year ? ' · ' + e.year : '') + (e.serial ? ' · SN: ' + e.serial : '') + '</div></div></div>'
-          + '<div style="text-align:right;font-size:12px;">'
+          + '<div style="display:flex;align-items:center;gap:8px;">'
+          + '<div style="text-align:right;font-size:12px;min-width:60px;">'
           + '<div style="font-weight:600;">' + (e.hours ? e.hours + ' hrs' : '') + '</div>'
-          + '<div style="color:var(--text-light);">' + (e.value ? UI.money(e.value) : '') + '</div></div></div>';
+          + '<div style="color:var(--text-light);">' + (e.value ? UI.money(e.value) : '') + '</div></div>'
+          + '<button onclick="event.stopPropagation();EquipmentPage.logHours(\'' + e.id + '\')" style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Hrs</button>'
+          + '</div></div>';
       });
       html += '</div>';
     });
@@ -152,6 +166,12 @@ var EquipmentPage = {
   showDetail: function(id) {
     var e = EquipmentPage.getAll().find(function(eq) { return eq.id === id; });
     if (!e) return;
+
+    // Load service history
+    var histKey = 'bm-equipment-history-' + id;
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem(histKey)) || []; } catch(err) {}
+
     var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'
       + '<div><h4 style="margin-bottom:8px;">Details</h4>'
       + '<div style="font-size:14px;line-height:2;">'
@@ -167,6 +187,30 @@ var EquipmentPage = {
       + '<div>Next Service: <strong>' + (e.nextService || 'None set') + '</strong></div>'
       + '<div>Last Service: <strong>' + (e.lastService ? UI.dateShort(e.lastService) : 'Never') + '</strong></div></div></div></div>';
 
+    // Service history section
+    html += '<div style="margin-top:20px;">'
+      + '<h4 style="font-size:14px;font-weight:700;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:6px;">Service History</h4>';
+    if (history.length === 0) {
+      html += '<div style="font-size:13px;color:var(--text-light);padding:8px 0;">No service logged yet.</div>';
+    } else {
+      var recent = history.slice(0, 5);
+      recent.forEach(function(h) {
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">'
+          + '<div>'
+          + '<div style="font-weight:600;">' + UI.esc(h.type) + '</div>'
+          + (h.notes ? '<div style="color:var(--text-light);margin-top:2px;">' + UI.esc(h.notes) + '</div>' : '')
+          + '</div>'
+          + '<div style="text-align:right;flex-shrink:0;margin-left:12px;">'
+          + '<div style="font-weight:600;color:var(--green-dark);">' + (h.cost > 0 ? UI.money(h.cost) : '') + '</div>'
+          + '<div style="color:var(--text-light);">' + UI.dateShort(h.date) + '</div>'
+          + '</div></div>';
+      });
+      if (history.length > 5) {
+        html += '<div style="font-size:12px;color:var(--text-light);padding:6px 0;">+ ' + (history.length - 5) + ' more entries</div>';
+      }
+    }
+    html += '</div>';
+
     if (typeof Photos !== 'undefined') {
       html += Photos.renderGallery('equipment', id);
     }
@@ -174,6 +218,7 @@ var EquipmentPage = {
     UI.showModal(e.name, html, {
       wide: true,
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
+        + ' <button class="btn btn-outline" onclick="EquipmentPage.logHours(\'' + id + '\')">⏱ Log Hours</button>'
         + ' <button class="btn btn-outline" onclick="EquipmentPage.logService(\'' + id + '\')">✅ Log Service</button>'
         + ' <button class="btn btn-primary" onclick="UI.closeModal();EquipmentPage.showForm(\'' + id + '\')">Edit</button>'
     });
@@ -182,10 +227,73 @@ var EquipmentPage = {
   logService: function(id) {
     var all = EquipmentPage.getAll();
     var eq = all.find(function(e) { return e.id === id; });
+    if (!eq) return;
+
+    var html = '<div style="display:grid;gap:10px;">'
+      + '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Service Type</label>'
+      + '<select id="svc-type" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<option>Oil Change</option><option>Blade Sharpen</option><option>Filter Replace</option>'
+      + '<option>Annual Inspection</option><option>Repair</option><option>Other</option>'
+      + '</select></div>'
+      + '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Notes</label>'
+      + '<input type="text" id="svc-notes" placeholder="What was done?" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>'
+      + '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Cost ($)</label>'
+      + '<input type="number" id="svc-cost" placeholder="0" step="0.01" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+      + '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+      + '<button class="btn btn-primary" onclick="EquipmentPage._saveService(\'' + id + '\')">Log Service</button>'
+      + '</div></div>';
+    UI.showModal('Log Service — ' + eq.name, html);
+  },
+
+  _saveService: function(id) {
+    var type = document.getElementById('svc-type').value;
+    var notes = document.getElementById('svc-notes').value;
+    var cost = parseFloat(document.getElementById('svc-cost').value) || 0;
+
+    // Save to history
+    var histKey = 'bm-equipment-history-' + id;
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem(histKey)) || []; } catch(e) {}
+    history.unshift({ type: type, notes: notes, cost: cost, date: new Date().toISOString() });
+    localStorage.setItem(histKey, JSON.stringify(history));
+
+    // Update equipment lastService
+    var all = EquipmentPage.getAll();
+    var eq = all.find(function(e) { return e.id === id; });
     if (eq) {
       eq.lastService = new Date().toISOString();
       localStorage.setItem('bm-equipment', JSON.stringify(all));
-      UI.toast('Service logged for ' + eq.name);
+    }
+
+    UI.closeModal();
+    UI.toast('Service logged for ' + (eq ? eq.name : 'equipment'));
+    loadPage('equipment');
+  },
+
+  logHours: function(id) {
+    var eq = EquipmentPage.getAll().find(function(e) { return e.id === id; });
+    if (!eq) return;
+    var html = '<div style="display:grid;gap:10px;">'
+      + '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Hours Used Today</label>'
+      + '<input type="number" id="hours-used" value="8" step="0.5" min="0.5" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:18px;font-weight:700;text-align:center;"></div>'
+      + '<div style="font-size:13px;color:var(--text-light);text-align:center;">Current total: <strong>' + (eq.hours || 0) + ' hrs</strong></div>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+      + '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+      + '<button class="btn btn-primary" onclick="EquipmentPage._saveHours(\'' + id + '\')">Add Hours</button>'
+      + '</div></div>';
+    UI.showModal('Log Hours — ' + eq.name, html);
+  },
+
+  _saveHours: function(id) {
+    var add = parseFloat(document.getElementById('hours-used').value) || 0;
+    var all = EquipmentPage.getAll();
+    var eq = all.find(function(e) { return e.id === id; });
+    if (eq && add > 0) {
+      eq.hours = (eq.hours || 0) + add;
+      localStorage.setItem('bm-equipment', JSON.stringify(all));
+      UI.closeModal();
+      UI.toast(add + ' hrs logged for ' + eq.name + ' (' + eq.hours + ' total)');
       loadPage('equipment');
     }
   }

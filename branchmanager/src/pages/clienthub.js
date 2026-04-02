@@ -9,14 +9,54 @@
  *
  * Access: peekskilltree.com/branchmanager/client.html?id=CLIENT_ID
  * (In production, this will be a separate page with its own auth)
+ * v3 — stats bar, real newRequest modal, Send Portal Link button, Email Portal Link in preview
  */
 var ClientHub = {
   render: function() {
     var clients = DB.clients.getAll().slice(0, 200);
     clients.sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
 
-    var html = '<div style="max-width:800px;">'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;">'
+    // Compute stats
+    var allInvoices = DB.invoices.getAll();
+    var allQuotes   = DB.quotes.getAll();
+
+    var clientsWithUnpaid  = 0;
+    var totalOutstanding   = 0;
+    var totalPendingApprovals = 0;
+
+    clients.forEach(function(c) {
+      var inv = allInvoices.filter(function(i) { return i.clientId === c.id || (i.clientName || '').toLowerCase() === (c.name || '').toLowerCase(); });
+      var unpaidBal = inv.reduce(function(s, i) { return s + (i.status !== 'paid' && i.balance > 0 ? (i.balance || 0) : 0); }, 0);
+      if (unpaidBal > 0) clientsWithUnpaid++;
+      totalOutstanding += unpaidBal;
+
+      var pending = allQuotes.filter(function(q) {
+        return (q.clientId === c.id || (q.clientName || '').toLowerCase() === (c.name || '').toLowerCase())
+          && (q.status === 'sent' || q.status === 'awaiting');
+      }).length;
+      totalPendingApprovals += pending;
+    });
+
+    var html = '<div style="max-width:800px;">';
+
+    // Stats bar
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:13px;color:var(--text-light);">Clients w/ unpaid invoices</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;color:' + (clientsWithUnpaid > 0 ? 'var(--red)' : 'var(--green-dark)') + ';">' + clientsWithUnpaid + '</div>'
+      + '</div>'
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:13px;color:var(--text-light);">Total outstanding</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;color:' + (totalOutstanding > 0 ? 'var(--red)' : 'var(--green-dark)') + ';">' + UI.money(totalOutstanding) + '</div>'
+      + '</div>'
+      + '<div style="padding:14px 16px;">'
+      + '<div style="font-size:13px;color:var(--text-light);">Pending quote approvals</div>'
+      + '<div style="font-size:28px;font-weight:700;margin-top:4px;color:' + (totalPendingApprovals > 0 ? '#e65100' : 'var(--green-dark)') + ';">' + totalPendingApprovals + '</div>'
+      + '</div>'
+      + '</div>';
+
+    // Info banner
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;">'
       + '<div style="display:flex;align-items:center;gap:12px;">'
       + '<div style="font-size:32px;">🌳</div>'
       + '<div><div style="font-weight:700;font-size:15px;">Client Portal</div>'
@@ -33,11 +73,13 @@ var ClientHub = {
     html += '<div id="clienthub-list">';
 
     clients.forEach(function(c) {
-      var allInvoices = DB.invoices.getAll().filter(function(i) { return i.clientId === c.id || (i.clientName || '').toLowerCase() === (c.name || '').toLowerCase(); });
-      var allQuotes = DB.quotes.getAll().filter(function(q) { return q.clientId === c.id || (q.clientName || '').toLowerCase() === (c.name || '').toLowerCase(); });
-      var unpaidCount = allInvoices.filter(function(i) { return i.status !== 'paid' && i.balance > 0; }).length;
-      var pendingQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).length;
+      var cInvoices = allInvoices.filter(function(i) { return i.clientId === c.id || (i.clientName || '').toLowerCase() === (c.name || '').toLowerCase(); });
+      var cQuotes   = allQuotes.filter(function(q) { return q.clientId === c.id || (q.clientName || '').toLowerCase() === (c.name || '').toLowerCase(); });
+      var unpaidCount   = cInvoices.filter(function(i) { return i.status !== 'paid' && i.balance > 0; }).length;
+      var pendingQuotes = cQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).length;
       var link = ClientHub.getLink(c.id);
+      var mailSubject = 'Your Second Nature Tree Service Portal';
+      var mailBody = 'Hi ' + (c.name ? c.name.split(' ')[0] : 'there') + ',\n\nHere is your private portal link to view quotes, approve work, pay invoices, and submit requests:\n\n' + link + '\n\nThank you,\nSecond Nature Tree Service\n(914) 391-5233';
 
       html += '<div class="client-hub-row" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
         + '<div style="display:flex;align-items:center;gap:10px;min-width:0;">'
@@ -48,11 +90,12 @@ var ClientHub = {
         + '<div style="font-size:12px;color:var(--text-light);">'
         + (c.email || '') + (c.email && c.phone ? ' · ' : '') + (c.phone || '')
         + '</div></div></div>'
-        + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">'
+        + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">'
         + (unpaidCount > 0 ? '<span style="font-size:11px;background:#fff3e0;color:#e65100;padding:3px 8px;border-radius:10px;font-weight:600;">' + unpaidCount + ' unpaid</span>' : '')
         + (pendingQuotes > 0 ? '<span style="font-size:11px;background:#e3f2fd;color:#1565c0;padding:3px 8px;border-radius:10px;font-weight:600;">' + pendingQuotes + ' quote' + (pendingQuotes > 1 ? 's' : '') + '</span>' : '')
         + '<button onclick="ClientHub.showForClient(\'' + c.id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">View Portal</button>'
         + '<button onclick="navigator.clipboard.writeText(\'' + link + '\').then(function(){UI.toast(\'Link copied!\');})" style="background:none;border:1px solid var(--border);padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;" title="Copy link">🔗</button>'
+        + (c.email ? '<button onclick="window.open(\'mailto:' + encodeURIComponent(c.email) + '?subject=' + encodeURIComponent(mailSubject) + '&body=' + encodeURIComponent(mailBody) + '\',\'_blank\')" style="background:none;border:1px solid var(--border);padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;" title="Send portal link by email">📧</button>' : '')
         + '</div></div>';
     });
 
@@ -79,16 +122,16 @@ var ClientHub = {
     var c = DB.clients.getById(clientId);
     if (!c) return '<div class="empty-state"><div class="empty-icon">👤</div><h3>Client not found</h3></div>';
 
-    var clientJobs = DB.jobs.getAll().filter(function(j) { return j.clientId === clientId; });
+    var clientJobs     = DB.jobs.getAll().filter(function(j) { return j.clientId === clientId; });
     var clientInvoices = DB.invoices.getAll().filter(function(i) { return i.clientId === clientId; });
-    var clientQuotes = DB.quotes.getAll().filter(function(q) { return q.clientId === clientId; });
+    var clientQuotes   = DB.quotes.getAll().filter(function(q) { return q.clientId === clientId; });
 
     var html = '<div style="max-width:600px;margin:0 auto;">';
 
     // Header
     html += '<div style="text-align:center;padding:24px;background:var(--green-dark);border-radius:12px;color:#fff;margin-bottom:20px;">'
       + '<h2 style="margin-bottom:4px;">🌳 Second Nature Tree Service</h2>'
-      + '<p style="opacity:.7;font-size:13px;">Client Portal for ' + c.name + '</p>'
+      + '<p style="opacity:.7;font-size:13px;">Client Portal for ' + UI.esc(c.name) + '</p>'
       + '</div>';
 
     // Quick Actions
@@ -104,7 +147,7 @@ var ClientHub = {
         + '<h3 style="font-size:15px;margin-bottom:12px;color:#e65100;">📋 Quotes Awaiting Your Approval</h3>';
       pendingQuotes.forEach(function(q) {
         html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;">'
-          + '<div><strong>Quote #' + q.quoteNumber + '</strong><br><span style="font-size:12px;color:var(--text-light);">' + (q.description || '') + '</span></div>'
+          + '<div><strong>Quote #' + q.quoteNumber + '</strong><br><span style="font-size:12px;color:var(--text-light);">' + UI.esc(q.description || '') + '</span></div>'
           + '<div style="text-align:right;"><div style="font-size:1.2rem;font-weight:800;color:var(--green-dark);">' + UI.money(q.total) + '</div>'
           + '<button class="btn btn-primary" style="font-size:11px;padding:4px 12px;margin-top:4px;" onclick="ClientHub.approveQuote(\'' + q.id + '\')">Approve</button></div>'
           + '</div>';
@@ -119,8 +162,8 @@ var ClientHub = {
     if (upcomingJobs.length > 0) {
       upcomingJobs.forEach(function(j) {
         html += '<div style="padding:10px 0;border-bottom:1px solid #f0f0f0;">'
-          + '<div style="display:flex;justify-content:space-between;"><strong>' + (j.description || 'Service') + '</strong>' + UI.statusBadge(j.status) + '</div>'
-          + '<div style="font-size:13px;color:var(--text-light);margin-top:4px;">📍 ' + (j.property || c.address || '') + '</div>'
+          + '<div style="display:flex;justify-content:space-between;"><strong>' + UI.esc(j.description || 'Service') + '</strong>' + UI.statusBadge(j.status) + '</div>'
+          + '<div style="font-size:13px;color:var(--text-light);margin-top:4px;">📍 ' + UI.esc(j.property || c.address || '') + '</div>'
           + '<div style="font-size:13px;color:var(--text-light);">📅 ' + UI.dateShort(j.scheduledDate) + '</div>'
           + '</div>';
       });
@@ -151,7 +194,7 @@ var ClientHub = {
         + '<h3 style="font-size:15px;margin-bottom:12px;">✅ Payment History</h3>';
       paidInvoices.forEach(function(inv) {
         html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:14px;">'
-          + '<span>#' + inv.invoiceNumber + ' — ' + (inv.subject || '') + '</span>'
+          + '<span>#' + inv.invoiceNumber + ' — ' + UI.esc(inv.subject || '') + '</span>'
           + '<span style="color:var(--green-dark);font-weight:600;">' + UI.money(inv.total) + ' ✓</span>'
           + '</div>';
       });
@@ -170,12 +213,18 @@ var ClientHub = {
   // Admin: show client hub for a specific client
   showForClient: function(clientId) {
     var html = ClientHub.renderPreview(clientId);
+    var c = DB.clients.getById(clientId);
     var link = ClientHub.getLink(clientId);
+    var mailSubject = 'Your Second Nature Tree Service Portal';
+    var mailBody = 'Hi ' + (c && c.name ? c.name.split(' ')[0] : 'there') + ',\n\nHere is your private portal link:\n\n' + link + '\n\nThank you,\nSecond Nature Tree Service\n(914) 391-5233';
 
     html += '<div style="margin-top:16px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;">'
       + '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">Share this link with your client:</div>'
-      + '<input type="text" value="' + link + '" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:13px;text-align:center;" readonly onclick="this.select()">'
-      + '<button class="btn btn-primary" style="margin-top:8px;" onclick="navigator.clipboard.writeText(\'' + link + '\');UI.toast(\'Link copied!\')">Copy Link</button>'
+      + '<input type="text" value="' + UI.esc(link) + '" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:13px;text-align:center;" readonly onclick="this.select()">'
+      + '<div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap;">'
+      + '<button class="btn btn-primary" onclick="navigator.clipboard.writeText(\'' + UI.esc(link) + '\');UI.toast(\'Link copied!\')">🔗 Copy Link</button>'
+      + (c && c.email ? '<button class="btn btn-outline" onclick="window.open(\'mailto:' + encodeURIComponent(c.email) + '?subject=' + encodeURIComponent(mailSubject) + '&body=' + encodeURIComponent(mailBody) + '\',\'_blank\')">📧 Email Portal Link</button>' : '')
+      + '</div>'
       + '</div>';
 
     UI.showModal('Client Portal Preview', html, { wide: true });
@@ -187,7 +236,65 @@ var ClientHub = {
     UI.closeModal();
   },
 
+  // Real request form modal — creates a DB record
   newRequest: function(clientId) {
-    UI.toast('Request form would open here (client-facing version)');
+    var c = DB.clients.getById(clientId);
+    if (!c) { UI.toast('Client not found', 'error'); return; }
+
+    var html = '<div style="display:flex;flex-direction:column;gap:14px;">'
+      + '<div style="background:var(--bg);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--text-light);">'
+      + 'Submitting for: <strong>' + UI.esc(c.name || '') + '</strong>'
+      + (c.email ? ' &bull; ' + UI.esc(c.email) : '')
+      + '</div>'
+
+      + '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Property Address</label>'
+      + '<input id="chr-property" type="text" value="' + UI.esc(c.address || '') + '" placeholder="Service address" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
+
+      + '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Type of Service</label>'
+      + '<select id="chr-source" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<option value="Client Portal">Client Portal</option>'
+      + '<option value="Phone">Phone</option>'
+      + '<option value="Email">Email</option>'
+      + '<option value="In-Person">In-Person</option>'
+      + '</select></div>'
+
+      + '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Description / Notes</label>'
+      + '<textarea id="chr-notes" rows="4" placeholder="Describe the work needed..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea></div>'
+
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+      + '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+      + '<button class="btn btn-primary" onclick="ClientHub._submitRequest(\'' + clientId + '\')">Submit Request</button>'
+      + '</div></div>';
+
+    UI.showModal('New Request — ' + UI.esc(c.name || ''), html);
+  },
+
+  _submitRequest: function(clientId) {
+    var c = DB.clients.getById(clientId);
+    if (!c) { UI.toast('Client not found', 'error'); return; }
+
+    var property = document.getElementById('chr-property').value.trim();
+    var source   = document.getElementById('chr-source').value;
+    var notes    = document.getElementById('chr-notes').value.trim();
+
+    if (!property) { UI.toast('Enter a property address', 'error'); return; }
+
+    DB.requests.create({
+      clientId:   c.id,
+      clientName: c.name,
+      property:   property,
+      phone:      c.phone || '',
+      email:      c.email || '',
+      source:     source,
+      notes:      notes,
+      status:     'new'
+    });
+
+    UI.toast('Request created for ' + c.name);
+    UI.closeModal();
+    // Refresh the current view if we're on requests page
+    if (window._currentPage === 'requests') {
+      loadPage('requests');
+    }
   }
 };

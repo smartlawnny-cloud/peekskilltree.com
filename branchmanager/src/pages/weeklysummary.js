@@ -52,8 +52,9 @@ var WeeklySummary = {
   // ── Section 1: Week at a Glance stat cards ──
 
   _renderGlance: function(week, invoices, jobs, requests) {
+    var lastWeek = WeeklySummary._lastWeekBounds();
+
     // Revenue Collected = paid invoices where paidAt (or updatedAt) falls in week
-    // Exclude Jobber mass-import artifacts (March 21-22 updatedAt dates)
     var collected = invoices.filter(function(i) {
       var d = i.paidAt || i.updatedAt || i.createdAt;
       return (i.status === 'paid' || i.status === 'collected')
@@ -61,15 +62,29 @@ var WeeklySummary = {
         && WeeklySummary._inRange(d, week.start, week.end);
     }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
 
+    var collectedLast = invoices.filter(function(i) {
+      var d = i.paidAt || i.updatedAt || i.createdAt;
+      return (i.status === 'paid' || i.status === 'collected')
+        && !WeeklySummary._isImportArtifact(d)
+        && WeeklySummary._inRange(d, lastWeek.start, lastWeek.end);
+    }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+
     // Jobs completed this week (by completedDate, else scheduledDate)
     var completedJobs = jobs.filter(function(j) {
       return j.status === 'completed'
         && WeeklySummary._inRange(j.completedDate || j.scheduledDate, week.start, week.end);
     });
+    var completedJobsLast = jobs.filter(function(j) {
+      return j.status === 'completed'
+        && WeeklySummary._inRange(j.completedDate || j.scheduledDate, lastWeek.start, lastWeek.end);
+    });
 
     // New requests this week
     var newReqs = requests.filter(function(r) {
       return WeeklySummary._inRange(r.createdAt, week.start, week.end);
+    });
+    var newReqsLast = requests.filter(function(r) {
+      return WeeklySummary._inRange(r.createdAt, lastWeek.start, lastWeek.end);
     });
 
     // Outstanding balance = all unpaid invoices regardless of week
@@ -77,14 +92,34 @@ var WeeklySummary = {
       return i.status !== 'paid' && i.status !== 'collected' && (i.balance > 0 || i.total > 0);
     }).reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0);
 
+    // WoW delta helper: returns a small inline comparison badge
+    var wowBadge = function(current, last, isMoney) {
+      if (last === 0 && current === 0) return '';
+      var diff = current - last;
+      if (diff === 0) return '<span style="font-size:11px;color:var(--text-light);margin-left:4px;">same as last wk</span>';
+      var sign = diff > 0 ? '+' : '';
+      var label = isMoney ? (sign + UI.moneyInt(Math.abs(diff)) + (diff > 0 ? '' : ' less')) : (sign + diff);
+      var color = diff > 0 ? '#2e7d32' : '#c62828';
+      return '<span style="font-size:11px;font-weight:600;color:' + color + ';margin-left:4px;">' + label + ' vs last wk</span>';
+    };
+
     var html = '<div class="stat-grid" style="margin-bottom:20px;">'
-      + UI.statCard('Revenue Collected', UI.moneyInt(collected), 'this week', collected > 0 ? 'up' : '', '')
-      + UI.statCard('Jobs Completed', completedJobs.length.toString(), completedJobs.length === 1 ? 'job' : 'jobs done', '', '')
-      + UI.statCard('New Requests', newReqs.length.toString(), newReqs.length === 1 ? 'request in' : 'requests in', newReqs.length > 0 ? 'up' : '', '')
+      + UI.statCard('Revenue Collected', UI.moneyInt(collected), 'this week' + wowBadge(collected, collectedLast, true), collected > 0 ? 'up' : '', '')
+      + UI.statCard('Jobs Completed', completedJobs.length.toString(), (completedJobs.length === 1 ? 'job' : 'jobs') + ' done' + wowBadge(completedJobs.length, completedJobsLast.length, false), '', '')
+      + UI.statCard('New Requests', newReqs.length.toString(), (newReqs.length === 1 ? 'request' : 'requests') + ' in' + wowBadge(newReqs.length, newReqsLast.length, false), newReqs.length > 0 ? 'up' : '', '')
       + UI.statCard('Outstanding', UI.moneyInt(outstanding), 'unpaid balance', outstanding > 0 ? 'down' : 'up', '')
       + '</div>';
 
     return html;
+  },
+
+  // ── Week-over-week delta helper ──
+
+  _lastWeekBounds: function() {
+    var w = WeeklySummary._weekBounds();
+    var s = new Date(w.start); s.setDate(s.getDate() - 7);
+    var e = new Date(w.end); e.setDate(e.getDate() - 7);
+    return { start: s, end: e };
   },
 
   // ── Section 2: Admin To-Do Summary ──
@@ -506,6 +541,184 @@ var WeeklySummary = {
     return html;
   },
 
+  // ── Section 8: Top Clients & Services This Week ──
+
+  _renderTopClientsAndServices: function(week, jobs, invoices) {
+    // Top clients by revenue (jobs or paid invoices this week)
+    var clientTotals = {};
+    jobs.forEach(function(j) {
+      if (!WeeklySummary._inRange(j.completedDate || j.scheduledDate, week.start, week.end)) return;
+      var key = j.clientName || 'Unknown';
+      clientTotals[key] = (clientTotals[key] || 0) + (j.total || 0);
+    });
+    invoices.forEach(function(i) {
+      var d = i.paidAt || i.updatedAt || i.createdAt;
+      if (!(i.status === 'paid' || i.status === 'collected')) return;
+      if (WeeklySummary._isImportArtifact(d)) return;
+      if (!WeeklySummary._inRange(d, week.start, week.end)) return;
+      var key = i.clientName || 'Unknown';
+      // Avoid double-counting if job already counted
+      if (!clientTotals[key]) clientTotals[key] = (i.total || 0);
+    });
+    var topClients = Object.keys(clientTotals).map(function(k){ return { name: k, total: clientTotals[k] }; });
+    topClients.sort(function(a, b){ return b.total - a.total; });
+    topClients = topClients.slice(0, 5);
+
+    // Top services by revenue (from job line items / description keywords)
+    var serviceTotals = {};
+    var serviceKeywords = {
+      'Tree Removal': ['removal','remove'],
+      'Tree Pruning': ['prune','pruning','trim','trimming'],
+      'Stump Grinding': ['stump'],
+      'Bucket Truck': ['bucket'],
+      'Chipping': ['chip','chipper'],
+      'Cabling': ['cable','cabling'],
+      'Cleanup/Debris': ['debris','cleanup','haul'],
+      'Snow Removal': ['snow'],
+      'Other': []
+    };
+    var allWeekJobs = jobs.filter(function(j) {
+      return WeeklySummary._inRange(j.completedDate || j.scheduledDate, week.start, week.end);
+    });
+    allWeekJobs.forEach(function(j) {
+      var desc = ((j.description || '') + ' ' + (j.title || '')).toLowerCase();
+      var matched = false;
+      var svcNames = Object.keys(serviceKeywords).filter(function(s){ return s !== 'Other'; });
+      for (var si = 0; si < svcNames.length; si++) {
+        var svc = svcNames[si];
+        var kws = serviceKeywords[svc];
+        for (var ki = 0; ki < kws.length; ki++) {
+          if (desc.indexOf(kws[ki]) >= 0) {
+            serviceTotals[svc] = (serviceTotals[svc] || 0) + (j.total || 0);
+            matched = true;
+            break;
+          }
+        }
+        if (matched) break;
+      }
+      if (!matched && (j.total || 0) > 0) {
+        serviceTotals['Other'] = (serviceTotals['Other'] || 0) + (j.total || 0);
+      }
+    });
+    var topServices = Object.keys(serviceTotals).map(function(k){ return { name: k, total: serviceTotals[k] }; });
+    topServices.sort(function(a, b){ return b.total - a.total; });
+    topServices = topServices.slice(0, 5);
+
+    var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
+
+    // Top Clients panel
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+      + '<h3 style="font-size:16px;font-weight:700;margin-bottom:14px;">&#127937; Top Clients This Week</h3>';
+    if (topClients.length === 0) {
+      html += '<div style="color:var(--text-light);font-size:13px;text-align:center;padding:12px 0;">No client data this week</div>';
+    } else {
+      topClients.forEach(function(c, i) {
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">'
+          + '<div style="font-size:13px;font-weight:' + (i === 0 ? '700' : '500') + ';">' + (i === 0 ? '&#127942; ' : (i + 1) + '. ') + UI.esc(c.name) + '</div>'
+          + '<div style="font-size:13px;font-weight:700;color:var(--green-dark);">' + UI.moneyInt(c.total) + '</div>'
+          + '</div>';
+      });
+    }
+    html += '</div>';
+
+    // Top Services panel
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+      + '<h3 style="font-size:16px;font-weight:700;margin-bottom:14px;">&#127795; Top Services This Week</h3>';
+    if (topServices.length === 0) {
+      html += '<div style="color:var(--text-light);font-size:13px;text-align:center;padding:12px 0;">No service data this week</div>';
+    } else {
+      var maxSvc = topServices[0].total || 1;
+      topServices.forEach(function(s, i) {
+        var barW = Math.round((s.total / maxSvc) * 100);
+        html += '<div style="margin-bottom:8px;">'
+          + '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">'
+          + '<span style="font-weight:600;">' + UI.esc(s.name) + '</span>'
+          + '<span style="color:var(--green-dark);font-weight:700;">' + UI.moneyInt(s.total) + '</span>'
+          + '</div>'
+          + '<div style="background:#f0f0f0;border-radius:4px;height:6px;overflow:hidden;">'
+          + '<div style="width:' + barW + '%;height:100%;background:var(--green-dark);border-radius:4px;"></div>'
+          + '</div>'
+          + '</div>';
+      });
+    }
+    html += '</div>';
+
+    html += '</div>';
+    return html;
+  },
+
+  // ── Section 9: Team Performance ──
+
+  _renderTeamPerformance: function(week, jobs) {
+    // Gather time-tracking entries for this week
+    var timeEntries = [];
+    try { timeEntries = JSON.parse(localStorage.getItem('bm-time-entries') || '[]'); } catch(e) {}
+    var weekEntries = timeEntries.filter(function(e) {
+      return WeeklySummary._inRange(e.clockIn || e.date, week.start, week.end);
+    });
+
+    // Crew members who clocked in
+    var memberMap = {};
+    weekEntries.forEach(function(e) {
+      var name = e.employeeName || e.userName || 'Unknown';
+      if (!memberMap[name]) memberMap[name] = { hours: 0, jobs: new Set() };
+      if (e.clockIn && e.clockOut) {
+        var hrs = (new Date(e.clockOut) - new Date(e.clockIn)) / 3600000;
+        memberMap[name].hours += Math.max(hrs, 0);
+      } else if (e.hours) {
+        memberMap[name].hours += e.hours;
+      }
+      if (e.jobId) memberMap[name].jobs.add(e.jobId);
+    });
+
+    // Week job stats
+    var weekJobs = jobs.filter(function(j) {
+      return j.status === 'completed'
+        && WeeklySummary._inRange(j.completedDate || j.scheduledDate, week.start, week.end);
+    });
+    var totalHours = Object.values ? Object.values(memberMap).reduce(function(s, m){ return s + m.hours; }, 0)
+      : Object.keys(memberMap).reduce(function(s, k){ return s + memberMap[k].hours; }, 0);
+    var avgJobValue = weekJobs.length > 0
+      ? weekJobs.reduce(function(s, j){ return s + (j.total || 0); }, 0) / weekJobs.length
+      : 0;
+
+    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<h3 style="font-size:16px;font-weight:700;margin-bottom:14px;">&#128736; Team Performance</h3>'
+      + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">'
+      + '<div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px;">'
+      + '<div style="font-size:22px;font-weight:800;">' + weekJobs.length + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Jobs Completed</div>'
+      + '</div>'
+      + '<div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px;">'
+      + '<div style="font-size:22px;font-weight:800;">' + (totalHours > 0 ? Math.round(totalHours) + ' hrs' : '—') + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Hours Logged</div>'
+      + '</div>'
+      + '<div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px;">'
+      + '<div style="font-size:22px;font-weight:800;">' + UI.moneyInt(avgJobValue) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Avg Job Value</div>'
+      + '</div>'
+      + '</div>';
+
+    var memberNames = Object.keys(memberMap);
+    if (memberNames.length > 0) {
+      html += '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Time Logged by Crew Member</div>';
+      memberNames.sort(function(a, b){ return memberMap[b].hours - memberMap[a].hours; });
+      memberNames.forEach(function(name) {
+        var m = memberMap[name];
+        var hrs = Math.round(m.hours * 10) / 10;
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;">'
+          + '<div>' + UI.esc(name) + '</div>'
+          + '<div style="color:var(--text-light);">' + hrs + ' hr' + (hrs !== 1 ? 's' : '') + (m.jobs.size > 0 ? ' &middot; ' + m.jobs.size + ' job' + (m.jobs.size !== 1 ? 's' : '') : '') + '</div>'
+          + '</div>';
+      });
+    } else {
+      html += '<div style="font-size:13px;color:var(--text-light);padding:8px 0;">No time entries logged this week. Crew can clock in/out from Team Management.</div>';
+    }
+
+    html += '</div>';
+    return html;
+  },
+
   // ── Main Render ──
 
   render: function() {
@@ -547,6 +760,12 @@ var WeeklySummary = {
 
     // 7. Top Action Items
     html += WeeklySummary._renderActionItems(invoices, quotes, jobs);
+
+    // 8. Top Clients & Services This Week
+    html += WeeklySummary._renderTopClientsAndServices(week, jobs, invoices);
+
+    // 9. Team Performance
+    html += WeeklySummary._renderTeamPerformance(week, jobs);
 
     return html;
   },

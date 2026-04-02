@@ -1,5 +1,5 @@
 /**
- * Branch Manager — Automations Configuration
+ * Branch Manager — Automations Configuration v10
  * Set up email/SMS triggers for:
  * - Quote follow-ups (5 + 10 days)
  * - Invoice follow-ups (1 + 4 days overdue)
@@ -523,6 +523,7 @@ var AutomationsPage = {
       AutomationsPage.runInvoiceFollowups();
       AutomationsPage.runVisitReminders();
       AutomationsPage.runReviewRequests();
+      AutomationsPage._checkRecurringJobs(true);
     } finally {
       UI.toast = origToast;
       UI.showModal = origModal;
@@ -536,6 +537,38 @@ var AutomationsPage = {
     if (!window._approvalPollStarted) {
       window._approvalPollStarted = true;
       setInterval(AutomationsPage._checkQuoteApprovals, 5 * 60 * 1000);
+    }
+  },
+
+  _checkRecurringJobs: function(suppressToast) {
+    if (typeof RecurringJobs === 'undefined') return;
+    var recs = [];
+    try { recs = JSON.parse(localStorage.getItem('bm-recurring') || '[]'); } catch(e) {}
+    var tomorrow = Date.now() + 24 * 60 * 60 * 1000;
+    var generated = 0;
+    recs.forEach(function(rec) {
+      if (!rec.active) return;
+      // Calculate next due date from lastGenerated or startDate
+      var base = rec.lastGenerated || rec.startDate;
+      if (!base) return;
+      var nextDate;
+      try {
+        nextDate = RecurringJobs._getNextDate(base, rec.frequency);
+      } catch(e) { return; }
+      if (!nextDate) return;
+      var nextMs = new Date(nextDate).getTime();
+      if (nextMs <= tomorrow) {
+        try {
+          RecurringJobs.generateJob(rec.id);
+          generated++;
+        } catch(e) {}
+      }
+    });
+    if (generated > 0) {
+      AutomationsPage._logActivity('Auto-created ' + generated + ' recurring job' + (generated !== 1 ? 's' : ''));
+      if (!suppressToast && typeof UI !== 'undefined') {
+        UI.toast('Auto-created ' + generated + ' recurring job' + (generated !== 1 ? 's' : ''));
+      }
     }
   },
 

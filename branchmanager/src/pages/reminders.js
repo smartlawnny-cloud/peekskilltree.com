@@ -129,7 +129,11 @@ var Reminders = {
     var upToDate = all.filter(function(r) { return r.expiry && r.expiry >= today; }).length - expiring;
     var noDate = all.filter(function(r) { return !r.expiry; }).length;
 
-    var html = '<div class="stat-grid">'
+    var html = '<div style="display:flex;justify-content:flex-end;margin-bottom:12px;">'
+      + '<button onclick="Reminders.showForm()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;">+ Add Reminder</button>'
+      + '</div>';
+
+    html += '<div class="stat-grid">'
       + (expired > 0 ? '<div class="stat-card" style="border-top:3px solid #dc3545;" onclick="Reminders._filterTo(\'expired\')">'
           + '<div class="stat-label">🚨 Expired</div>'
           + '<div class="stat-value" style="color:#dc3545;">' + expired + '</div>'

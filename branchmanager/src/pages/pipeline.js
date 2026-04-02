@@ -40,6 +40,15 @@ var PipelinePage = {
     var wonValue = deals.filter(function(d) { return d.stage === 'won'; }).reduce(function(s, d) { return s + (d.value || 0); }, 0);
     var winRate = deals.length > 0 ? Math.round((stageStats.won.count / deals.length) * 100) : 0;
 
+    // Won This Month stat
+    var now2 = new Date();
+    var monthStart = new Date(now2.getFullYear(), now2.getMonth(), 1);
+    var wonThisMonth = deals.filter(function(d) {
+      if (d.stage !== 'won') return false;
+      var moved = d.movedAt || d.createdAt;
+      return moved && new Date(moved) >= monthStart;
+    }).reduce(function(s, d) { return s + (d.value || 0); }, 0);
+
     // Jobber-style stat cards
     var activeDeals = deals.filter(function(d) { return d.stage !== 'won' && d.stage !== 'lost'; });
     var activeValue = activeDeals.reduce(function(s,d){ return s + (d.value||0); }, 0);
@@ -52,7 +61,12 @@ var PipelinePage = {
       return !existingIds.has(q.id) && (q.status === 'sent' || q.status === 'awaiting' || q.status === 'draft');
     });
 
-    var html = '<div class="stat-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
+    // Conversion funnel percentages (new_lead → assessment → quote_sent → follow_up → won)
+    var funnelStages = ['new_lead','assessment','quote_sent','follow_up','won'];
+    var funnelCounts = funnelStages.map(function(s){ return stageStats[s] ? stageStats[s].count : 0; });
+    var funnelTotal  = funnelCounts.reduce(function(a,b){ return a+b; }, 0) || 1;
+
+    var html = '<div class="stat-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
       + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
       + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
       + '<div style="font-size:12px;margin-bottom:2px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2196f3;margin-right:6px;"></span>New (' + (stageStats.new_lead?stageStats.new_lead.count:0) + ')</div>'
@@ -71,12 +85,37 @@ var PipelinePage = {
       + '<div style="font-size:28px;font-weight:800;margin-top:8px;color:var(--green-dark);">' + UI.moneyInt(wonValue) + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">' + (stageStats.won?stageStats.won.count:0) + ' deal' + ((stageStats.won?stageStats.won.count:0) !== 1 ? 's' : '') + '</div>'
       + '</div>'
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;">Won This Month</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + (now2.toLocaleString('default',{month:'long'})) + '</div>'
+      + '<div style="font-size:28px;font-weight:800;margin-top:8px;color:var(--green-dark);">' + UI.moneyInt(wonThisMonth) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">revenue closed</div>'
+      + '</div>'
       + '<div style="padding:14px 16px;">'
       + '<div style="font-size:14px;font-weight:700;">Win rate</div>'
       + '<div style="font-size:12px;color:var(--text-light);">Conversion</div>'
       + '<div style="font-size:28px;font-weight:800;margin-top:8px;color:' + (winRate >= 50 ? 'var(--green-dark)' : '#e07c24') + ';">' + winRate + '%</div>'
       + '<div style="font-size:12px;color:var(--text-light);">' + lostCount + ' lost</div>'
       + '</div></div>';
+
+    // Conversion funnel bar
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px;">'
+      + '<div style="font-size:13px;font-weight:700;margin-bottom:10px;">Conversion Funnel</div>'
+      + '<div style="display:flex;align-items:center;gap:0;">';
+    var funnelColors = ['#2196f3','#9c27b0','#ff9800','#e91e63','#4caf50'];
+    var funnelLabels = ['New Lead','Assessment','Quote Sent','Follow Up','Won'];
+    funnelCounts.forEach(function(cnt, i) {
+      var pct = Math.round((cnt / funnelTotal) * 100);
+      var convPct = i === 0 ? 100 : (funnelCounts[0] > 0 ? Math.round((cnt / funnelCounts[0]) * 100) : 0);
+      html += '<div style="flex:1;text-align:center;">'
+        + '<div style="font-size:11px;color:var(--text-light);margin-bottom:4px;">' + funnelLabels[i] + '</div>'
+        + '<div style="height:28px;background:' + funnelColors[i] + ';opacity:' + (0.4 + 0.6 * pct / 100) + ';border-radius:4px;display:flex;align-items:center;justify-content:center;">'
+        + '<span style="font-size:12px;font-weight:700;color:#fff;">' + cnt + '</span></div>'
+        + '<div style="font-size:10px;color:var(--text-light);margin-top:3px;">' + (i === 0 ? '100%' : convPct + '% of leads') + '</div>'
+        + '</div>'
+        + (i < funnelCounts.length - 1 ? '<div style="font-size:16px;color:var(--border);padding:0 2px;margin-top:8px;">&#8250;</div>' : '');
+    });
+    html += '</div></div>';
 
     // Filter bar + Import from Quotes button
     html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">'
@@ -133,11 +172,17 @@ var PipelinePage = {
             + (deal.source ? '<div style="font-size:10px;color:var(--text-light);margin-top:4px;">via ' + deal.source + '</div>' : '')
             + (deal.notes ? '<div style="font-size:11px;color:var(--text-light);margin-top:5px;padding-top:5px;border-top:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📌 ' + deal.notes + '</div>' : '');
 
-          // Quick-action buttons (only on active stages)
+          // Quick-action buttons
           if (stage.id !== 'won' && stage.id !== 'lost') {
             html += '<div style="display:flex;gap:5px;margin-top:8px;" onclick="event.stopPropagation()">'
               + '<button style="flex:1;padding:4px 0;font-size:11px;background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;border-radius:5px;cursor:pointer;font-weight:600;" onclick="PipelinePage.quickMove(\'' + deal.id + '\',\'won\')">Won ✓</button>'
               + '<button style="flex:1;padding:4px 0;font-size:11px;background:#fce4ec;color:#c62828;border:1px solid #ef9a9a;border-radius:5px;cursor:pointer;font-weight:600;" onclick="PipelinePage.quickMove(\'' + deal.id + '\',\'lost\')">Lost ✗</button>'
+              + '</div>';
+          } else if (stage.id === 'won') {
+            html += '<div style="display:flex;gap:5px;margin-top:8px;" onclick="event.stopPropagation()">'
+              + (deal.jobId
+                ? '<div style="flex:1;padding:4px 0;font-size:11px;text-align:center;color:var(--text-light);font-style:italic;">Job created</div>'
+                : '<button style="width:100%;padding:4px 0;font-size:11px;background:#1565c0;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:600;" onclick="PipelinePage.convertToJob(\'' + deal.id + '\')">🔨 Convert to Job</button>')
               + '</div>';
           }
 
@@ -373,6 +418,7 @@ var PipelinePage = {
       + (deal.stage !== 'won' && deal.stage !== 'lost' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="PipelinePage.sendFollowUp(\'' + dealId + '\')">📧 Send Follow-up</button>' : '')
       + (clientPhone ? '<button class="btn btn-outline" style="font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){Dialpad.showTextModal(\'' + cleanPhone + '\',\'Hi ' + firstName + ', this is Doug from Second Nature Tree Service. Just following up on your estimate. Any questions? — Doug (914) 391-5233\');}">📱 Text</button>' : '')
       + (deal.stage !== 'won' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="UI.closeModal();QuotesPage.showForm(null,\'' + deal.clientId + '\')">📋 Create Quote</button>' : '')
+      + (deal.stage === 'won' ? '<button class="btn btn-primary" style="font-size:12px;background:#2e7d32;" onclick="PipelinePage.convertToJob(\'' + dealId + '\')">🔨 Convert to Job</button>' : '')
       + '</div>';
 
     // Move to stage buttons
@@ -469,6 +515,39 @@ var PipelinePage = {
       PipelinePage.saveDeals(deals);
       UI.toast('Notes saved');
     }
+  },
+
+  convertToJob: function(dealId) {
+    var deals = PipelinePage.getDeals();
+    var deal = deals.find(function(d) { return d.id === dealId; });
+    if (!deal) return;
+
+    if (deal.jobId) {
+      UI.toast('Job already created for this deal');
+      UI.closeModal();
+      loadPage('jobs');
+      return;
+    }
+
+    var job = DB.jobs.create({
+      clientId: deal.clientId,
+      clientName: deal.clientName,
+      description: deal.description || '',
+      total: deal.value || 0,
+      status: 'scheduled',
+      source: deal.source || '',
+      notes: deal.notes || '',
+      quoteId: deal.quoteId || null,
+      createdAt: new Date().toISOString()
+    });
+
+    // Mark deal as having a linked job
+    deal.jobId = job.id;
+    PipelinePage.saveDeals(deals);
+
+    UI.toast('Job created for ' + (deal.clientName || 'client') + ' — ' + UI.moneyInt(deal.value));
+    UI.closeModal();
+    loadPage('jobs');
   },
 
   removeDeal: function(dealId) {

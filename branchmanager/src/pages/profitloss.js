@@ -1,6 +1,7 @@
 /**
  * Branch Manager — Profit & Loss Report
  * Monthly/yearly revenue vs expenses breakdown
+ * v2
  */
 var ProfitLossPage = {
   render: function() {
@@ -145,17 +146,50 @@ var ProfitLossPage = {
 
     // Monthly trend (year view)
     if (view === 'year') {
+      // Compute max monthly revenue for this year (for scaling bars)
+      var maxMRev = 0;
+      for (var mx = 0; mx < 12; mx++) {
+        var mxStart = new Date(year, mx, 1);
+        var mxEnd = new Date(year, mx + 1, 0);
+        var mxRev = invoices.filter(function(i) { var d = new Date(i.createdAt); return d >= mxStart && d <= mxEnd; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+        if (mxRev > maxMRev) maxMRev = mxRev;
+      }
+      // Also factor in last year's monthly max for consistent scale
+      var prevYear = year - 1;
+      var prevInvoices = DB.invoices.getAll().filter(function(i) {
+        var d = new Date(i.createdAt);
+        return d.getFullYear() === prevYear;
+      });
+      for (var px = 0; px < 12; px++) {
+        var pxStart = new Date(prevYear, px, 1);
+        var pxEnd = new Date(prevYear, px + 1, 0);
+        var pxRev = prevInvoices.filter(function(i) { var d = new Date(i.createdAt); return d >= pxStart && d <= pxEnd; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+        if (pxRev > maxMRev) maxMRev = pxRev;
+      }
+
       html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
-        + '<h3 style="font-size:15px;margin-bottom:12px;">Monthly Trend — ' + year + '</h3>'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+        + '<h3 style="font-size:15px;margin:0;">Monthly Trend — ' + year + '</h3>'
+        + '<div style="display:flex;gap:12px;font-size:11px;color:var(--text-light);">'
+        + '<span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4caf50;"></span>' + year + '</span>'
+        + '<span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ccc;"></span>' + prevYear + '</span>'
+        + '</div></div>'
         + '<div style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px;text-align:center;font-size:11px;">';
       for (var m = 0; m < 12; m++) {
         var mStart = new Date(year, m, 1);
         var mEnd = new Date(year, m + 1, 0);
         var mRev = invoices.filter(function(i) { var d = new Date(i.createdAt); return d >= mStart && d <= mEnd; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
-        var barH = Math.min(80, Math.max(4, mRev / 500));
+        var barH = maxMRev > 0 ? Math.max(4, (mRev / maxMRev) * 80) : 4;
+        // Previous year same month
+        var pmStart = new Date(prevYear, m, 1);
+        var pmEnd = new Date(prevYear, m + 1, 0);
+        var pmRev = prevInvoices.filter(function(i) { var d = new Date(i.createdAt); return d >= pmStart && d <= pmEnd; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+        var pBarH = maxMRev > 0 ? Math.max(4, (pmRev / maxMRev) * 80) : 4;
         html += '<div>'
-          + '<div style="height:80px;display:flex;align-items:flex-end;justify-content:center;">'
-          + '<div style="width:100%;max-width:30px;height:' + barH + 'px;background:' + (m <= month ? '#4caf50' : '#e0e0e0') + ';border-radius:3px;"></div></div>'
+          + '<div style="height:80px;display:flex;align-items:flex-end;justify-content:center;gap:2px;">'
+          + '<div style="width:45%;height:' + pBarH + 'px;background:#ccc;border-radius:3px;" title="' + prevYear + ' ' + monthNames[m] + ': $' + Math.round(pmRev) + '"></div>'
+          + '<div style="width:45%;height:' + barH + 'px;background:' + (m <= month ? '#4caf50' : '#e0e0e0') + ';border-radius:3px;" title="' + year + ' ' + monthNames[m] + ': $' + Math.round(mRev) + '"></div>'
+          + '</div>'
           + '<div style="margin-top:4px;color:var(--text-light);">' + monthNames[m] + '</div>'
           + '<div style="font-weight:600;">' + (mRev > 0 ? '$' + Math.round(mRev / 1000) + 'k' : '-') + '</div>'
           + '</div>';

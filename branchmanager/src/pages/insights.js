@@ -1,6 +1,8 @@
 /**
- * Branch Manager — Insights Page
- * Revenue charts, funnel metrics, marketing source breakdown
+ * Branch Manager — Insights Page v7
+ * Revenue charts, funnel metrics, marketing source breakdown,
+ * quick KPI row, revenue goal tracker, revenue forecast,
+ * client LTV, invoice collection report, win rate by source, new client growth
  */
 var InsightsPage = {
   _year: null, // null = current year
@@ -21,9 +23,10 @@ var InsightsPage = {
     var availableYears = Object.keys(yearsSet).map(Number).sort().reverse();
     if (availableYears.indexOf(now.getFullYear()) === -1) availableYears.unshift(now.getFullYear());
 
+    var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
     // Revenue by month (selected year)
     var monthlyRev = [];
-    var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     for (var m = 0; m < 12; m++) {
       var rev = allInvoices.filter(function(inv) {
         if (inv.status !== 'paid') return false;
@@ -37,6 +40,61 @@ var InsightsPage = {
     // Total revenue
     var totalRevYear = monthlyRev.reduce(function(s, m) { return s + m.revenue; }, 0);
     var totalReceivable = DB.invoices.totalReceivable();
+
+    // Quick KPI: this month vs last month revenue
+    var thisMonth = now.getMonth();
+    var lastMonth = (thisMonth === 0) ? 11 : thisMonth - 1;
+    var lastMonthYear = (thisMonth === 0) ? now.getFullYear() - 1 : now.getFullYear();
+    var lastMonthRev = allInvoices.filter(function(i) {
+      if (i.status !== 'paid') return false;
+      var d = new Date(i.paidDate || i.createdAt);
+      return d.getFullYear() === lastMonthYear && d.getMonth() === lastMonth;
+    }).reduce(function(s,i){return s+(i.total||0);},0);
+    var thisMonthRev = allInvoices.filter(function(i) {
+      if (i.status !== 'paid') return false;
+      var d = new Date(i.paidDate || i.createdAt);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }).reduce(function(s,i){return s+(i.total||0);},0);
+    var momChange = lastMonthRev > 0 ? Math.round(((thisMonthRev - lastMonthRev) / lastMonthRev) * 100) : null;
+
+    // Open pipeline and scheduled revenue
+    var openPipeline = allQuotes.filter(function(q){return q.status==='sent'||q.status==='awaiting';}).reduce(function(s,q){return s+(q.total||0);},0);
+    var scheduledRevenue = allJobs.filter(function(j){return j.status==='scheduled'||j.status==='in_progress';}).reduce(function(s,j){return s+(j.total||0);},0);
+
+    // Revenue goal tracker variables
+    var monthGoal = parseInt(localStorage.getItem('bm-revenue-goal') || '0');
+    var currentMonthInvoices = allInvoices.filter(function(inv) {
+      if (inv.status !== 'paid') return false;
+      var d = new Date(inv.paidDate || inv.createdAt);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    });
+    var currentMonthRev = currentMonthInvoices.reduce(function(s,i){return s+(i.total||0);},0);
+    var goalPct = monthGoal > 0 ? Math.min(Math.round((currentMonthRev / monthGoal) * 100), 100) : 0;
+    var daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+    var dayOfMonth = now.getDate();
+    var dayPct = Math.round((dayOfMonth / daysInMonth) * 100);
+    var onTrack = monthGoal === 0 || goalPct >= dayPct;
+
+    // Revenue forecast data (last 6 months)
+    var monthsData = [];
+    for (var mi = 5; mi >= 0; mi--) {
+      var mDate = new Date(now.getFullYear(), now.getMonth() - mi, 1);
+      var mRev = allInvoices.filter(function(inv) {
+        if (inv.status !== 'paid') return false;
+        var d = new Date(inv.paidDate || inv.createdAt);
+        return d.getFullYear() === mDate.getFullYear() && d.getMonth() === mDate.getMonth();
+      }).reduce(function(s,i){return s+(i.total||0);},0);
+      monthsData.push({ label: monthNames[mDate.getMonth()] + ' \'' + String(mDate.getFullYear()).slice(2), revenue: mRev, isFuture: false });
+    }
+    // Simple average-based forecast for next 3 months
+    var last3Avg = monthsData.slice(-3).reduce(function(s,m){return s+m.revenue;},0) / 3;
+    var trend = (monthsData[5].revenue - monthsData[2].revenue) / 3; // simple slope
+    for (var fi = 1; fi <= 3; fi++) {
+      var fDate = new Date(now.getFullYear(), now.getMonth() + fi, 1);
+      var fRev = Math.max(0, last3Avg + trend * fi * 0.3); // dampened trend
+      monthsData.push({ label: monthNames[fDate.getMonth()] + ' \'' + String(fDate.getFullYear()).slice(2), revenue: fRev, isFuture: true });
+    }
+    var maxForecast = Math.max.apply(null, monthsData.map(function(m){return m.revenue;})) || 1;
 
     // Marketing source breakdown with auto-categorization
     var SOURCE_MAP = {
@@ -83,6 +141,30 @@ var InsightsPage = {
         + (active ? 'background:var(--green-dark);color:#fff;' : 'background:transparent;color:var(--text);') + '">' + y + '</button>';
     });
     html += '</div></div>';
+
+    // Quick KPI row (4 cards)
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;" class="stat-row">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden;">'
+      + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">' + monthNames[now.getMonth()] + ' Revenue</div>'
+      + '<div style="font-size:26px;font-weight:800;color:var(--green-dark);margin:4px 0;">' + UI.moneyInt(thisMonthRev) + '</div>'
+      + (momChange !== null ? '<div style="font-size:12px;font-weight:700;color:' + (momChange >= 0 ? '#2e7d32' : '#dc3545') + ';">' + (momChange >= 0 ? '↑' : '↓') + Math.abs(momChange) + '% vs last month</div>' : '<div style="font-size:12px;color:var(--text-light);">vs last month N/A</div>')
+      + '</div>'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Open Pipeline</div>'
+      + '<div style="font-size:26px;font-weight:800;color:#1565c0;margin:4px 0;">' + UI.moneyInt(openPipeline) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Sent quotes awaiting approval</div>'
+      + '</div>'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Scheduled Value</div>'
+      + '<div style="font-size:26px;font-weight:800;color:#e65100;margin:4px 0;">' + UI.moneyInt(scheduledRevenue) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Jobs on the calendar</div>'
+      + '</div>'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Receivables</div>'
+      + '<div style="font-size:26px;font-weight:800;color:#c62828;margin:4px 0;">' + UI.moneyInt(totalReceivable) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Outstanding balances</div>'
+      + '</div>'
+      + '</div>';
 
     // Revenue stats
     var yearInvoices = allInvoices.filter(function(i) { return new Date(i.createdAt).getFullYear() === year; });
@@ -333,6 +415,179 @@ var InsightsPage = {
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Quote → Job</div>'
       + '<div style="font-size:24px;font-weight:800;color:#6a1b9a;margin-top:4px;">' + (avgConversionDays !== null ? avgConversionDays + ' days' : '—') + '</div></div>'
       + '</div>';
+
+    // Revenue Goal Tracker
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<div><h3 style="margin:0;">Monthly Revenue Goal</h3>'
+      + '<p style="font-size:12px;color:var(--text-light);margin:4px 0 0;">' + monthNames[now.getMonth()] + ' ' + now.getFullYear() + ' — ' + dayOfMonth + ' of ' + daysInMonth + ' days</p></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<span style="font-size:12px;color:var(--text-light);">Goal: $</span>'
+      + '<input type="number" id="revenue-goal-input" value="' + (monthGoal || '') + '" placeholder="e.g. 30000" min="0" step="1000" style="width:110px;padding:6px 10px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-weight:700;" onchange="localStorage.setItem(\'bm-revenue-goal\',this.value||0);loadPage(\'insights\')">'
+      + '</div></div>'
+      + (monthGoal > 0 ?
+        '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;"><span>' + UI.moneyInt(currentMonthRev) + ' earned</span><span style="color:var(--text-light);">' + UI.moneyInt(monthGoal) + ' goal</span></div>'
+        + '<div style="background:var(--bg);border-radius:8px;height:20px;overflow:hidden;position:relative;">'
+        + '<div style="height:100%;width:' + goalPct + '%;background:' + (onTrack ? 'var(--green-dark)' : '#ff9800') + ';border-radius:8px;transition:width .5s;"></div>'
+        + (dayPct > 0 && dayPct < 100 ? '<div style="position:absolute;top:0;bottom:0;left:' + dayPct + '%;width:2px;background:rgba(0,0,0,.2);" title="Expected pace"></div>' : '')
+        + '</div>'
+        + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-top:6px;">'
+        + '<span style="color:' + (onTrack ? '#2e7d32' : '#e65100') + ';font-weight:700;">' + (onTrack ? '✅ On track' : '⚠️ Behind pace') + ' — ' + goalPct + '% complete</span>'
+        + '<span>' + UI.moneyInt(Math.max(0, monthGoal - currentMonthRev)) + ' remaining</span>'
+        + '</div>'
+        : '<div style="text-align:center;color:var(--text-light);padding:12px;font-size:13px;">Set a monthly revenue goal above to track your progress</div>'
+      )
+      + '</div>';
+
+    // Revenue Trend & Forecast
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      + '<h3 style="margin-bottom:4px;">Revenue Trend & Forecast</h3>'
+      + '<p style="font-size:12px;color:var(--text-light);margin:0 0 16px;">Last 6 months + 3-month projection based on recent trend</p>'
+      + '<div style="display:flex;align-items:flex-end;gap:6px;height:140px;padding-bottom:24px;position:relative;">';
+    monthsData.forEach(function(m) {
+      var h = maxForecast > 0 ? Math.max((m.revenue / maxForecast) * 120, m.revenue > 0 ? 6 : 2) : 2;
+      html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;">'
+        + (m.revenue > 0 ? '<div style="font-size:9px;font-weight:700;color:' + (m.isFuture ? '#9ca3af' : 'var(--green-dark)') + ';margin-bottom:2px;">' + UI.moneyInt(m.revenue) + '</div>' : '')
+        + '<div style="width:100%;max-width:36px;height:' + h + 'px;background:' + (m.isFuture ? 'repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0 2px,#f1f5f9 2px,#f1f5f9 8px)' : 'var(--green-dark)') + ';border-radius:4px 4px 0 0;border:' + (m.isFuture ? '1px dashed #9ca3af' : 'none') + ';"></div>'
+        + '<div style="font-size:9px;color:' + (m.isFuture ? '#9ca3af' : 'var(--text-light)') + ';margin-top:4px;">' + m.label + '</div>'
+        + '</div>';
+    });
+    html += '</div>'
+      + '<div style="display:flex;gap:16px;font-size:12px;color:var(--text-light);">'
+      + '<div style="display:flex;align-items:center;gap:5px;"><div style="width:12px;height:12px;background:var(--green-dark);border-radius:2px;"></div>Actual</div>'
+      + '<div style="display:flex;align-items:center;gap:5px;"><div style="width:12px;height:12px;background:#e2e8f0;border:1px dashed #9ca3af;border-radius:2px;"></div>Projected</div>'
+      + '<div style="margin-left:auto;font-style:italic;">Projection = recent trend (not a guarantee)</div>'
+      + '</div>'
+      + '</div>';
+
+    // Client LTV — total revenue per client across all time
+    var clientLTV = {};
+    allInvoices.forEach(function(inv) {
+      if (inv.status !== 'paid') return;
+      var key = inv.clientName || inv.clientId || 'Unknown';
+      if (!clientLTV[key]) clientLTV[key] = { name: key, jobs: 0, revenue: 0, firstJob: null, lastJob: null };
+      clientLTV[key].revenue += (inv.total || 0);
+      clientLTV[key].jobs++;
+      var d = inv.paidDate || inv.createdAt;
+      if (!clientLTV[key].firstJob || d < clientLTV[key].firstJob) clientLTV[key].firstJob = d;
+      if (!clientLTV[key].lastJob || d > clientLTV[key].lastJob) clientLTV[key].lastJob = d;
+    });
+    var ltvList = Object.values(clientLTV).sort(function(a,b){return b.revenue-a.revenue;}).slice(0,10);
+    var totalLTV = ltvList.reduce(function(s,c){return s+c.revenue;},0);
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<div><h3 style="margin:0;">Client Lifetime Value — Top 10</h3>'
+      + '<p style="font-size:12px;color:var(--text-light);margin:4px 0 0;">Total revenue per client (paid invoices, all time)</p></div>'
+      + '<div style="text-align:right;"><div style="font-size:11px;color:var(--text-light);">Combined</div><div style="font-size:20px;font-weight:800;color:var(--green-dark);">' + UI.moneyInt(totalLTV) + '</div></div>'
+      + '</div>';
+    if (ltvList.length === 0) {
+      html += '<div style="text-align:center;padding:20px;color:var(--text-light);">No paid invoices yet.</div>';
+    } else {
+      var maxLTV = ltvList[0].revenue || 1;
+      ltvList.forEach(function(c, i) {
+        var pct = Math.round((c.revenue / maxLTV) * 100);
+        var yrs = c.firstJob && c.lastJob ? Math.round((new Date(c.lastJob) - new Date(c.firstJob)) / 86400000 / 365 * 10) / 10 : 0;
+        html += '<div style="margin-bottom:10px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:3px;">'
+          + '<div style="display:flex;align-items:center;gap:8px;">'
+          + '<span style="width:20px;height:20px;border-radius:50%;background:var(--green-dark);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">' + (i+1) + '</span>'
+          + '<span style="font-weight:600;">' + UI.esc(c.name) + '</span>'
+          + '<span style="font-size:11px;color:var(--text-light);">' + c.jobs + ' invoice' + (c.jobs!==1?'s':'') + (yrs > 0 ? ' · ' + yrs + ' yrs' : '') + '</span>'
+          + '</div>'
+          + '<span style="font-weight:700;">' + UI.moneyInt(c.revenue) + '</span></div>'
+          + '<div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;">'
+          + '<div style="height:100%;width:' + pct + '%;background:var(--green-dark);border-radius:3px;opacity:' + (0.5 + 0.5 * pct/100) + ';"></div>'
+          + '</div></div>';
+      });
+    }
+    html += '</div>';
+
+    // Invoice collection report
+    var paidInvoices = allInvoices.filter(function(i){return i.status==='paid'&&(i.paidDate||i.updatedAt);});
+    var totalInvoiced = allInvoices.filter(function(i){return i.status!=='draft'&&i.status!=='cancelled';}).reduce(function(s,i){return s+(i.total||0);},0);
+    var totalPaid = paidInvoices.reduce(function(s,i){return s+(i.total||0);},0);
+    var collectionRate = totalInvoiced > 0 ? Math.round((totalPaid / totalInvoiced) * 100) : 0;
+    var daysToPayList = paidInvoices.map(function(i) {
+      var issued = i.issuedDate || i.createdAt;
+      var paid = i.paidDate || i.updatedAt;
+      if (!issued || !paid) return null;
+      return Math.max(0, Math.round((new Date(paid) - new Date(issued)) / 86400000));
+    }).filter(function(d){return d!==null && d<365;});
+    var avgDaysToPay = daysToPayList.length > 0 ? Math.round(daysToPayList.reduce(function(s,d){return s+d;},0) / daysToPayList.length) : null;
+    var within30 = daysToPayList.filter(function(d){return d<=30;}).length;
+    var within30pct = daysToPayList.length > 0 ? Math.round((within30/daysToPayList.length)*100) : 0;
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      + '<h3 style="margin-bottom:16px;">Invoice Collection Report</h3>'
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;" class="stat-row">'
+      + '<div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Collection Rate</div><div style="font-size:26px;font-weight:800;color:' + (collectionRate>=90?'#2e7d32':collectionRate>=70?'#e65100':'#c62828') + ';">' + collectionRate + '%</div><div style="font-size:11px;color:var(--text-light);">' + paidInvoices.length + ' of ' + allInvoices.filter(function(i){return i.status!=='draft'&&i.status!=='cancelled';}).length + ' paid</div></div>'
+      + '<div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Avg Days to Pay</div><div style="font-size:26px;font-weight:800;color:' + (avgDaysToPay!==null&&avgDaysToPay<=14?'#2e7d32':avgDaysToPay<=30?'#e65100':'#c62828') + ';">' + (avgDaysToPay!==null?avgDaysToPay+'d':'—') + '</div><div style="font-size:11px;color:var(--text-light);">from issue to payment</div></div>'
+      + '<div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Paid within 30d</div><div style="font-size:26px;font-weight:800;color:#1565c0;">' + within30pct + '%</div><div style="font-size:11px;color:var(--text-light);">' + within30 + ' invoices</div></div>'
+      + '<div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Outstanding</div><div style="font-size:26px;font-weight:800;color:#c62828;">' + UI.moneyInt(totalInvoiced - totalPaid) + '</div><div style="font-size:11px;color:var(--text-light);">uncollected</div></div>'
+      + '</div></div>';
+
+    // Win rate by lead source
+    var sourceWins = {};
+    allRequests.forEach(function(r) {
+      var raw = (r.source || 'Unknown').trim();
+      var normalized = SOURCE_MAP[raw.toLowerCase()] || raw;
+      if (!sourceWins[normalized]) sourceWins[normalized] = { requests: 0, quotes: 0, won: 0 };
+      sourceWins[normalized].requests++;
+      var q = allQuotes.find(function(q){return q.requestId===r.id || (q.clientId&&q.clientId===r.clientId);});
+      if (q) {
+        sourceWins[normalized].quotes++;
+        if (q.status==='approved'||q.status==='converted') sourceWins[normalized].won++;
+      }
+    });
+    var sourceWinList = Object.keys(sourceWins).map(function(k){
+      var s = sourceWins[k];
+      return { source: k, requests: s.requests, quotes: s.quotes, won: s.won, winRate: s.quotes>0?Math.round(s.won/s.quotes*100):0 };
+    }).filter(function(s){return s.requests>=2;}).sort(function(a,b){return b.requests-a.requests;});
+
+    if (sourceWinList.length > 0) {
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+        + '<h3 style="margin-bottom:4px;">Win Rate by Lead Source</h3>'
+        + '<p style="font-size:12px;color:var(--text-light);margin:0 0 16px;">Which channels convert requests → approved quotes</p>'
+        + '<table class="data-table"><thead><tr><th>Source</th><th style="text-align:right;">Requests</th><th style="text-align:right;">Quoted</th><th style="text-align:right;">Won</th><th style="text-align:right;">Win Rate</th></tr></thead><tbody>';
+      sourceWinList.slice(0,8).forEach(function(s) {
+        var color = s.winRate>=60?'#2e7d32':s.winRate>=30?'#e65100':'#c62828';
+        html += '<tr>'
+          + '<td><strong>' + UI.esc(s.source) + '</strong></td>'
+          + '<td style="text-align:right;">' + s.requests + '</td>'
+          + '<td style="text-align:right;">' + s.quotes + '</td>'
+          + '<td style="text-align:right;">' + s.won + '</td>'
+          + '<td style="text-align:right;"><span style="background:' + (s.winRate>=60?'#e8f5e9':s.winRate>=30?'#fff3e0':'#ffebee') + ';color:' + color + ';padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700;">' + s.winRate + '%</span></td>'
+          + '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    // New client growth chart
+    var newClientsByMonth = [];
+    for (var ni = 11; ni >= 0; ni--) {
+      var nDate = new Date(now.getFullYear(), now.getMonth() - ni, 1);
+      var nCount = allClients.filter(function(c) {
+        var d = new Date(c.createdAt || c.created_at || '2000-01-01');
+        return d.getFullYear()===nDate.getFullYear() && d.getMonth()===nDate.getMonth();
+      }).length;
+      newClientsByMonth.push({ label: monthNames[nDate.getMonth()], year: nDate.getFullYear(), count: nCount });
+    }
+    var maxNewClients = Math.max.apply(null, newClientsByMonth.map(function(m){return m.count;})) || 1;
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      + '<h3 style="margin-bottom:4px;">New Clients by Month</h3>'
+      + '<p style="font-size:12px;color:var(--text-light);margin:0 0 16px;">Client acquisition rate — past 12 months</p>'
+      + '<div style="display:flex;align-items:flex-end;gap:4px;height:120px;padding-bottom:24px;">';
+    newClientsByMonth.forEach(function(m, i) {
+      var h = maxNewClients > 0 ? Math.max((m.count / maxNewClients) * 100, m.count > 0 ? 4 : 2) : 2;
+      var isCurrent = i === 11;
+      html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;">'
+        + (m.count > 0 ? '<div style="font-size:10px;font-weight:700;color:' + (isCurrent?'var(--green-dark)':'#1565c0') + ';margin-bottom:2px;">' + m.count + '</div>' : '')
+        + '<div style="width:100%;max-width:32px;height:' + h + 'px;background:' + (isCurrent?'var(--green-dark)':'#90caf9') + ';border-radius:3px 3px 0 0;opacity:' + (m.count>0?'1':'.3') + ';"></div>'
+        + '<div style="font-size:9px;color:var(--text-light);margin-top:3px;">' + m.label + '</div>'
+        + '</div>';
+    });
+    html += '</div></div>';
 
     return html;
   }

@@ -1,6 +1,7 @@
 /**
  * Branch Manager — Clients Page
  * Full client list, detail view, add/edit forms
+ * v12
  */
 var ClientsPage = {
   _page: 0,
@@ -465,6 +466,7 @@ var ClientsPage = {
       + (c.email ? '<button class="btn btn-primary" onclick="window.location.href=\'mailto:' + c.email + '\'">✉️ Email</button>' : '')
       + '<button class="btn btn-outline" onclick="ClientsPage.showForm(\'' + id + '\')">✏️ Edit</button>'
       + '<button class="btn btn-outline" onclick="ClientsPage._showPortalMenu(\'' + id + '\')" title="Share client portal">🔗 Portal ▾</button>'
+      + '<button class="btn btn-outline" style="font-size:12px;" onclick="ClientsPage.showStatement(\'' + id + '\')">📄 Statement</button>'
       + '</div>'
 
       // Client name (big, like Jobber)
@@ -858,6 +860,84 @@ var ClientsPage = {
     btn.style.color = 'var(--accent)';
     btn.classList.add('active');
     document.getElementById(panelId).style.display = 'block';
+  },
+
+  showStatement: function(clientId) {
+    var client = DB.clients.getById(clientId);
+    if (!client) return;
+
+    // Gather all transactions for this client
+    var invoices = DB.invoices.getAll().filter(function(i){ return i.clientId === clientId || i.clientName === client.name; });
+    var quotes = DB.quotes.getAll().filter(function(q){ return q.clientId === clientId || q.clientName === client.name; });
+    var jobs = DB.jobs.getAll().filter(function(j){ return j.clientId === clientId || j.clientName === client.name; });
+
+    // Sort invoices by date
+    invoices.sort(function(a,b){ return new Date(a.createdAt)-new Date(b.createdAt); });
+
+    var totalBilled = invoices.reduce(function(s,i){return s+(i.total||0);},0);
+    var totalPaid = invoices.filter(function(i){return i.status==='paid';}).reduce(function(s,i){return s+(i.total||0);},0);
+    var balance = totalBilled - totalPaid;
+
+    var html = '<div style="max-width:600px;font-family:sans-serif;">'
+      // Header
+      + '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--border);">'
+      + '<div><div style="font-size:18px;font-weight:800;color:#1a3c12;">Second Nature Tree Service</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">1 Highland Industrial Park · Peekskill, NY 10566</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">(914) 391-5233 · peekskilltree.com</div></div>'
+      + '<div style="text-align:right;"><div style="font-size:20px;font-weight:800;">Account Statement</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">As of ' + new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) + '</div></div>'
+      + '</div>'
+      // Client info
+      + '<div style="background:var(--bg);border-radius:8px;padding:12px 16px;margin-bottom:16px;">'
+      + '<div style="font-weight:700;font-size:15px;">' + UI.esc(client.name) + '</div>'
+      + (client.address ? '<div style="font-size:13px;color:var(--text-light);">' + UI.esc(client.address) + '</div>' : '')
+      + (client.email ? '<div style="font-size:13px;color:var(--text-light);">' + UI.esc(client.email) + '</div>' : '')
+      + '</div>'
+      // Summary
+      + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">'
+      + '<div style="text-align:center;padding:12px;border:1px solid var(--border);border-radius:8px;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Total Billed</div><div style="font-size:20px;font-weight:800;">' + UI.moneyInt(totalBilled) + '</div></div>'
+      + '<div style="text-align:center;padding:12px;border:1px solid var(--border);border-radius:8px;"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Paid</div><div style="font-size:20px;font-weight:800;color:#2e7d32;">' + UI.moneyInt(totalPaid) + '</div></div>'
+      + '<div style="text-align:center;padding:12px;border:1px solid var(--border);border-radius:8px;background:' + (balance>0?'#fff8f0':'#f0faf0') + ';"><div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;">Balance Due</div><div style="font-size:20px;font-weight:800;color:' + (balance>0?'#c62828':'#2e7d32') + ';">' + UI.moneyInt(balance) + '</div></div>'
+      + '</div>'
+      // Invoice table
+      + '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px;">'
+      + '<thead><tr style="border-bottom:2px solid var(--border);">'
+      + '<th style="text-align:left;padding:8px 4px;font-size:11px;color:var(--text-light);text-transform:uppercase;">Date</th>'
+      + '<th style="text-align:left;padding:8px 4px;font-size:11px;color:var(--text-light);text-transform:uppercase;">Invoice</th>'
+      + '<th style="text-align:left;padding:8px 4px;font-size:11px;color:var(--text-light);text-transform:uppercase;">Description</th>'
+      + '<th style="text-align:right;padding:8px 4px;font-size:11px;color:var(--text-light);text-transform:uppercase;">Amount</th>'
+      + '<th style="text-align:right;padding:8px 4px;font-size:11px;color:var(--text-light);text-transform:uppercase;">Paid</th>'
+      + '<th style="text-align:right;padding:8px 4px;font-size:11px;color:var(--text-light);text-transform:uppercase;">Balance</th>'
+      + '</tr></thead><tbody>';
+
+    var runningBalance = 0;
+    if (invoices.length === 0) {
+      html += '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-light);">No invoices on record</td></tr>';
+    } else {
+      invoices.forEach(function(inv) {
+        var invBalance = (inv.balance !== undefined ? inv.balance : (inv.total - (inv.amountPaid||0)));
+        runningBalance += invBalance;
+        html += '<tr style="border-bottom:1px solid #f3f4f6;">'
+          + '<td style="padding:8px 4px;">' + UI.dateShort(inv.createdAt) + '</td>'
+          + '<td style="padding:8px 4px;font-weight:600;">#' + (inv.invoiceNumber||'') + '</td>'
+          + '<td style="padding:8px 4px;color:var(--text-light);">' + UI.esc((inv.subject||inv.description||'Tree Service').substring(0,30)) + '</td>'
+          + '<td style="padding:8px 4px;text-align:right;">' + UI.money(inv.total) + '</td>'
+          + '<td style="padding:8px 4px;text-align:right;color:#2e7d32;">' + (inv.status==='paid'?UI.money(inv.total):inv.amountPaid>0?UI.money(inv.amountPaid):'—') + '</td>'
+          + '<td style="padding:8px 4px;text-align:right;font-weight:700;color:' + (invBalance>0?'#c62828':'#2e7d32') + ';">' + UI.money(invBalance) + '</td>'
+          + '</tr>';
+      });
+    }
+    html += '</tbody><tfoot><tr style="border-top:2px solid var(--border);font-weight:700;">'
+      + '<td colspan="5" style="padding:10px 4px;text-align:right;font-size:14px;">Total Balance Due:</td>'
+      + '<td style="padding:10px 4px;text-align:right;font-size:16px;color:' + (balance>0?'#c62828':'#2e7d32') + ';">' + UI.money(balance) + '</td>'
+      + '</tr></tfoot></table>'
+      + (balance>0 ? '<div style="margin-top:12px;text-align:center;"><a href="https://peekskilltree.com/branchmanager/client.html?id=' + clientId + '" style="display:inline-block;background:#1a3c12;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:700;">View Online & Pay →</a></div>' : '')
+      + '</div>';
+
+    UI.showModal('Account Statement — ' + client.name, html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
+        + ' <button class="btn btn-primary" onclick="window.print()">🖨 Print Statement</button>'
+    });
   },
 
   // Legacy modal version (keeping for reference, not used)

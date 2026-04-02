@@ -31,10 +31,10 @@
     --orange: #fd7e14;
     --blue: #0d6efd;
     --sidebar-w: 200px;
-    --sidebar-bg: #1a1a2e;
-    --sidebar-border: rgba(255,255,255,.06);
-    --sidebar-hover: rgba(255,255,255,.06);
-    --sidebar-active: rgba(255,255,255,.1);
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #e8eaed;
+    --sidebar-hover: rgba(0,0,0,.04);
+    --sidebar-active: rgba(0,131,108,.08);
     --accent: #00836c;
     --accent-hover: #006d59;
   }
@@ -56,6 +56,18 @@
   [data-theme="dark"] .modal-header { border-color:var(--border); }
   [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background:#2d3748; color:var(--text); border-color:#4a5568; }
   [data-theme="dark"] .toast { background:#2d3748; color:#e2e8f0; }
+  [data-theme="dark"] .sidebar-header h1 { color: rgba(255,255,255,.9); }
+  [data-theme="dark"] .sidebar-header h1 span { color: rgba(255,255,255,.35); }
+  [data-theme="dark"] .sidebar-user { color: rgba(255,255,255,.5); }
+  [data-theme="dark"] .nav-section { color: rgba(255,255,255,.3); }
+  [data-theme="dark"] .nav-item { color: rgba(255,255,255,.6); }
+  [data-theme="dark"] .nav-item:hover { color: rgba(255,255,255,.9); }
+  [data-theme="dark"] .nav-item.active { color: #fff; }
+  [data-theme="dark"] .nav-item .li { stroke: rgba(255,255,255,.5); }
+  [data-theme="dark"] .nav-item:hover .li { stroke: rgba(255,255,255,.9); }
+  [data-theme="dark"] .nav-item.active .li { stroke: #fff; }
+  [data-theme="dark"] .sidebar-footer { color: rgba(255,255,255,.4); }
+  [data-theme="dark"] .sidebar.collapsed .sidebar-footer #sidebar-toggle-btn { color: rgba(255,255,255,.5); }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; font-size:14px; }
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -80,7 +92,7 @@
   .sidebar.collapsed > div[style*="padding"]:not(.sidebar-footer) { display:none !important; }
   .sidebar.collapsed .sidebar-footer { padding:8px !important; justify-content:center; }
   .sidebar.collapsed .sidebar-footer .log-out-btn { display:none !important; }
-  .sidebar.collapsed .sidebar-footer #sidebar-toggle-btn { padding:6px; font-size:16px; color:rgba(255,255,255,.5); }
+  .sidebar.collapsed .sidebar-footer #sidebar-toggle-btn { padding:6px; font-size:16px; color:#9ca3af; }
   .sidebar.collapsed .sidebar-header { justify-content:center; padding:14px 8px; cursor:pointer; }
   .sidebar.collapsed .nav-item { justify-content:center; padding:10px 0; font-size:0; overflow:hidden; }
   .sidebar.collapsed .nav-item .icon { width:auto; font-size:16px; }
@@ -98,33 +110,33 @@
   }
   .sidebar-logo svg { width:20px; height:20px; }
   .sidebar-header h1 {
-    font-size:14px; font-weight:700; color:#fff; line-height:1.15; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    font-size:14px; font-weight:700; color:#1a1a2a; line-height:1.15; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .sidebar-header h1 span { display:block; font-size:10px; font-weight:400; color:rgba(255,255,255,.35); margin-top:1px; letter-spacing:.01em; text-transform:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sidebar-header h1 span { display:block; font-size:10px; font-weight:400; color:#9ca3af; margin-top:1px; letter-spacing:.01em; text-transform:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sidebar-user {
-    padding:10px 16px; font-size:12px; color:rgba(255,255,255,.5); border-bottom:1px solid var(--sidebar-border);
+    padding:10px 16px; font-size:12px; color:#6b7280; border-bottom:1px solid var(--sidebar-border);
   }
 
   .sidebar-nav { flex:1; padding:8px 10px; overflow-y:auto; }
-  .nav-section { padding:16px 10px 6px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,.3); font-weight:600; }
+  .nav-section { padding:16px 10px 6px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#9ca3af; font-weight:600; }
   .nav-item {
     display:flex; align-items:center; gap:12px; padding:9px 12px;
-    font-size:14px; font-weight:400; color:rgba(255,255,255,.6); cursor:pointer;
+    font-size:14px; font-weight:400; color:#374151; cursor:pointer;
     transition: all 0.12s; text-decoration:none; border:none; background:none; width:100%;
     border-radius:7px; margin-bottom:1px; position:relative;
   }
-  .nav-item:hover { background:var(--sidebar-hover); color:rgba(255,255,255,.9); }
-  .nav-item.active { background:transparent; color:#fff; font-weight:500; }
+  .nav-item:hover { background:var(--sidebar-hover); color:#111827; }
+  .nav-item.active { background:transparent; color:var(--accent); font-weight:600; }
   .nav-item.active::before { content:''; position:absolute; left:-8px; top:6px; bottom:6px; width:3px; background:#00a88a; border-radius:0 3px 3px 0; }
   .nav-item .icon { width:24px; text-align:center; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .nav-item .li { width:22px; height:22px; stroke:rgba(255,255,255,.5); stroke-width:1.75; }
-  .nav-item:hover .li { stroke:rgba(255,255,255,.9); }
-  .nav-item.active .li { stroke:#fff; }
+  .nav-item .li { width:22px; height:22px; stroke:#9ca3af; stroke-width:1.75; }
+  .nav-item:hover .li { stroke:#374151; }
+  .nav-item.active .li { stroke:var(--accent); }
   .nav-item .badge { margin-left:auto; background:#dc3545; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center; }
 
   .sidebar-footer {
     padding:10px 16px; border-top:1px solid var(--sidebar-border);
-    font-size:10px; color:rgba(255,255,255,.4);
+    font-size:10px; color:#9ca3af;
   }
 
   /* ── Main Content (Jobber style) ── */
@@ -573,8 +585,8 @@
     </div>
 
     <div class="sidebar-footer" style="display:flex;gap:6px;padding:10px 14px;">
-      <button id="sidebar-toggle-btn" onclick="toggleSidebar()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;color:rgba(255,255,255,.5);flex:1;" title="Collapse sidebar">◀</button>
-      <button class="log-out-btn" onclick="Auth.logout()" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;color:rgba(255,200,200,.7);white-space:nowrap;" title="Log out">Log Out</button>
+      <button id="sidebar-toggle-btn" onclick="toggleSidebar()" style="background:rgba(0,0,0,.04);border:1px solid #e8eaed;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;color:#9ca3af;flex:1;" title="Collapse sidebar">◀</button>
+      <button class="log-out-btn" onclick="Auth.logout()" style="background:rgba(0,0,0,.04);border:1px solid #e8eaed;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;color:#dc3545;white-space:nowrap;" title="Log out">Log Out</button>
     </div>
   </nav>
 
@@ -643,26 +655,26 @@
 <script src="src/db.js?v=8"></script>
 <script src="src/ui.js?v=2"></script>
 <script src="src/pages/dashboard.js?v=9"></script>
-<script src="src/pages/clients.js?v=11"></script>
+<script src="src/pages/clients.js?v=12"></script>
 <script src="src/pages/requests.js?v=6"></script>
 <script src="src/pages/quotes.js?v=11"></script>
 <script src="src/pages/jobs.js?v=13"></script>
 <script src="src/pages/invoices.js?v=12"></script>
 <script src="src/pages/schedule.js?v=6"></script>
-<script src="src/pages/insights.js?v=5"></script>
+<script src="src/pages/insights.js?v=7"></script>
 <script src="src/geofence.js"></script>
 <script src="src/weather.js"></script>
 <script src="src/pages/comms.js?v=2"></script>
 <script src="src/pages/messaging.js?v=3"></script>
-<script src="src/pages/profitloss.js"></script>
+<script src="src/pages/profitloss.js?v=2"></script>
 <script src="src/photos.js"></script>
 <script src="src/pages/clientmap.js"></script>
 <script src="src/pages/photomap.js"></script>
-<script src="src/pages/crewview.js?v=3"></script>
+<script src="src/pages/crewview.js?v=4"></script>
 <script src="src/pages/employeecenter.js"></script>
-<script src="src/pages/budget.js"></script>
-<script src="src/pages/equipment.js"></script>
-<script src="src/pages/jobcosting.js"></script>
+<script src="src/pages/budget.js?v=2"></script>
+<script src="src/pages/equipment.js?v=2"></script>
+<script src="src/pages/jobcosting.js?v=2"></script>
 <script src="src/pages/dispatch.js?v=3"></script>
 <script src="src/pages/recurring.js?v=2"></script>
 <script src="src/pages/notifications.js?v=5"></script>
@@ -671,20 +683,20 @@
 <script src="src/email.js?v=4"></script>
 <script src="src/pages/reports.js?v=3"></script>
 <script src="src/pages/reviewtools.js"></script>
-<script src="src/pages/weeklysummary.js?v=3"></script>
+<script src="src/pages/weeklysummary.js?v=4"></script>
 <script src="src/pages/backup.js"></script>
-<script src="src/pages/onlinebooking.js?v=2"></script>
+<script src="src/pages/onlinebooking.js?v=3"></script>
 <script src="src/pages/import.js?v=2"></script>
 <script src="src/pages/settings.js?v=16"></script>
 <script src="src/pages/propertymap.js?v=2"></script>
 <script src="src/pages/estimator.js"></script>
 <script src="src/pages/treemeasure.js"></script>
 <script src="src/stripe.js?v=3"></script>
-<script src="src/pages/search.js"></script>
-<script src="src/pages/clienthub.js?v=2"></script>
+<script src="src/pages/search.js?v=2"></script>
+<script src="src/pages/clienthub.js?v=3"></script>
 <script src="src/pages/team.js?v=3"></script>
-<script src="src/pages/automations.js?v=9"></script>
-<script src="src/pages/pipeline.js?v=3"></script>
+<script src="src/pages/automations.js?v=10"></script>
+<script src="src/pages/pipeline.js?v=4"></script>
 <script src="src/sendjim.js"></script>
 <script src="src/supabase.js?v=3"></script>
 <script>
@@ -699,10 +711,10 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <!-- photos.js moved earlier, before photomap.js -->
 <script src="src/templates.js"></script>
 <script src="src/supacloud.js?v=2"></script>
-<script src="src/pages/payments.js?v=2"></script>
+<script src="src/pages/payments.js?v=3"></script>
 <script src="src/pages/workflow.js?v=11"></script>
-<script src="src/pages/reviews.js"></script>
-<script src="src/pages/timetrack.js?v=3"></script>
+<script src="src/pages/reviews.js?v=2"></script>
+<script src="src/pages/timetrack.js?v=4"></script>
 <script src="src/pages/checklists.js?v=2"></script>
 <script src="src/pages/visits.js?v=2"></script>
 <script src="src/pages/customfields.js?v=2"></script>
@@ -714,7 +726,7 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script src="src/pages/materials.js"></script>
 <script src="src/pages/beforeafter.js?v=2"></script>
 <script src="src/pages/mediacenter.js?v=1"></script>
-<script src="src/pages/reminders.js?v=2"></script>
+<script src="src/pages/reminders.js?v=3"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';
@@ -811,8 +823,8 @@ var pageRenderers = {
   insights: function() { return InsightsPage.render(); },
   reviews: function() { return ReviewsPage.render(); },
   team: function() { return TeamPage.render(); },
-  timesheet: function() { return TimeTrackPage.renderClockWidget() + TimeTrackPage.renderTimesheet(); },
-  timetrack: function() { return TimeTrackPage.renderClockWidget() + TimeTrackPage.renderTimesheet(); },
+  timesheet: function() { return TimeTrackPage.render(); },
+  timetrack: function() { return TimeTrackPage.render(); },
   automations: function() { return AutomationsPage.render(); },
   crewview: function() { return CrewView.render(); },
   employeecenter: function() { return EmployeeCenter.render(); },
@@ -1391,6 +1403,18 @@ var NotifCenter = (function() {
           icon: '✅',
           iconBg: '#e8f5e9',
           msg: 'Quote #' + (q.quoteNumber || '?') + ' approved by ' + getClientName(q.clientId || q.client),
+          time: q.updatedAt || q.createdAt,
+          page: 'quotes',
+          recordId: q.id
+        });
+      }
+      // Changes requested by client
+      if (q.status === 'awaiting' && q.updatedAt && q.updatedAt >= sevenDaysAgo) {
+        items.push({
+          id: 'qchg-' + q.id,
+          icon: '💬',
+          iconBg: '#fff3e0',
+          msg: 'Quote #' + (q.quoteNumber || '?') + ' — client requested changes',
           time: q.updatedAt || q.createdAt,
           page: 'quotes',
           recordId: q.id

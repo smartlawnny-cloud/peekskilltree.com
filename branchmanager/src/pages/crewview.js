@@ -1,7 +1,7 @@
 /**
  * Branch Manager — Crew View
  * Simplified mobile-first view for crew members
- * Shows: today's jobs, clock in/out, navigation, photos
+ * Shows: today's jobs, clock in/out, navigation, photos, notes
  */
 var CrewView = {
   render: function() {
@@ -20,7 +20,7 @@ var CrewView = {
     var userName = Auth.user ? Auth.user.name : 'Crew';
 
     // Header
-    var html = '<div style="text-align:center;padding:20px 0;">'
+    var html = '<div style="text-align:center;padding:20px 0 12px;">'
       + '<div style="font-size:36px;margin-bottom:8px;">🌳</div>'
       + '<h2 style="font-size:20px;">Good ' + CrewView._greeting() + ', ' + userName.split(' ')[0] + '!</h2>'
       + '<div style="color:var(--text-light);font-size:14px;">' + today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + '</div>'
@@ -55,19 +55,46 @@ var CrewView = {
     }
     html += '</div>';
 
+    // Today summary bar
+    var completed = jobs.filter(function(j) { return j.status === 'completed'; }).length;
+    var inProgress = jobs.filter(function(j) { return j.status === 'in_progress'; }).length;
+    var todayRevenue = jobs.reduce(function(s, j) { return s + (j.total || 0); }, 0);
+    if (jobs.length > 0) {
+      var pct = jobs.length > 0 ? Math.round(completed / jobs.length * 100) : 0;
+      html += '<div style="background:var(--white);border-radius:12px;padding:14px 16px;border:1px solid var(--border);margin-bottom:16px;">'
+        + '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">'
+        + '<span style="font-weight:600;">' + completed + ' of ' + jobs.length + ' done</span>'
+        + '<span style="font-weight:700;color:var(--green-dark);">' + UI.moneyInt(todayRevenue) + ' today</span></div>'
+        + '<div style="background:#e8e8e8;border-radius:6px;height:8px;overflow:hidden;">'
+        + '<div style="background:var(--green-dark);height:100%;width:' + pct + '%;border-radius:6px;transition:width .3s;"></div>'
+        + '</div>'
+        + (inProgress > 0 ? '<div style="font-size:11px;color:#ff9800;font-weight:600;margin-top:4px;">🔧 ' + inProgress + ' in progress</div>' : '')
+        + '</div>';
+    }
+
     // Today's jobs
     html += '<div style="margin-bottom:16px;">'
       + '<h3 style="font-size:16px;margin-bottom:12px;">Today\'s Jobs (' + jobs.length + ')</h3>';
 
     if (jobs.length) {
       jobs.forEach(function(j, idx) {
-        var statusColors = { scheduled: '#2196f3', in_progress: '#ff9800', completed: '#4caf50' };
-        html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:10px;border-left:4px solid ' + (statusColors[j.status] || '#999') + ';">'
-          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'
-          + '<div><strong style="font-size:16px;">' + j.clientName + '</strong>'
-          + '<div style="font-size:13px;color:var(--text-light);margin-top:2px;">' + (j.description || '') + '</div>'
-          + '<div style="font-size:13px;color:var(--text-light);">📍 ' + (j.property || 'No address') + '</div></div>'
-          + '<div style="font-weight:700;color:var(--green-dark);font-size:16px;">' + UI.money(j.total || 0) + '</div></div>'
+        var statusColors = { scheduled: '#2196f3', in_progress: '#ff9800', completed: '#4caf50', late: '#dc3545' };
+        var statusBorder = statusColors[j.status] || '#999';
+        var isCompleted = j.status === 'completed';
+
+        html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:10px;border-left:4px solid ' + statusBorder + ';' + (isCompleted ? 'opacity:.75;' : '') + '">'
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+          + '<strong style="font-size:16px;">' + UI.esc(j.clientName) + '</strong>'
+          + UI.statusBadge(j.status)
+          + '</div>'
+          + (j.description ? '<div style="font-size:13px;color:var(--text-light);margin-top:3px;">' + UI.esc(j.description) + '</div>' : '')
+          + '<div style="font-size:13px;color:var(--text-light);margin-top:3px;">📍 ' + UI.esc(j.property || j.address || 'No address') + '</div>'
+          + (j.startTime ? '<div style="font-size:12px;color:#1565c0;margin-top:2px;">⏰ ' + CrewView._formatTime(j.startTime) + '</div>' : '')
+          + (j.crewNotes ? '<div style="font-size:12px;background:#fff3e0;padding:6px 8px;border-radius:6px;margin-top:6px;color:#e65100;">📋 ' + UI.esc(j.crewNotes) + '</div>' : '')
+          + '</div>'
+          + '<div style="font-weight:700;color:var(--green-dark);font-size:16px;white-space:nowrap;margin-left:8px;">' + UI.moneyInt(j.total || 0) + '</div></div>'
 
           // Action buttons — big and touch-friendly
           + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
@@ -79,14 +106,17 @@ var CrewView = {
         } else if (j.status === 'in_progress') {
           html += '<button onclick="CrewView.completeJob(\'' + j.id + '\')" style="grid-column:span 2;padding:12px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;">✅ Complete Job</button>';
         } else if (j.status === 'completed') {
-          html += '<div style="grid-column:span 2;padding:12px;background:#e8f5e9;border-radius:10px;text-align:center;color:#2e7d32;font-weight:600;">✅ Completed</div>';
+          html += '<div style="grid-column:span 2;padding:12px;background:#e8f5e9;border-radius:10px;text-align:center;color:#2e7d32;font-weight:600;">✅ Completed' + (j.completedAt ? ' · ' + new Date(j.completedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '') + '</div>';
         }
 
-        // Photo button
+        // Photo + Notes row
         html += '</div>'
-          + '<div style="margin-top:8px;"><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--bg);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-light);">'
-          + '📸 Add Photo<input type="file" accept="image/*" capture="environment" onchange="Photos.upload(event, \'job\', \'' + j.id + '\')" style="display:none;">'
-          + '</label></div>'
+          + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">'
+          + '<label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--bg);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-light);">'
+          + '📸 Photo<input type="file" accept="image/*" capture="environment" onchange="Photos.upload(event, \'job\', \'' + j.id + '\')" style="display:none;">'
+          + '</label>'
+          + '<button onclick="CrewView.addNote(\'' + j.id + '\')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--bg);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-light);border:none;">📝 Add Note</button>'
+          + '</div>'
           + '</div>';
       });
     } else {
@@ -99,15 +129,28 @@ var CrewView = {
 
     // Upcoming this week
     if (upcoming.length) {
-      html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border);">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">'
         + '<h3 style="font-size:15px;margin-bottom:12px;">This Week</h3>';
       upcoming.forEach(function(j) {
         html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'
-          + '<div><strong>' + j.clientName + '</strong> <span style="color:var(--text-light);">— ' + (j.description || '') + '</span></div>'
-          + '<div style="color:var(--text-light);white-space:nowrap;">' + UI.dateShort(j.scheduledDate) + '</div></div>';
+          + '<div><strong>' + UI.esc(j.clientName) + '</strong>'
+          + (j.description ? ' <span style="color:var(--text-light);">— ' + UI.esc(j.description.substr(0, 30)) + '</span>' : '')
+          + (j.property ? '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">📍 ' + UI.esc(j.property.substr(0, 40)) + '</div>' : '')
+          + '</div>'
+          + '<div style="text-align:right;flex-shrink:0;">'
+          + '<div style="color:var(--text-light);font-size:12px;">' + UI.dateShort(j.scheduledDate) + '</div>'
+          + '<div style="font-weight:600;color:var(--green-dark);font-size:12px;">' + UI.moneyInt(j.total || 0) + '</div>'
+          + '</div></div>';
       });
       html += '</div>';
     }
+
+    // Quick access links at bottom
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">'
+      + '<button onclick="loadPage(\'timetrack\')" style="padding:14px 8px;background:var(--white);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text);">⏱ Timesheet</button>'
+      + '<button onclick="loadPage(\'expenses\')" style="padding:14px 8px;background:var(--white);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text);">💸 Expenses</button>'
+      + '<button onclick="loadPage(\'dispatch\')" style="padding:14px 8px;background:var(--white);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text);">🗺 Route</button>'
+      + '</div>';
 
     return html;
   },
@@ -117,6 +160,16 @@ var CrewView = {
     if (h < 12) return 'morning';
     if (h < 17) return 'afternoon';
     return 'evening';
+  },
+
+  _formatTime: function(t) {
+    if (!t) return '';
+    var parts = t.split(':');
+    var h = parseInt(parts[0]);
+    var m = parts[1] || '00';
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return h + ':' + m + ' ' + ampm;
   },
 
   clockIn: function() {
@@ -134,7 +187,7 @@ var CrewView = {
 
       // Save time entry via DB so it syncs to Supabase
       var userName = Auth.user ? Auth.user.name : 'Crew';
-      var entry = DB.timeEntries.create({
+      DB.timeEntries.create({
         userId: userName,
         user: userName,
         date: new Date().toISOString().split('T')[0],
@@ -148,6 +201,28 @@ var CrewView = {
       // Prompt for expenses
       CrewView._showExpensePrompt(hrs);
     }
+  },
+
+  addNote: function(jobId) {
+    var j = DB.jobs.getById(jobId);
+    if (!j) return;
+    var html = '<div style="display:grid;gap:10px;">'
+      + '<p style="font-size:13px;color:var(--text-light);margin:0;">Add a note for the office about this job:</p>'
+      + '<textarea id="crew-note-text" rows="4" placeholder="e.g. Large limb hanging over fence, client wants us to call before we leave..." style="width:100%;padding:12px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;">'
+      + UI.esc(j.crewNotes || '') + '</textarea>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+      + '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+      + '<button class="btn btn-primary" onclick="CrewView._saveNote(\'' + jobId + '\')">Save Note</button>'
+      + '</div></div>';
+    UI.showModal('Job Note — ' + UI.esc(j.clientName || ''), html);
+  },
+
+  _saveNote: function(jobId) {
+    var text = (document.getElementById('crew-note-text').value || '').trim();
+    DB.jobs.update(jobId, { crewNotes: text, updatedAt: new Date().toISOString() });
+    UI.closeModal();
+    UI.toast('Note saved');
+    loadPage('crewview');
   },
 
   _showExpensePrompt: function(hours) {
@@ -205,7 +280,28 @@ var CrewView = {
   },
 
   completeJob: function(jobId) {
-    DB.jobs.update(jobId, { status: 'completed', completedAt: new Date().toISOString() });
+    var j = DB.jobs.getById(jobId);
+    if (!j) return;
+
+    // Prompt for quick note before completing
+    var html = '<div style="text-align:center;margin-bottom:16px;">'
+      + '<div style="font-size:36px;margin-bottom:8px;">✅</div>'
+      + '<h3 style="margin:0 0 4px;">Complete Job</h3>'
+      + '<p style="font-size:13px;color:var(--text-light);">' + UI.esc(j.clientName || '') + '</p></div>'
+      + '<textarea id="complete-notes" rows="3" placeholder="Any notes for the office? (optional)" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>'
+      + '<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">'
+      + '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+      + '<button class="btn btn-primary" onclick="CrewView._doCompleteJob(\'' + jobId + '\')">Mark Complete ✅</button>'
+      + '</div>';
+    UI.showModal('Complete Job', html);
+  },
+
+  _doCompleteJob: function(jobId) {
+    var notes = (document.getElementById('complete-notes') || {}).value || '';
+    var updates = { status: 'completed', completedAt: new Date().toISOString() };
+    if (notes.trim()) updates.crewNotes = notes.trim();
+    DB.jobs.update(jobId, updates);
+    UI.closeModal();
     UI.toast('Job completed! ✅');
     loadPage('crewview');
   }

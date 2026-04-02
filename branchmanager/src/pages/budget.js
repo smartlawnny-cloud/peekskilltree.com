@@ -28,6 +28,9 @@ var BudgetPage = {
     // Savings Goals
     html += BudgetPage._renderSavingsGoals(budget);
 
+    // Monthly Snapshot
+    html += BudgetPage._renderMonthlySnapshot(budget, takeHome);
+
     return html;
   },
 
@@ -163,7 +166,7 @@ var BudgetPage = {
 
   _renderSavingsGoals: function(budget) {
     var goals = budget.savingsGoals || [];
-    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
       + '<h3 style="font-size:16px;">🎯 Savings Goals</h3>'
       + '<button onclick="BudgetPage.addGoal()" style="background:var(--green-dark);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">+ Add Goal</button></div>';
@@ -181,6 +184,36 @@ var BudgetPage = {
     } else {
       html += '<div style="text-align:center;padding:16px;color:var(--text-light);font-size:13px;">No savings goals yet. What are you saving for?</div>';
     }
+    html += '</div>';
+    return html;
+  },
+
+  _renderMonthlySnapshot: function(budget, takeHome) {
+    var envelopes = budget.envelopes || [];
+    var totalBudgeted = envelopes.reduce(function(s, e) { return s + (e.budgeted || 0); }, 0);
+    var unassigned = takeHome - totalBudgeted;
+    var budgetedPct = takeHome > 0 ? Math.min(100, Math.round(totalBudgeted / takeHome * 100)) : 0;
+
+    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+      + '<h3 style="font-size:16px;">📅 Monthly Snapshot</h3>'
+      + '<button onclick="BudgetPage.startNewMonth()" style="background:var(--green-dark);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">+ Start New Month</button></div>';
+
+    // Summary line
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;text-align:center;">'
+      + '<div style="padding:10px;background:var(--green-bg);border-radius:8px;"><div style="font-size:11px;color:var(--text-light);">Take-Home</div><div style="font-size:18px;font-weight:700;color:var(--green-dark);">' + UI.moneyInt(takeHome) + '</div></div>'
+      + '<div style="padding:10px;background:var(--bg);border-radius:8px;"><div style="font-size:11px;color:var(--text-light);">Budgeted</div><div style="font-size:18px;font-weight:700;">' + UI.moneyInt(totalBudgeted) + '</div></div>'
+      + '<div style="padding:10px;background:' + (unassigned < 0 ? '#fde8e8' : '#e8f5e9') + ';border-radius:8px;"><div style="font-size:11px;color:var(--text-light);">Unassigned</div><div style="font-size:18px;font-weight:700;color:' + (unassigned < 0 ? 'var(--red)' : 'var(--green-dark)') + ';">' + UI.moneyInt(unassigned) + '</div></div>'
+      + '</div>';
+
+    // Income vs budgeted bar
+    html += '<div style="margin-bottom:6px;">'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-bottom:4px;">'
+      + '<span>Income vs Budgeted</span><span>' + budgetedPct + '% assigned</span></div>'
+      + '<div style="height:10px;background:var(--bg);border-radius:5px;overflow:hidden;">'
+      + '<div style="height:100%;width:' + budgetedPct + '%;background:' + (budgetedPct > 100 ? '#f44336' : budgetedPct > 90 ? '#ff9800' : '#4caf50') + ';border-radius:5px;transition:width .3s;"></div></div>'
+      + '</div>';
+
     html += '</div>';
     return html;
   },
@@ -260,13 +293,97 @@ var BudgetPage = {
   },
 
   editEnvelopes: function() {
-    UI.toast('Tap each envelope amount to edit. Coming next update!');
+    var budget = BudgetPage._load();
+    var envelopes = budget.envelopes && budget.envelopes.length ? budget.envelopes : [
+      { name: 'Housing (Rent/Mortgage)', pct: 25, budgeted: 0, spent: 0 },
+      { name: 'Transportation', pct: 10, budgeted: 0, spent: 0 },
+      { name: 'Food (Groceries)', pct: 12, budgeted: 0, spent: 0 },
+      { name: 'Utilities', pct: 5, budgeted: 0, spent: 0 },
+      { name: 'Insurance', pct: 5, budgeted: 0, spent: 0 },
+      { name: 'Phone', pct: 3, budgeted: 0, spent: 0 },
+      { name: 'Gas/Fuel', pct: 5, budgeted: 0, spent: 0 },
+      { name: 'Personal/Clothing', pct: 3, budgeted: 0, spent: 0 },
+      { name: 'Entertainment', pct: 3, budgeted: 0, spent: 0 },
+      { name: 'Giving/Tithe', pct: 10, budgeted: 0, spent: 0 },
+      { name: 'Savings/Emergency', pct: 10, budgeted: 0, spent: 0 },
+      { name: 'Debt Payments', pct: 9, budgeted: 0, spent: 0 }
+    ];
+
+    var html = '<div id="env-edit-container">';
+    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Adjust your envelope names, percentages, and budgets. Percentages auto-calculate amounts based on your take-home pay.</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 60px 100px 40px;gap:6px;margin-bottom:6px;font-size:11px;color:var(--text-light);font-weight:600;">'
+      + '<div>Category</div><div>%</div><div>Monthly $</div><div></div></div>';
+
+    envelopes.forEach(function(e) {
+      html += '<div class="env-row" style="display:grid;grid-template-columns:1fr 60px 100px 40px;gap:6px;margin-bottom:4px;">'
+        + '<input class="env-name" type="text" value="' + e.name + '" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+        + '<input class="env-pct" type="number" value="' + e.pct + '" min="0" max="100" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+        + '<input class="env-budget" type="number" value="' + (e.budgeted || 0) + '" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:700;">'
+        + '<button onclick="this.closest(\'.env-row\').remove()" style="background:#fde8e8;border:none;border-radius:6px;cursor:pointer;font-size:16px;color:#c62828;">×</button>'
+        + '</div>';
+    });
+
+    html += '</div>'
+      + '<button onclick="BudgetPage._addEnvRow()" style="background:var(--bg);border:1px dashed var(--border);border-radius:6px;padding:8px;width:100%;cursor:pointer;font-size:13px;color:var(--text-light);margin-top:4px;">+ Add Category</button>';
+
+    UI.showModal('Edit Budget Envelopes', html, {
+      wide: true,
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="BudgetPage._saveEnvelopes()">Save Envelopes</button>'
+    });
+  },
+
+  _addEnvRow: function() {
+    var container = document.getElementById('env-edit-container');
+    var row = document.createElement('div');
+    row.className = 'env-row';
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 60px 100px 40px;gap:6px;margin-bottom:4px;';
+    row.innerHTML = '<input class="env-name" type="text" placeholder="Category name" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+      + '<input class="env-pct" type="number" value="0" min="0" max="100" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+      + '<input class="env-budget" type="number" value="0" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:700;">'
+      + '<button onclick="this.closest(\'.env-row\').remove()" style="background:#fde8e8;border:none;border-radius:6px;cursor:pointer;font-size:16px;color:#c62828;">×</button>';
+    container.insertBefore(row, container.lastElementChild);
+  },
+
+  _saveEnvelopes: function() {
+    var rows = document.querySelectorAll('.env-row');
+    var budget = BudgetPage._load();
+    var existing = budget.envelopes || [];
+    budget.envelopes = [];
+    rows.forEach(function(row) {
+      var name = row.querySelector('.env-name').value.trim();
+      var pct = parseFloat(row.querySelector('.env-pct').value) || 0;
+      var budgeted = parseFloat(row.querySelector('.env-budget').value) || 0;
+      var prev = existing.find(function(e) { return e.name === name; }) || {};
+      if (name) budget.envelopes.push({ name: name, pct: pct, budgeted: budgeted, spent: prev.spent || 0 });
+    });
+    BudgetPage._save(budget);
+    UI.closeModal();
+    UI.toast('Envelopes saved!');
+    loadPage('budget');
   },
 
   logSpending: function() {
     var budget = BudgetPage._load();
-    var envelopes = budget.envelopes || [];
-    var options = envelopes.map(function(e) { return e.name; });
+    // Initialize default envelopes if none exist
+    if (!budget.envelopes || !budget.envelopes.length) {
+      budget.envelopes = [
+        { name: 'Housing (Rent/Mortgage)', pct: 25, budgeted: 0, spent: 0 },
+        { name: 'Transportation', pct: 10, budgeted: 0, spent: 0 },
+        { name: 'Food (Groceries)', pct: 12, budgeted: 0, spent: 0 },
+        { name: 'Utilities', pct: 5, budgeted: 0, spent: 0 },
+        { name: 'Insurance', pct: 5, budgeted: 0, spent: 0 },
+        { name: 'Phone', pct: 3, budgeted: 0, spent: 0 },
+        { name: 'Gas/Fuel', pct: 5, budgeted: 0, spent: 0 },
+        { name: 'Personal/Clothing', pct: 3, budgeted: 0, spent: 0 },
+        { name: 'Entertainment', pct: 3, budgeted: 0, spent: 0 },
+        { name: 'Giving/Tithe', pct: 10, budgeted: 0, spent: 0 },
+        { name: 'Savings/Emergency', pct: 10, budgeted: 0, spent: 0 },
+        { name: 'Debt Payments', pct: 9, budgeted: 0, spent: 0 }
+      ];
+      BudgetPage._save(budget);
+    }
+    var options = budget.envelopes.map(function(e) { return e.name; });
 
     var html = '<form id="spend-form" onsubmit="BudgetPage.saveSpending(event)">'
       + UI.formField('Category', 'select', 'spend-cat', '', { options: [''].concat(options) })
@@ -303,6 +420,16 @@ var BudgetPage = {
       BudgetPage._save(budget);
     }
     UI.toast('Budget reset for new month!');
+    loadPage('budget');
+  },
+
+  startNewMonth: function() {
+    var budget = BudgetPage._load();
+    if (budget.envelopes) {
+      budget.envelopes.forEach(function(e) { e.spent = 0; });
+      BudgetPage._save(budget);
+    }
+    UI.toast('New month started — spending reset to $0!');
     loadPage('budget');
   }
 };

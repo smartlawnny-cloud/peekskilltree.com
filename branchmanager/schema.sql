@@ -210,6 +210,18 @@ CREATE TABLE notes (
 -- ══════════════════════════════════════
 -- AUTOMATIONS LOG
 -- ══════════════════════════════════════
+CREATE TABLE expenses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  date TIMESTAMPTZ DEFAULT now(),
+  amount NUMERIC(10,2) DEFAULT 0,
+  category TEXT,
+  description TEXT,
+  vendor TEXT,
+  job TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
 CREATE TABLE automation_log (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   type TEXT NOT NULL, -- 'quote_followup', 'invoice_followup', 'visit_reminder', 'review_request'
@@ -231,6 +243,7 @@ CREATE INDEX idx_jobs_scheduled ON jobs(scheduled_date);
 CREATE INDEX idx_invoices_status ON invoices(status);
 CREATE INDEX idx_time_entries_date ON time_entries(date);
 CREATE INDEX idx_notes_record ON notes(record_type, record_id);
+CREATE INDEX idx_expenses_date ON expenses(date);
 
 -- ══════════════════════════════════════
 -- ROW LEVEL SECURITY (enable later for multi-tenant)
@@ -245,6 +258,7 @@ ALTER TABLE time_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE automation_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 
 -- Allow authenticated users full access (single-tenant for now)
 CREATE POLICY "Allow all for authenticated" ON clients FOR ALL USING (true);
@@ -254,6 +268,7 @@ CREATE POLICY "Allow all for authenticated" ON jobs FOR ALL USING (true);
 CREATE POLICY "Allow all for authenticated" ON invoices FOR ALL USING (true);
 CREATE POLICY "Allow all for authenticated" ON services FOR ALL USING (true);
 CREATE POLICY "Allow all for authenticated" ON time_entries FOR ALL USING (true);
+CREATE POLICY "Allow all for authenticated" ON expenses FOR ALL USING (true);
 CREATE POLICY "Allow all for authenticated" ON team_members FOR ALL USING (true);
 CREATE POLICY "Allow all for authenticated" ON notes FOR ALL USING (true);
 CREATE POLICY "Allow all for authenticated" ON automation_log FOR ALL USING (true);

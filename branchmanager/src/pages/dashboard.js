@@ -24,6 +24,7 @@ var DashboardPage = {
     var allQuotes = DB.quotes.getAll();
     var allJobs = DB.jobs.getAll();
     var now = new Date();
+    var sixMonthsAgo = new Date(now.getTime() - 180 * 86400000);
 
     // Jobber-style date greeting
     var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -341,7 +342,10 @@ var DashboardPage = {
     html += '</div>';
 
     // Revenue Forecast widget
-    var openQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting' || q.status === 'draft'; });
+    var openQuotes = allQuotes.filter(function(q) {
+      if (q.status !== 'sent' && q.status !== 'awaiting' && q.status !== 'draft') return false;
+      return !q.createdAt || new Date(q.createdAt) > sixMonthsAgo;
+    });
     var pipelineValue = openQuotes.reduce(function(s, q) { return s + (q.total || 0); }, 0);
     var wonQuotes = allQuotes.filter(function(q) { return q.status === 'approved' || q.status === 'converted'; });
     var winRate = allQuotes.length > 0 ? wonQuotes.length / allQuotes.length : 0.5;
@@ -377,13 +381,16 @@ var DashboardPage = {
     var overdueInvTotal = overdueTotal;
     var sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
     var expiringQuotes = allQuotes.filter(function(q) {
-      return q.status === 'sent' && q.createdAt && new Date(q.createdAt) < sevenDaysAgo;
+      return q.status === 'sent' && q.createdAt
+        && new Date(q.createdAt) < sevenDaysAgo
+        && new Date(q.createdAt) > sixMonthsAgo;
     });
     var unscheduledJobs = allJobs.filter(function(j) {
       return (j.status === 'in_progress' || j.status === 'scheduled') && !j.scheduledDate;
     });
     var unsignedQuotes = allQuotes.filter(function(q) {
-      return q.status === 'sent' || q.status === 'awaiting';
+      if (q.status !== 'sent' && q.status !== 'awaiting') return false;
+      return !q.createdAt || new Date(q.createdAt) > sixMonthsAgo;
     });
 
     var hasActions = overdueInvCount > 0 || expiringQuotes.length > 0 || unscheduledJobs.length > 0 || unsignedQuotes.length > 0;

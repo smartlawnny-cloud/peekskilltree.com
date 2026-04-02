@@ -716,6 +716,7 @@ var JobsPage = {
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Quick Actions</h4>'
       + (j.clientPhone ? '<a href="tel:' + j.clientPhone + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 Call Client</a>' : '')
+      + (j.clientPhone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){var fn=\'' + UI.esc((j.clientName||'').split(' ')[0]||'there') + '\';var msg=\'Hi \'+fn+\', this is Doug from Second Nature Tree Service.' + (j.scheduledDate ? ' Your job is scheduled for ' + UI.dateShort(j.scheduledDate) + '.' : '') + ' Let us know if you have any questions! (914) 391-5233\';Dialpad.showTextModal(\'' + (j.clientPhone||'').replace(/\D/g,'') + '\',msg);}">📱 Text Client</button>' : '')
       + (j.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">🗺 Navigate</a>' : '')
       + '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="PropertyMap.show(\'' + (j.property || '').replace(/'/g, "\\'") + '\')">📐 Equipment Layout</button>'
       + '</div>'

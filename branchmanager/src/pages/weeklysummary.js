@@ -518,11 +518,13 @@ var WeeklySummary = {
     var html = '';
 
     // ── Page header ──
-    html += '<div style="margin-bottom:20px;">'
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">'
+      + '<div>'
       + '<h2 style="font-size:24px;font-weight:700;margin:0 0 4px;">&#128197; Weekly Summary</h2>'
       + '<div style="font-size:14px;color:var(--text-light);">'
       + WeeklySummary._formatDateRange(week.start, week.end)
-      + '</div>'
+      + '</div></div>'
+      + '<button onclick="WeeklySummary.emailToSelf()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;">📧 Email Me This Summary</button>'
       + '</div>';
 
     // 1. Week at a Glance
@@ -547,5 +549,79 @@ var WeeklySummary = {
     html += WeeklySummary._renderActionItems(invoices, quotes, jobs);
 
     return html;
+  },
+
+  emailToSelf: function() {
+    var week = WeeklySummary._weekBounds();
+    var invoices = DB.invoices.getAll();
+    var jobs = DB.jobs.getAll();
+    var quotes = DB.quotes.getAll();
+    var requests = DB.requests.getAll();
+
+    var collected = invoices.filter(function(i) {
+      var d = i.paidAt || i.updatedAt || i.createdAt;
+      return (i.status === 'paid' || i.status === 'collected')
+        && !WeeklySummary._isImportArtifact(d)
+        && WeeklySummary._inRange(d, week.start, week.end);
+    }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+
+    var completedJobs = jobs.filter(function(j) {
+      return j.status === 'completed'
+        && WeeklySummary._inRange(j.completedDate || j.scheduledDate, week.start, week.end);
+    });
+
+    var newReqs = requests.filter(function(r) {
+      return WeeklySummary._inRange(r.createdAt, week.start, week.end);
+    });
+
+    var outstanding = invoices.filter(function(i) {
+      return i.status !== 'paid' && i.status !== 'collected' && (i.balance > 0 || i.total > 0);
+    }).reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0);
+
+    var overdueInvs = invoices.filter(function(i) {
+      return i.status !== 'paid' && i.balance > 0 && i.dueDate && new Date(i.dueDate) < new Date();
+    });
+
+    var openQuotes = quotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
+    var staleQuotes = openQuotes.filter(function(q) { return q.createdAt && (Date.now() - new Date(q.createdAt).getTime()) > 7 * 86400000; });
+
+    var upcomingJobs = jobs.filter(function(j) {
+      var d = j.scheduledDate;
+      if (!d) return false;
+      var jDate = new Date(d);
+      var today = new Date(); today.setHours(0,0,0,0);
+      var next7 = new Date(today.getTime() + 7*86400000);
+      return jDate >= today && jDate <= next7 && j.status !== 'completed' && j.status !== 'cancelled';
+    });
+
+    var dateRange = WeeklySummary._formatDateRange(week.start, week.end);
+    var subject = 'Weekly Business Summary — ' + dateRange + ' — Second Nature Tree Service';
+    var body = 'WEEKLY SUMMARY: ' + dateRange + '\n'
+      + 'Second Nature Tree Service\n'
+      + '─────────────────────────────\n\n'
+      + 'THIS WEEK:\n'
+      + '• Revenue collected: $' + Math.round(collected).toLocaleString() + '\n'
+      + '• Jobs completed: ' + completedJobs.length + '\n'
+      + '• New requests: ' + newReqs.length + '\n\n'
+      + 'CURRENT STATUS:\n'
+      + '• Outstanding receivables: $' + Math.round(outstanding).toLocaleString() + '\n'
+      + (overdueInvs.length > 0 ? '• ⚠️ OVERDUE invoices: ' + overdueInvs.length + '\n' : '• No overdue invoices ✓\n')
+      + '• Open quotes awaiting response: ' + openQuotes.length + (staleQuotes.length > 0 ? ' (' + staleQuotes.length + ' stale 7+ days)' : '') + '\n'
+      + '• Upcoming jobs (next 7 days): ' + upcomingJobs.length + '\n\n'
+      + 'ACTION ITEMS:\n'
+      + (overdueInvs.length > 0 ? '→ Follow up on ' + overdueInvs.length + ' overdue invoice' + (overdueInvs.length > 1 ? 's' : '') + '\n' : '')
+      + (staleQuotes.length > 0 ? '→ Follow up on ' + staleQuotes.length + ' stale quote' + (staleQuotes.length > 1 ? 's' : '') + '\n' : '')
+      + (upcomingJobs.length > 0 ? '→ Send reminders for ' + upcomingJobs.length + ' upcoming job' + (upcomingJobs.length > 1 ? 's' : '') + '\n' : '')
+      + '\n─────────────────────────────\n'
+      + 'Branch Manager · peekskilltree.com/branchmanager/';
+
+    if (typeof Email !== 'undefined' && Email.isConfigured()) {
+      Email.send('info@peekskilltree.com', subject, body).then(function() {
+        UI.toast('Weekly summary emailed to info@peekskilltree.com ✅');
+      });
+    } else {
+      window.open('mailto:info@peekskilltree.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+      UI.toast('Opening email client with weekly summary');
+    }
   }
 };

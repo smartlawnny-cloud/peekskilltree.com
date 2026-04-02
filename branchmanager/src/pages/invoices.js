@@ -61,7 +61,7 @@ var InvoicesPage = {
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All invoices</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
       + (function() {
-        var chips = [['all','All'],['draft','Draft'],['sent','Sent'],['past_due','Past Due'],['paid','Paid']];
+        var chips = [['all','All'],['draft','Draft'],['sent','Sent'],['overdue','Overdue'],['paid','Paid']];
         var out = '';
         for (var ci = 0; ci < chips.length; ci++) {
           var val = chips[ci][0], label = chips[ci][1];
@@ -134,7 +134,7 @@ var InvoicesPage = {
     var self = InvoicesPage;
     var all = DB.invoices.getAll();
     if (self._filter === 'unpaid') all = all.filter(function(i) { return i.status !== 'paid'; });
-    else if (self._filter === 'past_due') all = all.filter(function(i) { var now = new Date(); return i.status !== 'paid' && i.dueDate && new Date(i.dueDate) < now; });
+    else if (self._filter === 'past_due' || self._filter === 'overdue') all = all.filter(function(i) { var now = new Date(); return i.status !== 'paid' && i.status !== 'cancelled' && (i.status === 'overdue' || (i.dueDate && new Date(i.dueDate) < now)); });
     else if (self._filter !== 'all') all = all.filter(function(i) { return i.status === self._filter; });
     if (self._search && self._search.length >= 2) {
       var s = self._search.toLowerCase();

@@ -126,12 +126,14 @@ var DB = (function() {
     getUpcoming: function() {
       var today = new Date().toISOString().split('T')[0];
       return getAll(KEYS.jobs).filter(function(j) {
-        return j.scheduledDate >= today && j.status !== 'completed';
+        return j.scheduledDate && j.scheduledDate.substring(0, 10) >= today && j.status !== 'completed';
       }).sort(function(a, b) { return (a.scheduledDate || '').localeCompare(b.scheduledDate || ''); });
     },
     getToday: function() {
       var today = new Date().toISOString().split('T')[0];
-      return getAll(KEYS.jobs).filter(function(j) { return j.scheduledDate === today; });
+      return getAll(KEYS.jobs).filter(function(j) {
+        return j.scheduledDate && j.scheduledDate.substring(0, 10) === today;
+      });
     },
     fixStatuses: function() {
       var valid = ['scheduled', 'in_progress', 'completed', 'late', 'cancelled'];

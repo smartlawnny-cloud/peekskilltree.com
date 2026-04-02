@@ -43,10 +43,20 @@ var Workflow = {
       html += '</div>';
     }
 
-    // Jobs ready to invoice
-    var completedNoInvoice = jobs.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+    // Jobs ready to invoice — filter by scheduledDate within 60 days to skip old Jobber import data
+    var cutoff60 = new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0];
+    var completedNoInvoice = jobs.filter(function(j) {
+      return j.status === 'completed' && !j.invoiceId && j.scheduledDate && j.scheduledDate >= cutoff60;
+    });
+    // Fallback: also show jobs with no scheduledDate but created recently (manually created)
+    var cutoff7 = new Date(Date.now() - 7 * 86400000).toISOString();
+    var recentManual = jobs.filter(function(j) {
+      return j.status === 'completed' && !j.invoiceId && !j.scheduledDate && (j.createdAt || '') > cutoff7;
+    });
+    completedNoInvoice = completedNoInvoice.concat(recentManual);
+    var totalCompletedNoInvoice = jobs.filter(function(j) { return j.status === 'completed' && !j.invoiceId; }).length;
     if (completedNoInvoice.length) {
-      html += '<div style="margin-bottom:20px;"><div style="font-weight:700;font-size:13px;color:#e65100;margin-bottom:10px;">🔔 Completed Jobs Needing Invoice (' + completedNoInvoice.length + ')</div>';
+      html += '<div style="margin-bottom:20px;"><div style="font-weight:700;font-size:13px;color:#e65100;margin-bottom:10px;">🔔 Completed Jobs Needing Invoice (' + completedNoInvoice.length + (totalCompletedNoInvoice > completedNoInvoice.length ? ' recent · ' + totalCompletedNoInvoice + ' total' : '') + ')</div>';
       completedNoInvoice.slice(0, 10).forEach(function(j) {
         html += '<div style="background:var(--white);border:1px solid #ffe0b2;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;">'
           + '<div>'

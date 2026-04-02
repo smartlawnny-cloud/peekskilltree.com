@@ -105,9 +105,9 @@ var Workflow = {
     var html = '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
 
     if (job.status === 'scheduled') {
-      html += '<button onclick="DB.jobs.update(\'' + jobId + '\',{status:\'active\',startedAt:new Date().toISOString()});UI.toast(\'Job started\');loadPage(\'jobs\');" style="background:#ff9800;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">▶ Start Job</button>';
+      html += '<button onclick="DB.jobs.update(\'' + jobId + '\',{status:\'in_progress\',startedAt:new Date().toISOString()});UI.toast(\'Job started\');loadPage(\'jobs\');" style="background:#ff9800;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">▶ Start Job</button>';
     }
-    if (job.status === 'active') {
+    if (job.status === 'in_progress') {
       html += '<button onclick="Workflow.jobToInvoice(\'' + jobId + '\');loadPage(\'invoices\');" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">✅ Complete & Invoice</button>';
     }
     if (job.status === 'completed' && !job.invoiceId) {

@@ -132,17 +132,16 @@ var CrewView = {
       var hrs = (elapsed / 60).toFixed(1);
       localStorage.removeItem('bm-clock-in');
 
-      // Save time entry
-      var entries = JSON.parse(localStorage.getItem('bm-time-entries') || '[]');
-      entries.unshift({
-        id: Date.now().toString(36),
-        user: Auth.user ? Auth.user.name : 'Crew',
-        date: new Date().toISOString(),
+      // Save time entry via DB so it syncs to Supabase
+      var userName = Auth.user ? Auth.user.name : 'Crew';
+      var entry = DB.timeEntries.create({
+        userId: userName,
+        user: userName,
+        date: new Date().toISOString().split('T')[0],
         hours: parseFloat(hrs),
         clockIn: startTime,
         clockOut: new Date().toISOString()
       });
-      localStorage.setItem('bm-time-entries', JSON.stringify(entries));
 
       UI.toast('Clocked out! ' + hrs + ' hours logged');
 

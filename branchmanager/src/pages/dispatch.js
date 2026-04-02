@@ -242,7 +242,7 @@ var DispatchPage = {
         + '<div style="font-size:12px;color:var(--text-light);">Base of operations \u2022 Depart 7:00 AM</div></div></div>';
 
       jobs.forEach(function(j, idx) {
-        var statusColors = { scheduled: '#2196f3', active: '#ff9800', completed: '#4caf50' };
+        var statusColors = { scheduled: '#2196f3', in_progress: '#ff9800', completed: '#4caf50' };
         var color = statusColors[j.status] || '#999';
 
         // Distance badge
@@ -281,7 +281,7 @@ var DispatchPage = {
           + '<button onclick="event.stopPropagation();DispatchPage.navigate(\'' + (j.property || j.address || '').replace(/'/g, "\\'") + '\')" style="background:var(--green-bg);border:1px solid #c8e6c9;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:var(--green-dark);">\uD83D\uDDFA Navigate</button>'
           + '<button onclick="event.stopPropagation();DispatchPage.callClient(\'' + (j.clientPhone || '') + '\')" style="background:#e3f2fd;border:1px solid #bbdefb;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:#1565c0;">\uD83D\uDCDE Call</button>'
           + (j.status === 'scheduled' ? '<button onclick="event.stopPropagation();DispatchPage.startJob(\'' + j.id + '\')" style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:#e65100;">\u25B6 Start</button>' : '')
-          + (j.status === 'active' ? '<button onclick="event.stopPropagation();DispatchPage.completeJob(\'' + j.id + '\')" style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:#2e7d32;">\u2705 Complete</button>' : '')
+          + (j.status === 'in_progress' ? '<button onclick="event.stopPropagation();DispatchPage.completeJob(\'' + j.id + '\')" style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:#2e7d32;">\u2705 Complete</button>' : '')
           + '</div></div></div>';
       });
 
@@ -335,7 +335,7 @@ var DispatchPage = {
   },
 
   startJob: function(jobId) {
-    DB.jobs.update(jobId, { status: 'active', startedAt: new Date().toISOString() });
+    DB.jobs.update(jobId, { status: 'in_progress', startedAt: new Date().toISOString() });
     UI.toast('Job started!');
     loadPage('dispatch');
   },

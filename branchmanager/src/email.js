@@ -44,10 +44,10 @@ var Email = {
           from: { email: 'info@peekskilltree.com', name: 'Second Nature Tree Service' },
           reply_to: { email: 'info@peekskilltree.com', name: 'Doug Brown' },
           subject: subject,
-          content: [{
-            type: options.html ? 'text/html' : 'text/plain',
-            value: body
-          }]
+          content: [
+            { type: 'text/plain', value: body },
+            { type: 'text/html', value: options.htmlBody || body }
+          ]
         })
       });
 

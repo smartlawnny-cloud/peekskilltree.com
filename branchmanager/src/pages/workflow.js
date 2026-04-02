@@ -302,12 +302,65 @@ var Workflow = {
     var subject = document.getElementById('q-send-subject').value;
     var body = document.getElementById('q-send-body').value;
 
+    // Build HTML email
+    var q = DB.quotes.getById(quoteId) || {};
+    var firstName = (q.clientName || '').split(' ')[0] || 'there';
+    var approveLink = 'https://peekskilltree.com/branchmanager/approve.html?id=' + quoteId;
+    var totalStr = (typeof UI !== 'undefined' && UI.money) ? UI.money(q.total) : ('$' + (q.total || '0'));
+    var htmlBody = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+      + '<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;">'
+      + '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0;">'
+      + '<tr><td align="center">'
+      + '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">'
+      // Header
+      + '<tr><td style="background:#1a3c12;padding:28px 32px;">'
+      + '<p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">Second Nature Tree Service</p>'
+      + '<p style="margin:6px 0 0;font-size:13px;color:#a8d5a2;">Licensed &amp; Insured — Westchester &amp; Putnam Counties</p>'
+      + '</td></tr>'
+      // Body
+      + '<tr><td style="padding:32px;">'
+      + '<p style="margin:0 0 20px;font-size:16px;color:#333333;">Hi ' + firstName + ',</p>'
+      + '<p style="margin:0 0 24px;font-size:15px;color:#555555;line-height:1.6;">Thanks for having us out to take a look! Here\'s your estimate for the work we discussed. You can review and approve it online using the button below.</p>'
+      // Quote detail box
+      + '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faf7;border:1px solid #d4e6d0;border-radius:8px;margin-bottom:28px;">'
+      + '<tr><td style="padding:20px 24px;">'
+      + '<p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#1a3c12;text-transform:uppercase;letter-spacing:0.5px;">Quote Summary</p>'
+      + '<table width="100%" cellpadding="0" cellspacing="0">'
+      + '<tr><td style="padding:6px 0;font-size:14px;color:#666666;">Quote Number</td><td style="padding:6px 0;font-size:14px;font-weight:600;color:#222222;text-align:right;">#' + (q.quoteNumber || '') + '</td></tr>'
+      + '<tr><td style="padding:6px 0;font-size:14px;color:#666666;">Client</td><td style="padding:6px 0;font-size:14px;font-weight:600;color:#222222;text-align:right;">' + (q.clientName || '') + '</td></tr>'
+      + '<tr><td style="padding:6px 0;font-size:14px;color:#666666;">Property</td><td style="padding:6px 0;font-size:14px;font-weight:600;color:#222222;text-align:right;">' + (q.property || 'Your property') + '</td></tr>'
+      + '<tr><td style="padding:6px 0;font-size:14px;color:#666666;">Total</td><td style="padding:6px 0;font-size:18px;font-weight:700;color:#1a3c12;text-align:right;">' + totalStr + '</td></tr>'
+      + '</table>'
+      + (q.description ? '<p style="margin:12px 0 0;font-size:13px;color:#555555;line-height:1.5;border-top:1px solid #d4e6d0;padding-top:12px;">' + q.description + '</p>' : '')
+      + '</td></tr>'
+      + '</table>'
+      // Approve button
+      + '<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">'
+      + '<tr><td align="center">'
+      + '<a href="' + approveLink + '" style="display:inline-block;background:#1a3c12;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 40px;border-radius:8px;letter-spacing:0.3px;">View &amp; Approve Quote</a>'
+      + '</td></tr>'
+      + '</table>'
+      + '<p style="margin:0 0 8px;font-size:13px;color:#888888;text-align:center;">You can approve, request changes, or ask questions directly from that link.</p>'
+      + '<p style="margin:0 0 24px;font-size:12px;color:#aaaaaa;text-align:center;">Direct link: <a href="' + approveLink + '" style="color:#1a3c12;">' + approveLink + '</a></p>'
+      + '<p style="margin:0;font-size:14px;color:#555555;line-height:1.6;">We can usually schedule within 1-2 weeks of approval. Give us a call anytime at (914) 391-5233.</p>'
+      + '</td></tr>'
+      // Footer
+      + '<tr><td style="background:#f0f4ef;border-top:1px solid #d4e6d0;padding:20px 32px;text-align:center;">'
+      + '<p style="margin:0 0 4px;font-size:13px;color:#555555;font-weight:600;">Second Nature Tree Service</p>'
+      + '<p style="margin:0;font-size:12px;color:#888888;">(914) 391-5233 &nbsp;·&nbsp; <a href="mailto:info@peekskilltree.com" style="color:#1a3c12;text-decoration:none;">info@peekskilltree.com</a> &nbsp;·&nbsp; <a href="https://peekskilltree.com" style="color:#1a3c12;text-decoration:none;">peekskilltree.com</a></p>'
+      + '<p style="margin:8px 0 0;font-size:11px;color:#aaaaaa;">Licensed &amp; Insured — WC-32079 (Westchester) · PC-50644 (Putnam)</p>'
+      + '</td></tr>'
+      + '</table>'
+      + '</td></tr>'
+      + '</table>'
+      + '</body></html>';
+
     Workflow._sendViaSupabase(to, subject, body, function(ok) {
       if (!ok) {
         var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
         window.open(mailto, '_blank');
       }
-    });
+    }, { htmlBody: htmlBody });
 
     DB.quotes.update(quoteId, { status: 'sent', sentAt: new Date().toISOString(), sentTo: to });
     UI.closeModal();
@@ -364,23 +417,76 @@ var Workflow = {
     var subject = document.getElementById('inv-send-subject').value;
     var body = document.getElementById('inv-send-body').value;
 
+    // Build HTML email
+    var inv = DB.invoices.getById(invoiceId) || {};
+    var firstName = (inv.clientName || '').split(' ')[0] || 'there';
+    var payLink = 'https://peekskilltree.com/branchmanager/pay.html?id=' + invoiceId;
+    var amountDue = (typeof UI !== 'undefined' && UI.money) ? UI.money(inv.balance || inv.total) : ('$' + (inv.balance || inv.total || '0'));
+    var dueDateStr = (typeof UI !== 'undefined' && UI.dateShort) ? UI.dateShort(inv.dueDate) : (inv.dueDate || '');
+    var htmlBody = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+      + '<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;">'
+      + '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0;">'
+      + '<tr><td align="center">'
+      + '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">'
+      // Header
+      + '<tr><td style="background:#1a3c12;padding:28px 32px;">'
+      + '<p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">Second Nature Tree Service</p>'
+      + '<p style="margin:6px 0 0;font-size:13px;color:#a8d5a2;">Licensed &amp; Insured — Westchester &amp; Putnam Counties</p>'
+      + '</td></tr>'
+      // Body
+      + '<tr><td style="padding:32px;">'
+      + '<p style="margin:0 0 20px;font-size:16px;color:#333333;">Hi ' + firstName + ',</p>'
+      + '<p style="margin:0 0 24px;font-size:15px;color:#555555;line-height:1.6;">Please find your invoice below for the work completed at your property. You can pay online securely using the button below.</p>'
+      // Invoice detail box
+      + '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faf7;border:1px solid #d4e6d0;border-radius:8px;margin-bottom:28px;">'
+      + '<tr><td style="padding:20px 24px;">'
+      + '<p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#1a3c12;text-transform:uppercase;letter-spacing:0.5px;">Invoice Summary</p>'
+      + '<table width="100%" cellpadding="0" cellspacing="0">'
+      + '<tr><td style="padding:6px 0;font-size:14px;color:#666666;">Invoice Number</td><td style="padding:6px 0;font-size:14px;font-weight:600;color:#222222;text-align:right;">#' + (inv.invoiceNumber || '') + '</td></tr>'
+      + '<tr><td style="padding:6px 0;font-size:14px;color:#666666;">Client</td><td style="padding:6px 0;font-size:14px;font-weight:600;color:#222222;text-align:right;">' + (inv.clientName || '') + '</td></tr>'
+      + '<tr><td style="padding:6px 0;font-size:14px;color:#666666;">Amount Due</td><td style="padding:6px 0;font-size:18px;font-weight:700;color:#1a3c12;text-align:right;">' + amountDue + '</td></tr>'
+      + '<tr><td style="padding:6px 0;font-size:14px;color:#666666;">Due Date</td><td style="padding:6px 0;font-size:14px;font-weight:600;color:#222222;text-align:right;">' + dueDateStr + '</td></tr>'
+      + '</table>'
+      + '</td></tr>'
+      + '</table>'
+      // Pay button
+      + '<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">'
+      + '<tr><td align="center">'
+      + '<a href="' + payLink + '" style="display:inline-block;background:#1a3c12;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 40px;border-radius:8px;letter-spacing:0.3px;">Pay Online Now</a>'
+      + '</td></tr>'
+      + '</table>'
+      + '<p style="margin:0 0 8px;font-size:13px;color:#888888;text-align:center;">Or pay by check payable to <strong>Second Nature Tree Service</strong></p>'
+      + '<p style="margin:0;font-size:12px;color:#aaaaaa;text-align:center;">Direct link: <a href="' + payLink + '" style="color:#1a3c12;">' + payLink + '</a></p>'
+      + '</td></tr>'
+      // Footer
+      + '<tr><td style="background:#f0f4ef;border-top:1px solid #d4e6d0;padding:20px 32px;text-align:center;">'
+      + '<p style="margin:0 0 4px;font-size:13px;color:#555555;font-weight:600;">Second Nature Tree Service</p>'
+      + '<p style="margin:0;font-size:12px;color:#888888;">(914) 391-5233 &nbsp;·&nbsp; <a href="mailto:info@peekskilltree.com" style="color:#1a3c12;text-decoration:none;">info@peekskilltree.com</a> &nbsp;·&nbsp; <a href="https://peekskilltree.com" style="color:#1a3c12;text-decoration:none;">peekskilltree.com</a></p>'
+      + '<p style="margin:8px 0 0;font-size:11px;color:#aaaaaa;">Licensed &amp; Insured — WC-32079 (Westchester) · PC-50644 (Putnam)</p>'
+      + '</td></tr>'
+      + '</table>'
+      + '</td></tr>'
+      + '</table>'
+      + '</body></html>';
+
     // Try SendGrid via Supabase, fallback to mailto
     Workflow._sendViaSupabase(to, subject, body, function(ok) {
       if (!ok) {
         var mailto = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
         window.open(mailto, '_blank');
       }
-    });
+    }, { htmlBody: htmlBody });
 
     DB.invoices.update(invoiceId, { status: 'sent', sentAt: new Date().toISOString(), sentTo: to });
     UI.closeModal();
     UI.toast('Invoice sent to ' + to);
   },
 
-  _sendViaSupabase: function(to, subject, body, callback) {
+  _sendViaSupabase: function(to, subject, body, callback, options) {
+    options = options || {};
     // Use Email.send() (SendGrid) if configured, else let caller handle fallback
     if (typeof Email !== 'undefined' && Email.isConfigured()) {
-      Email.send(to, subject, body).then(function(result) {
+      Email.send(to, subject, body, options).then(function(result) {
         if (callback) callback(result && result.success);
       });
     } else {

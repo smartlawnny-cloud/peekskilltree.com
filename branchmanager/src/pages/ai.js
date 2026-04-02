@@ -33,11 +33,20 @@ var AI = {
       return html;
     }
 
+    // Build context-aware quick actions
+    var overdueInvs = DB.invoices.getAll().filter(function(i) { return i.status !== 'paid' && i.balance > 0 && i.dueDate && new Date(i.dueDate) < new Date(); });
+    var overdueTotal = overdueInvs.reduce(function(s,i){return s+(i.balance||0);},0);
+    var staleQuotes = DB.quotes.getAll().filter(function(q){return (q.status==='sent'||q.status==='awaiting') && q.createdAt && (Date.now()-new Date(q.createdAt).getTime()) > 7*86400000;});
+    var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+    var tomorrowJobs = DB.jobs.getAll().filter(function(j){return j.scheduledDate && j.scheduledDate.substring(0,10)===tomorrow.toISOString().split('T')[0];});
     html += '<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;background:var(--bg);">'
       + '<button onclick="AI._inlineAsk(\'Write a professional quote description for a large oak tree removal near power lines\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">✍️ Quote description</button>'
       + '<button onclick="AI._inlineAsk(\'Draft a friendly follow-up email to a client whose quote has been pending for a week\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">📧 Follow-up email</button>'
       + '<button onclick="AI._inlineAsk(\'Give me a business summary with total revenue, active jobs, open quotes, and recommendations\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">📊 Business summary</button>'
       + '<button onclick="AI._inlineAsk(\'What should I charge for removing a 24-inch DBH oak, 60 feet tall, tight backyard, no bucket truck access?\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">💰 Price estimate</button>'
+      + (overdueInvs.length > 0 ? '<button onclick="AI._inlineAsk(\'I have ' + overdueInvs.length + ' overdue invoices totaling $' + Math.round(overdueTotal).toLocaleString() + '. Write me a firm but professional collection email I can send to late-paying clients.\')" style="font-size:11px;padding:5px 10px;border:1px solid #dc3545;border-radius:14px;background:#fff5f5;cursor:pointer;color:#dc3545;">🔴 ' + overdueInvs.length + ' overdue invoices</button>' : '')
+      + (staleQuotes.length > 0 ? '<button onclick="AI._inlineAsk(\'I have ' + staleQuotes.length + ' quotes that have been sitting unanswered for over a week. Write a short, friendly nudge text message I can send to get a response.\')" style="font-size:11px;padding:5px 10px;border:1px solid #e6a817;border-radius:14px;background:#fffbf0;cursor:pointer;color:#b8860b;">⏳ ' + staleQuotes.length + ' stale quotes</button>' : '')
+      + (tomorrowJobs.length > 0 ? '<button onclick="AI._inlineAsk(\'I have ' + tomorrowJobs.length + ' job' + (tomorrowJobs.length !== 1 ? 's' : '') + ' scheduled for tomorrow. Write a short, friendly reminder text I can send to each client tonight.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--green-dark);border-radius:14px;background:var(--green-bg);cursor:pointer;color:var(--green-dark);">📅 Tomorrow\'s reminders</button>' : '')
       + '</div>';
 
     html += '<div id="ai-messages" style="flex:1;overflow-y:auto;padding:16px;">';
@@ -232,14 +241,21 @@ var AI = {
 
   _renderMessage: function(msg) {
     var isUser = msg.role === 'user';
+    var msgId = 'ai-msg-' + Math.random().toString(36).slice(2, 8);
+    var copyBtn = !isUser
+      ? '<button onclick="(function(){var el=document.getElementById(\'' + msgId + '\');if(!el)return;var t=el.innerText;if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){UI.toast(\'Copied!\');});}else{var ta=document.createElement(\'textarea\');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand(\'copy\');document.body.removeChild(ta);UI.toast(\'Copied!\');}})();" '
+        + 'style="background:none;border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:10px;color:var(--text-light);cursor:pointer;margin-top:4px;display:inline-block;" title="Copy response">📋 Copy</button>'
+      : '';
     return '<div style="display:flex;gap:8px;margin-bottom:16px;' + (isUser ? 'flex-direction:row-reverse;' : '') + '">'
       + '<div style="width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;'
       + (isUser ? 'background:var(--accent);color:#fff;' : 'background:linear-gradient(135deg,#D4A574,#C4956A);color:#fff;') + '">'
       + (isUser ? '👤' : '✦') + '</div>'
       + '<div style="flex:1;max-width:calc(100% - 44px);">'
       + '<div style="font-size:11px;color:var(--text-light);margin-bottom:4px;' + (isUser ? 'text-align:right;' : '') + '">' + (isUser ? 'You' : 'Claude') + '</div>'
-      + '<div style="background:' + (isUser ? 'var(--accent)' : 'var(--bg)') + ';color:' + (isUser ? '#fff' : 'var(--text)') + ';padding:10px 14px;border-radius:' + (isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px') + ';font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;">'
-      + AI._formatResponse(msg.content) + '</div></div></div>';
+      + '<div id="' + msgId + '" style="background:' + (isUser ? 'var(--accent)' : 'var(--bg)') + ';color:' + (isUser ? '#fff' : 'var(--text)') + ';padding:10px 14px;border-radius:' + (isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px') + ';font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;">'
+      + AI._formatResponse(msg.content) + '</div>'
+      + copyBtn
+      + '</div></div>';
   },
 
   _formatResponse: function(text) {
@@ -312,27 +328,42 @@ var AI = {
       return (j.description || 'Job') + ': $' + (j.total || 0);
     }).join('; ');
 
+    var overdueInvoices = unpaidInvoices.filter(function(i) { return i.dueDate && new Date(i.dueDate) < new Date(); });
+    var overdueTotal = overdueInvoices.reduce(function(s,i){return s+(i.balance||0);},0);
+    var newRequests = DB.requests.getAll().filter(function(r){return r.status==='new';});
+    var staleQuotes = openQuotes.filter(function(q){return q.createdAt && (Date.now()-new Date(q.createdAt).getTime()) > 7*86400000;});
+    var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+    var tomorrowStr = tomorrow.toISOString().split('T')[0];
+    var tomorrowJobs = jobs.filter(function(j){return j.scheduledDate && j.scheduledDate.substring(0,10)===tomorrowStr;});
+    var thisYear = new Date().getFullYear();
+    var ytdRevenue = invoices.filter(function(i){return i.status==='paid' && new Date(i.paidDate||i.createdAt).getFullYear()===thisYear;}).reduce(function(s,i){return s+(i.total||0);},0);
+
     return 'You are Claude, an AI assistant built into Branch Manager — a field service management app for Second Nature Tree Service in Peekskill, NY.\n\n'
       + 'BUSINESS CONTEXT:\n'
       + '• Company: Second Nature Tree Service\n'
       + '• Location: Peekskill, NY (serves Westchester & Putnam counties)\n'
-      + '• Phone: (914) 391-5233\n'
+      + '• Phone: (914) 391-5233 | Email: info@peekskilltree.com\n'
       + '• Owner: Doug Brown\n'
-      + '• Services: Tree removal, pruning, stump grinding, cabling, bucket truck work, storm damage, lot clearing\n\n'
-      + 'CURRENT DATA:\n'
+      + '• Licenses: WC-32079 (Westchester), PC-50644 (Putnam)\n'
+      + '• Services: Tree removal, pruning, stump grinding, cabling, bucket truck work, storm damage, lot clearing, firewood, snow removal\n'
+      + '• Reviews: 5.0★ / 100 Google reviews\n\n'
+      + 'LIVE BUSINESS DATA (' + new Date().toLocaleDateString() + '):\n'
       + '• Total clients: ' + clients.length + '\n'
       + '• Total jobs: ' + jobs.length + ' (active: ' + activeJobs.length + ')\n'
-      + '• Total quotes: ' + quotes.length + ' (open: ' + openQuotes.length + ')\n'
-      + '• Unpaid invoices: ' + unpaidInvoices.length + '\n'
-      + '• Total revenue (paid): $' + Math.round(totalRevenue).toLocaleString() + '\n'
+      + '• Total quotes: ' + quotes.length + ' (open/awaiting: ' + openQuotes.length + ', stale 7+ days: ' + staleQuotes.length + ')\n'
+      + '• Unpaid invoices: ' + unpaidInvoices.length + ' (overdue: ' + overdueInvoices.length + ', $' + Math.round(overdueTotal).toLocaleString() + ' past due)\n'
+      + '• New service requests: ' + newRequests.length + '\n'
+      + '• Tomorrow\'s jobs: ' + tomorrowJobs.length + '\n'
+      + '• YTD revenue (' + thisYear + '): $' + Math.round(ytdRevenue).toLocaleString() + '\n'
+      + '• All-time revenue (paid invoices): $' + Math.round(totalRevenue).toLocaleString() + '\n'
       + '• Average job value: $' + Math.round(avgJobValue).toLocaleString() + '\n\n'
       + 'RECENT JOB PRICING:\n' + recentJobs + '\n\n'
       + 'INSTRUCTIONS:\n'
-      + '• Be concise and professional\n'
-      + '• For pricing estimates, use the recent job data and industry standards for the NY/Westchester area\n'
-      + '• For emails/texts, write them ready to send — professional but friendly\n'
-      + '• For business analysis, reference the actual numbers above\n'
-      + '• Keep responses under 300 words unless asked for detail\n'
+      + '• Be concise and professional — responses under 300 words unless detail is requested\n'
+      + '• For pricing estimates, use the recent job data and NY/Westchester market rates\n'
+      + '• For emails/texts, write them ready to copy-paste — professional but warm\n'
+      + '• For business analysis, reference the actual live numbers above\n'
+      + '• When writing client communications, sign as Doug Brown, Second Nature Tree Service\n'
       + '• Use dollar amounts when discussing pricing\n';
   },
 

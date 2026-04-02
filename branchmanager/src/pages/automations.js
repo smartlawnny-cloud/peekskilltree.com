@@ -498,5 +498,71 @@ var AutomationsPage = {
     // Refresh
     var logEl = document.querySelector('#automation-log-container');
     if (logEl) logEl.innerHTML = '';
+  },
+
+  // Called on app startup — run automations once per day (silently)
+  init: function() {
+    var today = new Date().toISOString().split('T')[0];
+    var lastRun = localStorage.getItem('bm-automations-last-run');
+    if (lastRun === today) return; // Already ran today
+
+    // Only run if SendGrid is connected
+    var sgKey = localStorage.getItem('bm-sendgrid-key');
+    if (!sgKey || sgKey.length < 10) return;
+
+    localStorage.setItem('bm-automations-last-run', today);
+    AutomationsPage._logActivity('Auto-run started — ' + today);
+
+    // Run silently (no toasts) using a quiet flag
+    var origToast = UI.toast;
+    var origModal = UI.showModal;
+    UI.toast = function() {};
+    UI.showModal = function() {};
+    try {
+      AutomationsPage.runQuoteFollowups();
+      AutomationsPage.runInvoiceFollowups();
+      AutomationsPage.runVisitReminders();
+      AutomationsPage.runReviewRequests();
+    } finally {
+      UI.toast = origToast;
+      UI.showModal = origModal;
+    }
+    AutomationsPage._logActivity('Auto-run complete — ' + today);
+    console.log('[Automations] Daily run complete:', today);
+  },
+
+  // Poll Supabase for new quote approvals (every 5 min while app is open)
+  startApprovalPolling: function() {
+    if (!window._approvalPollStarted) {
+      window._approvalPollStarted = true;
+      setInterval(AutomationsPage._checkQuoteApprovals, 5 * 60 * 1000);
+    }
+  },
+
+  _checkQuoteApprovals: async function() {
+    if (typeof SupabaseDB === 'undefined' || !SupabaseDB.ready || !SupabaseDB.client) return;
+    try {
+      var since = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // last 5 min
+      var { data, error } = await SupabaseDB.client
+        .from('quotes')
+        .select('id, quote_number, client_name, total, status, updated_at')
+        .eq('status', 'approved')
+        .gte('updated_at', since);
+      if (error || !data || !data.length) return;
+
+      // Check which are new locally
+      var localQuotes = [];
+      try { localQuotes = JSON.parse(localStorage.getItem('bm-quotes') || '[]'); } catch(e) {}
+      data.forEach(function(remote) {
+        var local = localQuotes.find(function(q) { return q.id === remote.id; });
+        if (local && local.status !== 'approved') {
+          local.status = 'approved';
+          UI.toast('✅ Quote #' + remote.quote_number + ' approved by ' + (remote.client_name || 'client') + '!', 'success');
+        }
+      });
+      localStorage.setItem('bm-quotes', JSON.stringify(localQuotes));
+    } catch(e) {
+      // Silent
+    }
   }
 };

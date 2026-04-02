@@ -186,7 +186,7 @@ var AutomationsPage = {
   runInvoiceFollowups: function() {
     var config = AutomationsPage.getConfig();
     var now = new Date();
-    var invoices = DB.invoices.getAll().filter(function(i) { return i.status === 'sent' || i.status === 'overdue'; });
+    var invoices = DB.invoices.getAll().filter(function(i) { return (i.status === 'sent' || i.status === 'overdue' || i.status === 'partial') && (i.balance || 0) > 0; });
     var sent = 0, skipped = 0;
     invoices.forEach(function(inv) {
       if (!inv.dueDate) return;
@@ -346,6 +346,8 @@ var AutomationsPage = {
       DB.jobs.update(job.id, { reviewSentAt: new Date().toISOString() });
       sent++;
     });
+    var rMsg = sent > 0 ? 'Sent ' + sent + ' review request' + (sent !== 1 ? 's' : '') : skipped > 0 ? skipped + ' jobs missing client email' : 'No completed jobs ready for review requests';
+    AutomationsPage._logActivity(rMsg);
     if (sent > 0) {
       UI.toast('Sent ' + sent + ' review request' + (sent !== 1 ? 's' : ''));
     } else if (skipped > 0) {

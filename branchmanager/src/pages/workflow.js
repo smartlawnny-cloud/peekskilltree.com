@@ -160,6 +160,7 @@ var Workflow = {
     var email = (client && client.email) || q.clientEmail || '';
     var firstName = (q.clientName || '').split(' ')[0] || 'there';
 
+    var approveLink = 'https://peekskilltree.com/branchmanager/approve.html?id=' + quoteId;
     var subject = 'Your estimate from Second Nature Tree — Quote #' + (q.quoteNumber || '');
     var body = 'Hi ' + firstName + ',\n\n'
       + 'Thanks for having us out to take a look! Here\'s your estimate for the work we discussed.\n\n'
@@ -167,8 +168,9 @@ var Workflow = {
       + '📍 ' + (q.property || 'Your property') + '\n'
       + '💰 Total: ' + UI.money(q.total) + '\n\n'
       + (q.description ? '📝 ' + q.description + '\n\n' : '')
-      + 'To approve this quote, just reply "approved" to this email or call (914) 391-5233.\n\n'
-      + 'We can usually schedule within 1-2 weeks of approval.\n\n'
+      + '✅ Review & Approve Online:\n' + approveLink + '\n\n'
+      + 'You can approve, request changes, or ask questions directly from that link.\n\n'
+      + 'We can usually schedule within 1-2 weeks of approval. Give us a call anytime at (914) 391-5233.\n\n'
       + 'Doug Brown\nSecond Nature Tree Service\n(914) 391-5233\ninfo@peekskilltree.com';
 
     var html = '<div style="padding:16px;">'
@@ -220,17 +222,15 @@ var Workflow = {
     var email = (client && client.email) || inv.clientEmail || '';
     var firstName = (inv.clientName || '').split(' ')[0] || 'there';
 
+    var payLink = 'https://peekskilltree.com/branchmanager/pay.html?id=' + invoiceId;
     var subject = 'Invoice #' + inv.invoiceNumber + ' from Second Nature Tree Service — ' + UI.money(inv.total);
     var body = 'Hi ' + firstName + ',\n\n'
       + 'Please find your invoice attached for the work completed at your property.\n\n'
       + '🧾 Invoice #' + inv.invoiceNumber + '\n'
       + '💰 Amount Due: ' + UI.money(inv.balance || inv.total) + '\n'
       + '📅 Due: ' + UI.dateShort(inv.dueDate) + '\n\n'
-      + 'Payment Options:\n'
-      + '• 💳 Credit Card — reply to this email and we\'ll send a secure payment link\n'
-      + '• 📝 Check — payable to Second Nature Tree Service\n'
-      + '• Venmo — @SecondNatureTree\n'
-      + '• Zelle — info@peekskilltree.com\n\n'
+      + '💳 Pay Online (card, Venmo, Zelle):\n' + payLink + '\n\n'
+      + 'Or pay by check payable to Second Nature Tree Service.\n\n'
       + 'Thank you for choosing Second Nature Tree Service!\n\n'
       + 'Doug Brown\n(914) 391-5233\ninfo@peekskilltree.com';
 
@@ -272,7 +272,7 @@ var Workflow = {
       }
     });
 
-    DB.invoices.update(invoiceId, { status: 'awaiting_payment', sentAt: new Date().toISOString(), sentTo: to });
+    DB.invoices.update(invoiceId, { status: 'sent', sentAt: new Date().toISOString(), sentTo: to });
     UI.closeModal();
     UI.toast('Invoice sent to ' + to);
   },

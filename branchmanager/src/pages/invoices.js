@@ -44,12 +44,15 @@ var InvoicesPage = {
       + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
       + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + UI.moneyInt(avgInvoice) + '</div>'
       + '</div>'
-      // Payment time
-      + '<div style="padding:14px 16px;">'
-      + '<div style="font-size:14px;font-weight:700;">Invoice payment time</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:12px;">' + paid + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Paid invoices</div>'
-      + '</div>'
+      // Total collected
+      + (function() {
+        var totalCollected = all.filter(function(i){return i.status==='paid';}).reduce(function(s,i){return s+(i.total||0);},0);
+        return '<div style="padding:14px 16px;">'
+          + '<div style="font-size:14px;font-weight:700;">Total Collected</div>'
+          + '<div style="font-size:22px;font-weight:800;margin-top:12px;color:var(--green-dark);">' + UI.moneyInt(totalCollected) + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">' + paid + ' paid invoices</div>'
+          + '</div>';
+      })()
       + '</div>';
 
     var filtered = self._getFiltered();

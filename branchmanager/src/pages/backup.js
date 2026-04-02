@@ -4,8 +4,21 @@
  */
 var BackupPage = {
   render: function() {
+    var lastBackup = BackupPage._getLastBackupDate();
+    var daysSince = lastBackup ? Math.floor((Date.now() - new Date(lastBackup)) / 86400000) : 999;
+
     var html = '<div class="section-header"><h2>Backup & Restore</h2>'
       + '<p style="color:var(--text-light);margin-top:4px;">Download a full backup of all your data, or restore from a previous backup.</p></div>';
+
+    // Auto-backup warning banner
+    if (daysSince > 7) {
+      html += '<div style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">'
+        + '<span style="font-size:20px;">&#9888;&#65039;</span>'
+        + '<div><strong style="color:#e65100;">Backup overdue</strong> — '
+        + (lastBackup ? 'Last backup was <strong>' + daysSince + ' days ago</strong>.' : 'You have <strong>never backed up</strong> your data.')
+        + ' Download a backup now to protect your data.</div>'
+        + '</div>';
+    }
 
     // Data summary
     var clients = DB.clients.getAll().length;
@@ -29,6 +42,35 @@ var BackupPage = {
       + '</div>'
       + '<p style="font-size:12px;color:var(--text-light);margin-top:8px;">Backup includes all clients, quotes, jobs, invoices, requests, expenses, settings, and communication logs.</p>'
       + '</div>';
+
+    // Recent backup history
+    var history = BackupPage._getHistory();
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<h3 style="font-size:15px;margin-bottom:12px;">Recent Backups</h3>';
+    if (history.length === 0) {
+      html += '<div style="font-size:13px;color:var(--text-light);">No backups recorded yet. Download your first backup above.</div>';
+    } else {
+      history.forEach(function(h) {
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'
+          + '<div><strong>' + h.date.split('T')[0] + '</strong>'
+          + ' <span style="color:var(--text-light);">' + new Date(h.date).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + '</span></div>'
+          + '<div style="color:var(--text-light);">'
+          + h.clients + ' clients &middot; ' + h.quotes + ' quotes &middot; ' + h.jobs + ' jobs &middot; ' + h.invoices + ' invoices'
+          + ' &middot; <span style="color:var(--green-dark);font-weight:600;">' + h.size + '</span></div>'
+          + '</div>';
+      });
+    }
+    html += '</div>';
+
+    // CSV Export
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<h3 style="font-size:15px;margin-bottom:8px;">Export as CSV</h3>'
+      + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Download individual data sets as CSV files for use in Excel or Google Sheets.</p>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button onclick="BackupPage.exportCSV(\'clients\')" style="background:#e3f2fd;color:#1565c0;border:none;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">&#128196; Clients CSV</button>'
+      + '<button onclick="BackupPage.exportCSV(\'jobs\')" style="background:#e8f5e9;color:#2e7d32;border:none;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">&#128196; Jobs CSV</button>'
+      + '<button onclick="BackupPage.exportCSV(\'invoices\')" style="background:#fff3e0;color:#e65100;border:none;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">&#128196; Invoices CSV</button>'
+      + '</div></div>';
 
     // Restore
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
@@ -83,6 +125,24 @@ var BackupPage = {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
+    // Save to backup history
+    var sizeBytes = json.length;
+    var sizeLabel = sizeBytes > 1048576 ? (sizeBytes / 1048576).toFixed(1) + ' MB'
+      : sizeBytes > 1024 ? Math.round(sizeBytes / 1024) + ' KB'
+      : sizeBytes + ' B';
+    var histEntry = {
+      date: backup.date,
+      clients: DB.clients.getAll().length,
+      quotes: DB.quotes.getAll().length,
+      jobs: DB.jobs.getAll().length,
+      invoices: DB.invoices.getAll().length,
+      size: sizeLabel
+    };
+    var hist = BackupPage._getHistory();
+    hist.unshift(histEntry);
+    if (hist.length > 5) hist = hist.slice(0, 5);
+    localStorage.setItem('bm-backup-history', JSON.stringify(hist));
+
     UI.toast('Backup downloaded!');
   },
 
@@ -122,6 +182,50 @@ var BackupPage = {
       }
     };
     reader.readAsText(file);
+  },
+
+  _getHistory: function() {
+    try { return JSON.parse(localStorage.getItem('bm-backup-history')) || []; } catch(e) { return []; }
+  },
+
+  _getLastBackupDate: function() {
+    var hist = BackupPage._getHistory();
+    return hist.length > 0 ? hist[0].date : null;
+  },
+
+  exportCSV: function(type) {
+    var data, headers, filename;
+    if (type === 'clients') {
+      data = DB.clients.getAll();
+      headers = ['id', 'name', 'phone', 'email', 'address', 'city', 'status'];
+      filename = 'clients.csv';
+    } else if (type === 'jobs') {
+      data = DB.jobs.getAll();
+      headers = ['id', 'clientName', 'description', 'status', 'scheduledDate', 'total'];
+      filename = 'jobs.csv';
+    } else if (type === 'invoices') {
+      data = DB.invoices.getAll();
+      headers = ['id', 'clientName', 'invoiceNumber', 'status', 'dueDate', 'total', 'balance'];
+      filename = 'invoices.csv';
+    } else {
+      return;
+    }
+    var csv = headers.join(',') + '\n' + data.map(function(row) {
+      return headers.map(function(h) {
+        var val = row[h] != null ? String(row[h]) : '';
+        return '"' + val.replace(/"/g, '""') + '"';
+      }).join(',');
+    }).join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    UI.toast(type.charAt(0).toUpperCase() + type.slice(1) + ' exported as CSV!');
   },
 
   _getLocalSize: function() {

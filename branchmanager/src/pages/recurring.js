@@ -6,8 +6,37 @@ var RecurringJobs = {
   render: function() {
     var recurring = RecurringJobs.getAll();
     var activeCount = recurring.filter(function(r) { return r.active; }).length;
-    var html = '<div class="section-header"><h2>Recurring Jobs' + (activeCount > 0 ? ' <span style="font-size:14px;font-weight:600;background:#e8f5e9;color:#2e7d32;padding:2px 10px;border-radius:12px;vertical-align:middle;">' + activeCount + ' active</span>' : '') + '</h2>'
-      + '<p style="color:var(--text-light);margin-top:4px;">Jobs that repeat automatically on a schedule.</p></div>';
+    var monthlyRevenue = recurring.filter(function(r) { return r.active; }).reduce(function(s, r) {
+      var multipliers = { weekly: 4.33, biweekly: 2.17, monthly: 1, quarterly: 0.33, biannual: 0.17, annual: 0.08 };
+      return s + (r.price || 0) * (multipliers[r.frequency] || 1);
+    }, 0);
+    var dueSoon7 = new Date(Date.now() + 7 * 86400000);
+    var nextDueCount = recurring.filter(function(r) {
+      return r.active && new Date(RecurringJobs._getNextDate(r)) <= dueSoon7;
+    }).length;
+    var annualValue = monthlyRevenue * 12;
+
+    var html = '<div class="section-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">'
+      + '<div><h2>Recurring Jobs' + (activeCount > 0 ? ' <span style="font-size:14px;font-weight:600;background:#e8f5e9;color:#2e7d32;padding:2px 10px;border-radius:12px;vertical-align:middle;">' + activeCount + ' active</span>' : '') + '</h2>'
+      + '<p style="color:var(--text-light);margin-top:4px;">Jobs that repeat automatically on a schedule.</p></div>'
+      + (recurring.length > 0 ? '<button onclick="RecurringJobs.generateAllDue()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap;">&#9889; Generate All Due</button>' : '')
+      + '</div>';
+
+    // Stats header
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">'
+      + '<div style="background:var(--white);border-radius:12px;padding:14px 12px;border:1px solid var(--border);text-align:center;">'
+      + '<div style="font-size:22px;font-weight:800;color:var(--green-dark);">' + activeCount + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Active Jobs</div></div>'
+      + '<div style="background:var(--white);border-radius:12px;padding:14px 12px;border:1px solid var(--border);text-align:center;">'
+      + '<div style="font-size:22px;font-weight:800;color:var(--green-dark);">' + UI.money(monthlyRevenue) + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Monthly Revenue</div></div>'
+      + '<div style="background:var(--white);border-radius:12px;padding:14px 12px;border:1px solid var(--border);text-align:center;">'
+      + '<div style="font-size:22px;font-weight:800;color:' + (nextDueCount > 0 ? '#e65100' : 'var(--text-light)') + ';">' + nextDueCount + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Due in 7 Days</div></div>'
+      + '<div style="background:var(--white);border-radius:12px;padding:14px 12px;border:1px solid var(--border);text-align:center;">'
+      + '<div style="font-size:22px;font-weight:800;color:var(--green-dark);">' + UI.money(annualValue) + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Annual Value</div></div>'
+      + '</div>';
 
     // Add new recurring job
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
@@ -74,6 +103,7 @@ var RecurringJobs = {
           + '<span style="font-weight:700;color:var(--green-dark);font-size:15px;">' + UI.money(r.price) + '</span>'
           + '<button onclick="RecurringJobs.toggle(\'' + r.id + '\')" style="background:' + (r.active ? '#fff3e0' : '#e8f5e9') + ';border:none;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">' + (r.active ? 'Pause' : 'Resume') + '</button>'
           + '<button onclick="RecurringJobs.generateJob(\'' + r.id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">Generate Job</button>'
+          + '<button onclick="RecurringJobs.delete(\'' + r.id + '\')" style="background:#ffebee;color:#c62828;border:none;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">Delete</button>'
           + '</div></div>';
       });
     } else {
@@ -146,6 +176,30 @@ var RecurringJobs = {
     rec.lastGenerated = new Date().toISOString();
     localStorage.setItem('bm-recurring', JSON.stringify(all));
     UI.toast('Job created for ' + rec.clientName + ' on ' + UI.dateShort(nextDate));
+  },
+
+  delete: function(id) {
+    if (!confirm('Remove this recurring job?')) return;
+    var all = RecurringJobs.getAll().filter(function(r) { return r.id !== id; });
+    localStorage.setItem('bm-recurring', JSON.stringify(all));
+    UI.toast('Recurring job removed');
+    loadPage('recurring');
+  },
+
+  generateAllDue: function() {
+    var all = RecurringJobs.getAll();
+    var cutoff = new Date(Date.now() + 7 * 86400000);
+    var count = 0;
+    all.forEach(function(r) {
+      if (!r.active) return;
+      var next = new Date(RecurringJobs._getNextDate(r));
+      if (next <= cutoff) {
+        RecurringJobs.generateJob(r.id);
+        count++;
+      }
+    });
+    if (count === 0) UI.toast('No jobs due in the next 7 days');
+    else UI.toast(count + ' job' + (count > 1 ? 's' : '') + ' generated!', 'success');
   },
 
   getAll: function() {

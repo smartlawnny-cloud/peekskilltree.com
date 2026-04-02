@@ -172,13 +172,16 @@ var SettingsPage = {
       + '<div id="import-status" style="margin-top:12px;font-size:13px;color:var(--green-dark);"></div>'
       + '</div>';
 
-    // Danger Zone
+    // Data Management
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid #ffcdd2;margin-bottom:16px;">'
       + '<h3 style="color:var(--red);margin-bottom:8px;">Data Management</h3>'
-      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
+      + '<button class="btn btn-outline" onclick="SettingsPage.deduplicateTags()">Fix Duplicate Tags</button>'
       + '<button class="btn btn-outline" onclick="SettingsPage.resetDemo()">Reset to Demo Data</button>'
       + '<button class="btn" style="background:var(--red);color:#fff;" onclick="SettingsPage.clearAll()">Clear All Data</button>'
-      + '</div></div>';
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">"Fix Duplicate Tags" removes duplicate tags from imported client records (e.g., [VIP, VIP] → [VIP]).</div>'
+      + '</div>';
 
     // About
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
@@ -325,6 +328,23 @@ var SettingsPage = {
       UI.toast(total + ' records synced from cloud!');
     }
     if (btn) { btn.textContent = 'Sync Now'; btn.disabled = false; }
+    loadPage('settings');
+  },
+
+  deduplicateTags: function() {
+    var clients = JSON.parse(localStorage.getItem('bm-clients') || '[]');
+    var fixed = 0;
+    clients.forEach(function(c) {
+      if (!c.tags || !c.tags.length) return;
+      var seen = {};
+      var uniq = c.tags.filter(function(t) {
+        var k = (t || '').toLowerCase();
+        return k && (seen[k] ? false : (seen[k] = true));
+      });
+      if (uniq.length < c.tags.length) { c.tags = uniq; fixed++; }
+    });
+    localStorage.setItem('bm-clients', JSON.stringify(clients));
+    UI.toast('Fixed ' + fixed + ' client' + (fixed !== 1 ? 's' : '') + ' with duplicate tags');
     loadPage('settings');
   },
 

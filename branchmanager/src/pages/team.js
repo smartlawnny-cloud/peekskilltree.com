@@ -163,10 +163,10 @@ var TeamPage = {
       + UI.formField('Phone', 'tel', 'tm-phone', m.phone, { placeholder: '(914) 555-0000' })
       + UI.formField('Email', 'email', 'tm-email', m.email, { placeholder: 'email@example.com' })
       + '</div>'
-      + UI.formField('Role', 'select', 'tm-role', m.role || 'crew', { options: [
+      + UI.formField('Role', 'select', 'tm-role', m.role || 'crew_member', { options: [
           { value: 'owner', label: 'Owner — Full access' },
           { value: 'crew_lead', label: 'Crew Lead — Jobs, schedule, clients' },
-          { value: 'crew', label: 'Crew Member — Clock in/out, today\'s jobs' }
+          { value: 'crew_member', label: 'Crew Member — Clock in/out, today\'s jobs' }
         ]})
 
       // ISA Certification section

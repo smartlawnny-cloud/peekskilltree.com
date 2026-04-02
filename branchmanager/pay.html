@@ -167,6 +167,8 @@
 
     var isCustomActive = state.tipPct === -1;
     var stripeLink = inv.stripe_payment_url || inv.stripePaymentUrl || '';
+    if (!stripeLink) { try { stripeLink = localStorage.getItem('bm-stripe-base-link') || ''; } catch(e) {} }
+    if (!stripeLink) { stripeLink = params.get('stripe') || ''; }
 
     el.innerHTML = '<div class="card">'
       + '<div class="card-header">'
@@ -250,10 +252,14 @@
       var balance = parseFloat(inv.balance || inv.total || 0);
       var grandTotal = balance + state.tip;
 
-      // Get payment link: invoice-specific OR base link from URL param
+      // Get payment link: invoice-specific → localStorage base link → URL param
       var stripeLink = inv.stripe_payment_url || inv.stripePaymentUrl || '';
 
-      // Fall back to base link passed as URL param (set by admin when generating pay link)
+      // Fall back to base link stored in localStorage (same domain as main app)
+      if (!stripeLink) {
+        try { stripeLink = localStorage.getItem('bm-stripe-base-link') || ''; } catch(e) {}
+      }
+      // Final fallback: base link passed as URL param
       if (!stripeLink) {
         stripeLink = params.get('stripe') || '';
       }

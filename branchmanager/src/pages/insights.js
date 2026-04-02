@@ -247,7 +247,7 @@ var InsightsPage = {
         }
       }
     });
-    var avgConversionDays = quotesToJobDays.length > 0 ? Math.round(quotesToJobDays.reduce(function(s,d){return s+d;},0) / quotesToJobDays.length) : 0;
+    var avgConversionDays = quotesToJobDays.length > 0 ? Math.round(quotesToJobDays.reduce(function(s,d){return s+d;},0) / quotesToJobDays.length) : null;
 
     html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;" class="stat-row">'
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
@@ -261,7 +261,7 @@ var InsightsPage = {
       + '<div style="font-size:24px;font-weight:800;color:#e65100;margin-top:4px;">' + closeRate + '%</div></div>'
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Quote → Job</div>'
-      + '<div style="font-size:24px;font-weight:800;color:#6a1b9a;margin-top:4px;">' + avgConversionDays + ' days</div></div>'
+      + '<div style="font-size:24px;font-weight:800;color:#6a1b9a;margin-top:4px;">' + (avgConversionDays !== null ? avgConversionDays + ' days' : '—') + '</div></div>'
       + '</div>';
 
     return html;

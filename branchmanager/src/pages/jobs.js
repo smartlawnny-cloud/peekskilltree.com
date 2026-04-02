@@ -796,6 +796,25 @@ var JobsPage = {
     DB.jobs.update(id, { status: 'completed', completedAt: new Date().toISOString() });
     UI.closeModal();
 
+    // Silently trigger review request email in background (2s delay so modal renders first)
+    setTimeout(function() {
+      if (typeof AutomationsPage !== 'undefined') {
+        var config = AutomationsPage.getConfig();
+        if (config.reviewRequest && config.reviewRequest.enabled) {
+          var origToast = UI.toast;
+          UI.toast = function(){};
+          try { AutomationsPage.runReviewRequests(); } finally {
+            setTimeout(function() { UI.toast = origToast; }, 100);
+          }
+        }
+      }
+    }, 2000);
+
+    // Build modal footer — include review request button if email is configured
+    var reviewBtn = (typeof Email !== 'undefined' && Email.isConfigured())
+      ? ' <button class="btn btn-outline" onclick="UI.closeModal();AutomationsPage.runReviewRequests();">📧 Send Review Request</button>'
+      : '';
+
     // Prompt to create invoice
     if (!j.invoiceId) {
       var modal = '<div style="text-align:center;padding:8px 0;">'
@@ -806,7 +825,9 @@ var JobsPage = {
         + '<button class="btn btn-outline" onclick="UI.closeModal();loadPage(\'jobs\');">Not Yet</button>'
         + '<button class="btn btn-primary" onclick="UI.closeModal();JobsPage.createInvoice(\'' + id + '\');loadPage(\'invoices\');">Create Invoice Now</button>'
         + '</div></div>';
-      UI.showModal('Job Completed', modal);
+      UI.showModal('Job Completed', modal, {
+        footer: '<button class="btn btn-outline" onclick="UI.closeModal();loadPage(\'jobs\');">Close</button>' + reviewBtn
+      });
     } else {
       UI.toast('Job marked complete');
       loadPage('jobs');

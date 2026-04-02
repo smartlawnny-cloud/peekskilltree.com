@@ -463,7 +463,21 @@ var Workflow = {
     });
     localStorage.setItem(pKey, JSON.stringify(allPmts));
 
-    UI.toast('Payment recorded — ' + UI.money(amount) + ' via ' + method);
+    if (isFullyPaid) {
+      UI.toast('Payment recorded! ✅ Invoice #' + (inv.invoiceNumber || invoiceId) + ' marked paid.');
+      // Optionally send thank-you email if email is configured and client has an address
+      var clientEmail = inv.clientEmail || '';
+      if (clientEmail && typeof Email !== 'undefined' && Email.isConfigured()) {
+        var firstName = (inv.clientName || '').split(' ')[0] || 'there';
+        var thankSubject = 'Thank you for your payment — Second Nature Tree Service';
+        var thankBody = 'Hi ' + firstName + ',\n\nThank you for your payment of ' + UI.money(amount) + '! Invoice #' + (inv.invoiceNumber || '') + ' is now paid in full.\n\n'
+          + 'We appreciate your business and look forward to serving you again.\n\n'
+          + 'Thank you,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+        Email.send(clientEmail, thankSubject, thankBody);
+      }
+    } else {
+      UI.toast('Payment recorded — ' + UI.money(amount) + ' via ' + method + '. Balance: ' + UI.money(newBalance));
+    }
     UI.closeModal();
     if (typeof InvoicesPage !== 'undefined') InvoicesPage.showDetail(invoiceId);
   }

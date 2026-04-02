@@ -79,25 +79,27 @@ var CloudSync = {
       var origUpdate = dbSection.update;
       var origRemove = dbSection.remove;
 
-      // Wrap create — write local + cloud
+      // Wrap create — pre-assign UUID so local + cloud IDs always match
       dbSection.create = function(record) {
+        // Inject UUID before local create so both sides use the same ID
+        if (!record.id || record.id.indexOf('-') === -1) {
+          record.id = CloudSync._uuid();
+        }
         var result = origCreate.call(dbSection, record);
-        // Async push to cloud
         var cloudRecord = CloudSync._toSnake(result);
-        cloudRecord.id = CloudSync._uuid(); // Ensure UUID format
+        // ID is already a UUID — no need to overwrite
         sb.from(table).insert(cloudRecord).then(function(res) {
           if (res.error) console.warn('Cloud create error (' + table + '):', res.error.message);
         });
         return result;
       };
 
-      // Wrap update
+      // Wrap update — find record in local cache and update cloud by same ID
       if (origUpdate) {
         dbSection.update = function(id, changes) {
           var result = origUpdate.call(dbSection, id, changes);
           var cloudChanges = CloudSync._toSnake(changes);
           cloudChanges.updated_at = new Date().toISOString();
-          // Try to find the UUID for this record
           var all = JSON.parse(localStorage.getItem(localKey) || '[]');
           var record = all.find(function(r) { return r.id === id; });
           if (record && record.id) {
@@ -105,6 +107,17 @@ var CloudSync = {
               if (res.error) console.warn('Cloud update error (' + table + '):', res.error.message);
             });
           }
+          return result;
+        };
+      }
+
+      // Wrap remove — delete from cloud when deleted locally
+      if (origRemove) {
+        dbSection.remove = function(id) {
+          var result = origRemove.call(dbSection, id);
+          sb.from(table).delete().eq('id', id).then(function(res) {
+            if (res.error) console.warn('Cloud delete error (' + table + '):', res.error.message);
+          });
           return result;
         };
       }

@@ -337,11 +337,12 @@ var AutomationsPage = {
       if (!email) { skipped++; return; }
       var firstName = (job.clientName || '').split(' ')[0] || 'there';
       var subject = 'How did we do? — Second Nature Tree Service';
-      var body = 'Hi ' + firstName + ',\n\nThank you so much for choosing Second Nature Tree Service! We hope everything looks great.\n\n'
-        + 'If you have a moment, we\'d really appreciate a Google review — it helps other homeowners find us:\n\n'
-        + '⭐ https://g.page/r/CcVkZHV_EKlEEBM/review\n\n'
-        + 'It only takes 30 seconds and means the world to a small business.\n\n'
-        + 'Thank you,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+      var reviewLink = 'https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG8tiRmM';
+      var body = 'Hi ' + firstName + ',\n\nThank you so much for choosing Second Nature Tree Service! We hope everything turned out exactly how you imagined.\n\n'
+        + 'If you have a moment, we\'d love to hear about your experience. Leaving a quick Google review helps other homeowners in the area find trusted tree care:\n\n'
+        + '⭐ Leave a Review: ' + reviewLink + '\n\n'
+        + 'It takes less than a minute and means the world to our small business.\n\n'
+        + 'Thank you for your support,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
       if (typeof Email !== 'undefined') Email.send(email, subject, body);
       DB.jobs.update(job.id, { reviewSentAt: new Date().toISOString() });
       sent++;

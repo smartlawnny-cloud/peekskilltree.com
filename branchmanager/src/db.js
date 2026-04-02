@@ -153,6 +153,24 @@ var DB = (function() {
     remove: function(id) { remove(KEYS.invoices, id); },
     search: function(q) { return search(KEYS.invoices, q); },
     count: function(filterFn) { return count(KEYS.invoices, filterFn); },
+    markOverdue: function() {
+      var today = new Date().toISOString().split('T')[0];
+      var all = _get(KEYS.invoices);
+      var changed = 0;
+      all.forEach(function(inv, idx) {
+        if (inv.status === 'past_due') {
+          all[idx].status = 'overdue';
+          all[idx].updatedAt = _now();
+          changed++;
+        } else if (inv.status !== 'paid' && inv.status !== 'cancelled' && inv.status !== 'overdue' && inv.status !== 'draft' && inv.dueDate && inv.dueDate.substring(0, 10) < today) {
+          all[idx].status = 'overdue';
+          all[idx].updatedAt = _now();
+          changed++;
+        }
+      });
+      if (changed > 0) _set(KEYS.invoices, all);
+      return changed;
+    },
     totalReceivable: function() {
       return getAll(KEYS.invoices).reduce(function(sum, inv) {
         if (inv.status !== 'paid') return sum + (inv.balance || inv.total || 0);

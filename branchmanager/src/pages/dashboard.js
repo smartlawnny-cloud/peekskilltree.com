@@ -59,12 +59,16 @@ var DashboardPage = {
           action: 'loadPage(\'quotes\');'
         });
       }
-      var bNeedsInvoicing = allJobs.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+      var ago90 = new Date(now.getTime() - 90 * 86400000);
+      var bNeedsInvoicing = allJobs.filter(function(j) {
+        if (j.status !== 'completed' || j.invoiceId) return false;
+        return j.createdAt && new Date(j.createdAt) > ago90;
+      });
       var bNeedsInvTotal = bNeedsInvoicing.reduce(function(s, j) { return s + (j.total || 0); }, 0);
       if (bNeedsInvoicing.length > 0) {
         briefingInsights.push({
           icon: '💵',
-          text: bNeedsInvoicing.length + ' completed job' + (bNeedsInvoicing.length > 1 ? 's' : '') + ' haven\'t been invoiced yet — ' + UI.money(bNeedsInvTotal) + ' in revenue waiting',
+          text: bNeedsInvoicing.length + ' recent completed job' + (bNeedsInvoicing.length > 1 ? 's' : '') + ' haven\'t been invoiced — ' + UI.money(bNeedsInvTotal) + ' waiting',
           action: 'loadPage(\'jobs\');'
         });
       }
@@ -139,7 +143,7 @@ var DashboardPage = {
     var changesQuotes = allQuotes.filter(function(q) { return q.status === 'changes_requested'; });
     var approvedQuotes = allQuotes.filter(function(q) { return q.status === 'approved'; });
     var lateJobs = allJobs.filter(function(j) { return j.status === 'late'; });
-    var activeJobs = allJobs.filter(function(j) { return j.status === 'active' || j.status === 'in_progress' || j.status === 'scheduled'; });
+    var activeJobs = allJobs.filter(function(j) { return j.status === 'in_progress' || j.status === 'scheduled'; });
     var needsInvoicing = allJobs.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
     var actionJobs = allJobs.filter(function(j) { return j.status === 'action_required'; });
     var sentInvoices = allInvoices.filter(function(i) { return i.status === 'sent' && (!i.dueDate || new Date(i.dueDate) >= now); });
@@ -365,7 +369,7 @@ var DashboardPage = {
       return q.status === 'sent' && q.createdAt && new Date(q.createdAt) < sevenDaysAgo;
     });
     var unscheduledJobs = allJobs.filter(function(j) {
-      return (j.status === 'active' || j.status === 'approved' || j.status === 'scheduled') && !j.scheduledDate;
+      return (j.status === 'in_progress' || j.status === 'scheduled') && !j.scheduledDate;
     });
     var unsignedQuotes = allQuotes.filter(function(q) {
       return q.status === 'sent' || q.status === 'awaiting';

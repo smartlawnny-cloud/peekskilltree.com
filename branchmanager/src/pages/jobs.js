@@ -13,7 +13,7 @@ var JobsPage = {
     var completed = all.filter(function(j) { return j.status === 'completed'; }).length;
 
     // Jobber-style stat cards row
-    var activeJobs = all.filter(function(j) { return j.status === 'active' || j.status === 'in_progress' || j.status === 'scheduled'; });
+    var activeJobs = all.filter(function(j) { return j.status === 'in_progress' || j.status === 'scheduled'; });
     var needsInvoicing = all.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
     var actionReq = all.filter(function(j) { return j.status === 'action_required'; });
     var unscheduled = all.filter(function(j) { return !j.scheduledDate; });

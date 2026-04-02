@@ -90,11 +90,11 @@ var InvoicesPage = {
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
       + '<th style="width:32px;"><input type="checkbox" onchange="InvoicesPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
-      + self._sortTh('Client', 'clientName') + self._sortTh('#', 'invoiceNumber') + self._sortTh('Due', 'dueDate') + '<th>Subject</th>' + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;') + self._sortTh('Balance', 'balance', 'text-align:right;')
+      + self._sortTh('Client', 'clientName') + self._sortTh('#', 'invoiceNumber') + self._sortTh('Due', 'dueDate') + '<th>Subject</th>' + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;') + self._sortTh('Balance', 'balance', 'text-align:right;') + '<th></th>'
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
-      html += '<tr><td colspan="8">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No invoices match "' + self._search + '"</div>' : UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.')) + '</td></tr>';
+      html += '<tr><td colspan="9">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No invoices match "' + self._search + '"</div>' : UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.')) + '</td></tr>';
     } else {
       page.forEach(function(inv) {
         html += '<tr style="cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')">'
@@ -106,6 +106,11 @@ var InvoicesPage = {
           + '<td>' + UI.statusBadge(inv.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(inv.total) + '</td>'
           + '<td style="text-align:right;font-weight:600;color:' + ((inv.balance||0) > 0 ? 'var(--red)' : 'var(--accent)') + ';">' + UI.money(inv.balance || 0) + '</td>'
+          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:12px;">'
+          + (inv.status !== 'paid' && inv.status !== 'cancelled' && (inv.balance || 0) > 0
+            ? '<button onclick="event.stopPropagation();InvoicesPage._quickPay(\'' + inv.id + '\')" style="font-size:11px;padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">✓ Paid</button>'
+            : '')
+          + '</td>'
           + '</tr>';
       });
     }
@@ -175,6 +180,19 @@ var InvoicesPage = {
   },
   _getSelected: function() {
     return Array.from(document.querySelectorAll('.inv-check:checked')).map(function(cb) { return cb.value; });
+  },
+  _quickPay: function(id) {
+    var inv = DB.invoices.getById(id);
+    if (!inv) return;
+    UI.confirm('Mark invoice #' + inv.invoiceNumber + ' for ' + UI.esc(inv.clientName || '') + ' as paid?', function() {
+      if (typeof Workflow !== 'undefined') {
+        Workflow.markPaid(id, 'check');
+      } else {
+        DB.invoices.update(id, { status: 'paid', balance: 0, paidDate: new Date().toISOString() });
+      }
+      UI.toast('Invoice #' + inv.invoiceNumber + ' marked paid');
+      loadPage('invoices');
+    });
   },
   _batchPaid: function() {
     var ids = InvoicesPage._getSelected();

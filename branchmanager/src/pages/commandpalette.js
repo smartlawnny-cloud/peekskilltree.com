@@ -18,7 +18,7 @@ var CommandPalette = {
     { category: 'Navigate', label: 'Go to Jobs', icon: '🔧', action: function() { loadPage('jobs'); }, keywords: 'work orders tasks' },
     { category: 'Navigate', label: 'Go to Invoices', icon: '💰', action: function() { loadPage('invoices'); }, keywords: 'billing payments' },
     { category: 'Navigate', label: 'Go to Pipeline', icon: '📊', action: function() { loadPage('pipeline'); }, keywords: 'sales funnel' },
-    { category: 'Navigate', label: 'Go to Timesheets', icon: '⏱', action: function() { loadPage('timesheets'); }, keywords: 'time tracking hours' },
+    { category: 'Navigate', label: 'Go to Timesheets', icon: '⏱', action: function() { loadPage('timesheet'); }, keywords: 'time tracking hours' },
     { category: 'Navigate', label: 'Go to Expenses', icon: '💸', action: function() { loadPage('expenses'); }, keywords: 'costs receipts' },
     { category: 'Navigate', label: 'Go to Reporting', icon: '📈', action: function() { loadPage('reports'); }, keywords: 'analytics stats' },
     { category: 'Navigate', label: 'Go to Team', icon: '👷', action: function() { loadPage('team'); }, keywords: 'crew employees staff' },
@@ -42,10 +42,10 @@ var CommandPalette = {
     { category: 'Actions', label: 'Sync to Cloud', icon: '☁️', action: function() { if(typeof CloudSync!=='undefined') CloudSync.refresh(); loadPage('backup'); }, keywords: 'upload backup save' },
     { category: 'Actions', label: 'Export All Data', icon: '📦', action: function() { if(typeof BackupPage!=='undefined') BackupPage.downloadBackup(); }, keywords: 'download backup' },
     { category: 'Actions', label: 'Show Keyboard Shortcuts', icon: '⌨️', action: function() { CommandPalette._showShortcuts(); }, keywords: 'hotkeys keys help' },
-    { category: 'Actions', label: 'View Property Map', icon: '🗺️', action: function() { loadPage('propertymap'); }, keywords: 'satellite aerial equipment' },
+    { category: 'Actions', label: 'View Property Map', icon: '🗺️', action: function() { if(typeof PropertyMap!=='undefined') PropertyMap.show(''); else loadPage('dispatch'); }, keywords: 'satellite aerial equipment' },
     { category: 'Actions', label: 'Open Online Booking Settings', icon: '🌐', action: function() { loadPage('onlinebooking'); }, keywords: 'widget embed website' },
     { category: 'Actions', label: 'View Job Costing', icon: '💵', action: function() { loadPage('jobcosting'); }, keywords: 'profitability margin' },
-    { category: 'Actions', label: 'Email Templates', icon: '✉️', action: function() { if(typeof EmailPage!=='undefined') EmailPage.showTemplates(); else loadPage('email'); }, keywords: 'templates messages' },
+    { category: 'Actions', label: 'Email Templates', icon: '✉️', action: function() { loadPage('messaging'); }, keywords: 'templates messages' },
     { category: 'Actions', label: 'Recurring Jobs', icon: '🔄', action: function() { loadPage('recurring'); }, keywords: 'repeat schedule' }
   ],
 

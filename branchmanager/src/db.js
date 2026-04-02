@@ -237,6 +237,12 @@ var DB = (function() {
     }
   };
 
+  // ── Expenses ──
+  var expenses = {
+    getAll: function() { try { return JSON.parse(localStorage.getItem('bm-expenses')) || []; } catch(e) { return []; } },
+    count: function() { return expenses.getAll().length; }
+  };
+
   // ── Time Entries ──
   var timeEntries = {
     getAll: function() { return getAll(KEYS.timeEntries); },
@@ -357,6 +363,7 @@ var DB = (function() {
     jobs: jobs,
     invoices: invoices,
     services: services,
+    expenses: expenses,
     timeEntries: timeEntries,
     dashboard: dashboard,
     importCSV: importCSV,

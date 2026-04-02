@@ -11,7 +11,7 @@ var SchedulePage = {
     var html = '';
     var today = new Date().toISOString().split('T')[0];
     var allJobs = DB.jobs.getAll();
-    var todayJobs = allJobs.filter(function(j) { return j.scheduledDate === today; });
+    var todayJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === today; });
 
     // Jobber-style Today's agenda card (always visible at top)
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;">'
@@ -104,7 +104,7 @@ var SchedulePage = {
       var futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + d);
       var fStr = futureDate.toISOString().split('T')[0];
-      var fJobs = allJobs.filter(function(j) { return j.scheduledDate === fStr; });
+      var fJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === fStr; });
       if (fJobs.length > 0) {
         next7.push({ date: futureDate, dateStr: fStr, jobs: fJobs });
       }
@@ -175,7 +175,7 @@ var SchedulePage = {
     var d = SchedulePage.currentDate;
     var dateStr = d.toISOString().split('T')[0];
     var allJobs = DB.jobs.getAll();
-    var dayJobs = allJobs.filter(function(j) { return j.scheduledDate === dateStr; });
+    var dayJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === dateStr; });
 
     var html = '';
 
@@ -351,7 +351,7 @@ var SchedulePage = {
       dd.setDate(dd.getDate() + i);
       var dateStr = dd.toISOString().split('T')[0];
       var isToday = dateStr === today;
-      var dayJobs = allJobs.filter(function(j) { return j.scheduledDate === dateStr; });
+      var dayJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === dateStr; });
 
       html += '<div data-date="' + dateStr + '" '
         + 'ondragover="event.preventDefault();this.style.background=\'#e8f5e9\';this.style.boxShadow=\'inset 0 0 0 2px #4caf50\'" '
@@ -419,7 +419,7 @@ var SchedulePage = {
     for (var day = 1; day <= daysInMonth; day++) {
       var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
       var isToday = dateStr === today;
-      var dayJobs = allJobs.filter(function(j) { return j.scheduledDate === dateStr; });
+      var dayJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === dateStr; });
 
       html += '<div data-date="' + dateStr + '" '
         + 'ondragover="event.preventDefault();this.style.background=\'#e8f5e9\';this.style.boxShadow=\'inset 0 0 0 2px #4caf50\'" '

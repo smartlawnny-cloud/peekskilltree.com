@@ -12,8 +12,7 @@ var ReportsPage = {
     var now = Date.now();
     var aging = { current: [], over30: [], over60: [], over90: [] };
     unpaid.forEach(function(inv) {
-      var due = inv.dueDate ? new Date(inv.dueDate).getTime() : new Date(inv.createdAt).getTime();
-      var days = Math.floor((now - due) / 86400000);
+      var days = inv.dueDate ? Math.floor((now - new Date(inv.dueDate).getTime()) / 86400000) : 0;
       if (days > 90) aging.over90.push(inv);
       else if (days > 60) aging.over60.push(inv);
       else if (days > 30) aging.over30.push(inv);
@@ -38,14 +37,14 @@ var ReportsPage = {
         var db = b.dueDate ? new Date(b.dueDate).getTime() : 0;
         return da - db;
       }).forEach(function(inv) {
-        var due = inv.dueDate ? new Date(inv.dueDate).getTime() : new Date(inv.createdAt).getTime();
-        var days = Math.floor((now - due) / 86400000);
+        var days = inv.dueDate ? Math.floor((now - new Date(inv.dueDate).getTime()) / 86400000) : 0;
         var color = days > 90 ? '#b71c1c' : days > 60 ? '#c62828' : days > 30 ? '#e65100' : 'var(--text)';
+        var daysLabel = !inv.dueDate ? 'No due date' : days > 0 ? days + 'd overdue' : 'Current';
         html += '<tr>'
           + '<td><strong>' + (inv.clientName || '—') + '</strong></td>'
           + '<td>#' + (inv.invoiceNumber || '') + '</td>'
           + '<td>' + UI.dateShort(inv.dueDate) + '</td>'
-          + '<td style="font-weight:700;color:' + color + ';">' + (days > 0 ? days + 'd overdue' : 'Current') + '</td>'
+          + '<td style="font-weight:700;color:' + color + ';">' + daysLabel + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(inv.balance || inv.total) + '</td>'
           + '<td><button class="btn btn-outline" style="font-size:11px;padding:4px 10px;" onclick="Workflow.sendInvoice(\'' + inv.id + '\')">Send Reminder</button></td>'
           + '</tr>';

@@ -1027,5 +1027,8 @@ var PDFGen = {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-  }
+  },
+
+  // Alias for backwards compatibility
+  generateJobSheet: function(jobId) { return PDFGen.generateJobSummary(jobId); }
 };

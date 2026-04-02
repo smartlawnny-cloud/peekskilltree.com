@@ -87,9 +87,10 @@ var ExpensesPage = {
           + '<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:600;border-bottom:1px solid var(--border);">'
           + '<span>' + catInfo.icon + ' ' + catInfo.label + '</span><span>' + UI.money(catTotal) + '</span></div>';
         grouped[cat].forEach(function(e) {
-          html += '<div style="display:flex;justify-content:space-between;padding:6px 0 6px 24px;font-size:13px;border-bottom:1px solid #f5f5f5;">'
-            + '<span style="color:var(--text-light);">' + (e.description || cat) + ' <span style="font-size:11px;">' + UI.dateShort(e.date) + '</span></span>'
-            + '<span style="font-weight:600;">' + UI.money(e.amount) + '</span></div>';
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 6px 24px;font-size:13px;border-bottom:1px solid #f5f5f5;">'
+            + '<span style="color:var(--text-light);">' + UI.esc(e.description || cat) + ' <span style="font-size:11px;">' + UI.dateShort(e.date) + '</span></span>'
+            + '<div style="display:flex;align-items:center;gap:6px;"><span style="font-weight:600;">' + UI.money(e.amount) + '</span>'
+            + '<button onclick="ExpensesPage.deleteExpense(\'' + e.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--text-light);font-size:14px;padding:2px 4px;line-height:1;" title="Delete">×</button></div></div>';
         });
         html += '</div>';
       });
@@ -107,25 +108,16 @@ var ExpensesPage = {
     var desc = document.getElementById('exp-desc').value;
     if (!amount || amount <= 0) { UI.toast('Enter an amount', 'error'); return; }
 
-    if (!DB.expenses) {
-      // Bootstrap expenses in DB
-      DB.expenses = {
-        getAll: function() { try { return JSON.parse(localStorage.getItem('bm-expenses')) || []; } catch(e) { return []; } },
-        create: function(r) {
-          var all = DB.expenses.getAll();
-          r.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-          r.date = r.date || new Date().toISOString();
-          all.unshift(r);
-          localStorage.setItem('bm-expenses', JSON.stringify(all));
-          return r;
-        }
-      };
-    }
-
     DB.expenses.create({ amount: amount, category: category, description: desc });
     document.getElementById('exp-amount').value = '';
     document.getElementById('exp-desc').value = '';
     UI.toast('Expense added: ' + UI.money(amount));
+    loadPage('expenses');
+  },
+
+  deleteExpense: function(id) {
+    DB.expenses.remove(id);
+    UI.toast('Expense deleted');
     loadPage('expenses');
   },
 
@@ -143,17 +135,3 @@ var ExpensesPage = {
   }
 };
 
-// Bootstrap DB.expenses if not exists
-if (!DB.expenses) {
-  DB.expenses = {
-    getAll: function() { try { return JSON.parse(localStorage.getItem('bm-expenses')) || []; } catch(e) { return []; } },
-    create: function(r) {
-      var all = DB.expenses.getAll();
-      r.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-      r.date = r.date || new Date().toISOString();
-      all.unshift(r);
-      localStorage.setItem('bm-expenses', JSON.stringify(all));
-      return r;
-    }
-  };
-}

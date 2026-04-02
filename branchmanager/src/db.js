@@ -240,7 +240,28 @@ var DB = (function() {
   // ── Expenses ──
   var expenses = {
     getAll: function() { try { return JSON.parse(localStorage.getItem('bm-expenses')) || []; } catch(e) { return []; } },
-    count: function() { return expenses.getAll().length; }
+    count: function() { return expenses.getAll().length; },
+    create: function(r) {
+      var all = expenses.getAll();
+      r.id = r.id || _id();
+      r.date = r.date || _now();
+      all.unshift(r);
+      localStorage.setItem('bm-expenses', JSON.stringify(all));
+      return r;
+    },
+    update: function(id, changes) {
+      var all = expenses.getAll();
+      var idx = all.findIndex(function(r) { return r.id === id; });
+      if (idx < 0) return null;
+      Object.assign(all[idx], changes);
+      localStorage.setItem('bm-expenses', JSON.stringify(all));
+      return all[idx];
+    },
+    remove: function(id) {
+      var all = expenses.getAll().filter(function(r) { return r.id !== id; });
+      localStorage.setItem('bm-expenses', JSON.stringify(all));
+    },
+    getById: function(id) { return expenses.getAll().find(function(r) { return r.id === id; }) || null; }
   };
 
   // ── Time Entries ──

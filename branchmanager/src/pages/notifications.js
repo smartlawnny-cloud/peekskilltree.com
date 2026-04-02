@@ -2,16 +2,20 @@
  * Branch Manager — Notification Center & Activity Feed
  */
 var NotificationsPage = {
+  _activeFilter: 'all',
+
   render: function() {
-    var activities = DB.getActivities ? DB.getActivities() : NotificationsPage._buildFeed();
+    var self = NotificationsPage;
+    var activities = DB.getActivities ? DB.getActivities() : self._buildFeed();
     var html = '<div class="section-header"><h2>Activity Feed</h2></div>';
 
     // Filter tabs
     html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">';
     var filters = ['All', 'Requests', 'Quotes', 'Jobs', 'Invoices', 'Payments'];
     filters.forEach(function(f) {
-      var active = f === 'All' ? ' style="background:var(--green-dark);color:#fff;border-color:var(--green-dark);"' : '';
-      html += '<button onclick="NotificationsPage.filter(\'' + f.toLowerCase() + '\')" class="filter-btn"' + active + '>' + f + '</button>';
+      var isActive = f.toLowerCase() === self._activeFilter;
+      var style = isActive ? ' style="background:var(--green-dark);color:#fff;border-color:var(--green-dark);"' : '';
+      html += '<button onclick="NotificationsPage.filter(\'' + f.toLowerCase() + '\')" class="filter-btn"' + style + '>' + f + '</button>';
     });
     html += '</div>';
 
@@ -68,7 +72,15 @@ var NotificationsPage = {
   },
 
   filter: function(type) {
-    // Re-render with filter
+    NotificationsPage._activeFilter = type;
+    // Update button active states
+    document.querySelectorAll('.filter-btn').forEach(function(btn) {
+      var isActive = btn.textContent.toLowerCase() === type;
+      btn.style.background = isActive ? 'var(--green-dark)' : '';
+      btn.style.color = isActive ? '#fff' : '';
+      btn.style.borderColor = isActive ? 'var(--green-dark)' : '';
+    });
+    // Filter and re-render list
     var activities = NotificationsPage._buildFeed();
     if (type !== 'all') {
       var typeMap = { requests: 'request', quotes: 'quote', jobs: 'job', invoices: 'invoice', payments: 'payment' };

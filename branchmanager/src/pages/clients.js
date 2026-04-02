@@ -259,6 +259,38 @@ var ClientsPage = {
     }
   },
 
+  _editNote: function(clientId) {
+    var v = document.getElementById('client-note-view-' + clientId);
+    var e = document.getElementById('client-note-edit-' + clientId);
+    if (v) v.style.display = 'none';
+    if (e) e.style.display = 'block';
+    var ta = document.getElementById('client-note-ta-' + clientId);
+    if (ta) ta.focus();
+  },
+
+  _cancelNote: function(clientId) {
+    var v = document.getElementById('client-note-view-' + clientId);
+    var e = document.getElementById('client-note-edit-' + clientId);
+    if (v) v.style.display = 'block';
+    if (e) e.style.display = 'none';
+  },
+
+  _saveNote: function(clientId) {
+    var ta = document.getElementById('client-note-ta-' + clientId);
+    if (!ta) return;
+    var notes = ta.value.trim();
+    DB.clients.update(clientId, { notes: notes });
+    var v = document.getElementById('client-note-view-' + clientId);
+    if (v) {
+      v.textContent = notes || 'No notes yet. Click Edit to add notes.';
+      v.style.color = notes ? 'var(--text)' : 'var(--text-light)';
+      v.style.display = 'block';
+    }
+    var e = document.getElementById('client-note-edit-' + clientId);
+    if (e) e.style.display = 'none';
+    UI.toast('Notes saved');
+  },
+
   _copyPortalLink: function(clientId) {
     var link = (typeof ClientHub !== 'undefined')
       ? ClientHub.getLink(clientId)
@@ -510,20 +542,22 @@ var ClientsPage = {
       html += CustomFields.renderDisplay('client', id);
     }
 
-    html += // Internal notes
+    html += // Internal notes — inline editable
         '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
-      + '<h3 style="font-size:18px;font-weight:700;margin-bottom:4px;">Internal notes</h3>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Internal notes will only be seen by your team</div>'
-      + (c.notes ? '<div style="font-size:13px;color:var(--text);line-height:1.6;padding:8px;background:var(--bg);border-radius:6px;">' + UI.esc(c.notes) + '</div>' : '<textarea placeholder="Note details" style="width:100%;height:80px;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:13px;resize:vertical;" readonly></textarea>')
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+      + '<h3 style="font-size:18px;font-weight:700;">Internal notes</h3>'
+      + '<button onclick="ClientsPage._editNote(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);font-weight:600;">✏️ Edit</button>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Only visible to your team</div>'
+      + '<div id="client-note-view-' + id + '" style="font-size:13px;color:' + (c.notes ? 'var(--text)' : 'var(--text-light)') + ';line-height:1.6;padding:8px;background:var(--bg);border-radius:6px;min-height:40px;">' + (c.notes ? UI.esc(c.notes) : 'No notes yet. Click Edit to add notes.') + '</div>'
+      + '<div id="client-note-edit-' + id + '" style="display:none;">'
+      + '<textarea id="client-note-ta-' + id + '" style="width:100%;height:100px;border:2px solid var(--accent);border-radius:6px;padding:8px;font-size:13px;resize:vertical;">' + UI.esc(c.notes || '') + '</textarea>'
+      + '<div style="display:flex;gap:6px;margin-top:6px;">'
+      + '<button onclick="ClientsPage._saveNote(\'' + id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Save</button>'
+      + '<button onclick="ClientsPage._cancelNote(\'' + id + '\')" style="background:none;border:1px solid var(--border);padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;">Cancel</button>'
+      + '</div></div>'
       + '</div>'
       + '</div></div>'
-
-      // Notes
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Notes</h4>'
-      + (c.notes ? '<div style="font-size:13px;color:var(--text);line-height:1.6;">' + UI.esc(c.notes) + '</div>' : '<div style="font-size:13px;color:var(--text-light);">No notes</div>')
-      + '</div>'
-      + '</div>'
 
       // Right content — tabs
       + '<div>'

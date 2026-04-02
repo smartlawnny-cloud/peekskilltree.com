@@ -24,20 +24,12 @@ var Stripe = {
     return !!Stripe.publishableKey;
   },
 
-  // Generate a payment link for an invoice
-  // For now, creates a simple Stripe Payment Link URL
-  // When Supabase is connected, this will use Edge Functions for proper Checkout Sessions
+  // Get payment link for an invoice — returns stored Stripe Payment Link URL if available
   getPaymentLink: function(invoiceId) {
     var inv = DB.invoices.getById(invoiceId);
     if (!inv) return null;
-
-    // If Stripe is connected, generate a real payment link
-    if (Stripe.isConnected()) {
-      // This would call Supabase Edge Function to create a Checkout Session
-      // For now, return a placeholder
-      return 'https://checkout.stripe.com/pay/placeholder_' + invoiceId;
-    }
-    return null;
+    // Return the URL saved per-invoice (set from invoice detail sidebar)
+    return inv.stripePaymentUrl || null;
   },
 
   // Render payment button for invoice detail

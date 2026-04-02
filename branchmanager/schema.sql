@@ -44,6 +44,8 @@ CREATE TABLE quotes (
   quote_number SERIAL,
   client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
   client_name TEXT,
+  client_email TEXT,
+  client_phone TEXT,
   property TEXT,
   description TEXT,
   line_items JSONB DEFAULT '[]',
@@ -52,10 +54,26 @@ CREATE TABLE quotes (
   status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'awaiting', 'approved', 'declined', 'converted')),
   job_id UUID,
   map_data JSONB, -- equipment placement markers
+  expires_at DATE,
+  deposit_required BOOLEAN DEFAULT false,
+  deposit_due DECIMAL(10,2) DEFAULT 0,
+  deposit_paid BOOLEAN DEFAULT false,
+  approved_at TIMESTAMPTZ,
+  client_changes TEXT, -- requested changes from client on approve page
   sent_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- If table already exists, add columns with:
+-- ALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_email TEXT;
+-- ALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_phone TEXT;
+-- ALTER TABLE quotes ADD COLUMN IF NOT EXISTS expires_at DATE;
+-- ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_required BOOLEAN DEFAULT false;
+-- ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_due DECIMAL(10,2) DEFAULT 0;
+-- ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_paid BOOLEAN DEFAULT false;
+-- ALTER TABLE quotes ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+-- ALTER TABLE quotes ADD COLUMN IF NOT EXISTS client_changes TEXT;
 
 -- ══════════════════════════════════════
 -- JOBS
@@ -65,6 +83,8 @@ CREATE TABLE jobs (
   job_number SERIAL,
   client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
   client_name TEXT,
+  client_email TEXT,
+  client_phone TEXT,
   property TEXT,
   description TEXT,
   line_items JSONB DEFAULT '[]',
@@ -75,12 +95,20 @@ CREATE TABLE jobs (
   status TEXT DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'in_progress', 'completed', 'late', 'cancelled')),
   crew TEXT[] DEFAULT '{}',
   quote_id UUID REFERENCES quotes(id) ON DELETE SET NULL,
+  invoice_id TEXT, -- UUID or 'legacy' for pre-migration Jobber invoices
+  completed_date DATE,
   notes TEXT,
   photos TEXT[] DEFAULT '{}',
   map_data JSONB,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- If table already exists, add columns with:
+-- ALTER TABLE jobs ADD COLUMN IF NOT EXISTS client_email TEXT;
+-- ALTER TABLE jobs ADD COLUMN IF NOT EXISTS client_phone TEXT;
+-- ALTER TABLE jobs ADD COLUMN IF NOT EXISTS invoice_id TEXT;
+-- ALTER TABLE jobs ADD COLUMN IF NOT EXISTS completed_date DATE;
 
 -- ══════════════════════════════════════
 -- INVOICES
@@ -90,19 +118,39 @@ CREATE TABLE invoices (
   invoice_number SERIAL,
   client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
   client_name TEXT,
+  client_email TEXT,
+  client_phone TEXT,
   job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
   subject TEXT DEFAULT 'For Services Rendered',
   line_items JSONB DEFAULT '[]',
   total DECIMAL(10,2) DEFAULT 0,
   balance DECIMAL(10,2) DEFAULT 0,
+  amount_paid DECIMAL(10,2) DEFAULT 0,
+  issued_date DATE,
   due_date DATE,
-  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid', 'overdue')),
+  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'viewed', 'partial', 'paid', 'overdue', 'cancelled')),
   paid_date TIMESTAMPTZ,
   payment_method TEXT,
+  stripe_payment_url TEXT,
+  payment_link_sent TIMESTAMPTZ,
+  payment_link_email TEXT,
+  sent_at TIMESTAMPTZ,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- If table already exists, add columns with:
+-- ALTER TABLE invoices ADD COLUMN IF NOT EXISTS client_email TEXT;
+-- ALTER TABLE invoices ADD COLUMN IF NOT EXISTS client_phone TEXT;
+-- ALTER TABLE invoices ADD COLUMN IF NOT EXISTS amount_paid DECIMAL(10,2) DEFAULT 0;
+-- ALTER TABLE invoices ADD COLUMN IF NOT EXISTS issued_date DATE;
+-- ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_payment_url TEXT;
+-- ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_link_sent TIMESTAMPTZ;
+-- ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_link_email TEXT;
+-- ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;
+-- ALTER TABLE invoices DROP CONSTRAINT IF EXISTS invoices_status_check;
+-- ALTER TABLE invoices ADD CONSTRAINT invoices_status_check CHECK (status IN ('draft','sent','viewed','partial','paid','overdue','cancelled'));
 
 -- ══════════════════════════════════════
 -- SERVICES CATALOG

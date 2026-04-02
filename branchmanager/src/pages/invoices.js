@@ -272,6 +272,13 @@ var InvoicesPage = {
     }
   },
 
+  _saveStripeUrl: function(id, url) {
+    if (url && !url.startsWith('https://')) { UI.toast('Must be a valid https:// URL', 'error'); return; }
+    DB.invoices.update(id, { stripePaymentUrl: url || null });
+    UI.toast(url ? 'Stripe Payment Link saved' : 'Payment link cleared');
+    InvoicesPage.showDetail(id);
+  },
+
   _sendInvoiceEmail: function(id) {
     var inv = DB.invoices.getById(id);
     if (!inv) return;
@@ -405,6 +412,24 @@ var InvoicesPage = {
       html += '<div style="text-align:center;padding:12px;color:var(--accent);font-weight:600;">Fully Paid</div>';
     }
     html += '</div>';
+
+    // Stripe Payment Link
+    if (inv.status !== 'paid') {
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+        + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">💳 Card Payment Link</h4>'
+        + (inv.stripePaymentUrl
+          ? '<div style="font-size:12px;color:var(--accent);margin-bottom:8px;word-break:break-all;">✅ ' + UI.esc(inv.stripePaymentUrl) + '</div>'
+            + '<div style="display:flex;gap:6px;">'
+            + '<button class="btn btn-outline" style="font-size:11px;flex:1;" onclick="navigator.clipboard&&navigator.clipboard.writeText(\'' + UI.esc(inv.stripePaymentUrl) + '\');UI.toast(\'Copied!\')">Copy</button>'
+            + '<button class="btn btn-outline" style="font-size:11px;flex:1;" onclick="InvoicesPage._saveStripeUrl(\'' + id + '\',\'\')">Clear</button>'
+            + '</div>'
+          : '<p style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Paste a <a href="https://dashboard.stripe.com/payment-links" target="_blank" style="color:var(--accent);">Stripe Payment Link</a> to enable card payments on the client pay page.</p>'
+            + '<div style="display:flex;gap:6px;">'
+            + '<input type="text" id="stripe-url-' + id + '" placeholder="https://buy.stripe.com/..." style="flex:1;padding:7px 10px;border:2px solid var(--border);border-radius:6px;font-size:12px;">'
+            + '<button class="btn btn-primary" style="font-size:11px;white-space:nowrap;" onclick="InvoicesPage._saveStripeUrl(\'' + id + '\',document.getElementById(\'stripe-url-' + id + '\').value.trim())">Save</button>'
+            + '</div>')
+        + '</div>';
+    }
 
     // Status workflow
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'

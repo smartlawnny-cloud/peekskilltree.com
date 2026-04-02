@@ -26,7 +26,12 @@ var CloudSync = {
         // Pull all rows from Supabase
         var { data, error } = await sb.from(table).select('*').order('created_at', { ascending: false }).limit(1000);
         if (error) {
-          console.warn('CloudSync: error fetching ' + table + ':', error.message);
+          // Table doesn't exist in Supabase yet — remove from sync list silently
+          if (error.message && error.message.includes('schema cache')) {
+            CloudSync.tables = CloudSync.tables.filter(function(t) { return t !== table; });
+          } else {
+            console.warn('CloudSync: error fetching ' + table + ':', error.message);
+          }
           continue;
         }
 

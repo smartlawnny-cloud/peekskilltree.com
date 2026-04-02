@@ -363,7 +363,7 @@ var AutomationsPage = {
       if (!email) { skipped++; return; }
       var firstName = (job.clientName || '').split(' ')[0] || 'there';
       var subject = 'How did we do? — Second Nature Tree Service';
-      var reviewLink = 'https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG8tiRmM';
+      var reviewLink = 'https://g.page/r/CcVkZHV_EKlEEBM/review';
       var body = 'Hi ' + firstName + ',\n\nThank you so much for choosing Second Nature Tree Service! We hope everything turned out exactly how you imagined.\n\n'
         + 'If you have a moment, we\'d love to hear about your experience. Leaving a quick Google review helps other homeowners in the area find trusted tree care:\n\n'
         + '⭐ Leave a Review: ' + reviewLink + '\n\n'

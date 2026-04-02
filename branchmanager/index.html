@@ -525,6 +525,7 @@
 
       <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team</button>
       <button class="nav-item" data-page="reminders" id="nav-reminders"><span class="icon"><i data-lucide="shield-alert" class="li"></i></span> Compliance <span class="badge" id="badge-reminders"></span></button>
+      <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> Claude AI</button>
       <button class="nav-item" data-page="automations"><span class="icon"><i data-lucide="zap" class="li"></i></span> Apps</button>
       <button class="nav-item" data-page="settings"><span class="icon"><i data-lucide="settings" class="li"></i></span> Settings</button>
 
@@ -561,7 +562,7 @@
         <button class="nav-item" data-page="emailtemplates"><span class="icon"><i data-lucide="mail" class="li"></i></span> Email Templates</button>
         <button class="nav-item" data-page="customfields"><span class="icon"><i data-lucide="sliders" class="li"></i></span> Custom Fields</button>
         <button class="nav-item" data-page="checklists"><span class="icon"><i data-lucide="check-square" class="li"></i></span> Checklists</button>
-        <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="sparkles" class="li"></i></span> AI Assistant</button>
+        <button class="nav-item" data-page="workflow"><span class="icon"><i data-lucide="workflow" class="li"></i></span> Workflow</button>
         <button class="nav-item" data-page="clienthub"><span class="icon"><i data-lucide="user-check" class="li"></i></span> Client Portal</button>
         <button class="nav-item" data-page="visits"><span class="icon"><i data-lucide="calendar-check" class="li"></i></span> Visits</button>
         <button class="nav-item" data-page="workflow"><span class="icon"><i data-lucide="git-merge" class="li"></i></span> Workflow</button>
@@ -1305,6 +1306,8 @@ document.addEventListener('keydown', function(e) {
         <div style="font-size:24px;margin-bottom:4px;">🔔</div><div style="font-size:11px;font-weight:600;color:var(--text);">Activity</div></button>
       <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('messaging')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
         <div style="font-size:24px;margin-bottom:4px;">💬</div><div style="font-size:11px;font-weight:600;color:var(--text);">Messages</div></button>
+      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('ai')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
+        <div style="font-size:24px;margin-bottom:4px;">🤖</div><div style="font-size:11px;font-weight:600;color:var(--text);">Claude AI</div></button>
       <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('settings')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
         <div style="font-size:24px;margin-bottom:4px;">⚙️</div><div style="font-size:11px;font-weight:600;color:var(--text);">Settings</div></button>
     </div>

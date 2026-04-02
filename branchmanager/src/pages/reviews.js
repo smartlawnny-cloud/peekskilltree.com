@@ -3,7 +3,7 @@
  * Review request management, Google review link, stats
  */
 var ReviewsPage = {
-  GOOGLE_REVIEW_URL: 'https://search.google.com/local/writereview?placeid=ChIJ_____PLACEHOLDER', // Replace with actual Place ID
+  GOOGLE_REVIEW_URL: 'https://g.page/r/CcVkZHV_EKlEEBM/review',
 
   render: function() {
     var completedJobs = DB.jobs.getAll().filter(function(j) { return j.status === 'completed'; });
@@ -62,7 +62,7 @@ var ReviewsPage = {
       + '<h3 style="margin-bottom:8px;">Your Google Review Link</h3>'
       + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Share this link directly with clients to leave a review.</p>'
       + '<div style="display:flex;gap:8px;">'
-      + '<input type="text" id="review-link" value="https://g.page/r/YOUR_GOOGLE_PLACE_ID/review" style="flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:13px;" readonly>'
+      + '<input type="text" id="review-link" value="' + ReviewsPage.GOOGLE_REVIEW_URL + '" style="flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:13px;" readonly>'
       + '<button class="btn btn-primary" onclick="ReviewsPage.copyLink()">Copy</button>'
       + '</div></div>';
 

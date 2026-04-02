@@ -30,7 +30,7 @@ var EmailTemplates = {
     invoiceBalance:  { label: 'Invoice Balance',    sample: '$2,400.00' },
     companyName:     { label: 'Company Name',       sample: 'Second Nature Tree Service' },
     companyPhone:    { label: 'Company Phone',      sample: '(914) 391-5233' },
-    reviewLink:      { label: 'Google Review Link', sample: 'https://g.page/r/secondnaturetree/review' }
+    reviewLink:      { label: 'Google Review Link', sample: 'https://g.page/r/CcVkZHV_EKlEEBM/review' }
   },
 
   // ─── Default Templates ───────────────────────────────────────
@@ -312,7 +312,7 @@ var EmailTemplates = {
     // Always fill company fields
     mergeData.companyName = 'Second Nature Tree Service';
     mergeData.companyPhone = '(914) 391-5233';
-    mergeData.reviewLink = 'https://g.page/r/secondnaturetree/review';
+    mergeData.reviewLink = 'https://g.page/r/CcVkZHV_EKlEEBM/review';
 
     // Overlay provided data
     var key;

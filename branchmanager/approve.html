@@ -255,7 +255,7 @@
 
       try {
         await sb.from('quotes')
-          .update({ status: 'awaiting', notes: 'CLIENT CHANGE REQUEST: ' + notes, updated_at: new Date().toISOString() })
+          .update({ status: 'awaiting', client_changes: notes, updated_at: new Date().toISOString() })
           .eq('id', window._quoteId);
 
         el('app').innerHTML = ''

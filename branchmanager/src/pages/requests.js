@@ -246,6 +246,7 @@ var RequestsPage = {
       + '<div style="font-size:14px;font-weight:600;margin-bottom:8px;">' + UI.esc(r.clientName || '—') + '</div>'
       + (r.property ? '<div style="font-size:13px;color:var(--text-light);margin-bottom:10px;">📍 ' + UI.esc(r.property) + '</div>' : '')
       + (r.phone ? '<a href="tel:' + r.phone.replace(/\D/g,'') + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 ' + UI.phone(r.phone) + '</a>' : '')
+      + (r.phone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){var fn=\'' + UI.esc((r.clientName||'').split(' ')[0]||'there') + '\';Dialpad.showTextModal(\'' + r.phone.replace(/\D/g,'') + '\',\'Hi \'+fn+\', thanks for reaching out to Second Nature Tree Service! We received your request and will follow up within 1 business day. Questions? Call or text (914) 391-5233.\');}">📱 Text</button>' : '')
       + (r.email ? '<a href="mailto:' + r.email + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">✉️ ' + r.email + '</a>' : '')
       + (r.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(r.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:12px;">🗺 Directions</a>' : '')
       + '</div>'

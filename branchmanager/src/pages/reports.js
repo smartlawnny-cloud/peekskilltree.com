@@ -55,6 +55,128 @@ var ReportsPage = {
     }
     html += '</div>';
 
+    // P&L Statement
+    var currentYear = new Date().getFullYear();
+    var lastYear = currentYear - 1;
+
+    // Income — from paid invoices
+    function getYearRevenue(yr) {
+      return DB.invoices.getAll().filter(function(i) {
+        return i.status === 'paid';
+      }).reduce(function(s, i) {
+        var d = new Date(i.paidDate || i.createdAt);
+        return d.getFullYear() === yr ? s + (i.total || 0) : s;
+      }, 0);
+    }
+
+    // Expenses — from DB.expenses if available
+    function getYearExpenses(yr) {
+      if (!DB.expenses) return 0;
+      return DB.expenses.getAll().filter(function(e) {
+        return new Date(e.date || e.createdAt).getFullYear() === yr;
+      }).reduce(function(s, e) { return s + (e.amount || 0); }, 0);
+    }
+
+    var thisRevenue = getYearRevenue(currentYear);
+    var lastRevenue = getYearRevenue(lastYear);
+    var thisExpenses = getYearExpenses(currentYear);
+    var lastExpenses = getYearExpenses(lastYear);
+    var thisProfit = thisRevenue - thisExpenses;
+    var lastProfit = lastRevenue - lastExpenses;
+    var revenueChange = lastRevenue > 0 ? Math.round(((thisRevenue - lastRevenue) / lastRevenue) * 100) : null;
+    var profitMargin = thisRevenue > 0 ? Math.round((thisProfit / thisRevenue) * 100) : 0;
+
+    // Expense breakdown by category for current year
+    var expenseByCategory = {};
+    if (DB.expenses) {
+      DB.expenses.getAll().filter(function(e) {
+        return new Date(e.date || e.createdAt).getFullYear() === currentYear;
+      }).forEach(function(e) {
+        var cat = e.category || 'Other';
+        expenseByCategory[cat] = (expenseByCategory[cat] || 0) + (e.amount || 0);
+      });
+    }
+    var expenseCats = Object.keys(expenseByCategory).sort(function(a, b) {
+      return expenseByCategory[b] - expenseByCategory[a];
+    });
+
+    // Monthly income for current year (for spark)
+    var monthlyIncome = [];
+    for (var mi = 0; mi < 12; mi++) {
+      var mRev = DB.invoices.getAll().filter(function(i) {
+        if (i.status !== 'paid') return false;
+        var d = new Date(i.paidDate || i.createdAt);
+        return d.getFullYear() === currentYear && d.getMonth() === mi;
+      }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+      monthlyIncome.push(mRev);
+    }
+    var maxMonthly = Math.max.apply(null, monthlyIncome) || 1;
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:20px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;">Profit & Loss Statement</h3>'
+      + '<span style="font-size:13px;color:var(--text-light);">January \u2013 December ' + currentYear + '</span>'
+      + '</div>'
+
+      // Three-column P&L summary
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">'
+      // Revenue
+      + '<div style="padding:16px;background:#e8f5e9;border-radius:10px;">'
+      + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#2e7d32;margin-bottom:4px;">Revenue ' + currentYear + '</div>'
+      + '<div style="font-size:28px;font-weight:800;color:#2e7d32;">' + UI.moneyInt(thisRevenue) + '</div>'
+      + (lastRevenue > 0 ? '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">' + UI.moneyInt(lastRevenue) + ' in ' + lastYear + (revenueChange !== null ? ' <span style="color:' + (revenueChange >= 0 ? '#2e7d32' : '#dc3545') + ';font-weight:700;">' + (revenueChange >= 0 ? '\u2191' : '\u2193') + Math.abs(revenueChange) + '%</span>' : '') + '</div>' : '')
+      + '</div>'
+      // Expenses
+      + '<div style="padding:16px;background:#fff3e0;border-radius:10px;">'
+      + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#e65100;margin-bottom:4px;">Expenses ' + currentYear + '</div>'
+      + '<div style="font-size:28px;font-weight:800;color:#e65100;">' + UI.moneyInt(thisExpenses) + '</div>'
+      + (lastExpenses > 0 ? '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">' + UI.moneyInt(lastExpenses) + ' in ' + lastYear + '</div>' : '<div style="font-size:12px;color:var(--text-light);margin-top:4px;"><a href="#" onclick="loadPage(\'expenses\');return false;" style="color:var(--green-dark);">Add expenses \u2192</a></div>')
+      + '</div>'
+      // Net Profit
+      + '<div style="padding:16px;background:' + (thisProfit >= 0 ? '#e3f2fd' : '#ffebee') + ';border-radius:10px;">'
+      + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:' + (thisProfit >= 0 ? '#1565c0' : '#c62828') + ';margin-bottom:4px;">Net Profit ' + currentYear + '</div>'
+      + '<div style="font-size:28px;font-weight:800;color:' + (thisProfit >= 0 ? '#1565c0' : '#c62828') + ';">' + UI.moneyInt(thisProfit) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Margin: <strong>' + profitMargin + '%</strong></div>'
+      + '</div>'
+      + '</div>'
+
+      // Monthly income sparkline
+      + '<div style="margin-bottom:16px;">'
+      + '<div style="font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Monthly Revenue \u2014 ' + currentYear + '</div>'
+      + '<div style="display:flex;align-items:flex-end;gap:3px;height:60px;">';
+    var monthAbbr = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+    for (var si = 0; si < 12; si++) {
+      var barH = monthlyIncome[si] > 0 ? Math.max(Math.round((monthlyIncome[si] / maxMonthly) * 52), 4) : 2;
+      var isCurMonth = si === new Date().getMonth() && currentYear === new Date().getFullYear();
+      html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;">'
+        + '<div style="width:100%;height:' + barH + 'px;background:' + (isCurMonth ? 'var(--green-dark)' : '#a5d6a7') + ';border-radius:2px 2px 0 0;"></div>'
+        + '<div style="font-size:9px;color:var(--text-light);' + (isCurMonth ? 'font-weight:700;color:var(--green-dark);' : '') + '">' + monthAbbr[si] + '</div>'
+        + '</div>';
+    }
+    html += '</div></div>';
+
+    // Expense breakdown by category
+    if (expenseCats.length > 0) {
+      var maxExpCat = expenseByCategory[expenseCats[0]] || 1;
+      html += '<div style="margin-bottom:4px;">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Expenses by Category</div>';
+      expenseCats.slice(0, 8).forEach(function(cat) {
+        var amt = expenseByCategory[cat];
+        var pct = Math.round((amt / maxExpCat) * 100);
+        html += '<div style="margin-bottom:8px;">'
+          + '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px;"><span>' + UI.esc(cat) + '</span><strong>' + UI.moneyInt(amt) + '</strong></div>'
+          + '<div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:#e65100;border-radius:3px;"></div></div>'
+          + '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div style="padding:12px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text-light);text-align:center;">'
+        + '\uD83D\uDCCA No expenses logged yet \u2014 <a href="#" onclick="loadPage(\'expenses\');return false;" style="color:var(--green-dark);">Add expenses</a> to see your full P&L'
+        + '</div>';
+    }
+
+    html += '</div>';
+
     html += '<div class="section-header"><h2>Reports & Exports</h2>'
       + '<p style="color:var(--text-light);margin-top:4px;">Download your data as CSV files for accounting, tax prep, or backup.</p></div>';
 

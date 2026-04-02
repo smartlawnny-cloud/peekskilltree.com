@@ -110,6 +110,76 @@ var InsightsPage = {
     });
     html += '</div></div>';
 
+    // YoY comparison — this year vs last year
+    var lastYearNum = year - 1;
+    var monthlyRevLastYear = [];
+    for (var lm = 0; lm < 12; lm++) {
+      var lmRev = allInvoices.filter(function(inv) {
+        if (inv.status !== 'paid') return false;
+        var d = new Date(inv.paidDate || inv.createdAt);
+        return d.getFullYear() === lastYearNum && d.getMonth() === lm;
+      }).reduce(function(sum, inv) { return sum + (inv.total || 0); }, 0);
+      monthlyRevLastYear.push(lmRev);
+    }
+    var totalRevLastYear = monthlyRevLastYear.reduce(function(s, v) { return s + v; }, 0);
+
+    // Only show YoY if last year has data
+    if (totalRevLastYear > 0) {
+      var yoyChange = totalRevLastYear > 0 ? Math.round(((totalRevYear - totalRevLastYear) / totalRevLastYear) * 100) : null;
+
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+        + '<h3 style="margin:0;">Year-over-Year Comparison</h3>'
+        + (yoyChange !== null ? '<span style="font-size:14px;font-weight:700;color:' + (yoyChange >= 0 ? '#2e7d32' : '#dc3545') + ';background:' + (yoyChange >= 0 ? '#e8f5e9' : '#ffebee') + ';padding:4px 12px;border-radius:20px;">' + (yoyChange >= 0 ? '↑' : '↓') + Math.abs(yoyChange) + '% vs ' + lastYearNum + '</span>' : '')
+        + '</div>'
+
+        // Summary stats
+        + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">'
+        + '<div style="padding:12px;background:var(--bg);border-radius:8px;text-align:center;">'
+        + '<div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;margin-bottom:4px;">' + year + '</div>'
+        + '<div style="font-size:22px;font-weight:800;color:var(--green-dark);">' + UI.moneyInt(totalRevYear) + '</div>'
+        + '</div>'
+        + '<div style="padding:12px;background:var(--bg);border-radius:8px;text-align:center;">'
+        + '<div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;margin-bottom:4px;">' + lastYearNum + '</div>'
+        + '<div style="font-size:22px;font-weight:800;color:var(--text-light);">' + UI.moneyInt(totalRevLastYear) + '</div>'
+        + '</div>'
+        + '<div style="padding:12px;background:' + (yoyChange >= 0 ? '#e8f5e9' : '#ffebee') + ';border-radius:8px;text-align:center;">'
+        + '<div style="font-size:11px;color:var(--text-light);text-transform:uppercase;font-weight:600;margin-bottom:4px;">Difference</div>'
+        + '<div style="font-size:22px;font-weight:800;color:' + (yoyChange >= 0 ? '#2e7d32' : '#c62828') + ';">' + (yoyChange >= 0 ? '+' : '') + UI.moneyInt(totalRevYear - totalRevLastYear) + '</div>'
+        + '</div>'
+        + '</div>'
+
+        // Side-by-side monthly bar chart (current year vs last year)
+        + '<div style="display:flex;align-items:flex-end;gap:4px;height:120px;padding-bottom:24px;position:relative;">';
+
+      var maxRevCombined = Math.max(
+        Math.max.apply(null, monthlyRev.map(function(m) { return m.revenue; })),
+        Math.max.apply(null, monthlyRevLastYear)
+      ) || 1;
+
+      monthlyRev.forEach(function(m, i) {
+        var hCurr = maxRevCombined > 0 ? Math.max((m.revenue / maxRevCombined) * 100, m.revenue > 0 ? 4 : 1) : 1;
+        var hLast = maxRevCombined > 0 ? Math.max((monthlyRevLastYear[i] / maxRevCombined) * 100, monthlyRevLastYear[i] > 0 ? 4 : 1) : 1;
+        var isCurrentMonth = i === now.getMonth() && year === now.getFullYear();
+        html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:1px;">'
+          + '<div style="width:100%;display:flex;align-items:flex-end;gap:1px;justify-content:center;">'
+          + '<div title="' + year + ': ' + UI.moneyInt(m.revenue) + '" style="flex:1;height:' + hCurr + 'px;background:' + (isCurrentMonth ? 'var(--green-dark)' : 'var(--green-light)') + ';border-radius:2px 2px 0 0;opacity:' + (m.revenue > 0 ? '1' : '.2') + ';"></div>'
+          + '<div title="' + lastYearNum + ': ' + UI.moneyInt(monthlyRevLastYear[i]) + '" style="flex:1;height:' + hLast + 'px;background:#b0bec5;border-radius:2px 2px 0 0;opacity:' + (monthlyRevLastYear[i] > 0 ? '1' : '.2') + ';"></div>'
+          + '</div>'
+          + '<div style="font-size:9px;color:var(--text-light);margin-top:3px;' + (isCurrentMonth ? 'font-weight:700;color:var(--green-dark);' : '') + '">' + m.month + '</div>'
+          + '</div>';
+      });
+
+      html += '</div>'
+        // Legend
+        + '<div style="display:flex;gap:16px;font-size:12px;color:var(--text-light);">'
+        + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:var(--green-light);border-radius:2px;"></div>' + year + '</div>'
+        + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:#b0bec5;border-radius:2px;"></div>' + lastYearNum + '</div>'
+        + '<div style="margin-left:auto;font-style:italic;">Hover bars for monthly totals</div>'
+        + '</div>'
+        + '</div>';
+    }
+
     // Funnel + Sources side by side
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
 

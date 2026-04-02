@@ -45,6 +45,28 @@ var AutomationsPage = {
         + '</div>';
     }
 
+    // Status bar
+    var sgKey = localStorage.getItem('bm-sendgrid-key');
+    var sgOk = sgKey && sgKey.length > 10;
+    var lastRun = localStorage.getItem('bm-automations-last-run');
+    var today = new Date().toISOString().split('T')[0];
+    var yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    var lastRunLabel = !lastRun ? 'Never run' : lastRun === today ? 'Today' : lastRun === yesterday ? 'Yesterday' : lastRun;
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">'
+      + '<div style="flex:1;min-width:180px;">'
+      + '<div style="font-size:13px;margin-bottom:4px;">'
+      + '<span style="color:' + (sgOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (sgOk ? '✅ SendGrid connected' : '⚠️ SendGrid not connected') + '</span>'
+      + (!sgOk ? ' — <a href="#" onclick="loadPage(\'settings\');return false;" style="color:var(--green-dark);">Connect in Settings →</a>' : '')
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Last auto-run: ' + lastRunLabel + ' &bull; Runs daily when app is open</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;">'
+      + '<button class="btn btn-outline" onclick="AutomationsPage.preview()" style="font-size:13px;">🔍 Preview</button>'
+      + '<button class="btn btn-primary" onclick="AutomationsPage.runAll()" style="font-size:13px;">▶ Run All Now</button>'
+      + '</div>'
+      + '</div>';
+
     // Quotes section
     html += AutomationsPage._section('Quotes', [
       AutomationsPage._rule('quoteFollowup1', config),
@@ -92,6 +114,8 @@ var AutomationsPage = {
       + '<h3 style="margin-bottom:12px;">Manual Triggers</h3>'
       + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Run automations manually for testing or catch-up. Results depend on client email addresses being on file.</p>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button class="btn btn-outline" onclick="AutomationsPage.preview()" style="font-size:13px;">🔍 Preview</button>'
+      + '<button class="btn btn-primary" onclick="AutomationsPage.runAll()" style="font-size:13px;">✅ Run All</button>'
       + '<button class="btn btn-outline" onclick="AutomationsPage.runQuoteFollowups()">📋 Quote Follow-ups</button>'
       + '<button class="btn btn-outline" onclick="AutomationsPage.runInvoiceFollowups()">💰 Invoice Reminders</button>'
       + '<button class="btn btn-outline" onclick="AutomationsPage.runVisitReminders()">📅 Visit Reminders</button>'
@@ -234,10 +258,12 @@ var AutomationsPage = {
   _automationLog: function() {
     var log = [];
     try { log = JSON.parse(localStorage.getItem('bm-automation-log') || '[]'); } catch(e) {}
-    if (!log.length) return '';
+    if (!log.length) return '<div id="automation-log-container"></div>';
     var recent = log.slice(0, 8);
-    return '<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">'
-      + '<div style="font-size:12px;font-weight:700;color:var(--text-light);margin-bottom:8px;text-transform:uppercase;">Recent Activity</div>'
+    return '<div id="automation-log-container" style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">'
+      + '<div style="font-size:12px;font-weight:700;color:var(--text-light);margin-bottom:8px;text-transform:uppercase;">Recent Activity'
+      + '<button onclick="AutomationsPage.clearLog()" style="font-size:11px;color:var(--text-light);background:none;border:none;cursor:pointer;float:right;">Clear</button>'
+      + '</div>'
       + recent.map(function(entry) {
           return '<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">'
             + '<span>' + UI.esc(entry.message) + '</span>'
@@ -356,5 +382,121 @@ var AutomationsPage = {
     } else {
       UI.toast('No completed jobs ready for review requests');
     }
+  },
+
+  runAll: function() {
+    // Run all 4 automations and show a summary modal
+    var results = [];
+    // Temporarily intercept UI.toast to collect results
+    var origToast = UI.toast;
+    UI.toast = function(msg) { results.push(msg); };
+    try {
+      AutomationsPage.runQuoteFollowups();
+      AutomationsPage.runInvoiceFollowups();
+      AutomationsPage.runVisitReminders();
+      AutomationsPage.runReviewRequests();
+    } finally {
+      UI.toast = origToast;
+    }
+    var html = '<div style="font-size:14px;line-height:2;">'
+      + results.map(function(r) { return '<div style="padding:6px 0;border-bottom:1px solid var(--border);">• ' + UI.esc(r) + '</div>'; }).join('')
+      + '</div>';
+    UI.showModal('Automation Results', html);
+    AutomationsPage._logActivity('Run All completed — ' + results.length + ' automation' + (results.length !== 1 ? 's' : '') + ' checked');
+    // Refresh log if on automations page
+    var logEl = document.querySelector('#automation-log-container');
+    if (logEl) logEl.innerHTML = AutomationsPage._automationLog();
+  },
+
+  preview: function() {
+    // Show a dry-run preview of what would be sent without actually sending
+    var now = Date.now();
+    var config = AutomationsPage.getConfig();
+    var lines = [];
+
+    // Quote follow-ups
+    var quotes = DB.quotes.getAll().filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
+    var qf1 = 0, qf2 = 0, qSkip = 0;
+    quotes.forEach(function(q) {
+      var daysSince = Math.floor((now - new Date(q.sentAt || q.createdAt).getTime()) / 86400000);
+      var client = q.clientId ? DB.clients.getById(q.clientId) : null;
+      var email = q.sentTo || (client && client.email) || '';
+      if (!email) { qSkip++; return; }
+      if (config.quoteFollowup1 && config.quoteFollowup1.enabled && daysSince >= (config.quoteFollowup1.days || 5) && daysSince < (config.quoteFollowup2 ? (config.quoteFollowup2.days || 10) : 999) && !q.followup1SentAt) qf1++;
+      else if (config.quoteFollowup2 && config.quoteFollowup2.enabled && daysSince >= (config.quoteFollowup2.days || 10) && !q.followup2SentAt) qf2++;
+    });
+    lines.push({ icon: '📋', label: 'Quote follow-up #1', count: qf1, color: qf1 > 0 ? 'var(--green-dark)' : 'var(--text-light)' });
+    lines.push({ icon: '📋', label: 'Quote follow-up #2', count: qf2, color: qf2 > 0 ? 'var(--green-dark)' : 'var(--text-light)' });
+    if (qSkip > 0) lines.push({ icon: '⚠️', label: 'Quotes missing email', count: qSkip, color: '#e07c24' });
+
+    // Invoice follow-ups
+    var nowDate = new Date();
+    var invoices = DB.invoices.getAll().filter(function(i) { return (i.status === 'sent' || i.status === 'overdue' || i.status === 'partial') && (i.balance || 0) > 0; });
+    var if1 = 0, if2 = 0, iSkip = 0;
+    invoices.forEach(function(inv) {
+      if (!inv.dueDate) return;
+      var daysOverdue = Math.floor((nowDate.getTime() - new Date(inv.dueDate).getTime()) / 86400000);
+      if (daysOverdue < 1) return;
+      var client = inv.clientId ? DB.clients.getById(inv.clientId) : null;
+      var email = inv.clientEmail || (client && client.email) || '';
+      if (!email) { iSkip++; return; }
+      if (config.invoiceFollowup1 && config.invoiceFollowup1.enabled && daysOverdue >= (config.invoiceFollowup1.days || 1) && daysOverdue < (config.invoiceFollowup2 ? (config.invoiceFollowup2.days || 4) : 999) && !inv.followup1SentAt) if1++;
+      else if (config.invoiceFollowup2 && config.invoiceFollowup2.enabled && daysOverdue >= (config.invoiceFollowup2.days || 4) && !inv.followup2SentAt) if2++;
+    });
+    lines.push({ icon: '💰', label: 'Invoice reminder #1', count: if1, color: if1 > 0 ? 'var(--green-dark)' : 'var(--text-light)' });
+    lines.push({ icon: '💰', label: 'Invoice reminder #2', count: if2, color: if2 > 0 ? 'var(--green-dark)' : 'var(--text-light)' });
+    if (iSkip > 0) lines.push({ icon: '⚠️', label: 'Invoices missing email', count: iSkip, color: '#e07c24' });
+
+    // Visit reminders (tomorrow)
+    var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    var tomorrowStr = tomorrow.toISOString().split('T')[0];
+    var tJobs = DB.jobs.getAll().filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0, 10) === tomorrowStr && j.status !== 'completed' && j.status !== 'cancelled'; });
+    var vrCount = 0, vrSkip = 0;
+    tJobs.forEach(function(job) {
+      if (job.reminderSentAt && job.reminderSentAt.substring(0, 10) === new Date().toISOString().split('T')[0]) return;
+      var client = job.clientId ? DB.clients.getById(job.clientId) : null;
+      var email = job.clientEmail || (client && client.email) || '';
+      if (!email) { vrSkip++; return; }
+      vrCount++;
+    });
+    lines.push({ icon: '📅', label: 'Visit reminders (tomorrow)', count: vrCount, color: vrCount > 0 ? 'var(--green-dark)' : 'var(--text-light)' });
+    if (vrSkip > 0) lines.push({ icon: '⚠️', label: 'Jobs missing email', count: vrSkip, color: '#e07c24' });
+
+    // Review requests
+    var cutoff = now - (config.reviewRequest && config.reviewRequest.days ? config.reviewRequest.days : 3) * 86400000;
+    var rrJobs = DB.jobs.getAll().filter(function(j) { return j.status === 'completed' && !j.reviewSentAt && new Date(j.completedAt || j.updatedAt || j.createdAt).getTime() <= cutoff; });
+    var rrCount = 0, rrSkip = 0;
+    rrJobs.forEach(function(job) {
+      var client = job.clientId ? DB.clients.getById(job.clientId) : null;
+      var email = job.clientEmail || (client && client.email) || '';
+      if (!email) { rrSkip++; return; }
+      rrCount++;
+    });
+    lines.push({ icon: '⭐', label: 'Review requests ready', count: rrCount, color: rrCount > 0 ? 'var(--green-dark)' : 'var(--text-light)' });
+    if (rrSkip > 0) lines.push({ icon: '⚠️', label: 'Jobs missing email (reviews)', count: rrSkip, color: '#e07c24' });
+
+    var totalToSend = qf1 + qf2 + if1 + if2 + vrCount + rrCount;
+    var sgConnected = !!localStorage.getItem('bm-sendgrid-key');
+
+    var html = (sgConnected
+      ? '<div style="padding:10px 14px;background:#e8f5e9;border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--green-dark);font-weight:600;">✅ SendGrid connected — ' + totalToSend + ' email' + (totalToSend !== 1 ? 's' : '') + ' would be sent now</div>'
+      : '<div style="padding:10px 14px;background:#fff3e0;border-radius:8px;margin-bottom:16px;font-size:13px;color:#e65100;font-weight:600;">⚠️ SendGrid not connected — connect in Settings to send these emails</div>')
+      + '<div style="font-size:13px;">'
+      + lines.map(function(l) {
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">'
+            + '<span>' + l.icon + ' ' + l.label + '</span>'
+            + '<span style="font-weight:700;color:' + l.color + ';">' + l.count + '</span>'
+            + '</div>';
+        }).join('')
+      + '</div>';
+    UI.showModal('Automation Preview (Dry Run)', html);
+  },
+
+  clearLog: function() {
+    localStorage.removeItem('bm-automation-log');
+    UI.toast('Activity log cleared');
+    // Refresh
+    var logEl = document.querySelector('#automation-log-container');
+    if (logEl) logEl.innerHTML = '';
   }
 };

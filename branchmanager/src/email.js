@@ -46,7 +46,7 @@ var Email = {
           subject: subject,
           content: [
             { type: 'text/plain', value: body },
-            { type: 'text/html', value: options.htmlBody || body }
+            { type: 'text/html', value: options.htmlBody || Email.htmlWrap(body) }
           ]
         })
       });
@@ -101,16 +101,45 @@ var Email = {
 
   // Generate branded HTML email
   htmlWrap: function(bodyText) {
-    return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>'
-      + '<body style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#1d1d1f;max-width:600px;margin:0 auto;padding:20px;">'
-      + '<div style="border-bottom:3px solid #1a3c12;padding-bottom:12px;margin-bottom:20px;">'
-      + '<h1 style="font-size:18px;color:#1a3c12;margin:0;">🌳 Second Nature Tree Service</h1>'
-      + '<p style="font-size:12px;color:#666;margin:4px 0 0;">Licensed & Insured — Westchester & Putnam Counties</p></div>'
-      + '<div style="font-size:15px;line-height:1.7;color:#333;">' + bodyText.replace(/\n/g, '<br>') + '</div>'
-      + '<div style="margin-top:30px;padding-top:16px;border-top:1px solid #e0e0e0;font-size:12px;color:#999;text-align:center;">'
-      + '<p>Second Nature Tree Service<br>(914) 391-5233 · info@peekskilltree.com · peekskilltree.com</p>'
-      + '<p style="font-size:10px;margin-top:8px;">You received this because you contacted Second Nature Tree Service. Reply STOP to unsubscribe.</p>'
-      + '</div></body></html>';
+    // Convert plain text to HTML: escape special chars, make URLs clickable, preserve line breaks
+    var htmlBody = bodyText
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      // Make URLs clickable (http/https)
+      .replace(/(https?:\/\/[^\s\n<]+)/g, '<a href="$1" style="color:#00836c;font-weight:600;">$1</a>')
+      // Preserve line breaks
+      .replace(/\n\n/g, '</p><p style="margin:0 0 12px;">')
+      .replace(/\n/g, '<br>');
+
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+      + '<body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,sans-serif;">'
+      + '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">'
+      + '<tr><td align="center">'
+      + '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">'
+      // Header
+      + '<tr><td style="background:#1a3c12;padding:24px 32px;">'
+      + '<table width="100%" cellpadding="0" cellspacing="0"><tr>'
+      + '<td><div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-.3px;">🌳 Second Nature Tree Service</div>'
+      + '<div style="font-size:12px;color:#a8d5a2;margin-top:3px;">Licensed &amp; Insured · Westchester &amp; Putnam Counties</div></td>'
+      + '</tr></table></td></tr>'
+      // Body
+      + '<tr><td style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">'
+      + '<p style="margin:0 0 12px;">' + htmlBody + '</p>'
+      + '</td></tr>'
+      // Footer
+      + '<tr><td style="background:#f8f8f8;padding:20px 32px;border-top:1px solid #e8e8e8;text-align:center;">'
+      + '<div style="font-size:13px;color:#888;line-height:1.6;">'
+      + '<strong style="color:#555;">Second Nature Tree Service</strong><br>'
+      + '<a href="tel:9143915233" style="color:#00836c;text-decoration:none;">(914) 391-5233</a> &nbsp;·&nbsp; '
+      + '<a href="mailto:info@peekskilltree.com" style="color:#00836c;text-decoration:none;">info@peekskilltree.com</a> &nbsp;·&nbsp; '
+      + '<a href="https://peekskilltree.com" style="color:#00836c;text-decoration:none;">peekskilltree.com</a>'
+      + '</div>'
+      + '<div style="font-size:11px;color:#aaa;margin-top:8px;">You received this because you contacted Second Nature Tree Service.</div>'
+      + '</td></tr>'
+      + '</table>'
+      + '</td></tr></table>'
+      + '</body></html>';
   },
 
   // Settings UI

@@ -195,7 +195,7 @@ var RequestsPage = {
       + UI.statusBadge(r.status)
       + '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-      + '<button class="btn btn-primary" onclick="RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId || '') + '\')" style="font-size:12px;">+ Create Quote</button>'
+      + '<button class="btn btn-primary" onclick="RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId || '') + '\',\'' + UI.esc(r.clientName || '') + '\')" style="font-size:12px;">+ Create Quote</button>'
       + '</div></div>'
       // Title
       + '<h2 style="font-size:24px;font-weight:700;margin-bottom:4px;">' + UI.esc(r.clientName || 'New Request') + '</h2>'
@@ -262,10 +262,17 @@ var RequestsPage = {
     RequestsPage.showDetail(id);
   },
 
-  _createQuote: function(requestId, clientId) {
+  _createQuote: function(requestId, clientId, clientName) {
     // Mark request as converted before opening quote form
-    DB.requests.update(requestId, { status: 'converted', convertedAt: new Date().toISOString() });
+    DB.requests.update(requestId, { status: 'converted' });
     UI.toast('Request marked as converted');
-    QuotesPage.showForm(null, clientId);
+    // Resolve client: try by ID first, fall back to name lookup
+    var resolvedId = clientId;
+    if (clientId && !DB.clients.getById(clientId) && clientName) {
+      var allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]');
+      var match = allClients.find(function(c) { return c.name === clientName; });
+      if (match) resolvedId = match.id;
+    }
+    QuotesPage.showForm(null, resolvedId);
   }
 };

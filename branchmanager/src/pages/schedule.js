@@ -9,6 +9,7 @@ var SchedulePage = {
   render: function() {
     var self = SchedulePage;
     var html = '';
+    AdminTasks.seedDefaults();
     var today = new Date().toISOString().split('T')[0];
     var allJobs = DB.jobs.getAll();
     var todayJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === today; });
@@ -258,6 +259,23 @@ var SchedulePage = {
       html += '<div style="margin-top:16px;text-align:center;padding:24px;color:var(--text-light);font-size:14px;">No jobs scheduled for this day. <button class="btn btn-primary" style="margin-left:8px;" onclick="JobsPage.showForm(null,{date:\'' + SchedulePage.currentDate.toISOString().split('T')[0] + '\'})">+ Schedule Job</button></div>';
     }
 
+    // Admin Tasks section for this day
+    var dayAdminTasks = AdminTasks.getForDate(dateStr);
+    if (dayAdminTasks.length > 0) {
+      html += '<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:10px 14px;margin-top:8px;">'
+        + '<div style="font-size:12px;font-weight:700;color:#6a1b9a;margin-bottom:6px;">&#x1F4CB; Admin Tasks</div>';
+      dayAdminTasks.forEach(function(t) {
+        html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #e1bee7;">'
+          + '<div onclick="AdminTasks.toggleComplete(\'' + t.id + '\')" style="width:18px;height:18px;border-radius:50%;border:2px solid #7b1fa2;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;" onmouseover="this.style.background=\'#ce93d8\'" onmouseout="this.style.background=\'transparent\'">&#x2713;</div>'
+          + '<div style="flex:1;">'
+          + '<div style="font-size:13px;font-weight:600;color:#4a148c;">' + UI.esc(t.title) + '</div>'
+          + (t.recurrence && t.recurrence !== 'none' ? '<div style="font-size:11px;color:#7b1fa2;margin-top:2px;">&#x1F501; ' + t.recurrence.charAt(0).toUpperCase() + t.recurrence.slice(1) + '</div>' : '')
+          + '</div>'
+          + '</div>';
+      });
+      html += '</div>';
+    }
+
     return html;
   },
 
@@ -368,8 +386,15 @@ var SchedulePage = {
           + '<div style="font-weight:700;font-size:11px;color:var(--green-dark);margin-top:2px;">' + UI.moneyInt(j.total) + '</div>'
           + '</div>';
       });
-      if (dayJobs.length === 0) {
+      // Admin task pills for this day
+      var weekAdminTasks = AdminTasks.getForDate(dateStr);
+      weekAdminTasks.forEach(function(t) {
+        html += '<div style="background:#f3e5f5;border-left:3px solid #7b1fa2;border-radius:4px;padding:3px 6px;font-size:11px;color:#6a1b9a;cursor:pointer;margin-top:2px;" onclick="event.stopPropagation();AdminTasks.toggleComplete(\'' + t.id + '\')">&#x1F4CB; ' + UI.esc(t.title) + '</div>';
+      });
+      if (dayJobs.length === 0 && weekAdminTasks.length === 0) {
         html += '<div onclick="event.stopPropagation();JobsPage.showForm(null,{date:\'' + dateStr + '\'})" title="New job" style="font-size:11px;color:#ccc;text-align:center;padding-top:16px;cursor:pointer;" onmouseover="this.style.color=\'var(--green-dark)\'" onmouseout="this.style.color=\'#ccc\'">+ job</div>';
+      } else if (dayJobs.length === 0) {
+        html += '<div onclick="event.stopPropagation();JobsPage.showForm(null,{date:\'' + dateStr + '\'})" title="New job" style="font-size:11px;color:#ccc;text-align:center;padding-top:4px;cursor:pointer;" onmouseover="this.style.color=\'var(--green-dark)\'" onmouseout="this.style.color=\'#ccc\'">+ job</div>';
       }
       html += '</div>';
     }
@@ -439,6 +464,11 @@ var SchedulePage = {
           + 'style="background:' + bgColor + ';border-radius:4px;padding:2px 4px;margin-bottom:2px;cursor:grab;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
           + (j.clientName || '#' + j.jobNumber) + '</div>';
       });
+      // Admin task dots for this day
+      var monthAdminTasks = AdminTasks.getForDate(dateStr);
+      monthAdminTasks.forEach(function(t) {
+        html += '<div style="font-size:9px;color:#7b1fa2;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="event.stopPropagation();AdminTasks.toggleComplete(\'' + t.id + '\')">&#x25CF; ' + UI.esc(t.title) + '</div>';
+      });
       html += '</div>';
     }
 
@@ -476,5 +506,82 @@ var SchedulePage = {
   goToday: function() {
     SchedulePage.currentDate = new Date();
     loadPage('schedule');
+  }
+};
+
+var AdminTasks = {
+  getAll: function() {
+    try { return JSON.parse(localStorage.getItem('bm-admin-tasks') || '[]'); } catch(e) { return []; }
+  },
+  save: function(arr) {
+    localStorage.setItem('bm-admin-tasks', JSON.stringify(arr));
+  },
+  add: function(task) {
+    var all = this.getAll();
+    all.push(task);
+    this.save(all);
+  },
+  toggleComplete: function(id) {
+    var all = this.getAll();
+    var t = all.find(function(t) { return t.id === id; });
+    if (t) {
+      t.completed = !t.completed;
+      if (t.recurrence === 'weekly' && t.completed) {
+        // Spawn next occurrence 7 days later
+        var nextDate = new Date(t.dueDate + 'T12:00:00');
+        nextDate.setDate(nextDate.getDate() + 7);
+        var nextDateStr = nextDate.toISOString().split('T')[0];
+        all.push({
+          id: 'at_' + Date.now(),
+          title: t.title,
+          dueDate: nextDateStr,
+          completed: false,
+          recurrence: 'weekly',
+          category: t.category,
+          color: t.color || '#7b1fa2'
+        });
+      } else if (t.recurrence === 'monthly' && t.completed) {
+        // Spawn next occurrence 1 month later
+        var nextDate = new Date(t.dueDate + 'T12:00:00');
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        var nextDateStr = nextDate.toISOString().split('T')[0];
+        all.push({
+          id: 'at_' + Date.now(),
+          title: t.title,
+          dueDate: nextDateStr,
+          completed: false,
+          recurrence: 'monthly',
+          category: t.category,
+          color: t.color || '#7b1fa2'
+        });
+      }
+    }
+    this.save(all);
+    if (typeof loadPage === 'function') loadPage('schedule');
+  },
+  getForDate: function(dateStr) {
+    return this.getAll().filter(function(t) { return t.dueDate === dateStr && !t.completed; });
+  },
+  getForWeek: function(startDateStr, endDateStr) {
+    return this.getAll().filter(function(t) { return !t.completed && t.dueDate >= startDateStr && t.dueDate <= endDateStr; });
+  },
+  seedDefaults: function() {
+    var all = this.getAll();
+    if (all.length === 0) {
+      // Find next Monday
+      var d = new Date();
+      var daysUntilMonday = (8 - d.getDay()) % 7 || 7;
+      d.setDate(d.getDate() + daysUntilMonday);
+      var dateStr = d.toISOString().split('T')[0];
+      this.add({
+        id: 'at_default_media',
+        title: 'Review media uploads & schedule social posts',
+        dueDate: dateStr,
+        completed: false,
+        recurrence: 'weekly',
+        category: 'media',
+        color: '#7b1fa2'
+      });
+    }
   }
 };

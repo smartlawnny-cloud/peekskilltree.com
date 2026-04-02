@@ -599,6 +599,15 @@ var DashboardPage = {
       html += '</div>';
     }
 
+    // Media Center weekly reminder (injected from MediaCenter module)
+    if (typeof MediaCenter !== 'undefined') {
+      var mediaReminder = MediaCenter.getWeeklyReminderHtml();
+      if (mediaReminder) html += mediaReminder;
+    }
+
+    // Admin To-Dos widget
+    html += DashboardPage._renderAdminTasks();
+
     // Quick Actions
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
       + '<h3 style="font-size:16px;margin-bottom:12px;">Quick Actions</h3>'
@@ -610,6 +619,7 @@ var DashboardPage = {
       + '<button onclick="loadPage(\'expenses\')" style="background:#f3e5f5;border:1px solid #e1bee7;border-radius:8px;padding:12px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:#6a1b9a;">💸 Log Expense</button>'
       + '<button onclick="loadPage(\'schedule\')" style="background:#e8eaf6;border:1px solid #c5cae9;border-radius:8px;padding:12px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:#283593;">📅 Schedule</button>'
       + '<button onclick="loadPage(\'treemeasure\')" style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:#2e7d32;">🌲 Measure Tree</button>'
+      + '<button onclick="loadPage(\'mediacenter\')" style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:#e65100;">📸 Media Center</button>'
       + '</div></div>';
 
     // Recent Communications
@@ -631,6 +641,199 @@ var DashboardPage = {
     }
 
     return html;
+  },
+
+  _renderAdminTasks: function() {
+    var tasks = DashboardPage._getAdminTasks();
+    var now = new Date();
+    var todayStr = now.toISOString().split('T')[0];
+
+    // Auto-generate recurring tasks that are past-due or due this week
+    DashboardPage._advanceRecurringTasks(tasks, todayStr);
+    tasks = DashboardPage._getAdminTasks(); // re-read after advance
+
+    var pending = tasks.filter(function(t) { return !t.completed; });
+    var overdue = pending.filter(function(t) { return t.dueDate < todayStr; });
+    var thisWeek = pending.filter(function(t) { return t.dueDate >= todayStr; });
+    var recentlyDone = tasks.filter(function(t) { return t.completed; }).slice(-3);
+
+    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
+      + '<h3 style="font-size:16px;margin:0;">📋 Admin To-Dos</h3>'
+      + '<div style="display:flex;gap:6px;">'
+      + (overdue.length > 0 ? '<span style="background:#ffebee;color:#c62828;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;">' + overdue.length + ' overdue</span>' : '')
+      + '<button onclick="DashboardPage.showAddTask()" class="btn btn-outline" style="font-size:11px;padding:4px 10px;">+ Add Task</button>'
+      + '</div></div>';
+
+    if (pending.length === 0 && recentlyDone.length === 0) {
+      html += '<div style="text-align:center;padding:20px;color:var(--text-light);font-size:14px;">✅ All caught up! No admin tasks.</div>';
+    }
+
+    // Overdue tasks
+    if (overdue.length > 0) {
+      html += '<div style="font-size:11px;font-weight:700;color:#c62828;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Overdue</div>';
+      overdue.forEach(function(t) { html += DashboardPage._renderTaskRow(t, true); });
+    }
+
+    // Due this week / upcoming
+    if (thisWeek.length > 0) {
+      if (overdue.length > 0) html += '<div style="height:1px;background:var(--border);margin:10px 0;"></div>';
+      html += '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Upcoming</div>';
+      thisWeek.forEach(function(t) { html += DashboardPage._renderTaskRow(t, false); });
+    }
+
+    // Recently completed (last 3)
+    if (recentlyDone.length > 0) {
+      html += '<div style="height:1px;background:var(--border);margin:10px 0;"></div>'
+        + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Recently Done</div>';
+      recentlyDone.forEach(function(t) { html += DashboardPage._renderTaskRow(t, false); });
+    }
+
+    html += '</div>';
+    return html;
+  },
+
+  _renderTaskRow: function(t, isOverdue) {
+    var catIcons = { media: '📸', social: '📱', finance: '💰', admin: '📋' };
+    var icon = catIcons[t.category] || '📋';
+    var recurLabel = t.recurrence === 'weekly' ? ' · Weekly' : t.recurrence === 'monthly' ? ' · Monthly' : '';
+    var dateLabel = t.dueDate ? UI.dateShort(t.dueDate) : '';
+    var rowStyle = t.completed ? 'opacity:.5;' : '';
+    var dateColor = isOverdue ? '#c62828' : 'var(--text-light)';
+
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;' + rowStyle + '">'
+      + '<div onclick="DashboardPage.toggleTask(\'' + t.id + '\')" style="width:20px;height:20px;border-radius:50%;border:2px solid ' + (t.completed ? 'var(--green-dark)' : (isOverdue ? '#c62828' : '#ccc')) + ';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;background:' + (t.completed ? 'var(--green-dark)' : 'transparent') + ';">'
+      + (t.completed ? '<span style="color:#fff;font-size:11px;">✓</span>' : '')
+      + '</div>'
+      + '<span style="font-size:16px;flex-shrink:0;">' + icon + '</span>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-size:13px;font-weight:600;' + (t.completed ? 'text-decoration:line-through;' : '') + '">' + UI.esc(t.title) + '</div>'
+      + '<div style="font-size:11px;color:' + dateColor + ';">' + dateLabel + recurLabel + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:4px;">'
+      + (t.category === 'media' ? '<button onclick="loadPage(\'mediacenter\')" class="btn btn-outline" style="font-size:10px;padding:2px 8px;">Open</button>' : '')
+      + '<button onclick="DashboardPage.deleteTask(\'' + t.id + '\')" style="background:none;border:none;color:var(--text-light);cursor:pointer;font-size:13px;padding:2px 4px;" title="Delete">✕</button>'
+      + '</div></div>';
+  },
+
+  _getAdminTasks: function() {
+    try { return JSON.parse(localStorage.getItem('bm-admin-tasks') || '[]'); } catch(e) { return []; }
+  },
+
+  _saveAdminTasks: function(tasks) {
+    localStorage.setItem('bm-admin-tasks', JSON.stringify(tasks));
+  },
+
+  _advanceRecurringTasks: function(tasks, todayStr) {
+    var changed = false;
+    var now = new Date();
+    tasks.forEach(function(t) {
+      if (!t.recurrence || t.recurrence === 'none') return;
+      // If completed and recurrence set, create next occurrence
+      if (t.completed && t.nextDue && t.nextDue <= todayStr) {
+        t.completed = false;
+        t.dueDate = t.nextDue;
+        t.nextDue = null;
+        changed = true;
+      }
+      // If not yet created default weekly media task, do it
+    });
+    // Seed default weekly task if none exist
+    if (tasks.length === 0) {
+      var d = new Date(now);
+      var daysUntilMonday = (8 - d.getDay()) % 7 || 7;
+      d.setDate(d.getDate() + daysUntilMonday);
+      tasks.push({
+        id: 'at_media_weekly',
+        title: 'Review media uploads & schedule social posts',
+        dueDate: d.toISOString().split('T')[0],
+        completed: false,
+        recurrence: 'weekly',
+        category: 'media',
+        color: '#7b1fa2'
+      });
+      changed = true;
+    }
+    if (changed) DashboardPage._saveAdminTasks(tasks);
+  },
+
+  toggleTask: function(id) {
+    var tasks = DashboardPage._getAdminTasks();
+    var t = tasks.find(function(x) { return x.id === id; });
+    if (!t) return;
+    t.completed = !t.completed;
+    if (t.completed && t.recurrence === 'weekly') {
+      var next = new Date(t.dueDate || new Date());
+      next.setDate(next.getDate() + 7);
+      t.nextDue = next.toISOString().split('T')[0];
+      UI.toast('Task done! Next reminder: ' + UI.dateShort(t.nextDue));
+    } else if (t.completed && t.recurrence === 'monthly') {
+      var next2 = new Date(t.dueDate || new Date());
+      next2.setMonth(next2.getMonth() + 1);
+      t.nextDue = next2.toISOString().split('T')[0];
+      UI.toast('Task done! Next reminder: ' + UI.dateShort(t.nextDue));
+    } else {
+      UI.toast(t.completed ? 'Task marked done' : 'Task reopened');
+    }
+    DashboardPage._saveAdminTasks(tasks);
+    loadPage('dashboard');
+  },
+
+  deleteTask: function(id) {
+    var tasks = DashboardPage._getAdminTasks().filter(function(t) { return t.id !== id; });
+    DashboardPage._saveAdminTasks(tasks);
+    loadPage('dashboard');
+  },
+
+  showAddTask: function() {
+    // Find next Monday as default due date
+    var d = new Date();
+    d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7));
+    var defDate = d.toISOString().split('T')[0];
+
+    var html = '<div style="display:flex;flex-direction:column;gap:14px;padding:4px 0;">'
+      + '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Task Title</label>'
+      + '<input id="at-title" class="form-control" placeholder="e.g. Review media uploads" style="width:100%;" /></div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      + '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Due Date</label>'
+      + '<input id="at-due" type="date" class="form-control" value="' + defDate + '" /></div>'
+      + '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Category</label>'
+      + '<select id="at-cat" class="form-control"><option value="admin">📋 Admin</option><option value="media">📸 Media</option><option value="social">📱 Social</option><option value="finance">💰 Finance</option></select></div>'
+      + '</div>'
+      + '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Repeat</label>'
+      + '<select id="at-recur" class="form-control"><option value="none">No repeat</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>'
+      + '</div>';
+
+    UI.showModal('Add Admin Task', html, {
+      footer: '<button class="btn btn-primary" onclick="DashboardPage._saveNewTask()">Add Task</button>'
+        + '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+    });
+    setTimeout(function() {
+      var el = document.getElementById('at-title');
+      if (el) el.focus();
+    }, 100);
+  },
+
+  _saveNewTask: function() {
+    var title = (document.getElementById('at-title') || {}).value || '';
+    var due = (document.getElementById('at-due') || {}).value || '';
+    var cat = (document.getElementById('at-cat') || {}).value || 'admin';
+    var recur = (document.getElementById('at-recur') || {}).value || 'none';
+    if (!title.trim()) { UI.toast('Please enter a task title'); return; }
+    var tasks = DashboardPage._getAdminTasks();
+    tasks.push({
+      id: 'at_' + Date.now(),
+      title: title.trim(),
+      dueDate: due || new Date().toISOString().split('T')[0],
+      completed: false,
+      recurrence: recur,
+      category: cat,
+      color: cat === 'media' ? '#7b1fa2' : cat === 'social' ? '#1565c0' : cat === 'finance' ? '#2e7d32' : '#555'
+    });
+    DashboardPage._saveAdminTasks(tasks);
+    UI.closeModal();
+    loadPage('dashboard');
+    UI.toast('Task added');
   },
 
   syncNow: async function() {

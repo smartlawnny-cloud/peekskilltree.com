@@ -4,8 +4,10 @@
     {
       "name": "branch-manager",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8888", "--directory", "/Users/dougbrown/Desktop/Claude/branch-manager"],
-      "port": 8888
+      "runtimeArgs": ["-m", "http.server", "8095"],
+      "cwd": "/Users/dougbrown/Desktop/Claude/branch-manager",
+      "port": 8095,
+      "autoPort": false
     }
   ]
 }

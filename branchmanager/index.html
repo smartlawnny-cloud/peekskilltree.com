@@ -543,6 +543,7 @@
         <button class="nav-item" data-page="crewperformance"><span class="icon"><i data-lucide="trophy" class="li"></i></span> Performance</button>
         <button class="nav-item" data-page="materials"><span class="icon"><i data-lucide="package" class="li"></i></span> Materials</button>
         <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
+        <button class="nav-item" data-page="mediacenter"><span class="icon"><i data-lucide="camera" class="li"></i></span> Media Center <span class="badge" id="badge-mediacenter"></span></button>
         <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Costing</button>
         <button class="nav-item" data-page="recurring"><span class="icon"><i data-lucide="repeat" class="li"></i></span> Recurring</button>
         <button class="nav-item" data-page="notifications"><span class="icon"><i data-lucide="bell" class="li"></i></span> Activity</button>
@@ -638,7 +639,7 @@
 <script src="src/auth.js"></script>
 <script src="src/db.js?v=8"></script>
 <script src="src/ui.js?v=2"></script>
-<script src="src/pages/dashboard.js?v=5"></script>
+<script src="src/pages/dashboard.js?v=6"></script>
 <script src="src/pages/clients.js?v=10"></script>
 <script src="src/pages/requests.js?v=4"></script>
 <script src="src/pages/quotes.js?v=9"></script>
@@ -661,7 +662,7 @@
 <script src="src/pages/jobcosting.js"></script>
 <script src="src/pages/dispatch.js?v=3"></script>
 <script src="src/pages/recurring.js"></script>
-<script src="src/pages/notifications.js?v=2"></script>
+<script src="src/pages/notifications.js?v=4"></script>
 <script src="src/pages/expenses.js?v=3"></script>
 <script src="src/dialpad.js"></script>
 <script src="src/email.js"></script>
@@ -709,6 +710,7 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script src="src/pages/crewperformance.js"></script>
 <script src="src/pages/materials.js"></script>
 <script src="src/pages/beforeafter.js?v=2"></script>
+<script src="src/pages/mediacenter.js?v=1"></script>
 <script src="src/pages/reminders.js?v=2"></script>
 <script>
 // ── Navigation ──
@@ -779,6 +781,7 @@ var pageConfigs = {
   crewperformance: { title: 'Crew Performance', action: null },
   materials: { title: 'Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
   beforeafter: { title: 'Before & After', action: null },
+  mediacenter: { title: 'Media Center', action: '+ Upload Photos', actionFn: 'MediaCenter.showUploadForm()' },
   reminders: { title: 'Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' },
   comms: { title: 'Communication Log', action: null },
   satisfaction: { title: 'Client Satisfaction', action: null },
@@ -832,6 +835,7 @@ var pageRenderers = {
   crewperformance: function() { return CrewPerformance.render(); },
   materials: function() { return Materials.render(); },
   beforeafter: function() { return BeforeAfter.render(); },
+  mediacenter: function() { return MediaCenter.render(); },
   reminders: function() { return Reminders.render(); },
   comms: function() { return CommsLog.render(); },
   satisfaction: function() { return Satisfaction.render(); },
@@ -922,6 +926,12 @@ function loadPage(page) {
   var newReqs = DB.requests.countNew();
   document.getElementById('badge-requests').textContent = newReqs > 0 ? newReqs : '';
   document.getElementById('badge-clients').textContent = '';
+  // Media center unreviewed badge
+  var mediaBadgeEl = document.getElementById('badge-mediacenter');
+  if (mediaBadgeEl && typeof MediaCenter !== 'undefined') {
+    var unreviewedCount = MediaCenter.getUnreviewedCount();
+    mediaBadgeEl.textContent = unreviewedCount > 0 ? unreviewedCount : '';
+  }
 
   var content = document.getElementById('pageContent');
   var renderer = pageRenderers[page];

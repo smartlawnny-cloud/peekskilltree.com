@@ -625,13 +625,13 @@
 
 <!-- Module scripts -->
 <script src="src/auth.js"></script>
-<script src="src/db.js?v=3"></script>
+<script src="src/db.js?v=4"></script>
 <script src="src/ui.js"></script>
 <script src="src/pages/dashboard.js?v=2"></script>
 <script src="src/pages/clients.js?v=7"></script>
 <script src="src/pages/requests.js?v=3"></script>
 <script src="src/pages/quotes.js?v=6"></script>
-<script src="src/pages/jobs.js?v=8"></script>
+<script src="src/pages/jobs.js?v=9"></script>
 <script src="src/pages/invoices.js?v=7"></script>
 <script src="src/pages/schedule.js?v=2"></script>
 <script src="src/pages/insights.js?v=2"></script>
@@ -1546,9 +1546,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof AutomationsPage !== 'undefined' && AutomationsPage.init) {
       AutomationsPage.init();
     }
-    // Auto-mark overdue invoices on every app load
-    if (typeof DB !== 'undefined' && DB.invoices && DB.invoices.markOverdue) {
-      DB.invoices.markOverdue();
+    // Auto-mark overdue invoices and fix invalid job statuses on every app load
+    if (typeof DB !== 'undefined') {
+      if (DB.invoices && DB.invoices.markOverdue) DB.invoices.markOverdue();
+      if (DB.jobs && DB.jobs.fixStatuses) DB.jobs.fixStatuses();
     }
   }, 3000);
 });

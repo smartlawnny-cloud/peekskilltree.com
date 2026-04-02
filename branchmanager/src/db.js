@@ -132,6 +132,24 @@ var DB = (function() {
     getToday: function() {
       var today = new Date().toISOString().split('T')[0];
       return getAll(KEYS.jobs).filter(function(j) { return j.scheduledDate === today; });
+    },
+    fixStatuses: function() {
+      var valid = ['scheduled', 'in_progress', 'completed', 'late', 'cancelled'];
+      var all = _get(KEYS.jobs);
+      var changed = 0;
+      all.forEach(function(j, idx) {
+        if (valid.indexOf(j.status) === -1) {
+          // Map legacy statuses to valid ones
+          if (j.status === 'active') { all[idx].status = 'in_progress'; }
+          else if (j.status === 'unscheduled' || j.status === 'pending') { all[idx].status = 'scheduled'; }
+          else if (j.status === 'done' || j.status === 'invoiced') { all[idx].status = 'completed'; }
+          else { all[idx].status = 'scheduled'; } // safest default
+          all[idx].updatedAt = _now();
+          changed++;
+        }
+      });
+      if (changed > 0) _set(KEYS.jobs, all);
+      return changed;
     }
   };
 

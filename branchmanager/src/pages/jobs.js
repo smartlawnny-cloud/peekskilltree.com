@@ -107,11 +107,11 @@ var JobsPage = {
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
       + '<th style="width:32px;"><input type="checkbox" onchange="JobsPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
-      + self._sortTh('Client', 'clientName') + self._sortTh('Job #', 'jobNumber') + '<th>Property</th>' + self._sortTh('Schedule', 'scheduledDate') + self._sortTh('Status', 'status') + '<th>Crew</th>' + self._sortTh('Total', 'total', 'text-align:right;')
+      + self._sortTh('Client', 'clientName') + self._sortTh('Job #', 'jobNumber') + '<th>Property</th>' + self._sortTh('Schedule', 'scheduledDate') + self._sortTh('Status', 'status') + '<th>Crew</th>' + self._sortTh('Total', 'total', 'text-align:right;') + '<th></th>'
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
-      html += '<tr><td colspan="8">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No jobs match "' + self._search + '"</div>' : UI.emptyState('🔧', 'No jobs yet', 'Create a job from an approved quote.', '+ New Job', 'JobsPage.showForm()')) + '</td></tr>';
+      html += '<tr><td colspan="9">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No jobs match "' + self._search + '"</div>' : UI.emptyState('🔧', 'No jobs yet', 'Create a job from an approved quote.', '+ New Job', 'JobsPage.showForm()')) + '</td></tr>';
     } else {
       page.forEach(function(j) {
         html += '<tr style="cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
@@ -124,6 +124,13 @@ var JobsPage = {
           + '<td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (j.crew ? j.crew.join(', ') : '—') + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(j.total)
           + (j.satisfaction && j.satisfaction.rating ? '<div style="font-size:10px;color:#ffc107;margin-top:2px;">' + Array(j.satisfaction.rating + 1).join('⭐') + '</div>' : '')
+          + '</td>'
+          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:12px;white-space:nowrap;">'
+          + (j.status === 'scheduled' || j.status === 'in_progress'
+            ? '<button onclick="event.stopPropagation();JobsPage._quickComplete(\'' + j.id + '\')" style="font-size:11px;padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;">✓ Done</button>'
+            : (j.status === 'completed' && !j.invoiceId
+              ? '<button onclick="event.stopPropagation();(function(){var inv=Workflow.jobToInvoice(\'' + j.id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="font-size:11px;padding:3px 8px;background:#1565c0;color:#fff;border:none;border-radius:4px;cursor:pointer;">💰 Invoice</button>'
+              : ''))
           + '</td>'
           + '</tr>';
       });
@@ -189,6 +196,13 @@ var JobsPage = {
     var count = document.getElementById('job-bulk-count');
     if (bar) bar.style.display = selected.length > 0 ? 'flex' : 'none';
     if (count) count.textContent = selected.length + ' selected';
+  },
+  _quickComplete: function(id) {
+    var j = DB.jobs.getById(id);
+    if (!j) return;
+    DB.jobs.update(id, { status: 'completed', completedAt: new Date().toISOString() });
+    UI.toast('Job #' + j.jobNumber + ' marked complete');
+    loadPage('jobs');
   },
   _batchComplete: function() {
     var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });

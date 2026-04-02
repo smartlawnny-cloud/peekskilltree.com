@@ -193,7 +193,8 @@ var Reminders = {
           }
         }
 
-        html += '<tr>'
+        var rowStatus = !r.expiry ? 'none' : (function() { var exp = new Date(r.expiry + 'T00:00:00'); var d = Math.ceil((exp - now) / 86400000); return d < 0 ? 'expired' : d <= (r.alertDays || 30) ? 'expiring' : 'valid'; })();
+        html += '<tr data-status="' + rowStatus + '">'
           + '<td><strong>' + UI.esc(r.name) + '</strong>'
           + (r.notes ? '<div style="font-size:12px;color:var(--text-light);">' + UI.esc(r.notes) + '</div>' : '')
           + '</td>'
@@ -285,6 +286,18 @@ var Reminders = {
   },
 
   _filterTo: function(status) {
-    // Could add filtering later; for now just scroll to the list
+    // Highlight rows matching this status by scrolling to the first match
+    var rows = document.querySelectorAll('#pageContent tr[data-status]');
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].dataset.status === status) {
+        rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        rows[i].style.background = 'rgba(220,53,69,0.08)';
+        setTimeout(function(r) { r.style.background = ''; }, 2000, rows[i]);
+        break;
+      }
+    }
+    // Fallback: scroll to the list section
+    var table = document.querySelector('#pageContent .data-table');
+    if (table && !rows.length) table.scrollIntoView({ behavior: 'smooth' });
   }
 };

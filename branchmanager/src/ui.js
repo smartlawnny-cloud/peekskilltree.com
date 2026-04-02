@@ -74,6 +74,7 @@ var UI = (function() {
   function phone(p) {
     if (!p) return '—';
     var d = p.replace(/\D/g, '');
+    if (d.length === 11 && d[0] === '1') d = d.substr(1);
     if (d.length === 10) return '(' + d.substr(0,3) + ') ' + d.substr(3,3) + '-' + d.substr(6);
     return p;
   }

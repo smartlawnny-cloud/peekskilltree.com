@@ -144,7 +144,11 @@ var DashboardPage = {
     var approvedQuotes = allQuotes.filter(function(q) { return q.status === 'approved'; });
     var lateJobs = allJobs.filter(function(j) { return j.status === 'late'; });
     var activeJobs = allJobs.filter(function(j) { return j.status === 'in_progress' || j.status === 'scheduled'; });
-    var needsInvoicing = allJobs.filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
+    var ago90dash = new Date(now.getTime() - 90 * 86400000);
+    var needsInvoicing = allJobs.filter(function(j) {
+      if (j.status !== 'completed' || j.invoiceId) return false;
+      return j.createdAt && new Date(j.createdAt) > ago90dash;
+    });
     var actionJobs = allJobs.filter(function(j) { return j.status === 'action_required'; });
     var sentInvoices = allInvoices.filter(function(i) { return i.status === 'sent' && (!i.dueDate || new Date(i.dueDate) >= now); });
     var draftInvoices = allInvoices.filter(function(i) { return i.status === 'draft'; });

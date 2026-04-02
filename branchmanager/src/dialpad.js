@@ -201,22 +201,48 @@ var Dialpad = {
     var client = clientId ? DB.clients.getById(clientId) : null;
     var clientPhone = phone || (client ? client.phone : '');
     var name = clientName || (client ? client.name : '');
+    var configured = Dialpad.isConfigured();
+    var cleanPhone = Dialpad._cleanPhone(clientPhone);
+
+    // Mode badge — tells the user what the Send button will do
+    var modeBadge = configured
+      ? '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;background:#ede9fe;color:#7c3aed;padding:3px 8px;border-radius:20px;font-weight:600;">⚡ Dialpad — sends instantly</span>'
+      : '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;background:#f0fdf4;color:var(--green-dark);padding:3px 8px;border-radius:20px;font-weight:600;">📱 Opens Messages app on iPhone</span>';
+
+    // Action buttons differ based on API key presence
+    var actionButtons;
+    if (configured) {
+      actionButtons = '<button onclick="Dialpad._sendFromModal(\'' + clientId + '\',\'' + (clientPhone || '').replace(/'/g, '') + '\')" class="btn btn-primary" style="background:#7c3aed;border-color:#7c3aed;">⚡ Send via Dialpad</button>';
+    } else {
+      actionButtons = '<button onclick="Dialpad._openSMSApp(\'' + (clientPhone || '').replace(/'/g, '') + '\')" class="btn btn-primary" style="background:var(--green-dark);">📱 Open SMS App</button>'
+        + '<button onclick="Dialpad._copyMessage()" class="btn btn-outline" style="font-size:13px;">📋 Copy</button>';
+    }
 
     var html = '<div>'
-      + '<div style="margin-bottom:12px;">'
-      + '<div style="font-size:13px;color:var(--text-light);margin-bottom:4px;">To: ' + UI.esc(name) + ' — ' + (clientPhone || 'No phone') + '</div>'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">'
+      + '<div style="font-size:13px;color:var(--text-light);">To: <strong>' + UI.esc(name) + '</strong> &mdash; ' + (clientPhone || 'No phone') + '</div>'
+      + modeBadge
       + '</div>'
-      + '<textarea id="sms-message" placeholder="Type your message..." style="width:100%;height:100px;border:2px solid var(--border);border-radius:8px;padding:10px;font-size:14px;resize:vertical;"></textarea>'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">'
+      + '<textarea id="sms-message" placeholder="Type your message..." style="width:100%;height:110px;border:2px solid var(--border);border-radius:8px;padding:10px;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px;">'
       + '<button onclick="Dialpad._showSMSTemplates(\'' + clientId + '\')" class="btn btn-outline" style="font-size:12px;">📋 Templates</button>'
-      + '<div style="display:flex;gap:8px;">'
-      + '<span id="sms-char-count" style="font-size:11px;color:var(--text-light);align-self:center;">0/160</span>'
-      + '<button onclick="Dialpad._sendFromModal(\'' + clientId + '\',\'' + (clientPhone || '').replace(/'/g, '') + '\')" class="btn btn-primary">Send Text</button>'
-      + '</div></div></div>';
+      + '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<span id="sms-char-count" style="font-size:11px;color:var(--text-light);">0/160</span>'
+      + actionButtons
+      + '</div>'
+      + '</div>';
+
+    if (!configured) {
+      html += '<div style="margin-top:10px;padding:10px 12px;background:#f0fdf4;border-radius:8px;font-size:12px;color:var(--green-dark);border:1px solid #bbf7d0;">'
+        + '💡 <strong>How it works on iPhone:</strong> Tap "Open SMS App" — Messages opens with the number and your text pre-filled. Hit send. Done.'
+        + '</div>';
+    }
+
+    html += '</div>';
 
     UI.showModal('💬 Text ' + UI.esc(name), html);
 
-    // Character counter
+    // Character counter + auto-focus
     setTimeout(function() {
       var ta = document.getElementById('sms-message');
       if (ta) {
@@ -227,6 +253,46 @@ var Dialpad = {
         ta.focus();
       }
     }, 100);
+  },
+
+  _openSMSApp: function(phone) {
+    var ta = document.getElementById('sms-message');
+    var message = ta ? ta.value.trim() : '';
+    var cleanPhone = Dialpad._cleanPhone(phone);
+    if (!cleanPhone) { UI.toast('No phone number', 'error'); return; }
+
+    var smsUrl = 'sms:+' + cleanPhone + (message ? '?body=' + encodeURIComponent(message) : '');
+    window.location.href = smsUrl;
+
+    // Log to comms if we can identify a client from the modal context
+    // (best-effort — phone is all we have here)
+    UI.toast('Opening Messages app…');
+  },
+
+  _copyMessage: function() {
+    var ta = document.getElementById('sms-message');
+    if (!ta || !ta.value.trim()) { UI.toast('Type a message first', 'error'); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value.trim()).then(function() {
+        UI.toast('Message copied!');
+      }).catch(function() {
+        Dialpad._copyFallback(ta.value.trim());
+      });
+    } else {
+      Dialpad._copyFallback(ta.value.trim());
+    }
+  },
+
+  _copyFallback: function(text) {
+    var tmp = document.createElement('textarea');
+    tmp.value = text;
+    tmp.style.position = 'fixed';
+    tmp.style.opacity = '0';
+    document.body.appendChild(tmp);
+    tmp.select();
+    try { document.execCommand('copy'); UI.toast('Message copied!'); }
+    catch(e) { UI.toast('Copy failed — select text manually', 'error'); }
+    document.body.removeChild(tmp);
   },
 
   _sendFromModal: function(clientId, phone) {
@@ -300,17 +366,17 @@ var Dialpad = {
       + '<div><h3 style="margin:0;">Dialpad Calling & SMS</h3>'
       + '<div style="font-size:12px;color:' + (configured ? 'var(--green-dark)' : 'var(--text-light)') + ';">' + (configured ? '✅ Connected — calls & texts via Dialpad' : '⚪ Not connected — calls open phone dialer, texts open Messages app') + '</div>'
       + '</div></div>'
-      + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Connect Dialpad to make calls and send texts directly from Branch Manager. Click-to-call and click-to-text from any client page — just like Jobber.</p>'
-      + '<div style="margin-bottom:8px;"><input type="text" id="dialpad-key" value="' + (Dialpad.apiKey || '') + '" placeholder="Dialpad API key..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>'
+      + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Connect Dialpad to send texts without leaving the app. Or skip the key entirely — the 📱 Text button works great on iPhone with no setup needed.</p>'
+      + '<div style="margin-bottom:8px;"><input type="text" id="dialpad-key" value="' + (Dialpad.apiKey || '') + '" placeholder="Dialpad API key (optional)..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;">'
       + '<button onclick="Dialpad.saveKey()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Save Key</button>'
       + (configured ? '<button onclick="Dialpad.testSMS()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Send Test SMS</button>' : '')
       + '</div>'
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your API key at <a href="https://dialpad.com/settings" target="_blank" style="color:#7c3aed;">dialpad.com/settings</a> → API & Integrations → Generate API Key.</p>'
-      + '<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text-light);">'
-      + '<strong>How it works:</strong><br>'
-      + '• <strong>Without API key:</strong> Call/Text buttons open your phone dialer or Messages app<br>'
-      + '• <strong>With API key:</strong> Calls and texts go through Dialpad — call recording, analytics, and SMS all in one place<br>'
+      + '<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text-light);line-height:1.6;">'
+      + '<strong style="color:var(--text);">How it works:</strong><br>'
+      + '<span style="color:var(--green-dark);font-weight:600;">📱 Without API key</span> — Tap the Text button in the field and a compose window opens. Hit "Open SMS App" and iPhone\'s Messages opens with the number and your message pre-filled. Tap send. <em>This is the primary mode for field use.</em><br><br>'
+      + '<span style="color:#7c3aed;font-weight:600;">⚡ With Dialpad API key</span> — Texts send programmatically from the app without switching to Messages. Useful for batch follow-ups from the office. Adds call recording and SMS analytics.<br><br>'
       + '• All calls and texts are logged to the client\'s communication history automatically'
       + '</div>'
       + '</div>';

@@ -65,6 +65,13 @@ var SettingsPage = {
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at console.anthropic.com → API Keys → Create Key (free tier available)</p>'
       + '</div>';
 
+    // Photo Storage info
+    html += '<div style="background:#f0f7ff;border-radius:12px;padding:14px 18px;border:1px solid #b3d4f5;margin-bottom:16px;display:flex;align-items:center;gap:12px;">'
+      + '<span style="font-size:22px;">📸</span>'
+      + '<div style="font-size:13px;color:#1a5276;">'
+      + '<strong>Photo Storage</strong> — Uses Supabase Storage bucket <code style="background:#d6eaf8;padding:1px 5px;border-radius:4px;">job-photos</code>. Run the RLS SQL below (Database Connection section) to create the bucket and enable photo uploads on jobs.'
+      + '</div></div>';
+
     // Stripe Payments
     html += Stripe.renderSettings();
 
@@ -143,7 +150,23 @@ var SettingsPage = {
         + '-- Allow anonymous form submissions (for book.html)\n'
         + 'CREATE POLICY "Anon insert requests"\n'
         + '  ON requests FOR INSERT TO anon\n'
-        + '  WITH CHECK (true);</pre>'
+        + '  WITH CHECK (true);\n\n'
+        + '-- Storage bucket for job photos\n'
+        + 'INSERT INTO storage.buckets (id, name, public)\n'
+        + 'VALUES (\'job-photos\', \'job-photos\', true)\n'
+        + 'ON CONFLICT (id) DO NOTHING;\n\n'
+        + '-- Allow public read of job photos\n'
+        + 'DROP POLICY IF EXISTS "Public read job photos" ON storage.objects;\n'
+        + 'CREATE POLICY "Public read job photos" ON storage.objects\n'
+        + '  FOR SELECT USING (bucket_id = \'job-photos\');\n\n'
+        + '-- Allow authenticated/anon insert to job-photos\n'
+        + 'DROP POLICY IF EXISTS "Anon upload job photos" ON storage.objects;\n'
+        + 'CREATE POLICY "Anon upload job photos" ON storage.objects\n'
+        + '  FOR INSERT WITH CHECK (bucket_id = \'job-photos\');\n\n'
+        + '-- Allow delete own photos\n'
+        + 'DROP POLICY IF EXISTS "Anon delete job photos" ON storage.objects;\n'
+        + 'CREATE POLICY "Anon delete job photos" ON storage.objects\n'
+        + '  FOR DELETE USING (bucket_id = \'job-photos\');</pre>'
         + '<button onclick="SettingsPage._copyRlsSql()" style="margin-top:8px;padding:6px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Copy SQL</button>'
         + '</details>'
         + '<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--green-dark);margin-bottom:8px;">🗄️ Add Missing Columns (run once on live DB)</summary>'
@@ -422,7 +445,23 @@ var SettingsPage = {
       + 'CREATE POLICY "Anon update quote status" ON quotes FOR UPDATE TO anon USING (status IN (\'sent\', \'awaiting\')) WITH CHECK (status IN (\'approved\', \'awaiting\'));\n\n'
       + 'CREATE POLICY "Anon read invoices" ON invoices FOR SELECT TO anon USING (status <> \'draft\');\n\n'
       + 'CREATE POLICY "Anon read clients" ON clients FOR SELECT TO anon USING (true);\n\n'
-      + 'CREATE POLICY "Anon insert requests" ON requests FOR INSERT TO anon WITH CHECK (true);';
+      + 'CREATE POLICY "Anon insert requests" ON requests FOR INSERT TO anon WITH CHECK (true);\n\n'
+      + '-- Storage bucket for job photos\n'
+      + 'INSERT INTO storage.buckets (id, name, public)\n'
+      + 'VALUES (\'job-photos\', \'job-photos\', true)\n'
+      + 'ON CONFLICT (id) DO NOTHING;\n\n'
+      + '-- Allow public read of job photos\n'
+      + 'DROP POLICY IF EXISTS "Public read job photos" ON storage.objects;\n'
+      + 'CREATE POLICY "Public read job photos" ON storage.objects\n'
+      + '  FOR SELECT USING (bucket_id = \'job-photos\');\n\n'
+      + '-- Allow authenticated/anon insert to job-photos\n'
+      + 'DROP POLICY IF EXISTS "Anon upload job photos" ON storage.objects;\n'
+      + 'CREATE POLICY "Anon upload job photos" ON storage.objects\n'
+      + '  FOR INSERT WITH CHECK (bucket_id = \'job-photos\');\n\n'
+      + '-- Allow delete own photos\n'
+      + 'DROP POLICY IF EXISTS "Anon delete job photos" ON storage.objects;\n'
+      + 'CREATE POLICY "Anon delete job photos" ON storage.objects\n'
+      + '  FOR DELETE USING (bucket_id = \'job-photos\');';
     navigator.clipboard.writeText(sql).then(function() { UI.toast('RLS SQL copied!'); });
   },
 

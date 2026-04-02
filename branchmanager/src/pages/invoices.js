@@ -296,8 +296,20 @@ var InvoicesPage = {
   _saveStripeUrl: function(id, url) {
     if (url && !url.startsWith('https://')) { UI.toast('Must be a valid https:// URL', 'error'); return; }
     DB.invoices.update(id, { stripePaymentUrl: url || null });
-    UI.toast(url ? 'Stripe Payment Link saved' : 'Payment link cleared');
+    UI.toast(url ? 'Payment link saved!' : 'Payment link removed');
     InvoicesPage.showDetail(id);
+  },
+
+  _copyStripeLink: function(id) {
+    var inv = DB.invoices.getById(id);
+    if (!inv || !inv.stripePaymentUrl) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(inv.stripePaymentUrl).then(function() { UI.toast('Copied!'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = inv.stripePaymentUrl; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      UI.toast('Copied!');
+    }
   },
 
   _sendInvoiceEmail: function(id) {
@@ -435,18 +447,21 @@ var InvoicesPage = {
     // Stripe Payment Link
     if (inv.status !== 'paid') {
       html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
-        + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">💳 Card Payment Link</h4>'
+        + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">💳 Stripe Payment Link</h4>'
         + (inv.stripePaymentUrl
-          ? '<div style="font-size:12px;color:var(--accent);margin-bottom:8px;word-break:break-all;">✅ ' + UI.esc(inv.stripePaymentUrl) + '</div>'
-            + '<div style="display:flex;gap:6px;">'
-            + '<button class="btn btn-outline" style="font-size:11px;flex:1;" onclick="navigator.clipboard&&navigator.clipboard.writeText(\'' + UI.esc(inv.stripePaymentUrl) + '\');UI.toast(\'Copied!\')">Copy</button>'
-            + '<button class="btn btn-outline" style="font-size:11px;flex:1;" onclick="InvoicesPage._saveStripeUrl(\'' + id + '\',\'\')">Clear</button>'
+          ? '<div style="background:var(--green-bg);border:1px solid var(--green-border,#c8e6c9);border-radius:7px;padding:10px 12px;margin-bottom:8px;">'
+            + '<div style="font-size:12px;font-weight:600;color:var(--green-dark,#2e7d32);margin-bottom:4px;">✅ Stripe link connected</div>'
+            + '<div style="font-size:11px;color:var(--text-light);word-break:break-all;">' + UI.esc(inv.stripePaymentUrl) + '</div>'
             + '</div>'
-          : '<p style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Paste a <a href="https://dashboard.stripe.com/payment-links" target="_blank" style="color:var(--accent);">Stripe Payment Link</a> to enable card payments on the client pay page.</p>'
             + '<div style="display:flex;gap:6px;">'
+            + '<button class="btn btn-outline" style="font-size:11px;flex:1;" onclick="InvoicesPage._copyStripeLink(\'' + id + '\')">Copy Link</button>'
+            + '<button class="btn btn-outline" style="font-size:11px;flex:1;" onclick="InvoicesPage._saveStripeUrl(\'' + id + '\',\'\')">Remove</button>'
+            + '</div>'
+          : '<div style="display:flex;gap:6px;margin-bottom:6px;">'
             + '<input type="text" id="stripe-url-' + id + '" placeholder="https://buy.stripe.com/..." style="flex:1;padding:7px 10px;border:2px solid var(--border);border-radius:6px;font-size:12px;">'
             + '<button class="btn btn-primary" style="font-size:11px;white-space:nowrap;" onclick="InvoicesPage._saveStripeUrl(\'' + id + '\',document.getElementById(\'stripe-url-' + id + '\').value.trim())">Save</button>'
-            + '</div>')
+            + '</div>'
+            + '<div style="font-size:11px;color:var(--text-light);">Get one: <a href="https://dashboard.stripe.com/payment-links" target="_blank" style="color:var(--accent);">dashboard.stripe.com → Payment Links</a></div>')
         + '</div>';
     }
 

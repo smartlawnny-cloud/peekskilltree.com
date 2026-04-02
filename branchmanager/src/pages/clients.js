@@ -292,9 +292,7 @@ var ClientsPage = {
   },
 
   _copyPortalLink: function(clientId) {
-    var link = (typeof ClientHub !== 'undefined')
-      ? ClientHub.getLink(clientId)
-      : window.location.origin + window.location.pathname.replace('index.html', '') + 'client.html?id=' + clientId;
+    var link = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/') + 'client.html?id=' + clientId;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(link).then(function() { UI.toast('Portal link copied!'); });
     } else {
@@ -302,6 +300,26 @@ var ClientsPage = {
       ta.value = link; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
       UI.toast('Portal link copied!');
     }
+  },
+
+  _showPortalMenu: function(clientId) {
+    var c = DB.clients.getById(clientId);
+    if (!c) return;
+    var link = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/') + 'client.html?id=' + clientId;
+    var name = c.name || 'your client';
+    var smsBody = 'Hi! Here\'s your Second Nature Tree Service portal where you can view quotes, invoices, and appointments: ' + link;
+    var emailSubject = 'Your Second Nature Tree Service Portal';
+    var emailBody = 'Hi ' + (name.split(' ')[0] || 'there') + ',\n\nHere\'s your client portal link where you can view quotes, approve work, pay invoices, and check appointments:\n\n' + link + '\n\nLet us know if you have any questions.\n\nThanks,\nDoug\nSecond Nature Tree Service\n(914) 391-5233';
+
+    var html = '<div style="padding:4px 0;">'
+      + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;word-break:break-all;background:var(--bg);padding:8px;border-radius:6px;font-size:11px;">' + link + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;">'
+      + '<button onclick="navigator.clipboard?navigator.clipboard.writeText(\'' + link.replace(/'/g, "\\'") + '\').then(function(){UI.toast(\'Link copied!\');}):void(0);UI.closeModal();" class="btn btn-outline" style="justify-content:flex-start;">📋 Copy link</button>'
+      + (c.phone ? '<a href="sms:' + c.phone.replace(/[^0-9+]/g,'') + '?body=' + encodeURIComponent(smsBody) + '" class="btn" style="background:#7c3aed;color:#fff;text-decoration:none;display:flex;align-items:center;">📱 Text to ' + c.phone + '</a>' : '')
+      + (c.email ? '<a href="mailto:' + c.email + '?subject=' + encodeURIComponent(emailSubject) + '&body=' + encodeURIComponent(emailBody) + '" class="btn btn-primary" style="text-decoration:none;display:flex;align-items:center;">✉️ Email to ' + c.email + '</a>' : '')
+      + '</div></div>';
+
+    UI.modal('Share Client Portal — ' + name, html);
   },
 
   removeTagFromClient: function(clientId, tag) {
@@ -446,7 +464,7 @@ var ClientsPage = {
       + (c.phone ? '<button class="btn" style="background:#7c3aed;color:#fff;" onclick="Dialpad.showTextModal(\'' + id + '\',\'' + (c.name || '').replace(/'/g, "\\'") + '\',\'' + (c.phone || '').replace(/'/g, '') + '\')">💬 Text</button>' : '')
       + (c.email ? '<button class="btn btn-primary" onclick="window.location.href=\'mailto:' + c.email + '\'">✉️ Email</button>' : '')
       + '<button class="btn btn-outline" onclick="ClientsPage.showForm(\'' + id + '\')">✏️ Edit</button>'
-      + '<button class="btn btn-outline" onclick="ClientsPage._copyPortalLink(\'' + id + '\')" title="Copy client portal link">🔗 Portal</button>'
+      + '<button class="btn btn-outline" onclick="ClientsPage._showPortalMenu(\'' + id + '\')" title="Share client portal">🔗 Portal ▾</button>'
       + '</div>'
 
       // Client name (big, like Jobber)

@@ -674,6 +674,45 @@ var DashboardPage = {
       }
     }
 
+    // Revenue — Last 6 months bar chart
+    var revMonths = [];
+    var rNow = new Date();
+    for (var rm = 5; rm >= 0; rm--) {
+      var rDate = new Date(rNow.getFullYear(), rNow.getMonth() - rm, 1);
+      var rMonth = rDate.getMonth();
+      var rYear = rDate.getFullYear();
+      var rRevenue = allInvoices.filter(function(i) {
+        if (i.status !== 'paid') return false;
+        var d = new Date(i.paidDate || i.createdAt);
+        return d.getMonth() === rMonth && d.getFullYear() === rYear;
+      }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
+      revMonths.push({ month: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][rMonth], revenue: rRevenue, isCurrent: rm === 0 });
+    }
+    var revMax = Math.max.apply(null, revMonths.map(function(m) { return m.revenue; })) || 1;
+    var revTotal = revMonths[5].revenue; // current month
+    var revPrev = revMonths[4].revenue; // last month
+
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:20px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;cursor:pointer;" onclick="loadPage(\'insights\')">'
+      + '<div><h3 style="font-size:15px;font-weight:700;margin:0;">Revenue</h3>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + (revPrev > 0 ? (revTotal >= revPrev ? '↑ ' + Math.round((revTotal - revPrev) / revPrev * 100) + '% vs last month' : '↓ ' + Math.round((revPrev - revTotal) / revPrev * 100) + '% vs last month') : 'Last 6 months collected') + '</div></div>'
+      + '<div style="text-align:right;"><div style="font-size:22px;font-weight:800;color:var(--green-dark);">' + UI.moneyInt(revTotal) + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);">this month</div></div>'
+      + '</div>';
+
+    revMonths.forEach(function(m) {
+      var pct = revMax > 0 ? Math.max(m.revenue / revMax * 100, m.revenue > 0 ? 4 : 0) : 0;
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+        + '<div style="width:28px;font-size:11px;color:var(--text-light);text-align:right;flex-shrink:0;">' + m.month + '</div>'
+        + '<div style="flex:1;height:20px;background:var(--bg);border-radius:4px;overflow:hidden;">'
+        + '<div style="height:100%;width:' + pct + '%;background:' + (m.isCurrent ? 'var(--green-dark)' : '#a5d6a7') + ';border-radius:4px;transition:width .3s;"></div></div>'
+        + '<div style="width:60px;font-size:12px;font-weight:' + (m.isCurrent ? '700' : '500') + ';color:' + (m.isCurrent ? 'var(--green-dark)' : 'var(--text-light)') + ';text-align:right;">' + (m.revenue > 0 ? UI.moneyInt(m.revenue) : '—') + '</div>'
+        + '</div>';
+    });
+
+    html += '<div style="text-align:center;margin-top:8px;"><a onclick="loadPage(\'insights\')" style="font-size:12px;color:var(--green-dark);cursor:pointer;text-decoration:none;">View full report →</a></div>'
+      + '</div>';
+
     return html;
   },
 

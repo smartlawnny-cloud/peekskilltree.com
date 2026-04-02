@@ -195,6 +195,7 @@ var RequestsPage = {
       + UI.statusBadge(r.status)
       + '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      + (r.email && r.status === 'new' ? '<button class="btn btn-outline" onclick="RequestsPage._sendConfirmation(\'' + r.id + '\')" style="font-size:12px;">📧 Confirm Receipt</button>' : '')
       + '<button class="btn btn-primary" onclick="RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId || '') + '\',\'' + UI.esc(r.clientName || '') + '\')" style="font-size:12px;">+ Create Quote</button>'
       + '</div></div>'
       // Title
@@ -274,5 +275,53 @@ var RequestsPage = {
       if (match) resolvedId = match.id;
     }
     QuotesPage.showForm(null, resolvedId);
+  },
+
+  _sendConfirmation: function(id) {
+    var r = DB.requests.getById(id);
+    if (!r || !r.email) { UI.toast('No email on file for this request', 'error'); return; }
+
+    var firstName = (r.clientName || '').split(' ')[0] || 'there';
+    var subject = 'We received your request — Second Nature Tree Service';
+    var body = 'Hi ' + firstName + ',\n\n'
+      + 'Thanks for reaching out to Second Nature Tree Service! We\'ve received your request and will be in touch within 1 business day to schedule an assessment.\n\n'
+      + (r.notes ? '📋 Your request: ' + r.notes + '\n\n' : '')
+      + (r.property ? '📍 Property: ' + r.property + '\n\n' : '')
+      + 'In the meantime, feel free to call or text us at (914) 391-5233 with any questions.\n\n'
+      + 'We look forward to working with you!\n\n'
+      + 'Doug Brown\nSecond Nature Tree Service\n(914) 391-5233\ninfo@peekskilltree.com\npeekskilltree.com\nLicensed & Fully Insured — WC-32079 / PC-50644';
+
+    var html = '<div style="padding:16px;">'
+      + '<div style="background:#e8f5e9;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1a3c12;">'
+      + '📧 Sending confirmation to <strong>' + r.email + '</strong>'
+      + '</div>'
+      + '<div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Subject</label>'
+      + '<input type="text" id="rc-subject" value="' + subject + '" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Message</label>'
+      + '<textarea id="rc-body" rows="12" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;font-family:inherit;resize:vertical;">' + body + '</textarea></div>'
+      + '</div>';
+
+    UI.showModal('Send Request Confirmation', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="RequestsPage._confirmSendConfirmation(\'' + id + '\')">📧 Send Now</button>'
+    });
+  },
+
+  _confirmSendConfirmation: function(id) {
+    var r = DB.requests.getById(id);
+    if (!r) return;
+    var subject = document.getElementById('rc-subject').value;
+    var body = document.getElementById('rc-body').value;
+    var to = r.email;
+
+    if (typeof Email !== 'undefined' && Email.isConfigured()) {
+      Email.send(to, subject, body);
+    } else {
+      window.open('mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+    }
+    DB.requests.update(id, { confirmationSentAt: new Date().toISOString(), status: 'assessment_scheduled' });
+    UI.closeModal();
+    UI.toast('Confirmation sent to ' + to + ' ✅');
+    RequestsPage.showDetail(id);
   }
 };

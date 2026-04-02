@@ -195,6 +195,51 @@ var SupabaseDB = {
     }
   },
 
+  // Poll for new requests submitted via book.html (every 3 min)
+  startRequestPolling: function() {
+    if (window._requestPollStarted) return;
+    window._requestPollStarted = true;
+    setInterval(SupabaseDB._checkNewRequests, 3 * 60 * 1000);
+  },
+
+  _checkNewRequests: async function() {
+    if (!SupabaseDB.ready || !SupabaseDB.client) return;
+    try {
+      var since = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+      var { data, error } = await SupabaseDB.client
+        .from('requests')
+        .select('id, client_name, client_phone, source, status, created_at')
+        .eq('status', 'new')
+        .gte('created_at', since);
+      if (error || !data || !data.length) return;
+
+      var localReqs = [];
+      try { localReqs = JSON.parse(localStorage.getItem('bm-requests') || '[]'); } catch(e) {}
+      var localIds = {};
+      localReqs.forEach(function(r) { localIds[r.id] = true; });
+
+      var newOnes = data.filter(function(r) { return !localIds[r.id]; });
+      if (!newOnes.length) return;
+
+      // Add to local
+      newOnes.forEach(function(remote) {
+        var local = {};
+        Object.keys(remote).forEach(function(k) {
+          var camel = k.replace(/_([a-z])/g, function(m, p) { return p.toUpperCase(); });
+          local[camel] = remote[k];
+        });
+        localReqs.unshift(local);
+        UI.toast('🆕 New request from ' + (remote.client_name || 'website') + '!', 'success');
+      });
+      localStorage.setItem('bm-requests', JSON.stringify(localReqs));
+
+      // Refresh requests page badge
+      if (typeof NotificationCenter !== 'undefined' && NotificationCenter.updateBadge) {
+        NotificationCenter.updateBadge();
+      }
+    } catch(e) {}
+  },
+
   // Force re-sync from cloud (can be called manually)
   resync: async function() {
     UI.toast('Syncing from cloud...');

@@ -317,27 +317,78 @@ var InvoicesPage = {
     if (!inv) return;
     var client = inv.clientId ? DB.clients.getById(inv.clientId) : null;
     var email = inv.clientEmail || (client && client.email) || '';
+    if (!email) { UI.toast('No email address for this client', 'error'); return; }
     var firstName = (inv.clientName || '').split(' ')[0] || 'there';
     var payLink = InvoicesPage._getPayLink(id);
-    var subject = 'Invoice #' + inv.invoiceNumber + ' from Second Nature Tree Service — ' + UI.money(inv.balance || inv.total);
+    var amtDue = UI.money(inv.balance || inv.total);
+    var subject = 'Invoice #' + inv.invoiceNumber + ' from Second Nature Tree Service — ' + amtDue;
+
+    // Plain text fallback
     var body = 'Hi ' + firstName + ',\n\n'
       + 'Thank you for choosing Second Nature Tree Service! Your invoice is ready:\n\n'
-      + '📄 Invoice #' + inv.invoiceNumber + '\n'
-      + (inv.subject ? '📋 Job: ' + inv.subject + '\n' : '')
-      + '💰 Amount Due: ' + UI.money(inv.balance || inv.total) + '\n'
-      + (inv.dueDate ? '📅 Due: ' + UI.dateShort(inv.dueDate) + '\n' : '') + '\n'
-      + '👉 View & pay online:\n' + payLink + '\n\n'
-      + 'Payment options: credit/debit card, Venmo, Zelle, check, or cash.\n\n'
-      + 'Questions? Reply to this email or call (914) 391-5233.\n\n'
+      + '  Invoice #' + inv.invoiceNumber + '\n'
+      + (inv.subject ? '  Job: ' + inv.subject + '\n' : '')
+      + '  Amount Due: ' + amtDue + '\n'
+      + (inv.dueDate ? '  Due: ' + UI.dateShort(inv.dueDate) + '\n' : '') + '\n'
+      + 'Pay online (card, or tip optional):\n' + payLink + '\n\n'
+      + 'Also accepted: Venmo (@SecondNatureTree), Zelle (info@peekskilltree.com), check, or cash.\n\n'
+      + 'Questions? Reply to this email or call/text (914) 391-5233.\n\n'
       + 'Thanks,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+
+    // Branded HTML email
+    var lineItemsHtml = '';
+    if (inv.lineItems && inv.lineItems.length) {
+      lineItemsHtml = '<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">'
+        + '<tr style="background:#f0f9f4;"><th style="padding:8px 12px;text-align:left;font-size:12px;color:#555;font-weight:600;border-bottom:2px solid #c8e6c9;">SERVICE</th><th style="padding:8px 12px;text-align:right;font-size:12px;color:#555;font-weight:600;border-bottom:2px solid #c8e6c9;">AMOUNT</th></tr>';
+      inv.lineItems.forEach(function(item) {
+        var amt = item.amount || ((item.qty||1) * (item.rate||0));
+        lineItemsHtml += '<tr><td style="padding:8px 12px;border-bottom:1px solid #e0e0e0;">' + (item.service||item.description||'Service') + '</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #e0e0e0;font-weight:600;">' + UI.money(amt) + '</td></tr>';
+      });
+      lineItemsHtml += '<tr style="background:#f0f9f4;"><td style="padding:10px 12px;font-weight:700;">Total</td><td style="padding:10px 12px;text-align:right;font-weight:800;color:#00836c;font-size:16px;">' + UI.money(inv.total) + '</td></tr></table>';
+    }
+
+    var htmlBody = '<div style="background:#f5f6f8;padding:24px 0;">'
+      + '<div style="max-width:520px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;">'
+      // Header
+      + '<div style="background:linear-gradient(135deg,#1a3c12 0%,#00836c 100%);border-radius:12px 12px 0 0;padding:24px 28px;color:#fff;">'
+      + '<div style="font-size:13px;opacity:.8;margin-bottom:4px;">🌳 Second Nature Tree Service</div>'
+      + '<div style="font-size:26px;font-weight:900;letter-spacing:-0.5px;">Invoice #' + inv.invoiceNumber + '</div>'
+      + '<div style="font-size:38px;font-weight:900;margin:8px 0 4px;letter-spacing:-1px;">' + amtDue + '</div>'
+      + '<div style="font-size:13px;opacity:.75;">' + (inv.dueDate ? 'Due ' + UI.dateShort(inv.dueDate) : 'Balance due') + ' &nbsp;·&nbsp; ' + (inv.clientName||'') + '</div>'
+      + '</div>'
+      // Body
+      + '<div style="background:#fff;border-radius:0 0 12px 12px;padding:24px 28px;">'
+      + '<p style="font-size:15px;color:#2d3748;margin-bottom:16px;">Hi ' + firstName + ',</p>'
+      + '<p style="font-size:14px;color:#4a5568;line-height:1.6;margin-bottom:16px;">Thank you for choosing Second Nature Tree Service! Your invoice is ready to view and pay online.</p>'
+      + (inv.subject ? '<p style="font-size:13px;color:#718096;margin-bottom:16px;">📋 <strong>Job:</strong> ' + inv.subject + '</p>' : '')
+      + lineItemsHtml
+      // Pay button
+      + '<div style="text-align:center;margin:24px 0;">'
+      + '<a href="' + payLink + '" style="display:inline-block;background:linear-gradient(135deg,#00836c,#1a3c12);color:#fff;padding:16px 36px;border-radius:10px;font-size:17px;font-weight:800;text-decoration:none;letter-spacing:-0.3px;box-shadow:0 4px 14px rgba(0,131,108,.35);">💳 Pay ' + amtDue + ' Online</a>'
+      + '</div>'
+      + '<p style="font-size:12px;color:#a0aec0;text-align:center;margin-bottom:20px;">You can also add an optional gratuity for the crew on the payment page.</p>'
+      + '<div style="background:#f7fafc;border-radius:8px;padding:14px 16px;font-size:13px;color:#4a5568;">'
+      + '<strong>Other ways to pay:</strong><br>'
+      + '• <strong>Venmo:</strong> @SecondNatureTree<br>'
+      + '• <strong>Zelle:</strong> info@peekskilltree.com<br>'
+      + '• <strong>Check/Cash:</strong> 1 Highland Industrial Park, Peekskill NY 10566'
+      + '</div>'
+      + '<p style="font-size:13px;color:#718096;margin-top:16px;">Questions? Reply to this email or call/text <strong>(914) 391-5233</strong>.</p>'
+      + '<p style="font-size:13px;color:#2d3748;margin-top:12px;">Thanks,<br><strong>Doug Brown</strong><br>Second Nature Tree Service</p>'
+      + '</div></div></div>';
+
     if (typeof Email !== 'undefined') {
-      Email.send(email || '', subject, body).then(function() {
-        DB.invoices.update(id, { status: 'sent', sentAt: new Date().toISOString() });
-        UI.toast('Invoice sent to ' + (email || 'client'));
+      Email.send(email, subject, body, { htmlBody: htmlBody }).then(function(result) {
+        if (result && result.ok) {
+          DB.invoices.update(id, { status: 'sent', sentAt: new Date().toISOString() });
+          UI.toast('Invoice sent to ' + email + ' ✓');
+        } else {
+          UI.toast('Email error: ' + (result && result.error ? result.error : 'unknown'), 'error');
+        }
         InvoicesPage.showDetail(id);
       });
     } else {
-      window.open('mailto:' + encodeURIComponent(email || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+      window.open('mailto:' + encodeURIComponent(email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
       DB.invoices.update(id, { status: 'sent', sentAt: new Date().toISOString() });
       InvoicesPage.showDetail(id);
     }

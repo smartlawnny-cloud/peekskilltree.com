@@ -1,15 +1,23 @@
 /**
  * Branch Manager — Notification Center & Activity Feed
+ * Clickable items, inline actions, unread badges
  */
 var NotificationsPage = {
   _activeFilter: 'all',
 
   render: function() {
     var self = NotificationsPage;
-    var activities = DB.getActivities ? DB.getActivities() : self._buildFeed();
+    var activities = self._buildFeed();
     var filteredCount = self._hiddenOldCount || 0;
-    var html = '<div class="section-header"><h2>Activity Feed</h2>'
-      + (filteredCount > 0 ? '<span style="font-size:12px;color:var(--text-light);font-weight:400;">' + filteredCount + ' older entries hidden</span>' : '')
+    var unreadCount = activities.filter(function(a){ return a.unread; }).length;
+
+    var html = '<div class="section-header" style="display:flex;align-items:center;justify-content:space-between;">'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
+      + '<h2 style="margin:0;">Activity Feed</h2>'
+      + (unreadCount > 0 ? '<span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">' + unreadCount + ' new</span>' : '')
+      + (filteredCount > 0 ? '<span style="font-size:12px;color:var(--text-light);">' + filteredCount + ' older entries hidden</span>' : '')
+      + '</div>'
+      + (unreadCount > 0 ? '<button class="btn btn-outline" style="font-size:12px;padding:5px 14px;" onclick="NotificationsPage.markAllRead()">Mark All Read</button>' : '')
       + '</div>';
 
     // Filter tabs
@@ -21,6 +29,32 @@ var NotificationsPage = {
       html += '<button onclick="NotificationsPage.filter(\'' + f.toLowerCase() + '\')" class="filter-btn"' + style + '>' + f + '</button>';
     });
     html += '</div>';
+
+    // Priority alerts banner (overdue invoices, new requests)
+    var overdueInvs = DB.invoices.getAll().filter(function(inv){
+      return inv.balance > 0 && inv.dueDate && new Date(inv.dueDate) < new Date() && inv.status !== 'paid' && inv.status !== 'draft' && inv.status !== 'cancelled';
+    });
+    var newReqs = DB.requests.getAll().filter(function(r){ return r.status === 'new'; });
+
+    if (overdueInvs.length > 0 || newReqs.length > 0) {
+      html += '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">';
+      if (overdueInvs.length > 0) {
+        var overdueTotal = overdueInvs.reduce(function(s,i){ return s + (i.balance||0); }, 0);
+        html += '<div style="flex:1;min-width:200px;background:#fff8f0;border:1px solid #ffcc80;border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="loadPage(\'invoices\')">'
+          + '<div><div style="font-weight:700;font-size:13px;color:#e65100;">⚠️ ' + overdueInvs.length + ' Overdue Invoice' + (overdueInvs.length !== 1 ? 's' : '') + '</div>'
+          + '<div style="font-size:12px;color:#bf360c;">' + UI.money(overdueTotal) + ' outstanding</div></div>'
+          + '<span style="font-size:12px;color:var(--accent);font-weight:600;">View →</span>'
+          + '</div>';
+      }
+      if (newReqs.length > 0) {
+        html += '<div style="flex:1;min-width:200px;background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="loadPage(\'requests\')">'
+          + '<div><div style="font-weight:700;font-size:13px;color:#0d47a1;">📥 ' + newReqs.length + ' New Request' + (newReqs.length !== 1 ? 's' : '') + '</div>'
+          + '<div style="font-size:12px;color:#1565c0;">Needs response</div></div>'
+          + '<span style="font-size:12px;color:var(--accent);font-weight:600;">View →</span>'
+          + '</div>';
+      }
+      html += '</div>';
+    }
 
     // Activity list
     html += '<div id="activity-list" style="display:flex;flex-direction:column;gap:8px;">';
@@ -40,24 +74,54 @@ var NotificationsPage = {
     var icon = icons[a.type] || '📋';
     var timeAgo = UI.dateRelative ? UI.dateRelative(a.date) : a.date;
 
-    return '<div style="background:var(--white);border-radius:10px;padding:14px 16px;border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;' + (a.unread ? 'border-left:3px solid var(--green-light);' : '') + '">'
+    // Build action buttons based on type and status
+    var actions = '';
+    if (a.type === 'request' && a.unread) {
+      actions += '<button class="btn btn-outline" style="font-size:11px;padding:3px 10px;" onclick="event.stopPropagation();loadPage(\'requests\')">Respond →</button>';
+    }
+    if (a.type === 'invoice' && a.unread) {
+      // Overdue invoice — show send reminder button
+      actions += '<button class="btn btn-outline" style="font-size:11px;padding:3px 10px;border-color:#ff9800;color:#e07c24;" onclick="event.stopPropagation();NotificationsPage._sendInvoiceReminder(\'' + (a.refId||'') + '\')">'
+        + '📧 Send Reminder</button>';
+      actions += '<button class="btn btn-outline" style="font-size:11px;padding:3px 10px;" onclick="event.stopPropagation();loadPage(\'invoices\')">View →</button>';
+    }
+    if (a.type === 'quote') {
+      actions += '<button class="btn btn-outline" style="font-size:11px;padding:3px 10px;" onclick="event.stopPropagation();loadPage(\'quotes\')">View →</button>';
+    }
+    if (a.type === 'job') {
+      actions += '<button class="btn btn-outline" style="font-size:11px;padding:3px 10px;" onclick="event.stopPropagation();loadPage(\'jobs\')">View →</button>';
+    }
+    if (a.type === 'payment') {
+      actions += '<span style="font-size:11px;color:#2e7d32;font-weight:700;">✓ Paid</span>';
+    }
+
+    // Clickable row — navigate to relevant page
+    var clickTarget = { request: 'requests', quote: 'quotes', job: 'jobs', invoice: 'invoices', payment: 'invoices' }[a.type] || '';
+    var clickHandler = clickTarget ? 'onclick="loadPage(\'' + clickTarget + '\')"' : '';
+
+    return '<div ' + clickHandler + ' style="background:var(--white);border-radius:10px;padding:14px 16px;border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;'
+      + (a.unread ? 'border-left:3px solid ' + (a.type === 'invoice' ? '#ff9800' : 'var(--green-light)') + ';' : '')
+      + (clickTarget ? 'cursor:pointer;' : '')
+      + '" '
+      + (clickTarget ? 'onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.1)\'" onmouseout="this.style.boxShadow=\'none\'"' : '')
+      + '>'
       + '<span style="font-size:20px;flex-shrink:0;">' + icon + '</span>'
       + '<div style="flex:1;min-width:0;">'
       + '<div style="font-size:14px;"><strong>' + (a.title || '') + '</strong></div>'
       + '<div style="font-size:13px;color:var(--text-light);margin-top:2px;">' + (a.description || '') + '</div>'
+      + (actions ? '<div style="display:flex;gap:6px;align-items:center;margin-top:8px;">' + actions + '</div>' : '')
       + '</div>'
-      + '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;">' + timeAgo + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;flex-shrink:0;">' + timeAgo + '</div>'
       + '</div>';
   },
 
   _hiddenOldCount: 0,
 
-  _buildFeed: function() {
+  _buildFeed: function(filterType) {
     var self = NotificationsPage;
     var feed = [];
     var ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
     var thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-    // Jobber import window — items "updated" on these days are import artifacts, not real activity
     function isImportArtifact(d) {
       if (!d) return false;
       var day = d.substring(0, 10);
@@ -70,7 +134,7 @@ var NotificationsPage = {
     requests.forEach(function(r) {
       allCount++;
       if (r.createdAt && r.createdAt < ninetyDaysAgo) return;
-      feed.push({ type: 'request', title: 'New request from ' + (r.clientName || 'Unknown'), description: r.property || r.notes || '', date: r.createdAt, unread: r.status === 'new' });
+      feed.push({ type: 'request', refId: r.id, title: 'New request from ' + (r.clientName || 'Unknown'), description: r.property || r.notes || '', date: r.createdAt, unread: r.status === 'new' });
     });
 
     // Quotes — only meaningful statuses, last 90 days, skip import-date artifacts
@@ -81,20 +145,20 @@ var NotificationsPage = {
       allCount++;
       var actDate = q.updatedAt || q.createdAt;
       if (!actDate || actDate < ninetyDaysAgo) return;
-      if (isImportArtifact(actDate)) return; // skip import artifacts
+      if (isImportArtifact(actDate)) return;
       var statusLabels = { sent: 'Sent', awaiting: 'Awaiting changes', approved: 'Approved ✓', declined: 'Declined', converted: 'Converted to job' };
-      feed.push({ type: 'quote', title: 'Quote #' + (q.quoteNumber || '') + ' — ' + (q.clientName || ''), description: UI.money(q.total) + ' • ' + (statusLabels[q.status] || q.status), date: actDate });
+      feed.push({ type: 'quote', refId: q.id, title: 'Quote #' + (q.quoteNumber || '') + ' — ' + (q.clientName || ''), description: UI.money(q.total) + ' • ' + (statusLabels[q.status] || q.status), date: actDate });
     });
 
-    // Jobs completed (last 30 days)
+    // Jobs completed (last 90 days)
     var jobs = DB.jobs.getAll();
     jobs.forEach(function(j) {
       if (j.status !== 'completed') return;
       allCount++;
       var actDate = j.completedDate || j.scheduledDate || j.createdAt;
       if (!actDate || actDate < ninetyDaysAgo) return;
-      if (isImportArtifact(actDate)) return; // skip import artifacts
-      feed.push({ type: 'job', title: 'Job #' + (j.jobNumber || '') + ' completed — ' + (j.clientName || ''), description: j.description || j.property || '', date: actDate });
+      if (isImportArtifact(actDate)) return;
+      feed.push({ type: 'job', refId: j.id, title: 'Job #' + (j.jobNumber || '') + ' completed — ' + (j.clientName || ''), description: j.description || j.property || '', date: actDate });
     });
 
     // Invoices — paid (last 90 days) + outstanding always shown
@@ -105,18 +169,59 @@ var NotificationsPage = {
         allCount++;
         var paidDate = inv.paidDate || inv.updatedAt || inv.createdAt;
         if (!paidDate || paidDate < ninetyDaysAgo) return;
-        if (isImportArtifact(paidDate)) return; // skip import artifacts
-        feed.push({ type: 'payment', title: 'Payment received — ' + (inv.clientName || ''), description: UI.money(inv.total) + ' • Invoice #' + (inv.invoiceNumber || ''), date: paidDate });
+        if (isImportArtifact(paidDate)) return;
+        feed.push({ type: 'payment', refId: inv.id, title: 'Payment received — ' + (inv.clientName || ''), description: UI.money(inv.total) + ' • Invoice #' + (inv.invoiceNumber || ''), date: paidDate });
       } else if (inv.balance > 0 && inv.status !== 'draft' && inv.status !== 'cancelled') {
         var isOverdue = inv.dueDate && new Date(inv.dueDate) < now;
-        feed.push({ type: 'invoice', title: 'Invoice #' + (inv.invoiceNumber || '') + (isOverdue ? ' overdue' : ' outstanding'), description: UI.money(inv.balance) + ' remaining • ' + (inv.clientName || ''), date: inv.dueDate || inv.createdAt, unread: isOverdue });
+        feed.push({ type: 'invoice', refId: inv.id, title: 'Invoice #' + (inv.invoiceNumber || '') + (isOverdue ? ' ⚠️ overdue' : ' outstanding'), description: UI.money(inv.balance) + ' remaining • ' + (inv.clientName || ''), date: inv.dueDate || inv.createdAt, unread: isOverdue });
       }
     });
 
     // Sort by date descending
     feed.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
     self._hiddenOldCount = Math.max(0, allCount - feed.length);
+
+    // Apply filter type if provided
+    if (filterType && filterType !== 'all') {
+      var typeMap = { requests: 'request', quotes: 'quote', jobs: 'job', invoices: 'invoice', payments: 'payment' };
+      var ft = typeMap[filterType] || filterType;
+      if (filterType === 'invoices') {
+        feed = feed.filter(function(a){ return a.type === 'invoice' || a.type === 'payment'; });
+      } else {
+        feed = feed.filter(function(a){ return a.type === ft; });
+      }
+    }
+
     return feed.slice(0, 100);
+  },
+
+  _sendInvoiceReminder: function(invId) {
+    if (!invId) { loadPage('invoices'); return; }
+    var inv = DB.invoices.getById(invId);
+    if (!inv) { loadPage('invoices'); return; }
+    var client = inv.clientId ? DB.clients.getById(inv.clientId) : null;
+    var email = client ? (client.email || '') : '';
+    if (!email) { UI.toast('No email on file for this client', 'error'); return; }
+    var firstName = (inv.clientName || '').split(' ')[0];
+    var subject = 'Invoice #' + (inv.invoiceNumber || '') + ' — Payment Due';
+    var body = 'Hi ' + firstName + ',\n\nThis is a friendly reminder that Invoice #' + (inv.invoiceNumber || '') + ' for ' + UI.money(inv.balance) + ' is overdue.\n\nPlease let me know if you have any questions.\n\nThank you,\nDoug\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+    if (typeof Email !== 'undefined' && Email.send) {
+      Email.send({ to: email, subject: subject, body: body }).then(function(r) {
+        UI.toast(r.ok ? 'Reminder sent to ' + email : 'Email failed', r.ok ? 'success' : 'error');
+      });
+    } else {
+      window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    }
+  },
+
+  markAllRead: function() {
+    // Mark new requests as 'pending' (seen)
+    var changed = 0;
+    DB.requests.getAll().forEach(function(r) {
+      if (r.status === 'new') { DB.requests.update(r.id, { status: 'pending' }); changed++; }
+    });
+    UI.toast(changed > 0 ? changed + ' item' + (changed !== 1 ? 's' : '') + ' marked as read' : 'All caught up!');
+    loadPage('notifications');
   },
 
   filter: function(type) {
@@ -129,17 +234,7 @@ var NotificationsPage = {
       btn.style.borderColor = isActive ? 'var(--green-dark)' : '';
     });
     // Filter and re-render list
-    var activities = NotificationsPage._buildFeed();
-    if (type !== 'all') {
-      var typeMap = { requests: 'request', quotes: 'quote', jobs: 'job', invoices: 'invoice', payments: 'payment' };
-      var filterType = typeMap[type] || type;
-      // 'invoices' filter should include both invoice and payment types
-      if (type === 'invoices') {
-        activities = activities.filter(function(a) { return a.type === 'invoice' || a.type === 'payment'; });
-      } else {
-        activities = activities.filter(function(a) { return a.type === filterType; });
-      }
-    }
+    var activities = NotificationsPage._buildFeed(type);
     var listEl = document.getElementById('activity-list');
     if (listEl) {
       listEl.innerHTML = activities.length

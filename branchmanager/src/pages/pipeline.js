@@ -46,6 +46,12 @@ var PipelinePage = {
     var lostCount = stageStats.lost ? stageStats.lost.count : 0;
     var hiddenOld = allDeals.length - deals.length;
 
+    // Unconfirmed open quotes not yet in pipeline
+    var existingIds = new Set(allDeals.map(function(d){ return d.id; }));
+    var openQuotes = DB.quotes.getAll().filter(function(q){
+      return !existingIds.has(q.id) && (q.status === 'sent' || q.status === 'awaiting' || q.status === 'draft');
+    });
+
     var html = '<div class="stat-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);">'
       + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
       + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
@@ -72,16 +78,22 @@ var PipelinePage = {
       + '<div style="font-size:12px;color:var(--text-light);">' + lostCount + ' lost</div>'
       + '</div></div>';
 
-    // Filter bar
-    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'
+    // Filter bar + Import from Quotes button
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">'
       + '<button class="btn ' + (PipelinePage._filterRecent ? 'btn-primary' : 'btn-outline') + '" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage._filterRecent=true;loadPage(\'pipeline\')">6 Months</button>'
       + '<button class="btn ' + (!PipelinePage._filterRecent ? 'btn-primary' : 'btn-outline') + '" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage._filterRecent=false;loadPage(\'pipeline\')">All Time</button>'
       + (hiddenOld > 0 ? '<span style="font-size:12px;color:var(--text-light);">' + hiddenOld + ' older Jobber deals hidden</span>' : '')
+      + '<div style="margin-left:auto;display:flex;gap:8px;">'
+      + (openQuotes.length > 0 ? '<button class="btn btn-outline" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage.importFromQuotes()">📋 Import ' + openQuotes.length + ' Quote' + (openQuotes.length !== 1 ? 's' : '') + '</button>' : '')
+      + '<button class="btn btn-primary" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage.addDeal(\'new_lead\')">+ New Deal</button>'
+      + '</div>'
       + '</div>';
 
     // Kanban board
     html += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:16px;">'
       + '<div style="display:flex;gap:12px;min-width:' + (PipelinePage.stages.length * 240) + 'px;">';
+
+    var now = Date.now();
 
     PipelinePage.stages.forEach(function(stage) {
       var stageDeals = deals.filter(function(d) { return d.stage === stage.id; });
@@ -103,17 +115,33 @@ var PipelinePage = {
         html += '<div style="text-align:center;padding:20px;font-size:12px;color:#ccc;border:2px dashed #e0e0e0;border-radius:8px;">Drop here</div>';
       } else {
         stageDeals.slice(0, maxShow).forEach(function(deal) {
+          // Age urgency for non-terminal stages
+          var ageDays = deal.createdAt ? Math.floor((now - new Date(deal.createdAt).getTime()) / 86400000) : 0;
+          var isStale = (stage.id === 'follow_up' || stage.id === 'assessment') && ageDays > 14;
+          var isAging = (stage.id === 'follow_up' || stage.id === 'assessment') && ageDays > 7 && !isStale;
+          var cardBorder = isStale ? 'border-left:3px solid #dc3545;' : isAging ? 'border-left:3px solid #ff9800;' : '';
+
           html += '<div class="pipeline-card" draggable="true" ondragstart="PipelinePage.dragStart(event, \'' + deal.id + '\')" onclick="PipelinePage.showDeal(\'' + deal.id + '\')"'
-            + ' style="background:var(--white);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid var(--border);cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:box-shadow .15s;"'
+            + ' style="background:var(--white);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid var(--border);' + cardBorder + 'cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:box-shadow .15s;"'
             + ' onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.12)\'" onmouseout="this.style.boxShadow=\'0 1px 3px rgba(0,0,0,.06)\'">'
             + '<div style="font-weight:700;font-size:14px;margin-bottom:4px;">' + (deal.clientName || 'Unknown') + '</div>'
             + '<div style="font-size:12px;color:var(--text-light);margin-bottom:6px;">' + (deal.description || '') + '</div>'
             + '<div style="display:flex;justify-content:space-between;align-items:center;">'
             + '<span style="font-size:1rem;font-weight:800;color:var(--green-dark);">' + UI.moneyInt(deal.value) + '</span>'
-            + '<span style="font-size:11px;color:var(--text-light);">' + UI.dateRelative(deal.createdAt) + '</span>'
+            + '<span style="font-size:11px;color:' + (isStale ? '#dc3545' : isAging ? '#ff9800' : 'var(--text-light)') + ';">' + UI.dateRelative(deal.createdAt) + '</span>'
             + '</div>'
             + (deal.source ? '<div style="font-size:10px;color:var(--text-light);margin-top:4px;">via ' + deal.source + '</div>' : '')
-            + '</div>';
+            + (deal.notes ? '<div style="font-size:11px;color:var(--text-light);margin-top:5px;padding-top:5px;border-top:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📌 ' + deal.notes + '</div>' : '');
+
+          // Quick-action buttons (only on active stages)
+          if (stage.id !== 'won' && stage.id !== 'lost') {
+            html += '<div style="display:flex;gap:5px;margin-top:8px;" onclick="event.stopPropagation()">'
+              + '<button style="flex:1;padding:4px 0;font-size:11px;background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;border-radius:5px;cursor:pointer;font-weight:600;" onclick="PipelinePage.quickMove(\'' + deal.id + '\',\'won\')">Won ✓</button>'
+              + '<button style="flex:1;padding:4px 0;font-size:11px;background:#fce4ec;color:#c62828;border:1px solid #ef9a9a;border-radius:5px;cursor:pointer;font-weight:600;" onclick="PipelinePage.quickMove(\'' + deal.id + '\',\'lost\')">Lost ✗</button>'
+              + '</div>';
+          }
+
+          html += '</div>';
         });
       }
 
@@ -158,6 +186,70 @@ var PipelinePage = {
 
   saveDeals: function(deals) {
     localStorage.setItem('bm-pipeline', JSON.stringify(deals));
+  },
+
+  // Import open quotes not yet in pipeline
+  importFromQuotes: function() {
+    var allDeals = PipelinePage.getDeals();
+    var existingIds = new Set(allDeals.map(function(d){ return d.id; }));
+    var openQuotes = DB.quotes.getAll().filter(function(q){
+      return !existingIds.has(q.id) && (q.status === 'sent' || q.status === 'awaiting' || q.status === 'draft');
+    });
+    if (!openQuotes.length) { UI.toast('No open quotes to import'); return; }
+
+    var html = '<p style="margin-bottom:12px;font-size:13px;color:var(--text-light);">These open quotes will be added to the pipeline as deals:</p>'
+      + '<div style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;">';
+    openQuotes.forEach(function(q) {
+      var stageLabel = q.status === 'sent' || q.status === 'awaiting' ? 'Quote Sent' : 'Assessment';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg);border-radius:6px;font-size:13px;">'
+        + '<div><strong>' + q.clientName + '</strong><div style="font-size:11px;color:var(--text-light);">' + (q.description || 'No description') + '</div></div>'
+        + '<div style="text-align:right;"><span style="font-weight:700;color:var(--green-dark);">' + UI.moneyInt(q.total) + '</span>'
+        + '<div style="font-size:10px;color:var(--text-light);">' + stageLabel + '</div></div>'
+        + '</div>';
+    });
+    html += '</div>';
+
+    UI.showModal('Import ' + openQuotes.length + ' Quote' + (openQuotes.length !== 1 ? 's' : '') + ' to Pipeline', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="PipelinePage._doImportQuotes()">Import All</button>'
+    });
+  },
+
+  _doImportQuotes: function() {
+    var allDeals = PipelinePage.getDeals();
+    var existingIds = new Set(allDeals.map(function(d){ return d.id; }));
+    var openQuotes = DB.quotes.getAll().filter(function(q){
+      return !existingIds.has(q.id) && (q.status === 'sent' || q.status === 'awaiting' || q.status === 'draft');
+    });
+    openQuotes.forEach(function(q) {
+      var stage = q.status === 'sent' || q.status === 'awaiting' ? 'quote_sent' : 'assessment';
+      allDeals.push({ id: q.id, clientName: q.clientName, clientId: q.clientId, description: q.description || '', value: q.total || 0, stage: stage, quoteId: q.id, createdAt: q.createdAt });
+    });
+    PipelinePage.saveDeals(allDeals);
+    UI.toast(openQuotes.length + ' quote' + (openQuotes.length !== 1 ? 's' : '') + ' imported to pipeline');
+    UI.closeModal();
+    loadPage('pipeline');
+  },
+
+  // Quick move without opening modal
+  quickMove: function(dealId, newStage) {
+    var deals = PipelinePage.getDeals();
+    var deal = deals.find(function(d) { return d.id === dealId; });
+    if (!deal) return;
+    var oldStage = deal.stage;
+    deal.stage = newStage;
+    deal.movedAt = new Date().toISOString();
+    PipelinePage.saveDeals(deals);
+
+    if (newStage === 'won' && deal.quoteId) {
+      DB.quotes.update(deal.quoteId, { status: 'approved' });
+    } else if (newStage === 'lost' && deal.quoteId) {
+      DB.quotes.update(deal.quoteId, { status: 'declined' });
+    }
+
+    var stageLabel = PipelinePage.stages.find(function(s) { return s.id === newStage; }).label;
+    UI.toast((deal.clientName || 'Deal') + ' moved to ' + stageLabel);
+    loadPage('pipeline');
   },
 
   // Drag and drop
@@ -205,6 +297,7 @@ var PipelinePage = {
       + UI.formField('Description', 'text', 'd-desc', '', { placeholder: 'e.g., 3 oak removals, backyard' })
       + UI.formField('Estimated Value ($)', 'number', 'd-value', '', { placeholder: '2500' })
       + UI.formField('Source', 'select', 'd-source', '', { options: ['', 'Google Search', 'Facebook', 'Instagram', 'Nextdoor', 'Friend/Referral', 'Yelp', 'Angi', 'Drive-by', 'Repeat Client', 'Other'] })
+      + UI.formField('Notes', 'textarea', 'd-notes', '', { placeholder: 'Internal notes about this deal...' })
       + '</form>';
 
     UI.showModal('Add Deal', html, {
@@ -239,6 +332,7 @@ var PipelinePage = {
       description: document.getElementById('d-desc').value.trim(),
       value: parseFloat(document.getElementById('d-value').value) || 0,
       source: document.getElementById('d-source').value,
+      notes: (document.getElementById('d-notes') ? document.getElementById('d-notes').value.trim() : ''),
       stage: stage,
       createdAt: new Date().toISOString()
     });
@@ -256,36 +350,90 @@ var PipelinePage = {
 
     var stage = PipelinePage.stages.find(function(s) { return s.id === deal.stage; });
 
+    // Look up client phone for text button
+    var client = deal.clientId ? DB.clients.getById(deal.clientId) : null;
+    var clientPhone = client ? (client.phone || '') : '';
+    var cleanPhone = clientPhone.replace(/\D/g, '');
+    var firstName = (deal.clientName || '').split(' ')[0];
+
     var html = '<div style="margin-bottom:16px;">'
       + '<h2 style="margin-bottom:4px;">' + deal.clientName + '</h2>'
       + '<div style="color:var(--text-light);">' + (deal.description || '') + '</div>'
-      + '<div style="margin-top:8px;display:flex;gap:8px;align-items:center;">'
+      + '<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
       + '<span style="background:' + stage.color + ';color:#fff;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;">' + stage.icon + ' ' + stage.label + '</span>'
       + '<span style="font-size:1.5rem;font-weight:800;color:var(--green-dark);">' + UI.moneyInt(deal.value) + '</span>'
+      + (clientPhone ? '<a href="tel:' + cleanPhone + '" style="font-size:12px;color:var(--accent);">📞 ' + clientPhone + '</a>' : '')
       + '</div>'
       + (deal.source ? '<div style="font-size:13px;color:var(--text-light);margin-top:8px;">Source: ' + deal.source + '</div>' : '')
       + '<div style="font-size:13px;color:var(--text-light);">Created: ' + UI.dateRelative(deal.createdAt) + '</div>'
       + '</div>';
 
+    // Action buttons row
+    html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">'
+      + (deal.stage !== 'won' && deal.stage !== 'lost' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="PipelinePage.sendFollowUp(\'' + dealId + '\')">📧 Send Follow-up</button>' : '')
+      + (clientPhone ? '<button class="btn btn-outline" style="font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){Dialpad.showTextModal(\'' + cleanPhone + '\',\'Hi ' + firstName + ', this is Doug from Second Nature Tree Service. Just following up on your estimate. Any questions? — Doug (914) 391-5233\');}">📱 Text</button>' : '')
+      + (deal.stage !== 'won' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="UI.closeModal();QuotesPage.showForm(null,\'' + deal.clientId + '\')">📋 Create Quote</button>' : '')
+      + '</div>';
+
     // Move to stage buttons
     html += '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">Move to:</div>'
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">';
     PipelinePage.stages.forEach(function(s) {
       html += '<button class="btn ' + (deal.stage === s.id ? 'btn-primary' : 'btn-outline') + '" style="font-size:12px;" onclick="PipelinePage.moveDeal(\'' + dealId + '\',\'' + s.id + '\')">' + s.icon + ' ' + s.label + '</button>';
     });
     html += '</div>';
 
-    // Value edit
-    html += '<div style="margin-top:16px;">'
-      + UI.formField('Deal Value ($)', 'number', 'deal-value', deal.value, { placeholder: '0' })
+    // Value + Notes edit
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
+      + '<div>' + UI.formField('Deal Value ($)', 'number', 'deal-value', deal.value, { placeholder: '0' })
       + '<button class="btn btn-outline" style="font-size:12px;" onclick="PipelinePage.updateValue(\'' + dealId + '\')">Update Value</button>'
+      + '</div>'
+      + '<div>' + UI.formField('Notes', 'textarea', 'deal-notes', deal.notes || '', { placeholder: 'Internal notes...' })
+      + '<button class="btn btn-outline" style="font-size:12px;" onclick="PipelinePage.updateNotes(\'' + dealId + '\')">Save Notes</button>'
+      + '</div>'
       + '</div>';
 
     UI.showModal(deal.clientName, html, {
       footer: '<button class="btn" style="background:var(--red);color:#fff;margin-right:auto;" onclick="PipelinePage.removeDeal(\'' + dealId + '\')">Delete</button>'
         + '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
-        + (deal.stage !== 'won' ? ' <button class="btn btn-primary" onclick="UI.closeModal();QuotesPage.showForm(null, \'' + deal.clientId + '\')">Create Quote</button>' : '')
     });
+  },
+
+  sendFollowUp: function(dealId) {
+    var deals = PipelinePage.getDeals();
+    var deal = deals.find(function(d) { return d.id === dealId; });
+    if (!deal) return;
+
+    var client = deal.clientId ? DB.clients.getById(deal.clientId) : null;
+    var email = client ? (client.email || '') : '';
+    var firstName = (deal.clientName || '').split(' ')[0];
+
+    if (!email) {
+      UI.toast('No email address for this client', 'error');
+      return;
+    }
+
+    var subject = 'Following up on your estimate — Second Nature Tree Service';
+    var body = 'Hi ' + firstName + ',\n\nI wanted to follow up on the estimate we discussed' + (deal.description ? ' for ' + deal.description : '') + '. Have you had a chance to review it?\n\nWe have availability coming up and would love to get your project scheduled. Feel free to reply to this email or call/text me at (914) 391-5233.\n\nBest,\nDoug\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+
+    if (typeof Email !== 'undefined' && Email.send) {
+      Email.send({
+        to: email,
+        subject: subject,
+        body: body
+      }).then(function(result) {
+        if (result.ok) {
+          UI.toast('Follow-up email sent to ' + email);
+          // Update deal movedAt so it resets the aging clock
+          deal.movedAt = new Date().toISOString();
+          PipelinePage.saveDeals(deals);
+        } else {
+          UI.toast('Email failed: ' + (result.error || 'unknown error'), 'error');
+        }
+      });
+    } else {
+      window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    }
   },
 
   moveDeal: function(dealId, newStage) {
@@ -309,6 +457,17 @@ var PipelinePage = {
       deal.value = val;
       PipelinePage.saveDeals(deals);
       UI.toast('Value updated to ' + UI.moneyInt(val));
+    }
+  },
+
+  updateNotes: function(dealId) {
+    var notes = document.getElementById('deal-notes') ? document.getElementById('deal-notes').value.trim() : '';
+    var deals = PipelinePage.getDeals();
+    var deal = deals.find(function(d) { return d.id === dealId; });
+    if (deal) {
+      deal.notes = notes;
+      PipelinePage.saveDeals(deals);
+      UI.toast('Notes saved');
     }
   },
 

@@ -252,8 +252,8 @@ var BeforeAfter = {
 
   addPair: function(jobId) {
     var jobs = [];
-    if (typeof DB !== 'undefined' && DB.jobs && DB.jobs.list) {
-      jobs = DB.jobs.list();
+    if (typeof DB !== 'undefined' && DB.jobs) {
+      jobs = DB.jobs.getAll();
     }
 
     var html = '<div style="display:flex;flex-direction:column;gap:16px;">';

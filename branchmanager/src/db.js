@@ -137,18 +137,17 @@ var DB = (function() {
       var valid = ['scheduled', 'in_progress', 'completed', 'late', 'cancelled'];
       var all = _get(KEYS.jobs);
       var changed = 0;
-      all.forEach(function(j, idx) {
+      all.forEach(function(j) {
         if (valid.indexOf(j.status) === -1) {
-          // Map legacy statuses to valid ones
-          if (j.status === 'active') { all[idx].status = 'in_progress'; }
-          else if (j.status === 'unscheduled' || j.status === 'pending') { all[idx].status = 'scheduled'; }
-          else if (j.status === 'done' || j.status === 'invoiced') { all[idx].status = 'completed'; }
-          else { all[idx].status = 'scheduled'; } // safest default
-          all[idx].updatedAt = _now();
+          var newStatus;
+          if (j.status === 'active') { newStatus = 'in_progress'; }
+          else if (j.status === 'unscheduled' || j.status === 'pending') { newStatus = 'scheduled'; }
+          else if (j.status === 'done' || j.status === 'invoiced') { newStatus = 'completed'; }
+          else { newStatus = 'scheduled'; }
+          jobs.update(j.id, { status: newStatus });
           changed++;
         }
       });
-      if (changed > 0) _set(KEYS.jobs, all);
       return changed;
     }
   };
@@ -175,18 +174,15 @@ var DB = (function() {
       var today = new Date().toISOString().split('T')[0];
       var all = _get(KEYS.invoices);
       var changed = 0;
-      all.forEach(function(inv, idx) {
+      all.forEach(function(inv) {
         if (inv.status === 'past_due') {
-          all[idx].status = 'overdue';
-          all[idx].updatedAt = _now();
+          invoices.update(inv.id, { status: 'overdue' });
           changed++;
         } else if (inv.status !== 'paid' && inv.status !== 'cancelled' && inv.status !== 'overdue' && inv.status !== 'draft' && inv.dueDate && inv.dueDate.substring(0, 10) < today) {
-          all[idx].status = 'overdue';
-          all[idx].updatedAt = _now();
+          invoices.update(inv.id, { status: 'overdue' });
           changed++;
         }
       });
-      if (changed > 0) _set(KEYS.invoices, all);
       return changed;
     },
     totalReceivable: function() {

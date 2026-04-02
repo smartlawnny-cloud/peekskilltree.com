@@ -49,11 +49,16 @@ var SchedulePage = {
           + '<div style="font-size:12px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '#' + j.jobNumber) + '</div>'
           + (j.property ? '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">📍 ' + UI.esc(j.property) + '</div>' : '')
           + '</div>'
-          + '<div style="text-align:right;flex-shrink:0;">'
+          + '<div style="text-align:right;flex-shrink:0;margin-right:8px;">'
           + '<div style="font-weight:700;color:var(--green-dark);font-size:14px;">' + UI.moneyInt(j.total) + '</div>'
           + (j.startTime ? '<div style="font-size:11px;color:var(--text-light);">' + self._formatTime(j.startTime) + '</div>' : '')
           + '</div>'
-          + '<div style="color:#ccc;font-size:16px;">›</div>'
+          + (j.status !== 'completed'
+            ? '<div onclick="event.stopPropagation();DB.jobs.update(\'' + j.id + '\',{status:\'completed\',completedAt:new Date().toISOString()});UI.toast(\'Job marked complete\');loadPage(\'schedule\');" '
+              + 'title="Mark complete" '
+              + 'style="width:32px;height:32px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;color:#ccc;flex-shrink:0;cursor:pointer;" '
+              + 'onmouseover="this.style.borderColor=\'#2e7d32\';this.style.color=\'#2e7d32\'" onmouseout="this.style.borderColor=\'#ccc\';this.style.color=\'#ccc\'">✓</div>'
+            : '<div style="width:32px;height:32px;border-radius:50%;background:#2e7d32;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;font-size:14px;">✓</div>')
           + '</div>';
       });
     } else {

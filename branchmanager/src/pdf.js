@@ -80,6 +80,11 @@ var PDF = {
       q.lineItems.forEach(function(item) {
         html += '<tr><td>' + (item.service || 'Custom') + '</td><td>' + (item.description || '') + '</td><td style="text-align:center;">' + (item.qty || 1) + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;">' + UI.money(item.amount || item.qty * item.rate) + '</td></tr>';
       });
+      if (q.taxRate) {
+        var pdfSubtotal = q.subtotal || (q.total - (q.taxAmount || 0));
+        html += '<tr><td colspan="4" style="text-align:right;color:#666;font-size:13px;">Subtotal</td><td style="text-align:right;color:#666;">' + UI.money(pdfSubtotal) + '</td></tr>';
+        html += '<tr><td colspan="4" style="text-align:right;color:#666;font-size:13px;">Tax (' + q.taxRate + '%)</td><td style="text-align:right;color:#666;">' + UI.money(q.taxAmount || 0) + '</td></tr>';
+      }
       html += '<tr class="total-row"><td colspan="4" style="text-align:right;">TOTAL</td><td style="text-align:right;" class="total-big">' + UI.money(q.total) + '</td></tr>';
       html += '</tbody></table>';
     }
@@ -145,6 +150,11 @@ var PDF = {
       inv.lineItems.forEach(function(item) {
         html += '<tr><td>' + (item.service || 'Custom') + '</td><td>' + (item.description || '') + '</td><td style="text-align:center;">' + (item.qty || 1) + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;">' + UI.money(item.amount || item.qty * item.rate) + '</td></tr>';
       });
+      if (inv.taxRate) {
+        var invPdfSubtotal = inv.subtotal || (inv.total - (inv.taxAmount || 0));
+        html += '<tr><td colspan="4" style="text-align:right;color:#666;font-size:13px;">Subtotal</td><td style="text-align:right;color:#666;">' + UI.money(invPdfSubtotal) + '</td></tr>';
+        html += '<tr><td colspan="4" style="text-align:right;color:#666;font-size:13px;">Tax (' + inv.taxRate + '%)</td><td style="text-align:right;color:#666;">' + UI.money(inv.taxAmount || 0) + '</td></tr>';
+      }
       html += '<tr class="total-row"><td colspan="4" style="text-align:right;">TOTAL</td><td style="text-align:right;" class="total-big">' + UI.money(inv.total) + '</td></tr>';
       if (inv.balance > 0 && inv.balance !== inv.total) {
         html += '<tr><td colspan="4" style="text-align:right;font-weight:600;color:#c0392b;">BALANCE DUE</td><td style="text-align:right;font-weight:800;font-size:20px;color:#c0392b;">' + UI.money(inv.balance) + '</td></tr>';

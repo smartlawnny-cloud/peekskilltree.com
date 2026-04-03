@@ -147,6 +147,7 @@ var JobsPage = {
             ? '<button onclick="event.stopPropagation();JobsPage._quickComplete(\'' + j.id + '\')" style="font-size:11px;padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;">✓ Done</button>'
             : (j.status === 'completed' && !j.invoiceId
               ? '<button onclick="event.stopPropagation();(function(){var inv=Workflow.jobToInvoice(\'' + j.id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="font-size:11px;padding:3px 8px;background:#1565c0;color:#fff;border:none;border-radius:4px;cursor:pointer;">💰 Invoice</button>'
+              + '<button onclick="event.stopPropagation();JobsPage._requestReview(\'' + j.id + '\')" style="font-size:11px;padding:3px 8px;background:#fff;color:#f9a825;border:1px solid #f9a825;border-radius:4px;cursor:pointer;margin-left:3px;">⭐</button>'
               : ''))
           + '</td>'
           + '</tr>';
@@ -214,6 +215,41 @@ var JobsPage = {
     if (bar) bar.style.display = selected.length > 0 ? 'flex' : 'none';
     if (count) count.textContent = selected.length + ' selected';
   },
+  _requestReview: function(id) {
+    var j = DB.jobs.getById(id);
+    if (!j) return;
+    var client = j.clientId ? DB.clients.getById(j.clientId) : null;
+    var phone = j.clientPhone || (client && client.phone) || '';
+    var email = j.clientEmail || (client && client.email) || '';
+    var firstName = (j.clientName || '').split(' ')[0] || 'there';
+    var reviewLink = 'https://g.page/r/CcVkZHV_EKlEEBM/review';
+
+    var smsMsg = 'Hi ' + firstName + '! It was great working with you. If you have a moment, we\'d really appreciate a quick Google review — it helps us a lot:\n' + reviewLink + '\nThank you! — Doug, Second Nature Tree Service';
+    var emailSubject = 'Quick favor — leave us a review?';
+    var emailBody = 'Hi ' + firstName + ',\n\nThank you for choosing Second Nature Tree Service! We hope you\'re happy with the work.\n\nIf you have a moment, a Google review would mean the world to us:\n' + reviewLink + '\n\nIt only takes 30 seconds and helps us reach more homeowners in the area.\n\nThank you!\n— Doug Brown\nSecond Nature Tree Service\n(914) 391-5233 · peekskilltree.com';
+
+    var html = '<div style="margin-bottom:12px;background:var(--green-bg);border-radius:8px;padding:10px 14px;font-size:13px;">'
+      + '⭐ Requesting a review for <strong>' + UI.esc(j.clientName) + '</strong> · Job #' + (j.jobNumber || '') + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" class="detail-grid">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">SMS to client</label>'
+      + '<textarea id="rv-sms" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:13px;min-height:100px;font-family:inherit;resize:vertical;">' + UI.esc(smsMsg) + '</textarea>'
+      + (phone ? '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">📞 ' + UI.phone(phone) + '</div>' : '<div style="font-size:12px;color:var(--red);margin-top:4px;">No phone on file</div>')
+      + '</div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Email to client</label>'
+      + '<textarea id="rv-email" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:13px;min-height:100px;font-family:inherit;resize:vertical;">' + UI.esc(emailBody) + '</textarea>'
+      + (email ? '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">✉️ ' + email + '</div>' : '<div style="font-size:12px;color:var(--red);margin-top:4px;">No email on file</div>')
+      + '</div></div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Review link: <a href="' + reviewLink + '" target="_blank" style="color:var(--accent);">' + reviewLink + '</a></div>';
+
+    UI.showModal('⭐ Request Google Review', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + (phone ? ' <button class="btn btn-outline" onclick="(function(){var msg=document.getElementById(\'rv-sms\').value;if(typeof Dialpad!==\'undefined\'){Dialpad.showTextModal(\'' + phone.replace(/\D/g,'') + '\',msg);}else{window.open(\'sms:' + phone.replace(/\D/g,'') + '?body=\'+encodeURIComponent(msg));}DB.jobs.update(\'' + id + '\',{reviewRequestedAt:new Date().toISOString()});UI.closeModal();UI.toast(\'Review request sent via SMS ✅\');})()">📱 Send SMS</button>' : '')
+        + (email ? ' <button class="btn btn-primary" onclick="(function(){var body=document.getElementById(\'rv-email\').value;if(typeof Email!==\'undefined\'&&Email.isConfigured()){Email.send(\'' + email + '\',\'' + emailSubject + '\',body);}else{window.open(\'mailto:' + email + '?subject=\'+encodeURIComponent(\'' + emailSubject + '\')+ \'&body=\'+encodeURIComponent(body));}DB.jobs.update(\'' + id + '\',{reviewRequestedAt:new Date().toISOString()});UI.closeModal();UI.toast(\'Review request sent via email ✅\');})()">📧 Send Email</button>' : '')
+    });
+    // Mark as review requested
+    DB.jobs.update(id, { reviewRequestedAt: new Date().toISOString() });
+  },
+
   _quickComplete: function(id) {
     var j = DB.jobs.getById(id);
     if (!j) return;
@@ -539,8 +575,9 @@ var JobsPage = {
       + '<span style="font-size:20px;">🔧</span>'
       + '<span>' + UI.statusBadge(j.status) + '</span>'
       + '</div>'
-      + '<div style="display:flex;gap:6px;">'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       + '<button class="btn btn-outline" onclick="JobsPage.showForm(\'' + id + '\')">··· More</button>'
+      + (j.status === 'completed' ? '<button class="btn btn-outline" style="color:#f9a825;border-color:#f9a825;" onclick="JobsPage._requestReview(\'' + id + '\')">⭐ Request Review</button>' : '')
       + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');UI.closeModal();loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()">💰 Create Invoice</button>' : '<button class="btn btn-primary" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>')
       + '</div></div>'
 

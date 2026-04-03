@@ -275,13 +275,20 @@ var DashboardPage = {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;background:var(--white);">';
 
     // Requests card
+    var allRequests = DB.requests.getAll();
+    var newRequests = allRequests.filter(function(r) { return r.status === 'new'; });
+    var assessedRequests = allRequests.filter(function(r) { return r.status === 'assessment_complete'; });
+    var overdueRequests = allRequests.filter(function(r) {
+      if (r.status === 'converted' || r.status === 'quoted' || r.status === 'archived') return false;
+      return (Date.now() - new Date(r.createdAt || 0)) / 86400000 > 3;
+    });
     html += '<div onclick="loadPage(\'requests\')" style="padding:16px 20px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;position:relative;">'
       + '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#e07c24;"></div>'
       + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;">📋 Requests</div>'
-      + '<div style="font-size:32px;font-weight:700;">' + recentRequests.length + '</div>'
+      + '<div style="font-size:32px;font-weight:700;">' + newRequests.length + '</div>'
       + '<div style="font-size:14px;font-weight:600;">New</div>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-top:6px;">Assessments complete (0)</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Overdue (0)</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:6px;">Assessments complete (' + assessedRequests.length + ')</div>'
+      + '<div style="font-size:12px;color:' + (overdueRequests.length > 0 ? 'var(--red)' : 'var(--text-light)') + ';">Overdue (' + overdueRequests.length + ')</div>'
       + '</div>';
 
     // Quotes card

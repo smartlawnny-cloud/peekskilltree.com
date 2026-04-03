@@ -1273,6 +1273,10 @@ document.getElementById('globalSearch').addEventListener('keydown', function(e) 
 
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.search-box')) searchDropdown.style.display = 'none';
+  // Close any open More-actions dropdowns
+  if (!e.target.closest('.more-dd') && !e.target.closest('[onclick*="more-dd"]')) {
+    document.querySelectorAll('.more-dd').forEach(function(d) { d.style.display = 'none'; });
+  }
 });
 
 // ── Quick Create ──

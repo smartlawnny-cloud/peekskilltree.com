@@ -64,7 +64,7 @@ var InvoicesPage = {
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All invoices</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
       + (function() {
-        var chips = [['all','All'],['draft','Draft'],['sent','Sent'],['overdue','Overdue'],['paid','Paid']];
+        var chips = [['all','All'],['past_due','Past Due'],['sent_not_due','Sent Not Due'],['draft','Draft'],['paid','Paid']];
         var out = '';
         for (var ci = 0; ci < chips.length; ci++) {
           var val = chips[ci][0], label = chips[ci][1];
@@ -109,10 +109,19 @@ var InvoicesPage = {
           + '<td>' + UI.statusBadge(inv.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(inv.total) + '</td>'
           + '<td style="text-align:right;font-weight:600;color:' + ((inv.balance||0) > 0 ? 'var(--red)' : 'var(--accent)') + ';">' + UI.money(inv.balance || 0) + '</td>'
-          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:12px;">'
+          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:8px;white-space:nowrap;">'
           + (inv.status !== 'paid' && inv.status !== 'cancelled' && (inv.balance || 0) > 0
-            ? '<button onclick="event.stopPropagation();InvoicesPage._quickPay(\'' + inv.id + '\')" style="font-size:11px;padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">✓ Paid</button>'
+            ? '<button onclick="event.stopPropagation();InvoicesPage._quickPay(\'' + inv.id + '\')" style="font-size:11px;padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">✓ Paid</button> '
             : '')
+          + '<div style="position:relative;display:inline-block;">'
+          + '<button onclick="event.stopPropagation();var d=this.nextElementSibling;document.querySelectorAll(\'.more-dd\').forEach(function(x){x.style.display=\'none\'});d.style.display=d.style.display===\'block\'?\'none\':\'block\';" style="font-size:13px;padding:2px 8px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:4px;cursor:pointer;line-height:1.4;">•••</button>'
+          + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 2px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
+          + (inv.status !== 'paid' ? '<button onclick="event.stopPropagation();InvoicesPage._sendInvoice(\'' + inv.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📧 Send</button>' : '')
+          + (inv.status !== 'paid' && (inv.balance||0) > 0 ? '<button onclick="event.stopPropagation();InvoicesPage._quickPay(\'' + inv.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">💵 Mark Paid</button>' : '')
+          + '<button onclick="event.stopPropagation();InvoicesPage.showDetail(\'' + inv.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📋 View Details</button>'
+          + '<button onclick="event.stopPropagation();InvoicesPage._viewPDF(\'' + inv.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📄 View PDF</button>'
+          + '<button onclick="event.stopPropagation();InvoicesPage.showForm(\'' + inv.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit</button>'
+          + '</div></div>'
           + '</td>'
           + '</tr>';
       });
@@ -136,8 +145,10 @@ var InvoicesPage = {
   _getFiltered: function() {
     var self = InvoicesPage;
     var all = DB.invoices.getAll();
+    var now = new Date();
     if (self._filter === 'unpaid') all = all.filter(function(i) { return i.status !== 'paid'; });
-    else if (self._filter === 'past_due' || self._filter === 'overdue') all = all.filter(function(i) { var now = new Date(); return i.status !== 'paid' && i.status !== 'cancelled' && (i.status === 'overdue' || (i.dueDate && new Date(i.dueDate) < now)); });
+    else if (self._filter === 'past_due') all = all.filter(function(i) { return i.status !== 'paid' && i.status !== 'cancelled' && (i.status === 'overdue' || (i.dueDate && new Date(i.dueDate) < now)); });
+    else if (self._filter === 'sent_not_due') all = all.filter(function(i) { return (i.status === 'sent' || i.status === 'viewed') && (!i.dueDate || new Date(i.dueDate) >= now); });
     else if (self._filter !== 'all') all = all.filter(function(i) { return i.status === self._filter; });
     if (self._search && self._search.length >= 2) {
       var s = self._search.toLowerCase();
@@ -183,6 +194,29 @@ var InvoicesPage = {
   },
   _getSelected: function() {
     return Array.from(document.querySelectorAll('.inv-check:checked')).map(function(cb) { return cb.value; });
+  },
+  _sendInvoice: function(id) {
+    var inv = DB.invoices.getById(id);
+    if (!inv) return;
+    if (typeof Workflow !== 'undefined' && typeof Workflow.sendInvoice === 'function') {
+      Workflow.sendInvoice(id);
+      UI.toast('Invoice #' + inv.invoiceNumber + ' sent');
+    } else {
+      DB.invoices.update(id, { status: 'sent' });
+      UI.toast('Invoice #' + inv.invoiceNumber + ' marked as sent');
+    }
+    loadPage('invoices');
+  },
+  _viewPDF: function(id) {
+    var inv = DB.invoices.getById(id);
+    if (!inv) return;
+    if (typeof PDFGen !== 'undefined' && typeof PDFGen.invoice === 'function') {
+      PDFGen.invoice(inv);
+    } else if (typeof PdfGen !== 'undefined') {
+      PdfGen.generateInvoice(id);
+    } else {
+      loadPage('pdfgen');
+    }
   },
   _quickPay: function(id) {
     var inv = DB.invoices.getById(id);
@@ -424,12 +458,22 @@ var InvoicesPage = {
       + '<div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
       + '<button class="btn btn-outline" onclick="PDF.generateInvoice(\'' + id + '\')" style="font-size:12px;">📄 PDF</button>'
       + (inv.status !== 'paid' ? '<button class="btn btn-outline" onclick="InvoicesPage._copyPayLink(\'' + id + '\')" style="font-size:12px;">🔗 Pay Link</button>' : '')
-      + (inv.status !== 'paid' ? '<button class="btn btn-outline" onclick="if(typeof Workflow!==\'undefined\')Workflow.sendInvoice(\'' + id + '\');else InvoicesPage._sendInvoiceEmail(\'' + id + '\')" style="font-size:12px;">📧 Send</button>' : '')
-      + (inv.status !== 'paid' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.showMarkPaid(\'' + id + '\');" style="font-size:12px;font-weight:700;">💵 Mark Paid</button>' : '<span style="font-size:12px;color:var(--green-dark);font-weight:700;">✓ Paid</span>')
+      + (inv.status !== 'paid' ? '<button class="btn btn-outline" onclick="InvoicesPage._sendInvoiceEmail(\'' + id + '\')" style="font-size:12px;">📧 Send</button>' : '')
+      + (inv.status !== 'paid' ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.showMarkPaid(\'' + id + '\');else InvoicesPage._quickPay(\'' + id + '\');" style="font-size:12px;font-weight:700;">💵 Mark Paid</button>' : '<span style="font-size:12px;color:var(--green-dark);font-weight:700;">✓ Paid ' + UI.money(inv.total) + '</span>')
+      + '<div style="position:relative;display:inline-block;">'
+      + '<button onclick="var d=this.nextElementSibling;document.querySelectorAll(\'.more-dd\').forEach(function(x){x.style.display=\'none\'});d.style.display=d.style.display===\'block\'?\'none\':\'block\';" class="btn btn-outline" style="font-size:13px;padding:6px 10px;">•••</button>'
+      + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:180px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
+      + '<button onclick="InvoicesPage._sendInvoiceEmail(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📧 Send Invoice Email</button>'
+      + '<button onclick="InvoicesPage._copyPayLink(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">🔗 Copy Pay Link</button>'
+      + '<button onclick="PDF.generateInvoice(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📄 Download PDF</button>'
+      + '<button onclick="InvoicesPage.showForm(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit Invoice</button>'
+      + '<div style="height:1px;background:var(--border);margin:4px 0;"></div>'
+      + '<button onclick="InvoicesPage.setStatus(\'' + id + '\',\'cancelled\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:#dc3545;">✗ Cancel Invoice</button>'
+      + '</div></div>'
       + '</div></div>'
       // Title
-      + '<h2 style="font-size:24px;font-weight:700;margin-bottom:4px;">Invoice for ' + UI.esc(inv.clientName || 'Client') + '</h2>'
-      + '<div style="font-size:14px;color:var(--text-light);margin-bottom:20px;">Invoice #' + (inv.invoiceNumber || '') + (inv.subject ? ' — ' + UI.esc(inv.subject) : '') + '</div>'
+      + '<h2 style="font-size:24px;font-weight:700;margin-bottom:4px;">Invoice #' + (inv.invoiceNumber||'') + ' — ' + UI.esc(inv.clientName || 'Client') + '</h2>'
+      + '<div style="font-size:14px;color:var(--text-light);margin-bottom:20px;">' + (inv.subject ? UI.esc(inv.subject) + ' · ' : '') + (inv.dueDate ? 'Due ' + UI.dateShort(inv.dueDate) : 'No due date set') + '</div>'
 
       // Two-column: Client card + metadata
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="detail-grid">'
@@ -525,10 +569,14 @@ var InvoicesPage = {
 
     // Status workflow
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Status</h4>'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Update Status</h4>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
-    ['draft','sent','paid'].forEach(function(s) {
-      html += '<button class="btn ' + (inv.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="InvoicesPage.setStatus(\'' + inv.id + '\',\'' + s + '\')" style="font-size:11px;padding:5px 12px;">' + s + '</button>';
+    var invStatusBtns = [['draft','Draft'],['sent','Sent'],['partial','Partial'],['paid','Paid'],['overdue','Overdue'],['cancelled','Cancelled']];
+    invStatusBtns.forEach(function(sb) {
+      var isActive = inv.status === sb[0];
+      html += '<button onclick="InvoicesPage.setStatus(\'' + inv.id + '\',\'' + sb[0] + '\')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid '
+        + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '700' : '500') + ';">'
+        + sb[1] + '</button>';
     });
     html += '</div></div>';
 

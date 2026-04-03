@@ -59,7 +59,7 @@ var QuotesPage = {
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All quotes</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
       + (function() {
-        var chips = [['all','All'],['draft','Draft'],['sent','Sent'],['awaiting','Awaiting Response'],['approved','Approved'],['converted','Converted'],['changes_requested','Changes Requested']];
+        var chips = [['all','All'],['draft','Draft'],['awaiting','Awaiting Response'],['changes_requested','Changes Requested'],['approved','Approved'],['converted','Converted']];
         var out = '';
         for (var ci = 0; ci < chips.length; ci++) {
           var val = chips[ci][0], label = chips[ci][1];
@@ -104,8 +104,17 @@ var QuotesPage = {
           + '<td>' + UI.dateShort(q.createdAt) + '</td>'
           + '<td>' + UI.statusBadge(q.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(q.total) + '</td>'
-          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:12px;">'
-          + (isStale ? '<button onclick="event.stopPropagation();QuotesPage._quickFollowUp(\'' + q.id + '\')" style="font-size:11px;padding:3px 8px;background:#e6a817;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">📬 Follow up</button>' : '')
+          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:8px;white-space:nowrap;">'
+          + (isStale ? '<button onclick="event.stopPropagation();QuotesPage._quickFollowUp(\'' + q.id + '\')" style="font-size:11px;padding:3px 8px;background:#e6a817;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;margin-right:4px;">📬 Follow up</button>' : '')
+          + '<div style="position:relative;display:inline-block;">'
+          + '<button onclick="event.stopPropagation();var d=this.nextElementSibling;document.querySelectorAll(\'.more-dd\').forEach(function(x){x.style.display=\'none\'});d.style.display=d.style.display===\'block\'?\'none\':\'block\';" style="font-size:13px;padding:2px 8px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:4px;cursor:pointer;line-height:1.4;">•••</button>'
+          + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 2px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:170px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
+          + (q.status !== 'approved' && q.status !== 'won' ? '<button onclick="event.stopPropagation();QuotesPage._confirmSend(\'' + q.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📧 Send Quote</button>' : '')
+          + (q.status === 'approved' || q.status === 'won' ? '<button onclick="event.stopPropagation();(function(){var job=Workflow.quoteToJob(\'' + q.id + '\');loadPage(\'jobs\');if(job)setTimeout(function(){JobsPage.showDetail(job.id);},100);})()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">🔧 Create Job</button>' : '')
+          + '<button onclick="event.stopPropagation();QuotesPage.showDetail(\'' + q.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📋 View Details</button>'
+          + '<button onclick="event.stopPropagation();QuotesPage.showForm(\'' + q.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit</button>'
+          + '<button onclick="event.stopPropagation();QuotesPage._quickFollowUp(\'' + q.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📬 Follow Up</button>'
+          + '</div></div>'
           + '</td>'
           + '</tr>';
       });
@@ -131,7 +140,7 @@ var QuotesPage = {
     var all = DB.quotes.getAll();
     if (self._filter !== 'all') {
       all = all.filter(function(q) {
-        if (self._filter === 'sent') return q.status === 'sent' || q.status === 'awaiting';
+        if (self._filter === 'awaiting' || self._filter === 'sent') return q.status === 'sent' || q.status === 'awaiting';
         return q.status === self._filter;
       });
     }
@@ -512,25 +521,41 @@ var QuotesPage = {
     var statusColor = statusColors[q.status] || '#8b2252';
     var client = q.clientId ? DB.clients.getById(q.clientId) : null;
 
-    var html = ''
-      // Colored status bar
-      + '<div style="height:4px;background:' + statusColor + ';margin:-24px -24px 16px -24px;"></div>'
-
-      // Status + action buttons
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
-      + '<span style="font-size:20px;">💰</span>'
-      + '<span>' + UI.statusBadge(q.status) + '</span>'
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;">'
-      + '<button class="btn btn-outline" onclick="QuotesPage.showForm(\'' + id + '\')">··· More</button>'
+    var html = '<div style="max-width:960px;margin:0 auto;">'
+      // Top bar: back + actions
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'quotes\')" style="padding:6px 12px;font-size:12px;">← Back to Quotes</button>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
       + '<button class="btn btn-outline" onclick="QuotesPage._copyApprovalLink(\'' + id + '\')" style="font-size:12px;">🔗 Copy Link</button>'
-      + '<button class="btn btn-primary" onclick="QuotesPage._sendQuote(\'' + id + '\')">📧 Send Quote</button>'
+      + (q.status !== 'converted' && q.status !== 'declined'
+          ? '<button class="btn btn-outline" onclick="QuotesPage._sendQuote(\'' + id + '\')" style="font-size:12px;">📧 Send Quote</button>' : '')
+      + (q.status === 'approved' || q.status === 'converted'
+          ? '<button class="btn btn-primary" onclick="if(typeof Workflow!==\'undefined\')Workflow.quoteToJob(\'' + id + '\');loadPage(\'jobs\');" style="font-size:12px;">🔧 Convert to Job</button>'
+          : '<button class="btn btn-primary" onclick="QuotesPage.showForm(\'' + id + '\')" style="font-size:12px;">✏️ Edit Quote</button>')
+      + '<div style="position:relative;display:inline-block;">'
+      + '<button onclick="var d=this.nextElementSibling;document.querySelectorAll(\'.more-dd\').forEach(function(x){x.style.display=\'none\'});d.style.display=d.style.display===\'block\'?\'none\':\'block\';" class="btn btn-outline" style="font-size:13px;padding:6px 10px;">•••</button>'
+      + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:180px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
+      + '<button onclick="QuotesPage.showForm(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit Quote</button>'
+      + '<button onclick="QuotesPage._sendQuote(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📧 Send to Client</button>'
+      + '<button onclick="QuotesPage._copyApprovalLink(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">🔗 Copy Approval Link</button>'
+      + '<button onclick="PDF.generateQuote(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📄 Download PDF</button>'
+      + '<button onclick="QuotesPage._quickFollowUp(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📬 Send Follow-up</button>'
+      + '<div style="height:1px;background:var(--border);margin:4px 0;"></div>'
+      + '<button onclick="QuotesPage.setStatus(\'' + id + '\',\'declined\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:#dc3545;">✗ Mark Declined</button>'
+      + '</div></div>'
       + '</div></div>'
 
-      // Title
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">'
-      + '<h2 style="font-size:24px;font-weight:700;">Quote for ' + UI.esc(q.clientName || '—') + '</h2>'
-      + '<button onclick="QuotesPage.showForm(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-light);">✏️</button>'
+      // Header card
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">'
+      + '<div style="height:4px;background:' + statusColor + ';"></div>'
+      + '<div style="padding:20px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">'
+      + '<div>'
+      + '<h2 style="font-size:22px;font-weight:700;margin:0 0 4px;">Quote #' + (q.quoteNumber||'') + ' — ' + UI.esc(q.clientName || '—') + '</h2>'
+      + '<div style="font-size:13px;color:var(--text-light);">' + UI.dateShort(q.createdAt) + (q.sentAt ? ' · Sent ' + UI.dateShort(q.sentAt) : '') + '</div>'
+      + (q.property ? '<div style="font-size:13px;color:var(--text-light);margin-top:2px;">📍 ' + UI.esc(q.property) + '</div>' : '')
       + '</div>'
+      + '<div style="text-align:right;">' + UI.statusBadge(q.status) + '<div style="font-size:24px;font-weight:800;color:var(--accent);margin-top:6px;">' + UI.money(q.total) + '</div></div>'
+      + '</div></div>'
 
       // Two-column: Client card (left) + metadata (right) — Jobber layout
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="detail-grid">'
@@ -569,28 +594,36 @@ var QuotesPage = {
 
       // Workflow progress bar
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">';
+    // Workflow stages — declined/changes_requested shown as a branch off "Sent"
     var qStages = ['draft','sent','approved','converted'];
-    var qStageLabels = {draft:'Draft',sent:'Sent',approved:'Approved',converted:'Converted to Job'};
-    var qIdx = qStages.indexOf(q.status === 'awaiting' ? 'sent' : q.status);
-    if (qIdx < 0) qIdx = 0;
+    var qStageLabels = {draft:'Draft', sent:'Sent', approved:'Approved', converted:'Job Created'};
+    var statusForStage = (q.status === 'awaiting' || q.status === 'changes_requested') ? 'sent' : q.status;
+    var qIdx = qStages.indexOf(statusForStage);
+    if (qIdx < 0) qIdx = q.status === 'declined' ? 1 : 0;
     html += '<div style="display:flex;align-items:center;margin-bottom:14px;">';
     qStages.forEach(function(s, i) {
-      var done = i <= qIdx;
-      var active = i === qIdx;
+      var done = i < qIdx || (q.status !== 'declined' && i === qIdx);
+      var active = i === qIdx && q.status !== 'declined';
+      var declined = q.status === 'declined' && i === qIdx;
       html += '<div style="flex:1;text-align:center;position:relative;">'
         + '<div style="width:28px;height:28px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;'
-        + (done ? 'background:var(--accent);color:#fff;' : 'background:var(--bg);color:var(--text-light);border:2px solid var(--border);') + '">'
-        + (done && !active ? '✓' : (i + 1)) + '</div>'
-        + '<div style="font-size:11px;font-weight:' + (active ? '700' : '500') + ';color:' + (done ? 'var(--accent)' : 'var(--text-light)') + ';margin-top:4px;">' + qStageLabels[s] + '</div>'
+        + (declined ? 'background:#dc3545;color:#fff;' : done ? 'background:var(--accent);color:#fff;' : 'background:var(--bg);color:var(--text-light);border:2px solid var(--border);') + '">'
+        + (declined ? '✗' : (done && !active ? '✓' : (i + 1))) + '</div>'
+        + '<div style="font-size:11px;font-weight:' + (active ? '700' : '500') + ';color:' + (declined ? '#dc3545' : done ? 'var(--accent)' : 'var(--text-light)') + ';margin-top:4px;">' + qStageLabels[s] + '</div>'
         + '</div>';
       if (i < qStages.length - 1) {
         html += '<div style="flex:0 0 40px;height:2px;background:' + (i < qIdx ? 'var(--accent)' : 'var(--border)') + ';margin-top:-16px;"></div>';
       }
     });
-    html += '</div>'
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
-    ['draft', 'sent', 'awaiting', 'approved', 'declined'].forEach(function(s) {
-      html += '<button class="btn ' + (q.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage.setStatus(\'' + id + '\',\'' + s + '\')" style="font-size:11px;padding:5px 12px;">' + s + '</button>';
+    html += '</div>';
+    // Status change buttons with proper labels
+    var statusBtns = [['draft','Draft'],['sent','Sent'],['awaiting','Awaiting Response'],['changes_requested','Changes Requested'],['approved','Approved'],['declined','Declined']];
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    statusBtns.forEach(function(sb) {
+      var isActive = q.status === sb[0];
+      html += '<button onclick="QuotesPage.setStatus(\'' + id + '\',\'' + sb[0] + '\')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid '
+        + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '700' : '500') + ';">'
+        + sb[1] + '</button>';
     });
     html += '</div></div>'
 
@@ -624,7 +657,8 @@ var QuotesPage = {
       + (q.status !== 'converted' ? '<button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="if(typeof Workflow!==\'undefined\')Workflow.quoteToJob(\'' + id + '\');loadPage(\'jobs\');">✅ Convert to Job</button>' : '')
       + '</div></div>'
 
-      + '</div>';
+      + '</div>'
+      + '</div>'; // close max-width wrapper
 
     // Render full page
     document.getElementById('pageTitle').textContent = 'Quote #' + q.quoteNumber;

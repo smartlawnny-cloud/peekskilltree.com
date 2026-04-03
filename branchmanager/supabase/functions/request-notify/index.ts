@@ -3,21 +3,43 @@
  * Supabase Edge Function
  *
  * Called by book.html after a customer submits a service request.
- * Sends notification email to info@peekskilltree.com (Team)
- * and confirmation email to customer.
+ * Sends:
+ *   1. SMS alert to Doug (914) 391-5233 via Twilio
+ *   2. Email notification to info@peekskilltree.com via SendGrid
+ *   3. Confirmation email to customer (if email provided)
  *
  * Deploy:
  *   supabase functions deploy request-notify --no-verify-jwt
  *
  * Set secrets:
  *   supabase secrets set SENDGRID_API_KEY=SG...
+ *   supabase secrets set TWILIO_ACCOUNT_SID=AC...
+ *   supabase secrets set TWILIO_AUTH_TOKEN=...
+ *   supabase secrets set TWILIO_FROM=+1XXXXXXXXXX
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
-const SENDGRID_API_KEY = Deno.env.get('SENDGRID_API_KEY') ?? '';
+const SENDGRID_API_KEY  = Deno.env.get('SENDGRID_API_KEY')  ?? '';
+const TWILIO_SID        = Deno.env.get('TWILIO_ACCOUNT_SID') ?? '';
+const TWILIO_TOKEN      = Deno.env.get('TWILIO_AUTH_TOKEN')  ?? '';
+const TWILIO_FROM       = Deno.env.get('TWILIO_FROM')        ?? '';
+const NOTIFY_PHONE      = '+19143915233'; // Doug
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' };
 
+// ── SMS via Twilio ─────────────────────────────────────────────────────────
+async function sendSMS(to: string, body: string) {
+  if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM) return;
+  const creds = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`);
+  const form = new URLSearchParams({ From: TWILIO_FROM, To: to, Body: body });
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
+    method: 'POST',
+    headers: { 'Authorization': `Basic ${creds}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form.toString()
+  });
+}
+
+// ── Email via SendGrid ─────────────────────────────────────────────────────
 async function sendEmail(to: string, toName: string, subject: string, text: string, html?: string) {
   if (!SENDGRID_API_KEY) return;
   const body: any = {
@@ -28,7 +50,6 @@ async function sendEmail(to: string, toName: string, subject: string, text: stri
     content: [{ type: 'text/plain', value: text }]
   };
   if (html) body.content.push({ type: 'text/html', value: html });
-
   await fetch('https://api.sendgrid.com/v3/mail/send', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${SENDGRID_API_KEY}`, 'Content-Type': 'application/json' },
@@ -36,6 +57,7 @@ async function sendEmail(to: string, toName: string, subject: string, text: stri
   });
 }
 
+// ── Main handler ───────────────────────────────────────────────────────────
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS });
@@ -44,42 +66,21 @@ serve(async (req: Request) => {
   try {
     const data = await req.json();
     const { name, phone, email, address, service, details } = data;
+    const firstName = (name || '').split(' ')[0] || 'Someone';
 
-    // 1. Notify the team
+    // 1. SMS to Doug
+    const smsBody = `🌳 New request!\n${name || '—'} · ${service || 'Tree service'}\n📍 ${address || '—'}\n📞 ${phone || '—'}\nOpen BM: peekskilltree.com/branchmanager/`;
+    await sendSMS(NOTIFY_PHONE, smsBody);
+
+    // 2. Email alert to team
     const teamSubject = `🌳 New request — ${service || 'Service'} — ${name}`;
-    const teamBody = `New service request submitted via website.
-
-Name:    ${name || '—'}
-Phone:   ${phone || '—'}
-Email:   ${email || '—'}
-Address: ${address || '—'}
-Service: ${service || '—'}
-Details: ${details || '—'}
-
-View in Branch Manager:
-https://peekskilltree.com/branchmanager/
-
-Call or text to follow up:
-https://sms.link/?body=Hi+${encodeURIComponent((name || '').split(' ')[0] || 'there')}%2C+this+is+Doug+from+Second+Nature+Tree+Service.+Thanks+for+reaching+out%21&phone=${encodeURIComponent(phone || '')}`;
-
+    const teamBody = `New service request submitted via website.\n\nName:    ${name || '—'}\nPhone:   ${phone || '—'}\nEmail:   ${email || '—'}\nAddress: ${address || '—'}\nService: ${service || '—'}\nDetails: ${details || '—'}\n\nView in Branch Manager:\nhttps://peekskilltree.com/branchmanager/`;
     await sendEmail('info@peekskilltree.com', 'Team', teamSubject, teamBody);
 
-    // 2. Confirm to customer (if email provided)
+    // 3. Confirmation email to customer
     if (email) {
-      const firstName = (name || '').split(' ')[0] || 'there';
       const custSubject = 'We received your request — Second Nature Tree Service';
-      const custText = `Hi ${firstName},
-
-Thanks for reaching out! We received your request for ${service || 'tree service'} at ${address || 'your property'}.
-
-We typically respond within 2 hours during business hours. We'll call or text you at ${phone || 'the number you provided'} to set up a free estimate.
-
-Questions? Reply to this email or call/text (914) 391-5233.
-
-— Doug & Catherine
-Second Nature Tree Service
-Peekskill, NY · Licensed & Insured · WC-32079 / PC-50644
-peekskilltree.com`;
+      const custText = `Hi ${firstName},\n\nThanks for reaching out! We received your request for ${service || 'tree service'} at ${address || 'your property'}.\n\nWe typically respond within 2 hours during business hours. We'll call or text you at ${phone || 'the number you provided'} to set up a free estimate.\n\nQuestions? Reply to this email or call/text (914) 391-5233.\n\n— Doug & Catherine\nSecond Nature Tree Service\nPeekskill, NY · Licensed & Insured · WC-32079 / PC-50644\npeekskilltree.com`;
 
       const custHtml = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;">
   <div style="background:#1a3c12;padding:24px 28px;border-radius:10px 10px 0 0;">

@@ -95,7 +95,7 @@ var JobsPage = {
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All jobs</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
       + (function() {
-        var chips = [['all','All'],['scheduled','Scheduled'],['in_progress','In Progress'],['completed','Completed'],['late','Late'],['action_required','Action Required']];
+        var chips = [['all','All'],['late','Late'],['requires_invoicing','Requires Invoicing'],['action_required','Action Required'],['unscheduled','Unscheduled']];
         var out = '';
         for (var ci = 0; ci < chips.length; ci++) {
           var val = chips[ci][0], label = chips[ci][1];
@@ -142,13 +142,21 @@ var JobsPage = {
           + '<td style="text-align:right;font-weight:600;">' + UI.money(j.total)
           + (j.satisfaction && j.satisfaction.rating ? '<div style="font-size:10px;color:#ffc107;margin-top:2px;">' + Array(j.satisfaction.rating + 1).join('⭐') + '</div>' : '')
           + '</td>'
-          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:12px;white-space:nowrap;">'
+          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:8px;white-space:nowrap;">'
           + (j.status === 'scheduled' || j.status === 'in_progress'
-            ? '<button onclick="event.stopPropagation();JobsPage._quickComplete(\'' + j.id + '\')" style="font-size:11px;padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;">✓ Done</button>'
+            ? '<button onclick="event.stopPropagation();JobsPage._quickComplete(\'' + j.id + '\')" style="font-size:11px;padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;">✓ Done</button> '
             : (j.status === 'completed' && !j.invoiceId
-              ? '<button onclick="event.stopPropagation();(function(){var inv=Workflow.jobToInvoice(\'' + j.id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="font-size:11px;padding:3px 8px;background:#1565c0;color:#fff;border:none;border-radius:4px;cursor:pointer;">💰 Invoice</button>'
-              + '<button onclick="event.stopPropagation();JobsPage._requestReview(\'' + j.id + '\')" style="font-size:11px;padding:3px 8px;background:#fff;color:#f9a825;border:1px solid #f9a825;border-radius:4px;cursor:pointer;margin-left:3px;">⭐</button>'
+              ? '<button onclick="event.stopPropagation();(function(){var inv=Workflow.jobToInvoice(\'' + j.id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="font-size:11px;padding:3px 8px;background:#1565c0;color:#fff;border:none;border-radius:4px;cursor:pointer;">💰 Invoice</button> '
               : ''))
+          + '<div style="position:relative;display:inline-block;">'
+          + '<button onclick="event.stopPropagation();var d=this.nextElementSibling;document.querySelectorAll(\'.more-dd\').forEach(function(x){x.style.display=\'none\'});d.style.display=d.style.display===\'block\'?\'none\':\'block\';" style="font-size:13px;padding:2px 8px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:4px;cursor:pointer;line-height:1.4;">•••</button>'
+          + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 2px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
+          + (j.status !== 'completed' ? '<button onclick="event.stopPropagation();JobsPage._quickComplete(\'' + j.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✓ Mark Complete</button>' : '')
+          + (j.status === 'completed' && !j.invoiceId ? '<button onclick="event.stopPropagation();(function(){var inv=Workflow.jobToInvoice(\'' + j.id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">💰 Create Invoice</button>' : '')
+          + (j.status === 'completed' ? '<button onclick="event.stopPropagation();JobsPage._requestReview(\'' + j.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">⭐ Request Review</button>' : '')
+          + '<button onclick="event.stopPropagation();JobsPage.showDetail(\'' + j.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📋 View Details</button>'
+          + '<button onclick="event.stopPropagation();JobsPage.showForm(\'' + j.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit</button>'
+          + '</div></div>'
           + '</td>'
           + '</tr>';
       });
@@ -172,7 +180,19 @@ var JobsPage = {
   _getFiltered: function() {
     var self = JobsPage;
     var all = DB.jobs.getAll();
-    if (self._filter !== 'all') all = all.filter(function(j) { return j.status === self._filter; });
+    if (self._filter === 'requires_invoicing') {
+      var cutoff60 = new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0];
+      var cutoff7 = new Date(Date.now() - 7 * 86400000).toISOString();
+      all = all.filter(function(j) {
+        return j.status === 'completed' && !j.invoiceId
+          && ((j.scheduledDate && j.scheduledDate >= cutoff60)
+          || (!j.scheduledDate && (j.createdAt || '') > cutoff7));
+      });
+    } else if (self._filter === 'unscheduled') {
+      all = all.filter(function(j) { return !j.scheduledDate && j.status !== 'completed' && j.status !== 'cancelled'; });
+    } else if (self._filter !== 'all') {
+      all = all.filter(function(j) { return j.status === self._filter; });
+    }
     if (self._search && self._search.length >= 2) {
       var s = self._search.toLowerCase();
       all = all.filter(function(j) { return (j.clientName||'').toLowerCase().indexOf(s) >= 0 || (j.description||'').toLowerCase().indexOf(s) >= 0 || (j.property||'').toLowerCase().indexOf(s) >= 0 || String(j.jobNumber).indexOf(s) >= 0; });
@@ -565,43 +585,56 @@ var JobsPage = {
     var statusColor = statusColors[j.status] || '#2e7d32';
     var client = j.clientId ? DB.clients.getById(j.clientId) : null;
 
-    var html = ''
-      // Colored status bar
-      + '<div style="height:4px;background:' + statusColor + ';margin:-24px -24px 16px -24px;"></div>'
-
-      // Status + action buttons
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
-      + '<div style="display:flex;align-items:center;gap:8px;">'
-      + '<span style="font-size:20px;">🔧</span>'
-      + '<span>' + UI.statusBadge(j.status) + '</span>'
-      + '</div>'
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-      + '<button class="btn btn-outline" onclick="JobsPage.showForm(\'' + id + '\')">··· More</button>'
-      + (j.status === 'completed' ? '<button class="btn btn-outline" style="color:#f9a825;border-color:#f9a825;" onclick="JobsPage._requestReview(\'' + id + '\')">⭐ Request Review</button>' : '')
-      + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');UI.closeModal();loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()">💰 Create Invoice</button>' : '<button class="btn btn-primary" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>')
+    var html = '<div style="max-width:960px;margin:0 auto;">'
+      // Top bar: back + actions
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'jobs\')" style="padding:6px 12px;font-size:12px;">← Back to Jobs</button>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
+      + (j.clientPhone ? '<a href="tel:' + (j.clientPhone||'').replace(/\D/g,'') + '" class="btn btn-outline" style="font-size:12px;">📞 Call</a>' : '')
+      + (j.status === 'completed' ? '<button class="btn btn-outline" style="font-size:12px;color:#f9a825;border-color:#f9a825;" onclick="JobsPage._requestReview(\'' + id + '\')">⭐ Request Review</button>' : '')
+      + (j.status === 'scheduled' || j.status === 'in_progress' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage._markComplete(\'' + id + '\')">✓ Mark Complete</button>' : '')
+      + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" style="font-size:12px;" onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()">💰 Create Invoice</button>' : '')
+      + (j.status !== 'completed' || j.invoiceId ? '<button class="btn btn-outline" style="font-size:12px;" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>' : '')
+      + '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage.showForm(\'' + id + '\')">✏️ Edit</button>'
+      + '<div style="position:relative;display:inline-block;">'
+      + '<button onclick="var d=this.nextElementSibling;document.querySelectorAll(\'.more-dd\').forEach(function(x){x.style.display=\'none\'});d.style.display=d.style.display===\'block\'?\'none\':\'block\';" class="btn btn-outline" style="font-size:13px;padding:6px 10px;">•••</button>'
+      + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:180px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
+      + '<button onclick="JobsPage.showForm(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit Job</button>'
+      + '<button onclick="PDF.generateJobSheet(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📄 Job Sheet PDF</button>'
+      + (j.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.property) + '" target="_blank" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);text-decoration:none;">🗺 Navigate to Property</a>' : '')
+      + (j.status !== 'completed' ? '<button onclick="JobsPage._markComplete(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✓ Mark Complete</button>' : '')
+      + (j.status === 'completed' && !j.invoiceId ? '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">💰 Create Invoice</button>' : '')
+      + '<button onclick="JobsPage._requestReview(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">⭐ Request Review</button>'
+      + '<div style="height:1px;background:var(--border);margin:4px 0;"></div>'
+      + '<button onclick="JobsPage.setStatus(\'' + id + '\',\'cancelled\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:#dc3545;">✗ Cancel Job</button>'
+      + '</div></div>'
       + '</div></div>'
 
-      // Title
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">'
-      + '<h2 style="font-size:24px;font-weight:700;">Job for ' + UI.esc(j.clientName || '—') + '</h2>'
-      + '<button onclick="JobsPage.showForm(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-light);">✏️</button>'
+      // Header card
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">'
+      + '<div style="height:4px;background:' + statusColor + ';"></div>'
+      + '<div style="padding:20px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">'
+      + '<div>'
+      + '<h2 style="font-size:22px;font-weight:700;margin:0 0 4px;">Job #' + (j.jobNumber||'') + ' — ' + UI.esc(j.clientName || '—') + '</h2>'
+      + '<div style="font-size:13px;color:var(--text-light);">'
+      + (j.scheduledDate ? UI.dateShort(j.scheduledDate) + (j.startTime ? ' at ' + j.startTime : '') : 'Not scheduled')
       + '</div>'
+      + (j.property ? '<div style="font-size:13px;color:var(--text-light);margin-top:2px;">📍 ' + UI.esc(j.property) + '</div>' : '')
+      + '</div>'
+      + '<div style="text-align:right;">' + UI.statusBadge(j.status) + '<div style="font-size:24px;font-weight:800;color:var(--accent);margin-top:6px;">' + UI.money(j.total) + '</div></div>'
+      + '</div></div>'
 
       // Two-column: Client card (left) + metadata (right)
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="detail-grid">'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;" class="detail-grid">'
 
       // Client contact card
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:start;">'
-      + '<div>'
-      + '<div style="font-size:16px;font-weight:700;">' + UI.esc(j.clientName || '—') + ' <span style="color:#2e7d32;font-size:10px;">●</span></div>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Property Address</div>'
-      + '<div style="font-size:14px;margin-top:2px;">' + UI.esc(j.property || '—') + '</div>'
-      + (j.clientPhone || (client && client.phone) ? '<div style="font-size:14px;margin-top:8px;">' + (j.clientPhone || client.phone) + '</div>' : '')
-      + (j.clientEmail || (client && client.email) ? '<div style="margin-top:2px;"><a href="mailto:' + (j.clientEmail || (client && client.email) || '') + '" style="font-size:14px;color:#1565c0;">' + (j.clientEmail || (client && client.email) || '') + '</a></div>' : '')
+      + '<div style="font-size:12px;color:var(--text-light);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">Client</div>'
+      + '<div style="font-size:16px;font-weight:700;margin-bottom:4px;">' + UI.esc(j.clientName || '—') + '</div>'
+      + (j.property ? '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">📍 ' + UI.esc(j.property) + '</div>' : '')
+      + (j.clientPhone || (client && client.phone) ? '<a href="tel:' + (j.clientPhone || (client && client.phone)||'').replace(/\D/g,'') + '" style="display:block;font-size:13px;color:var(--accent);margin-bottom:4px;text-decoration:none;">📞 ' + (j.clientPhone || (client && client.phone)) + '</a>' : '')
+      + (j.clientEmail || (client && client.email) ? '<a href="mailto:' + (j.clientEmail || (client && client.email) || '') + '" style="font-size:13px;color:#1565c0;text-decoration:none;">✉️ ' + (j.clientEmail || (client && client.email) || '') + '</a>' : '')
       + '</div>'
-      + '<button style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-light);">···</button>'
-      + '</div></div>'
 
       // Job metadata table
       + '<div>'
@@ -637,8 +670,12 @@ var JobsPage = {
     });
     html += '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
-    ['scheduled', 'in_progress', 'completed', 'cancelled'].forEach(function(s) {
-      html += '<button class="btn ' + (j.status === s ? 'btn-primary' : 'btn-outline') + '" onclick="JobsPage.' + (s === 'completed' ? '_markComplete' : 'setStatus') + '(\'' + id + '\'' + (s !== 'completed' ? ',\'' + s + '\'' : '') + ');" style="font-size:11px;padding:5px 12px;">' + s.replace(/_/g, ' ') + '</button>';
+    var statusBtns = [['scheduled','Scheduled'],['in_progress','In Progress'],['completed','Completed'],['late','Late'],['action_required','Action Required'],['cancelled','Cancelled']];
+    statusBtns.forEach(function(sb) {
+      var isActive = j.status === sb[0];
+      html += '<button onclick="JobsPage.' + (sb[0] === 'completed' ? '_markComplete(\'' + id + '\')' : 'setStatus(\'' + id + '\',\'' + sb[0] + '\')') + '" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid '
+        + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '700' : '500') + ';">'
+        + sb[1] + '</button>';
     });
     html += '</div></div>'
 
@@ -780,7 +817,7 @@ var JobsPage = {
     } else {
       html += '<div style="font-size:13px;color:var(--text-light);">No activity yet</div>';
     }
-    html += '</div></div></div></div>';
+    html += '</div></div></div></div></div>'; // close sidebar col, grid, main col, grid, max-width wrapper
 
     // Render as full page
     document.getElementById('pageTitle').textContent = 'Job #' + j.jobNumber;

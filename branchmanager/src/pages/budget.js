@@ -7,7 +7,7 @@ var BudgetPage = {
   render: function() {
     var budget = BudgetPage._load();
     var monthlyIncome = parseFloat(localStorage.getItem('bm-my-rate') || '30') * 40 * 4.33; // hourly * 40hrs * 4.33 weeks
-    var taxes = EmployeeCenter._calcTaxes(monthlyIncome);
+    var taxes = (typeof EmployeeCenter !== 'undefined' && EmployeeCenter._calcTaxes) ? EmployeeCenter._calcTaxes(monthlyIncome) : { takeHome: monthlyIncome * 0.72 };
     var takeHome = taxes.takeHome;
 
     var html = '<div style="text-align:center;margin-bottom:20px;">'

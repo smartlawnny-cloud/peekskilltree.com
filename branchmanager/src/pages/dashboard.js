@@ -326,6 +326,37 @@ var DashboardPage = {
 
     html += '</div>';
 
+    // Today's Jobs — Jobber shows this on dashboard
+    var todayDateStr2 = now.getFullYear() + '-' + (now.getMonth()+1<10?'0':'') + (now.getMonth()+1) + '-' + (now.getDate()<10?'0':'') + now.getDate();
+    var todayJobList = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === todayDateStr2; });
+    var todayComplete = todayJobList.filter(function(j) { return j.status === 'completed'; }).length;
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
+      + '<div><h3 style="font-size:16px;font-weight:700;margin:0;">Today\'s Jobs</h3>'
+      + (todayJobList.length > 0 ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + todayComplete + ' of ' + todayJobList.length + ' complete</div>' : '')
+      + '</div>'
+      + '<button onclick="loadPage(\'schedule\')" style="background:none;border:1px solid var(--border);padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--accent);">View Schedule →</button>'
+      + '</div>';
+    if (todayJobList.length === 0) {
+      html += '<div style="text-align:center;padding:20px;color:var(--text-light);font-size:13px;">No jobs scheduled for today.<br><button onclick="loadPage(\'schedule\')" style="margin-top:8px;background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;">Open Schedule</button></div>';
+    } else {
+      todayJobList.forEach(function(j) {
+        var statusColor = j.status === 'completed' ? '#2e7d32' : j.status === 'in_progress' ? '#e07c24' : '#1565c0';
+        var statusBg = j.status === 'completed' ? '#e8f5e9' : j.status === 'in_progress' ? '#fff3e0' : '#e3f2fd';
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="loadPage(\'jobs\');setTimeout(function(){JobsPage.showDetail(\'' + j.id + '\');},100);">'
+          + '<div style="width:8px;height:8px;border-radius:50%;background:' + statusColor + ';flex-shrink:0;"></div>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:14px;font-weight:600;">' + UI.esc(j.clientName || '—') + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || j.property || '') + '</div>'
+          + '</div>'
+          + (j.startTime ? '<div style="font-size:12px;color:var(--text-light);flex-shrink:0;">' + j.startTime + '</div>' : '')
+          + '<span style="background:' + statusBg + ';color:' + statusColor + ';padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;flex-shrink:0;">' + (j.status||'').replace('_',' ').replace(/\b\w/g,function(c){return c.toUpperCase();}) + '</span>'
+          + '<div style="font-size:13px;font-weight:700;flex-shrink:0;">' + UI.money(j.total||0) + '</div>'
+          + '</div>';
+      });
+    }
+    html += '</div>';
+
     // Revenue chart (last 6 months)
     var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -987,11 +1018,16 @@ var DashboardPage = {
     UI.toast('Task added');
   },
 
-  syncNow: async function() {
+  syncNow: function() {
     var btn = document.getElementById('sync-btn');
     if (btn) { btn.textContent = 'Syncing...'; btn.disabled = true; }
-    if (SupabaseDB && SupabaseDB.ready) {
-      await SupabaseDB._pullFromCloud();
+    if (typeof SupabaseDB !== 'undefined' && SupabaseDB.ready) {
+      SupabaseDB._pullFromCloud().then(function() {
+        loadPage('dashboard');
+      }).catch(function(e) {
+        console.warn('Sync error:', e);
+        loadPage('dashboard');
+      });
     } else {
       // Direct fetch if SupabaseDB not initialized yet
       var url = 'https://ltpivkqahvplapyagljt.supabase.co';
@@ -1006,13 +1042,19 @@ var DashboardPage = {
         { local: 'bm-team', remote: 'team_members' }
       ];
       var total = 0;
-      for (var i = 0; i < tables.length; i++) {
-        var t = tables[i];
-        try {
-          var resp = await fetch(url + '/rest/v1/' + t.remote + '?select=*&limit=5000&order=created_at.desc', {
-            headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
-          });
-          var data = await resp.json();
+      var idx = 0;
+      function fetchNext() {
+        if (idx >= tables.length) {
+          if (typeof UI !== 'undefined') UI.toast(total + ' records synced from cloud!');
+          loadPage('dashboard');
+          return;
+        }
+        var t = tables[idx++];
+        fetch(url + '/rest/v1/' + t.remote + '?select=*&limit=5000&order=created_at.desc', {
+          headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
+        }).then(function(resp) {
+          return resp.json();
+        }).then(function(data) {
           if (data && data.length > 0) {
             // Convert snake_case to camelCase
             var converted = data.map(function(row) {
@@ -1026,11 +1068,14 @@ var DashboardPage = {
             localStorage.setItem(t.local, JSON.stringify(converted));
             total += converted.length;
           }
-        } catch (e) { console.warn('Sync error:', t.remote, e); }
+          fetchNext();
+        }).catch(function(e) {
+          console.warn('Sync error:', t.remote, e);
+          fetchNext();
+        });
       }
-      UI.toast(total + ' records synced from cloud!');
+      fetchNext();
     }
-    loadPage('dashboard');
   },
 
   dismissBriefing: function() {

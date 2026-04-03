@@ -220,7 +220,11 @@
         + '<div class="section-label">Services</div>'
         + '<table class="line-table"><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th>Rate</th><th>Total</th></tr></thead>'
         + '<tbody>' + lineRows + '</tbody>'
-        + (items.length ? '<tfoot><tr class="total-row"><td colspan="4">Total</td><td>' + money(q.total) + '</td></tr></tfoot>' : '')
+        + (items.length ? '<tfoot>'
+          + (q.subtotal && q.tax_rate ? '<tr><td colspan="4" style="font-weight:400;font-size:13px;color:#666;padding:6px 0;border:none;">Subtotal</td><td style="font-weight:400;font-size:13px;color:#666;padding:6px 0;border:none;text-align:right;">' + money(q.subtotal) + '</td></tr>' : '')
+          + (q.tax_rate ? '<tr><td colspan="4" style="font-weight:400;font-size:13px;color:#666;padding:6px 0;border:none;">Tax (' + q.tax_rate + '%)</td><td style="font-weight:400;font-size:13px;color:#666;padding:6px 0;border:none;text-align:right;">' + money(q.tax_amount || 0) + '</td></tr>' : '')
+          + '<tr class="total-row"><td colspan="4">Total</td><td>' + money(q.total) + '</td></tr>'
+          + '</tfoot>' : '')
         + '</table>'
         + actionHtml
         + '</div>'

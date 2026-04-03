@@ -53,16 +53,22 @@ var ClientsPage = {
 
     // Jobber-style header + filter/search
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
-      + '<h3 style="font-size:16px;font-weight:700;margin:0;">Filtered clients</h3>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+      + '<h3 style="font-size:16px;font-weight:700;margin:0;">Clients</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + clients.length + ' results)</span>'
-      + '<button class="filter-btn' + (self._tagFilter ? ' active' : '') + '" onclick="ClientsPage.showTagFilter()" style="font-size:12px;padding:5px 12px;">' + (self._tagFilter ? 'Tag: ' + UI.esc(self._tagFilter) + ' ✕' : 'Filter by tag +') + '</button>'
-      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="ClientsPage.setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | Leads and Active</button>'
-      + '<button class="filter-btn' + (self._filter==='no-email'?' active':'') + '" onclick="ClientsPage.setFilter(\'no-email\')" style="font-size:12px;padding:5px 12px;" title="Clients missing email — automations can\'t reach them">📧 Missing email (' + DB.clients.getAll().filter(function(c){return !c.email;}).length + ')</button>'
+      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="ClientsPage.setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">All</button>'
+      + '<button class="filter-btn' + (self._filter==='active'?' active':'') + '" onclick="ClientsPage.setFilter(\'active\')" style="font-size:12px;padding:5px 12px;">Active</button>'
+      + '<button class="filter-btn' + (self._filter==='lead'?' active':'') + '" onclick="ClientsPage.setFilter(\'lead\')" style="font-size:12px;padding:5px 12px;">Lead</button>'
+      + '<button class="filter-btn' + (self._filter==='archived'?' active':'') + '" onclick="ClientsPage.setFilter(\'archived\')" style="font-size:12px;padding:5px 12px;">Archived</button>'
+      + '<button class="filter-btn' + (self._filter==='no-email'?' active':'') + '" onclick="ClientsPage.setFilter(\'no-email\')" style="font-size:12px;padding:5px 12px;" title="Clients missing email">📧 Missing email</button>'
+      + (self._tagFilter ? '<button class="filter-btn active" onclick="ClientsPage._tagFilter=\'\';ClientsPage._page=0;loadPage(\'clients\')" style="font-size:12px;padding:5px 12px;">Tag: ' + UI.esc(self._tagFilter) + ' ✕</button>' : '<button class="filter-btn" onclick="ClientsPage.showTagFilter()" style="font-size:12px;padding:5px 12px;">Filter by tag +</button>')
       + '</div>'
-      + '<div class="search-box" style="min-width:200px;max-width:280px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<div class="search-box" style="min-width:200px;max-width:260px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
       + '<input type="text" id="client-search" placeholder="Search clients..." value="' + UI.esc(self._search) + '" oninput="ClientsPage.setSearch(this.value)">'
+      + '</div>'
+      + '<button class="btn btn-primary" onclick="ClientsPage.showForm()" style="font-size:13px;white-space:nowrap;">+ New Client</button>'
       + '</div></div>';
 
     // Active tag filter banner

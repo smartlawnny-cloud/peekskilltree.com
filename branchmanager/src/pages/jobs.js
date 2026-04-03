@@ -39,6 +39,7 @@ var JobsPage = {
       // Overview
       + '<div onclick="JobsPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
       + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
+      + '<div style="font-size:12px;"><span style="color:#e6a817;">●</span> Ending within 30 days (' + upcomingVisits.length + ')</div>'
       + '<div style="font-size:12px;"><span style="color:#dc3545;">●</span> Late (' + late + ')</div>'
       + '<div style="font-size:12px;"><span style="color:#e6a817;">●</span> Requires Invoicing (' + needsInvoicing.length + ')</div>'
       + '<div style="font-size:12px;"><span style="color:#fd7e14;">●</span> Action Required (' + actionReq.length + ')</div>'
@@ -95,7 +96,7 @@ var JobsPage = {
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All jobs</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
       + (function() {
-        var chips = [['all','All'],['late','Late'],['requires_invoicing','Requires Invoicing'],['action_required','Action Required'],['unscheduled','Unscheduled']];
+        var chips = [['all','All'],['ending_soon','Ending within 30 days'],['late','Late'],['requires_invoicing','Requires Invoicing'],['action_required','Action Required'],['unscheduled','Unscheduled']];
         var out = '';
         for (var ci = 0; ci < chips.length; ci++) {
           var val = chips[ci][0], label = chips[ci][1];
@@ -123,7 +124,7 @@ var JobsPage = {
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + self._sortTh('Client', 'clientName') + self._sortTh('Job #', 'jobNumber') + '<th>Property</th>' + self._sortTh('Schedule', 'scheduledDate') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
+      + self._sortTh('Client', 'clientName') + self._sortTh('Job number', 'jobNumber') + '<th>Property</th>' + self._sortTh('Schedule', 'scheduledDate') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
@@ -169,6 +170,9 @@ var JobsPage = {
           && ((j.scheduledDate && j.scheduledDate >= cutoff60)
           || (!j.scheduledDate && (j.createdAt || '') > cutoff7));
       });
+    } else if (self._filter === 'ending_soon') {
+      var now = new Date(); var end30 = new Date(Date.now() + 30 * 86400000);
+      all = all.filter(function(j) { var d = j.scheduledDate ? new Date(j.scheduledDate) : null; return d && d > now && d <= end30 && j.status !== 'completed' && j.status !== 'cancelled'; });
     } else if (self._filter === 'unscheduled') {
       all = all.filter(function(j) { return !j.scheduledDate && j.status !== 'completed' && j.status !== 'cancelled'; });
     } else if (self._filter !== 'all') {

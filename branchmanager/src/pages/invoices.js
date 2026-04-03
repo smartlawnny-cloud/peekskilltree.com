@@ -64,7 +64,7 @@ var InvoicesPage = {
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All invoices</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
       + (function() {
-        var chips = [['all','All'],['past_due','Past Due'],['sent_not_due','Sent Not Due'],['draft','Draft'],['paid','Paid']];
+        var chips = [['all','All'],['past_due','Past Due'],['sent_not_due','Sent but not due'],['draft','Draft'],['paid','Paid']];
         var out = '';
         for (var ci = 0; ci < chips.length; ci++) {
           var val = chips[ci][0], label = chips[ci][1];

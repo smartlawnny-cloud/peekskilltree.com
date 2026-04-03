@@ -36,8 +36,8 @@ var QuotesPage = {
       + '</div>'
       // Sent (currently awaiting)
       + '<div onclick="QuotesPage._setFilter(\'sent\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;">Awaiting Response</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Open quotes</div>'
+      + '<div style="font-size:14px;font-weight:700;">Sent</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
       + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + sent + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(sentTotal) + '</div>'
       + '</div>'
@@ -87,7 +87,7 @@ var QuotesPage = {
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
       + '<th style="width:32px;"><input type="checkbox" onchange="QuotesPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
-      + self._sortTh('Client', 'clientName') + self._sortTh('Quote #', 'quoteNumber') + '<th>Property</th>' + self._sortTh('Created', 'createdAt') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
+      + self._sortTh('Client', 'clientName') + self._sortTh('Quote number', 'quoteNumber') + '<th>Property</th>' + self._sortTh('Created', 'createdAt') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {

@@ -70,6 +70,8 @@ var MediaCenter = {
       + '>&#128228; Export to SocialPilot'
       + (MediaCenter._selectedIds.length > 0 ? ' (' + MediaCenter._selectedIds.length + ')' : '')
       + '</button>'
+      + (MediaCenter._selectedIds.length > 0 ? '<button onclick="MediaCenter.bulkMarkReviewed()" style="background:#e8f5e9;color:var(--green-dark);border:1px solid #c8e6c9;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10003; Mark Reviewed (' + MediaCenter._selectedIds.length + ')</button>' : '')
+      + (MediaCenter._selectedIds.length > 0 ? '<button onclick="MediaCenter.bulkDelete()" style="background:#fff5f5;color:#dc3545;border:1px solid #fca5a5;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128465; Delete (' + MediaCenter._selectedIds.length + ')</button>' : '')
       + '<button class="btn btn-primary" onclick="MediaCenter.showUploadForm()">+ Upload Photos</button>'
       + '</div>'
       + '</div>';
@@ -80,6 +82,20 @@ var MediaCenter = {
       + UI.statCard('This Week', thisWeekCount.toString(), 'new uploads', thisWeekCount > 0 ? 'up' : '', '')
       + UI.statCard('Unreviewed', unreviewedCount.toString(), 'awaiting review', unreviewedCount > 0 ? 'down' : '', '')
       + UI.statCard('Exported', exportedCount.toString(), 'used in posts', '', '')
+      + '</div>';
+
+    // Storage usage indicator
+    var storageBytes = (localStorage.getItem(MediaCenter._storageKey) || '').length;
+    var storageMB = (storageBytes / 1048576).toFixed(1);
+    var storageLimit = 5; // MB (localStorage limit ~5-10MB)
+    var storagePct = Math.min(100, storageBytes / (storageLimit * 1048576) * 100);
+    var storageColor = storagePct > 80 ? '#dc3545' : storagePct > 60 ? '#e65100' : 'var(--green-dark)';
+    html += '<div style="background:var(--white);border-radius:10px;padding:10px 16px;border:1px solid var(--border);margin-bottom:16px;display:flex;align-items:center;gap:12px;">'
+      + '<span style="font-size:12px;color:var(--text-light);white-space:nowrap;">&#128190; Storage: <strong style="color:' + storageColor + ';">' + storageMB + ' MB</strong> / ~5 MB available</span>'
+      + '<div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;">'
+      + '<div style="height:100%;width:' + storagePct.toFixed(1) + '%;background:' + storageColor + ';border-radius:3px;transition:width 0.3s;"></div>'
+      + '</div>'
+      + '<span style="font-size:11px;color:var(--text-light);white-space:nowrap;">' + storagePct.toFixed(0) + '%</span>'
       + '</div>';
 
     // Filter bar
@@ -618,6 +634,21 @@ var MediaCenter = {
     if (container) container.innerHTML = MediaCenter.render();
   },
 
+  bulkMarkReviewed: function() {
+    var ids = MediaCenter._selectedIds.slice();
+    if (!ids.length) return;
+    var all = MediaCenter.getAll();
+    ids.forEach(function(id) {
+      var item = all.find(function(m) { return m.id === id; });
+      if (item) item.reviewed = true;
+    });
+    MediaCenter._save(all);
+    MediaCenter._selectedIds = [];
+    UI.toast(ids.length + ' item' + (ids.length !== 1 ? 's' : '') + ' marked reviewed!');
+    var container = document.getElementById('page-content');
+    if (container) container.innerHTML = MediaCenter.render();
+  },
+
   // ── Delete ──
 
   deleteMedia: function(id) {
@@ -628,6 +659,17 @@ var MediaCenter = {
     var selIdx = MediaCenter._selectedIds.indexOf(id);
     if (selIdx >= 0) MediaCenter._selectedIds.splice(selIdx, 1);
     UI.toast('Media deleted.');
+    var container = document.getElementById('page-content');
+    if (container) container.innerHTML = MediaCenter.render();
+  },
+
+  bulkDelete: function() {
+    var ids = MediaCenter._selectedIds.slice();
+    if (!ids.length || !confirm('Delete ' + ids.length + ' item' + (ids.length !== 1 ? 's' : '') + '?')) return;
+    var all = MediaCenter.getAll().filter(function(m) { return ids.indexOf(m.id) < 0; });
+    MediaCenter._save(all);
+    MediaCenter._selectedIds = [];
+    UI.toast(ids.length + ' item' + (ids.length !== 1 ? 's' : '') + ' deleted');
     var container = document.getElementById('page-content');
     if (container) container.innerHTML = MediaCenter.render();
   },
@@ -684,6 +726,18 @@ var MediaCenter = {
       + '<li>Paste caption and schedule your post</li>'
       + '</ol>'
       + '</div>'
+      + (function() {
+          var videos = selected.filter(function(m) { return m.type === 'video'; });
+          if (videos.length === 0) return '';
+          var videoNames = videos.map(function(m) {
+            return UI.esc(m.caption || m.clientName || m.jobNumber || m.id);
+          }).join(', ');
+          return '<div style="background:#fff8e1;border-radius:10px;padding:14px 16px;">'
+            + '<div style="font-size:13px;font-weight:600;color:#e65100;margin-bottom:6px;">&#128249; Videos suitable for YouTube Shorts</div>'
+            + '<div style="font-size:13px;color:#555;margin-bottom:10px;">' + videoNames + '</div>'
+            + '<a href="https://studio.youtube.com" target="_blank" style="display:inline-block;font-size:13px;font-weight:600;color:#c00;text-decoration:none;background:#fff;border:1px solid #fca5a5;padding:6px 14px;border-radius:8px;">Open YouTube Studio &#8594;</a>'
+            + '</div>';
+        })()
       + '</div>';
 
     var footer = '<button class="btn btn-outline" onclick="MediaCenter._copyCaptionFromModal()">&#128203; Copy Caption</button>'

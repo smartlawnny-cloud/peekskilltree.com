@@ -205,9 +205,12 @@
         + '</div>'
         + '<div class="footer">Questions? <a href="tel:9143915233">📞 (914) 391-5233</a> · <a href="mailto:info@peekskilltree.com">info@peekskilltree.com</a></div>';
 
-      // Store quote ID for button handlers
+      // Store quote data for button handlers
       window._quoteId = q.id;
+      window._quoteData = q;
     }
+
+    var QUOTE_NOTIFY_URL = 'https://ltpivkqahvplapyagljt.supabase.co/functions/v1/quote-notify';
 
     async function approveQuote() {
       var btn = document.querySelector('.btn-approve');
@@ -218,6 +221,21 @@
           .update({ status: 'approved', updated_at: new Date().toISOString() })
           .eq('id', window._quoteId);
         if (result.error) throw result.error;
+
+        var q = window._quoteData || {};
+        fetch(QUOTE_NOTIFY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'approved',
+            quoteId: window._quoteId,
+            quoteNumber: q.quote_number || '',
+            clientName: q.client_name || '',
+            total: q.total || 0,
+            property: q.property || '',
+            clientEmail: q.client_email || ''
+          })
+        }).catch(function(){});
 
         el('app').innerHTML = ''
           + '<div class="header" style="border-radius:12px;">'
@@ -254,9 +272,25 @@
       if (btn) { btn.textContent = 'Sending...'; btn.disabled = true; }
 
       try {
-        await sb.from('quotes')
+        var result2 = await sb.from('quotes')
           .update({ status: 'awaiting', client_changes: notes, updated_at: new Date().toISOString() })
           .eq('id', window._quoteId);
+        if (result2.error) throw result2.error;
+
+        fetch(QUOTE_NOTIFY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'changes_requested',
+            quoteId: window._quoteId,
+            quoteNumber: (window._quoteData || {}).quote_number || '',
+            clientName: (window._quoteData || {}).client_name || '',
+            total: (window._quoteData || {}).total || 0,
+            property: (window._quoteData || {}).property || '',
+            changeNotes: notes,
+            clientEmail: (window._quoteData || {}).client_email || ''
+          })
+        }).catch(function(){});
 
         el('app').innerHTML = ''
           + '<div class="header" style="border-radius:12px;">'

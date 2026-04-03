@@ -17,7 +17,10 @@ var AI = {
       + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
       + '<div><div style="font-weight:700;font-size:15px;">Claude AI Assistant</div>'
       + '<div style="font-size:11px;color:var(--text-light);">Your tree service business assistant</div></div></div>'
+      + '<div style="display:flex;gap:4px;">'
+      + '<button onclick="AI._copyConversation();" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-light);padding:4px 8px;" title="Copy conversation">📋 Copy</button>'
       + '<button onclick="AI._clearHistory();AI._refreshInline();" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-light);padding:4px 8px;" title="Clear chat">🗑️ Clear</button>'
+      + '</div>'
       + '</div>';
 
     if (!AI._apiKey) {
@@ -47,6 +50,10 @@ var AI = {
       + (overdueInvs.length > 0 ? '<button onclick="AI._inlineAsk(\'I have ' + overdueInvs.length + ' overdue invoices totaling $' + Math.round(overdueTotal).toLocaleString() + '. Write me a firm but professional collection email I can send to late-paying clients.\')" style="font-size:11px;padding:5px 10px;border:1px solid #dc3545;border-radius:14px;background:#fff5f5;cursor:pointer;color:#dc3545;">🔴 ' + overdueInvs.length + ' overdue invoices</button>' : '')
       + (staleQuotes.length > 0 ? '<button onclick="AI._inlineAsk(\'I have ' + staleQuotes.length + ' quotes that have been sitting unanswered for over a week. Write a short, friendly nudge text message I can send to get a response.\')" style="font-size:11px;padding:5px 10px;border:1px solid #e6a817;border-radius:14px;background:#fffbf0;cursor:pointer;color:#b8860b;">⏳ ' + staleQuotes.length + ' stale quotes</button>' : '')
       + (tomorrowJobs.length > 0 ? '<button onclick="AI._inlineAsk(\'I have ' + tomorrowJobs.length + ' job' + (tomorrowJobs.length !== 1 ? 's' : '') + ' scheduled for tomorrow. Write a short, friendly reminder text I can send to each client tonight.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--green-dark);border-radius:14px;background:var(--green-bg);cursor:pointer;color:var(--green-dark);">📅 Tomorrow\'s reminders</button>' : '')
+      + '<button onclick="AI._inlineAsk(\'It\'s April in Westchester NY. What tree services should I upsell to existing clients this spring? Think about what homeowners need after winter storms — stump grinding, spring pruning, cabling, etc. Give me a short pitch for each.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">🌲 Upsell ideas</button>'
+      + '<button onclick="AI._inlineAsk(\'Write a compelling Instagram caption for a recent tree job. Make it engaging, use 3-5 relevant hashtags, and keep it under 150 words. Tone: professional but personable, showing craftsmanship and care for the property.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">📱 Instagram caption</button>'
+      + '<button onclick="AI._inlineAsk(\'Draft a short, friendly referral request text message I can send to happy clients. Keep it under 3 sentences, don\'t sound salesy, and make it easy for them to share our info. Sign as Doug from Second Nature Tree Service.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">🤝 Referral ask</button>'
+      + '<button onclick="AI._inlineAsk(\'Give me one specific, actionable business improvement tip for a tree service company in April in Westchester NY. Focus on something I can do this week to grow revenue or improve operations.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;">💡 Business tip</button>'
       + '</div>';
 
     html += '<div id="ai-messages" style="flex:1;overflow-y:auto;padding:16px;">';
@@ -124,7 +131,11 @@ var AI = {
 
   init: function() {
     AI._apiKey = localStorage.getItem('bm-claude-key') || '';
-    AI._messages = JSON.parse(localStorage.getItem('bm-ai-history') || '[]');
+    AI._loadHistory();
+  },
+
+  _loadHistory: function() {
+    try { AI._messages = JSON.parse(localStorage.getItem('bm-ai-history') || '[]'); } catch(e) { AI._messages = []; }
   },
 
   toggle: function() {
@@ -178,6 +189,7 @@ var AI = {
       + '<div><div style="font-weight:700;font-size:15px;">Claude AI</div>'
       + '<div style="font-size:11px;color:var(--text-light);">Your tree service assistant</div></div></div>'
       + '<div style="display:flex;gap:4px;">'
+      + '<button onclick="AI._copyConversation()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-light);padding:4px 8px;" title="Copy conversation">📋</button>'
       + '<button onclick="AI._clearHistory()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-light);padding:4px 8px;" title="Clear chat">🗑️</button>'
       + '<button onclick="AI.hide()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-light);padding:4px 8px;">✕</button>'
       + '</div></div>';
@@ -202,6 +214,10 @@ var AI = {
       + '<button class="ai-quick" onclick="AI.ask(\'Draft a friendly follow-up email to a client whose quote has been pending for a week\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">📧 Follow-up email</button>'
       + '<button class="ai-quick" onclick="AI.ask(\'Give me a business summary: total revenue, active jobs, open quotes, and any recommendations\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">📊 Business summary</button>'
       + '<button class="ai-quick" onclick="AI.ask(\'What should I charge for removing a 24-inch DBH oak tree, 60 feet tall, in a tight backyard with no bucket truck access?\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">💰 Price estimate</button>'
+      + '<button class="ai-quick" onclick="AI.ask(\'It\'s April in Westchester NY. What tree services should I upsell to existing clients this spring? Think about what homeowners need after winter storms — stump grinding, spring pruning, cabling, etc. Give me a short pitch for each.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">🌲 Upsell ideas</button>'
+      + '<button class="ai-quick" onclick="AI.ask(\'Write a compelling Instagram caption for a recent tree job. Make it engaging, use 3-5 relevant hashtags, and keep it under 150 words. Tone: professional but personable, showing craftsmanship and care for the property.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">📱 Instagram caption</button>'
+      + '<button class="ai-quick" onclick="AI.ask(\'Draft a short, friendly referral request text message I can send to happy clients. Keep it under 3 sentences, don\'t sound salesy, and make it easy for them to share our info. Sign as Doug from Second Nature Tree Service.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">🤝 Referral ask</button>'
+      + '<button class="ai-quick" onclick="AI.ask(\'Give me one specific, actionable business improvement tip for a tree service company in April in Westchester NY. Focus on something I can do this week to grow revenue or improve operations.\')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:14px;background:var(--bg);cursor:pointer;color:var(--text);">💡 Business tip</button>'
       + '</div>';
 
     // Messages
@@ -298,7 +314,7 @@ var AI = {
       AI._loading = false;
       AI._removeTyping();
       AI._messages.push({ role: 'assistant', content: response });
-      localStorage.setItem('bm-ai-history', JSON.stringify(AI._messages.slice(-30)));
+      AI._saveHistory();
       AI._refreshMessages();
       AI._scrollToBottom();
     }).catch(function(err) {
@@ -472,7 +488,7 @@ var AI = {
   },
 
   _saveHistory: function() {
-    localStorage.setItem('bm-ai-history', JSON.stringify(AI._messages.slice(-30)));
+    try { localStorage.setItem('bm-ai-history', JSON.stringify(AI._messages.slice(-20))); } catch(e) {}
   },
 
   _clearHistory: function() {
@@ -480,6 +496,24 @@ var AI = {
     localStorage.removeItem('bm-ai-history');
     AI._refreshMessages();
     UI.toast('Chat cleared');
+  },
+
+  _copyConversation: function() {
+    if (AI._messages.length === 0) { UI.toast('No conversation to copy', 'error'); return; }
+    var text = AI._messages.map(function(m) {
+      return (m.role === 'user' ? 'You' : 'Claude') + ':\n' + m.content;
+    }).join('\n\n---\n\n');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() { UI.toast('Conversation copied!'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      UI.toast('Conversation copied!');
+    }
   }
 };
 

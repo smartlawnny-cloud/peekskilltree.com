@@ -75,9 +75,10 @@ var CrewPerformance = {
       + UI.statCard('Top Performer', topPerformer, crewStats.length > 0 ? UI.moneyInt(crewStats[0].revenue) + ' revenue' : '', '', '')
       + '</div>';
 
-    // ── Leaderboard ──
-    html += '<div style="margin-bottom:8px;">'
-      + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:12px;">Crew Leaderboard</div>'
+    // ── Leaderboard header + export button ──
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+      + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);">Crew Leaderboard</div>'
+      + '<button onclick="CrewPerformance.exportReport()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--white);font-size:12px;font-weight:600;cursor:pointer;color:var(--text);">📥 Export Report</button>'
       + '</div>';
 
     if (crewStats.length === 0) {
@@ -170,8 +171,48 @@ var CrewPerformance = {
             + '</div></div>';
         }
 
+        // Progress bar — monthly goal (if set)
+        var memberGoal = parseFloat(localStorage.getItem('bm-crew-goal-' + cs.member.id) || '0');
+        if (memberGoal > 0) {
+          var goalPct = Math.min(Math.round((cs.revenue / memberGoal) * 100), 100);
+          var goalColor = goalPct >= 100 ? 'var(--green-dark)' : goalPct >= 60 ? '#ff9800' : 'var(--red)';
+          html += '<div style="margin-top:10px;">'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-light);margin-bottom:4px;">'
+            + '<span>Revenue vs Goal</span>'
+            + '<span style="font-weight:700;color:' + goalColor + ';">' + UI.moneyInt(cs.revenue) + ' / ' + UI.moneyInt(memberGoal) + ' (' + goalPct + '%)</span>'
+            + '</div>'
+            + '<div style="height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden;">'
+            + '<div style="height:100%;width:' + goalPct + '%;background:' + goalColor + ';border-radius:3px;transition:width .3s;"></div>'
+            + '</div></div>';
+        }
+
+        // Set goal button (inline, subtle)
+        html += '<div style="margin-top:10px;text-align:right;">'
+          + '<button onclick="event.stopPropagation();CrewPerformance.setGoal(\'' + cs.member.id + '\')" '
+          + 'style="background:none;border:none;font-size:11px;color:var(--text-light);cursor:pointer;padding:2px 4px;" '
+          + 'title="Set monthly revenue goal">🎯 ' + (memberGoal > 0 ? 'Edit' : 'Set') + ' Goal</button>'
+          + '</div>';
+
         html += '</div>';
       });
+    }
+
+    // ── Team Totals Footer ──
+    if (crewStats.length > 0) {
+      var teamAvgRating = ratedCount > 0 ? (avgRating).toFixed(1) : '—';
+      html += '<div style="background:var(--white);border-radius:10px;padding:16px 20px;border:2px solid var(--border);margin-top:4px;">'
+        + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:12px;">Team Totals</div>'
+        + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'
+        + '<div style="text-align:center;padding:10px 6px;background:#f8fdf8;border-radius:8px;">'
+        + '<div style="font-size:20px;font-weight:800;color:var(--green-dark);">' + totalTeamHours.toFixed(1) + '</div>'
+        + '<div style="font-size:10px;color:var(--text-light);margin-top:2px;">Total Hours</div></div>'
+        + '<div style="text-align:center;padding:10px 6px;background:#f8fdf8;border-radius:8px;">'
+        + '<div style="font-size:20px;font-weight:800;color:var(--green-dark);">' + UI.moneyInt(totalTeamRev) + '</div>'
+        + '<div style="font-size:10px;color:var(--text-light);margin-top:2px;">Total Revenue</div></div>'
+        + '<div style="text-align:center;padding:10px 6px;background:#f8fdf8;border-radius:8px;">'
+        + '<div style="font-size:20px;font-weight:800;color:' + (parseFloat(teamAvgRating) >= 4 ? 'var(--green-dark)' : '#ff9800') + ';">' + (teamAvgRating !== '—' ? teamAvgRating + '★' : '—') + '</div>'
+        + '<div style="font-size:10px;color:var(--text-light);margin-top:2px;">Team Avg Rating</div></div>'
+        + '</div></div>';
     }
 
     return html;
@@ -460,6 +501,64 @@ var CrewPerformance = {
     localStorage.setItem('bm-crew-skills-' + memberId, JSON.stringify(skills));
     UI.closeModal();
     CrewPerformance._showDetail(memberId);
+  },
+
+  // ── Set monthly revenue goal for a crew member ──
+  setGoal: function(memberId) {
+    var current = parseFloat(localStorage.getItem('bm-crew-goal-' + memberId) || '0');
+    var goal = prompt('Monthly revenue goal for this crew member ($):', current || '');
+    if (goal !== null && !isNaN(parseFloat(goal))) {
+      localStorage.setItem('bm-crew-goal-' + memberId, parseFloat(goal));
+      UI.toast('Goal set!');
+      loadPage('crewperformance');
+    }
+  },
+
+  // ── Export crew report as CSV ──
+  exportReport: function() {
+    var self = CrewPerformance;
+    var team = JSON.parse(localStorage.getItem('bm-team') || '[]').filter(function(m) { return m.status === 'active'; });
+    var allJobs = DB.jobs.getAll();
+    var allEntries = JSON.parse(localStorage.getItem('bm-time-entries') || '[]');
+
+    var rows = [['Name', 'Role', 'Jobs Completed', 'Revenue', 'Hours', 'Rev/Hour', 'Avg Rating', 'On-Time %', 'Monthly Goal']];
+    team.forEach(function(member) {
+      var stats = self._getCrewStats(member.id, self._dateRange, allJobs, allEntries, member.name);
+      var revPerHr = stats.hoursWorked > 0 ? (stats.revenue / stats.hoursWorked).toFixed(2) : '0.00';
+      var goal = localStorage.getItem('bm-crew-goal-' + member.id) || '';
+      rows.push([
+        member.name,
+        member.role || 'Crew',
+        stats.jobsCompleted,
+        stats.revenue.toFixed(2),
+        stats.hoursWorked.toFixed(1),
+        revPerHr,
+        stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '',
+        stats.onTimeRate,
+        goal
+      ]);
+    });
+
+    var csv = rows.map(function(row) {
+      return row.map(function(cell) {
+        var s = String(cell);
+        if (s.indexOf(',') > -1 || s.indexOf('"') > -1 || s.indexOf('\n') > -1) {
+          s = '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      }).join(',');
+    }).join('\n');
+
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'crew-report-' + self._dateRange + '-' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    UI.toast('Crew report exported!');
   },
 
   // ── Dashboard widget: compact top 3 performers ──

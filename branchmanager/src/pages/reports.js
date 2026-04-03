@@ -219,6 +219,119 @@ var ReportsPage = {
       + '<div style="padding:12px;background:var(--bg);border-radius:8px;text-align:center;"><div style="font-size:11px;color:var(--text-light);">Clients</div><div style="font-size:20px;font-weight:800;">' + DB.clients.getAll().length + '</div></div>'
       + '</div></div>';
 
+    // ── Service Type Analysis ──
+    var serviceTypes = ['Tree Removal', 'Tree Pruning', 'Stump Removal', 'Storm Damage', 'Land Clearing', 'Bucket Truck', 'Cabling', 'Firewood', 'Other'];
+    var serviceRevenue = {};
+    var serviceCount = {};
+    serviceTypes.forEach(function(s) { serviceRevenue[s] = 0; serviceCount[s] = 0; });
+
+    DB.jobs.getAll().filter(function(j) { return j.status === 'completed'; }).forEach(function(j) {
+      var desc = (j.description || '').toLowerCase();
+      var serviceType = (j.serviceType || '').toLowerCase();
+      var matched = 'Other';
+      serviceTypes.forEach(function(s) {
+        if (desc.indexOf(s.toLowerCase()) >= 0 || serviceType.indexOf(s.toLowerCase()) >= 0) matched = s;
+      });
+      serviceRevenue[matched] = (serviceRevenue[matched] || 0) + (j.total || 0);
+      serviceCount[matched] = (serviceCount[matched] || 0) + 1;
+    });
+
+    // Sort by revenue descending
+    var sortedServiceTypes = serviceTypes.slice().sort(function(a, b) {
+      return serviceRevenue[b] - serviceRevenue[a];
+    });
+    var hasServiceData = sortedServiceTypes.some(function(s) { return serviceCount[s] > 0; });
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      + '<h3 style="font-size:15px;margin-bottom:12px;">&#127795; Service Type Analysis</h3>';
+    if (hasServiceData) {
+      html += '<table class="data-table"><thead><tr>'
+        + '<th>Service</th><th style="text-align:right;">Jobs</th><th style="text-align:right;">Revenue</th><th style="text-align:right;">Avg / Job</th>'
+        + '</tr></thead><tbody>';
+      sortedServiceTypes.forEach(function(s) {
+        if (serviceCount[s] === 0) return;
+        var avg = serviceCount[s] > 0 ? serviceRevenue[s] / serviceCount[s] : 0;
+        html += '<tr>'
+          + '<td><strong>' + UI.esc(s) + '</strong></td>'
+          + '<td style="text-align:right;">' + serviceCount[s] + '</td>'
+          + '<td style="text-align:right;font-weight:600;color:var(--green-dark);">' + UI.moneyInt(serviceRevenue[s]) + '</td>'
+          + '<td style="text-align:right;color:var(--text-light);">' + UI.moneyInt(avg) + '</td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="text-align:center;padding:16px;color:var(--text-light);font-size:13px;">No completed jobs yet — data will appear here as jobs are marked complete.</div>';
+    }
+    html += '</div>';
+
+    // ── Lead Source Analysis ──
+    var sources = {};
+    DB.requests.getAll().forEach(function(r) {
+      var src = (r.source || 'Unknown');
+      var srcKey = src.toLowerCase();
+      if (!sources[srcKey]) sources[srcKey] = { label: src, count: 0, converted: 0 };
+      sources[srcKey].count++;
+      if (r.status === 'converted' || r.status === 'quoted') sources[srcKey].converted++;
+    });
+    var sourceKeys = Object.keys(sources).sort(function(a, b) {
+      return sources[b].count - sources[a].count;
+    });
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      + '<h3 style="font-size:15px;margin-bottom:12px;">&#128202; Lead Source Analysis</h3>';
+    if (sourceKeys.length > 0) {
+      html += '<table class="data-table"><thead><tr>'
+        + '<th>Source</th><th style="text-align:right;">Requests</th><th style="text-align:right;">Converted</th><th style="text-align:right;">Rate</th>'
+        + '</tr></thead><tbody>';
+      sourceKeys.forEach(function(key) {
+        var s = sources[key];
+        var rate = s.count > 0 ? Math.round((s.converted / s.count) * 100) : 0;
+        html += '<tr>'
+          + '<td><strong>' + UI.esc(s.label) + '</strong></td>'
+          + '<td style="text-align:right;">' + s.count + '</td>'
+          + '<td style="text-align:right;">' + s.converted + '</td>'
+          + '<td style="text-align:right;font-weight:600;color:' + (rate >= 50 ? 'var(--green-dark)' : rate >= 25 ? '#e65100' : '#dc3545') + ';">' + rate + '%</td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="text-align:center;padding:16px;color:var(--text-light);font-size:13px;">No requests yet — lead sources will appear here once requests are added.</div>';
+    }
+    html += '</div>';
+
+    // ── Month-over-Month Revenue (last 12 months) ──
+    var now12 = new Date();
+    var momRows = [];
+    for (var i = 11; i >= 0; i--) {
+      var d = new Date(now12.getFullYear(), now12.getMonth() - i, 1);
+      var monthStr = d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1);
+      var monthLabel = d.toLocaleString('default', { month: 'short', year: 'numeric' });
+      var monthInvsPaid = DB.invoices.getAll().filter(function(inv) {
+        return inv.status === 'paid' && inv.createdAt && inv.createdAt.substring(0, 7) === monthStr;
+      });
+      var monthRev = monthInvsPaid.reduce(function(s, inv) { return s + (inv.total || 0); }, 0);
+      var monthJobs = monthInvsPaid.length;
+      var monthAvg = monthJobs > 0 ? monthRev / monthJobs : 0;
+      momRows.push({ label: monthLabel, rev: monthRev, jobs: monthJobs, avg: monthAvg });
+    }
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      + '<h3 style="font-size:15px;margin-bottom:12px;">&#128197; Month-over-Month Revenue (Last 12 Months)</h3>'
+      + '<table class="data-table"><thead><tr>'
+      + '<th>Month</th><th style="text-align:right;">Revenue</th><th style="text-align:right;">Invoices Paid</th><th style="text-align:right;">Avg Invoice</th>'
+      + '</tr></thead><tbody>';
+    momRows.forEach(function(row) {
+      var isCurrentMonth = row.label === now12.toLocaleString('default', { month: 'short', year: 'numeric' });
+      html += '<tr' + (isCurrentMonth ? ' style="background:var(--green-bg);"' : '') + '>'
+        + '<td><strong>' + UI.esc(row.label) + '</strong>' + (isCurrentMonth ? ' <span style="font-size:10px;color:var(--green-dark);font-weight:700;">NOW</span>' : '') + '</td>'
+        + '<td style="text-align:right;font-weight:600;color:' + (row.rev > 0 ? 'var(--green-dark)' : 'var(--text-light)') + ';">' + UI.moneyInt(row.rev) + '</td>'
+        + '<td style="text-align:right;">' + (row.jobs > 0 ? row.jobs : '—') + '</td>'
+        + '<td style="text-align:right;color:var(--text-light);">' + (row.jobs > 0 ? UI.moneyInt(row.avg) : '—') + '</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>'
+      + '</div>';
+
     return html;
   },
 

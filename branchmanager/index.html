@@ -548,23 +548,25 @@
     <div class="sidebar-nav">
       <button class="nav-item active" data-page="dashboard"><span class="icon"><i data-lucide="layout-dashboard" class="li"></i></span> Home</button>
       <button class="nav-item" data-page="schedule"><span class="icon"><i data-lucide="calendar" class="li"></i></span> Calendar</button>
-
-      <div class="nav-label">Work</div>
+      <button class="nav-item" data-page="clients"><span class="icon"><i data-lucide="users" class="li"></i></span> Clients <span class="badge" id="badge-clients"></span></button>
       <button class="nav-item" data-page="requests"><span class="icon"><i data-lucide="inbox" class="li"></i></span> Requests <span class="badge" id="badge-requests"></span></button>
       <button class="nav-item" data-page="quotes"><span class="icon"><i data-lucide="file-text" class="li"></i></span> Quotes</button>
       <button class="nav-item" data-page="jobs"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Jobs</button>
       <button class="nav-item" data-page="invoices"><span class="icon"><i data-lucide="receipt" class="li"></i></span> Invoices</button>
+      <button class="nav-item" data-page="payments"><span class="icon"><i data-lucide="credit-card" class="li"></i></span> Payments</button>
 
-      <div class="nav-label">Clients</div>
-      <button class="nav-item" data-page="clients"><span class="icon"><i data-lucide="users" class="li"></i></span> Clients <span class="badge" id="badge-clients"></span></button>
-
-      <div class="nav-label">Team</div>
-      <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team</button>
-      <button class="nav-item" data-page="timesheet"><span class="icon"><i data-lucide="clock" class="li"></i></span> Timesheets</button>
-
-      <div class="nav-label">Money</div>
-      <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
-      <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Reporting</button>
+      <!-- Marketing (collapsible, matches Jobber exactly) -->
+      <button class="nav-item" id="marketing-toggle" onclick="(function(){var el=document.getElementById('marketing-sub');var open=el.style.display!=='none';el.style.display=open?'none':'block';document.getElementById('marketing-chevron').style.transform=open?'':'rotate(90deg)';})()">
+        <span class="icon"><i data-lucide="megaphone" class="li"></i></span>
+        Marketing
+        <i data-lucide="chevron-right" id="marketing-chevron" style="width:14px;height:14px;stroke:currentColor;margin-left:auto;transition:transform .2s;"></i>
+      </button>
+      <div id="marketing-sub" style="display:none;padding-left:14px;">
+        <button class="nav-item" data-page="reviews"><span class="icon"><i data-lucide="star" class="li"></i></span> Reviews</button>
+        <button class="nav-item" data-page="campaigns"><span class="icon"><i data-lucide="mail" class="li"></i></span> Campaigns</button>
+        <button class="nav-item" data-page="referrals"><span class="icon"><i data-lucide="share-2" class="li"></i></span> Referrals</button>
+        <button class="nav-item" data-page="onlinebooking"><span class="icon"><i data-lucide="globe" class="li"></i></span> Website</button>
+      </div>
 
       <div style="border-top:1px solid rgba(255,255,255,.06);margin:8px 10px 4px;"></div>
       <button class="nav-item" data-page="settings"><span class="icon"><i data-lucide="settings" class="li"></i></span> Settings</button>
@@ -572,8 +574,13 @@
       <!-- More — everything beyond Jobber's core -->
       <div class="nav-section" style="cursor:pointer;margin-top:4px;" onclick="var el=document.getElementById('more-nav');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.more-arrow').textContent=el.style.display==='none'?'&#9656;':'&#9662;';">More <span class="more-arrow" style="float:right;">&#9656;</span></div>
       <div id="more-nav" style="display:none;">
-        <!-- Payments & Finance -->
-        <button class="nav-item" data-page="payments"><span class="icon"><i data-lucide="credit-card" class="li"></i></span> Payments</button>
+        <!-- Team -->
+        <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team</button>
+        <button class="nav-item" data-page="timesheet"><span class="icon"><i data-lucide="clock" class="li"></i></span> Timesheets</button>
+        <!-- Money -->
+        <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
+        <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Reporting</button>
+        <!-- Finance -->
         <button class="nav-item" data-page="profitloss"><span class="icon"><i data-lucide="line-chart" class="li"></i></span> Profit/Loss</button>
         <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Job Costing</button>
         <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget</button>
@@ -653,16 +660,16 @@
             <i data-lucide="plus" style="width:18px;height:18px;stroke:#fff;stroke-width:2.5;"></i>
           </button>
           <div style="width:1px;height:20px;background:var(--border);margin:0 4px;"></div>
+          <button class="topbar-icon" onclick="loadPage('messaging')" title="Message Center">
+            <i data-lucide="message-square" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i>
+          </button>
           <div style="position:relative;">
-            <button class="topbar-icon" id="notif-bell-btn" onclick="NotifCenter.toggle(event)" title="Notifications">
+            <button class="topbar-icon" id="notif-bell-btn" onclick="NotifCenter.toggle(event)" title="Activity Feed">
               <i data-lucide="bell" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i>
               <span class="notif-badge" id="notif-badge"></span>
             </button>
             <div class="notif-dropdown" id="notif-dropdown"></div>
           </div>
-          <button class="topbar-icon" onclick="loadPage('messaging')" title="Messages">
-            <i data-lucide="message-square" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i>
-          </button>
           <button class="topbar-icon" onclick="AI.toggle()" title="AI Assistant">
             <i data-lucide="sparkles" style="width:17px;height:17px;stroke:var(--text-light);stroke-width:1.75;"></i>
           </button>
@@ -729,6 +736,8 @@
 <script src="src/pages/onlinebooking.js?v=3"></script>
 <script src="src/pages/formbuilder.js?v=1"></script>
 <script src="src/pages/receptionist.js?v=1"></script>
+<script src="src/pages/campaigns.js?v=1"></script>
+<script src="src/pages/referrals.js?v=1"></script>
 <script src="src/pages/import.js?v=2"></script>
 <script src="src/pages/settings.js?v=16"></script>
 <script src="src/pages/propertymap.js?v=2"></script>
@@ -835,6 +844,8 @@ var pageConfigs = {
   onlinebooking: { title: 'Online Booking', action: null },
   formbuilder: { title: 'Form Builder', action: null },
   receptionist: { title: 'Receptionist', action: null },
+  campaigns: { title: 'Campaigns', action: '+ New Campaign', actionFn: 'loadPage("campaigns")' },
+  referrals: { title: 'Referrals', action: null },
   import: { title: 'Import Data', action: null },
   backup: { title: 'Backup & Restore', action: null },
   settings: { title: 'Settings', action: null },
@@ -890,6 +901,8 @@ var pageRenderers = {
   onlinebooking: function() { return OnlineBooking.render(); },
   formbuilder: function() { return FormBuilderPage.render(); },
   receptionist: function() { return Receptionist.render(); },
+  campaigns: function() { return Campaigns.render(); },
+  referrals: function() { return Referrals.render(); },
   import: function() { return ImportPage.render(); },
   backup: function() { return BackupPage.render(); },
   settings: function() { return SettingsPage.render(); },

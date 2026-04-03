@@ -5,6 +5,16 @@
 var QuotesPage = {
   _page: 0, _perPage: 50, _search: '', _filter: 'all', _sortCol: 'quoteNumber', _sortDir: 'desc',
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com',
+      licenses: localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644'
+    };
+  },
+
   render: function() {
     var self = QuotesPage;
     var all = DB.quotes.getAll();
@@ -191,12 +201,13 @@ var QuotesPage = {
     var email = q.clientEmail || (client && client.email) || '';
     if (email && typeof Email !== 'undefined') {
       var firstName = (q.clientName || '').split(' ')[0] || 'there';
-      var subject = 'Following up on your quote from Second Nature Tree Service';
+      var _co2 = QuotesPage._co();
+      var subject = 'Following up on your quote from ' + _co2.name;
       var body = 'Hi ' + firstName + ',\n\n'
         + 'I wanted to follow up on the quote I sent over for ' + (q.description || 'tree services') + '.\n\n'
         + 'Quote #' + q.quoteNumber + ' — ' + UI.money(q.total) + '\n\n'
-        + 'Do you have any questions or would you like to move forward? Just reply to this email or give me a call at (914) 391-5233.\n\n'
-        + 'Thanks,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+        + 'Do you have any questions or would you like to move forward? Just reply to this email or give me a call at ' + _co2.phone + '.\n\n'
+        + 'Thanks,\nDoug Brown\n' + _co2.name + '\n' + _co2.phone + '\n' + _co2.website;
       Email.send(email, subject, body).then(function() {
         UI.toast('Follow-up sent to ' + email);
       }).catch(function() {
@@ -712,17 +723,18 @@ var QuotesPage = {
     var approvalLink = QuotesPage._getApprovalLink(id);
 
     // Build email preview (Jobber style)
-    var subject = 'Quote #' + q.quoteNumber + ' from Second Nature Tree Service — ' + UI.money(q.total);
+    var _co = QuotesPage._co();
+    var subject = 'Quote #' + q.quoteNumber + ' from ' + _co.name + ' — ' + UI.money(q.total);
     var body = 'Hi ' + firstName + ',\n\n'
-      + 'Thanks for reaching out to Second Nature Tree Service! Here\'s your quote for the work we discussed:\n\n'
+      + 'Thanks for reaching out to ' + _co.name + '! Here\'s your quote for the work we discussed:\n\n'
       + '📋 Quote #' + q.quoteNumber + '\n'
       + '📍 ' + (q.property || 'Property on file') + '\n'
       + '💰 Total: ' + UI.money(q.total) + '\n\n';
     if (q.description) body += 'Scope: ' + q.description + '\n\n';
     body += '👉 View & approve your quote online:\n' + approvalLink + '\n\n'
       + 'This quote is valid for 30 days. Click the link above to approve or request changes — no login required.\n\n'
-      + 'Questions? Reply to this email or call (914) 391-5233.\n\n'
-      + 'Thanks,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com\nLicensed & Fully Insured — WC-32079 / PC-50644';
+      + 'Questions? Reply to this email or call ' + _co.phone + '.\n\n'
+      + 'Thanks,\nDoug Brown\n' + _co.name + '\n' + _co.phone + '\n' + _co.website + '\nLicensed & Fully Insured — ' + _co.licenses;
 
     var html = '<div style="padding:16px;">'
       // Approval link prominent display
@@ -793,22 +805,22 @@ var QuotesPage = {
     var htmlBody = '<div style="background:#f5f6f8;padding:24px 0;">'
       + '<div style="max-width:520px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;">'
       + '<div style="background:linear-gradient(135deg,#1a3c12 0%,#00836c 100%);border-radius:12px 12px 0 0;padding:24px 28px;color:#fff;">'
-      + '<div style="font-size:13px;opacity:.8;margin-bottom:4px;">🌳 Second Nature Tree Service</div>'
+      + '<div style="font-size:13px;opacity:.8;margin-bottom:4px;">🌳 ' + _co.name + '</div>'
       + '<div style="font-size:24px;font-weight:900;letter-spacing:-.5px;">Quote #' + (q ? q.quoteNumber : '') + '</div>'
       + '<div style="font-size:38px;font-weight:900;margin:6px 0 4px;letter-spacing:-1px;">' + UI.money(q ? q.total : 0) + '</div>'
       + '<div style="font-size:13px;opacity:.75;">' + (q && q.property ? '📍 ' + q.property : '') + '</div>'
       + '</div>'
       + '<div style="background:#fff;border-radius:0 0 12px 12px;padding:24px 28px;">'
       + '<p style="font-size:15px;color:#2d3748;margin-bottom:12px;">Hi ' + firstName + ',</p>'
-      + '<p style="font-size:14px;color:#4a5568;line-height:1.6;margin-bottom:16px;">Thanks for reaching out to Second Nature Tree Service! Here\'s the quote for the work we discussed. You can approve it online — no login required.</p>'
+      + '<p style="font-size:14px;color:#4a5568;line-height:1.6;margin-bottom:16px;">Thanks for reaching out to ' + _co.name + '! Here\'s the quote for the work we discussed. You can approve it online — no login required.</p>'
       + (q && q.description ? '<p style="font-size:13px;color:#718096;background:#f7fafc;padding:10px 12px;border-radius:6px;margin-bottom:16px;"><strong>Scope:</strong> ' + q.description + '</p>' : '')
       + lineItemsHtml
       + '<div style="text-align:center;margin:24px 0;">'
       + '<a href="' + approvalLink + '" style="display:inline-block;background:linear-gradient(135deg,#00836c,#1a3c12);color:#fff;padding:16px 36px;border-radius:10px;font-size:17px;font-weight:800;text-decoration:none;box-shadow:0 4px 14px rgba(0,131,108,.35);">✅ View & Approve Quote</a>'
       + '</div>'
       + '<p style="font-size:12px;color:#a0aec0;text-align:center;margin-bottom:20px;">This quote is valid for 30 days. Click above to approve or request changes.</p>'
-      + '<p style="font-size:13px;color:#718096;">Questions? Reply to this email or call/text <strong>(914) 391-5233</strong>.</p>'
-      + '<p style="font-size:13px;color:#2d3748;margin-top:12px;">Thanks,<br><strong>Doug Brown</strong><br>Second Nature Tree Service<br>Licensed & Insured — WC-32079 / PC-50644</p>'
+      + '<p style="font-size:13px;color:#718096;">Questions? Reply to this email or call/text <strong>' + _co.phone + '</strong>.</p>'
+      + '<p style="font-size:13px;color:#2d3748;margin-top:12px;">Thanks,<br><strong>Doug Brown</strong><br>' + _co.name + '<br>Licensed & Insured — ' + _co.licenses + '</p>'
       + '</div></div></div>';
 
     if (typeof Email !== 'undefined') {

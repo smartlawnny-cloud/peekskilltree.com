@@ -63,7 +63,7 @@ var Workflow = {
           + '<div style="font-weight:600;font-size:14px;">' + UI.esc(j.clientName || '') + (j.jobNumber ? ' · Job #' + j.jobNumber : '') + '</div>'
           + '<div style="font-size:12px;color:var(--text-light);">' + (j.description || '').substr(0, 60) + ' · ' + UI.money(j.total) + '</div>'
           + '</div>'
-          + '<button onclick="var inv=Workflow.jobToInvoice(\'' + j.id + '\');if(inv){loadPage(\'invoices\');setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);}" style="background:#e65100;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">→ Create Invoice</button>'
+          + '<button onclick="var inv=Workflow.jobToInvoice(\'' + j.id + '\');if(inv){loadPage(\'invoices\');setTimeout(function(){if(typeof InvoicesPage!==\'undefined\')InvoicesPage.showDetail(inv.id);else loadPage(\'invoices\');},100);}" style="background:#e65100;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">→ Create Invoice</button>'
           + '</div>';
       });
       html += '</div>';
@@ -81,7 +81,7 @@ var Workflow = {
           + '<div style="font-weight:600;font-size:14px;">' + UI.esc(inv.clientName || '') + (inv.invoiceNumber ? ' · Invoice #' + inv.invoiceNumber : '') + '</div>'
           + '<div style="font-size:12px;color:var(--red);">' + daysOverdue + ' days overdue · ' + UI.money(inv.balance) + ' due</div>'
           + '</div>'
-          + '<button onclick="loadPage(\'invoices\');setTimeout(function(){InvoicesPage.showDetail(\'' + inv.id + '\');},100);" style="background:var(--red);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">View Invoice</button>'
+          + '<button onclick="loadPage(\'invoices\');setTimeout(function(){if(typeof InvoicesPage!==\'undefined\')InvoicesPage.showDetail(\'' + inv.id + '\');else loadPage(\'invoices\');},100);" style="background:var(--red);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">View Invoice</button>'
           + '</div>';
       });
       html += '</div>';
@@ -208,10 +208,10 @@ var Workflow = {
       html += '<button onclick="DB.jobs.update(\'' + jobId + '\',{status:\'in_progress\',startedAt:new Date().toISOString()});UI.toast(\'Job started\');loadPage(\'jobs\');" style="background:#ff9800;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">▶ Start Job</button>';
     }
     if (job.status === 'in_progress') {
-      html += '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + jobId + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">✅ Complete & Invoice</button>';
+      html += '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + jobId + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){if(typeof InvoicesPage!==\'undefined\')InvoicesPage.showDetail(inv.id);else loadPage(\'invoices\');},100);})()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">✅ Complete & Invoice</button>';
     }
     if (job.status === 'completed' && !job.invoiceId) {
-      html += '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + jobId + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">💰 Create Invoice</button>';
+      html += '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + jobId + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){if(typeof InvoicesPage!==\'undefined\')InvoicesPage.showDetail(inv.id);else loadPage(\'invoices\');},100);})()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">💰 Create Invoice</button>';
     }
 
     html += '<button onclick="PDFGen.generateJobSheet(\'' + jobId + '\')" style="background:#6a1b9a;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">📄 Job Sheet PDF</button>';
@@ -240,7 +240,9 @@ var Workflow = {
       + '<button onclick="Workflow.markPaid(\'' + invoiceId + '\',\'zelle\');loadPage(\'invoices\');" style="background:#6D1ED4;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">Zelle</button>';
 
     // Stripe (if connected)
-    html += Stripe.paymentButton(invoiceId);
+    if (typeof Stripe !== 'undefined' && Stripe.paymentButton) {
+      html += Stripe.paymentButton(invoiceId);
+    }
 
     // Send & PDF
     html += '<button onclick="Workflow.sendInvoice(\'' + invoiceId + '\')" style="background:#1565c0;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">📧 Send</button>'

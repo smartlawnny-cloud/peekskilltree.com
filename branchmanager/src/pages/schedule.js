@@ -9,7 +9,7 @@ var SchedulePage = {
   render: function() {
     var self = SchedulePage;
     var html = '';
-    AdminTasks.seedDefaults();
+    if (typeof AdminTasks !== 'undefined') AdminTasks.seedDefaults();
     var today = new Date().toISOString().split('T')[0];
     var allJobs = DB.jobs.getAll();
     var todayJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === today; });
@@ -264,7 +264,7 @@ var SchedulePage = {
     }
 
     // Admin Tasks section for this day
-    var dayAdminTasks = AdminTasks.getForDate(dateStr);
+    var dayAdminTasks = (typeof AdminTasks !== 'undefined') ? AdminTasks.getForDate(dateStr) : [];
     if (dayAdminTasks.length > 0) {
       html += '<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:10px 14px;margin-top:8px;">'
         + '<div style="font-size:12px;font-weight:700;color:#6a1b9a;margin-bottom:6px;">&#x1F4CB; Admin Tasks</div>';
@@ -391,7 +391,7 @@ var SchedulePage = {
           + '</div>';
       });
       // Admin task pills for this day
-      var weekAdminTasks = AdminTasks.getForDate(dateStr);
+      var weekAdminTasks = (typeof AdminTasks !== 'undefined') ? AdminTasks.getForDate(dateStr) : [];
       weekAdminTasks.forEach(function(t) {
         html += '<div style="background:#f3e5f5;border-left:3px solid #7b1fa2;border-radius:4px;padding:3px 6px;font-size:11px;color:#6a1b9a;cursor:pointer;margin-top:2px;" onclick="event.stopPropagation();AdminTasks.toggleComplete(\'' + t.id + '\')">&#x1F4CB; ' + UI.esc(t.title) + '</div>';
       });
@@ -469,7 +469,7 @@ var SchedulePage = {
           + (j.clientName || '#' + j.jobNumber) + '</div>';
       });
       // Admin task dots for this day
-      var monthAdminTasks = AdminTasks.getForDate(dateStr);
+      var monthAdminTasks = (typeof AdminTasks !== 'undefined') ? AdminTasks.getForDate(dateStr) : [];
       monthAdminTasks.forEach(function(t) {
         html += '<div style="font-size:9px;color:#7b1fa2;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="event.stopPropagation();AdminTasks.toggleComplete(\'' + t.id + '\')">&#x25CF; ' + UI.esc(t.title) + '</div>';
       });

@@ -196,8 +196,6 @@ var InvoicesPage = {
     if (!inv) return;
     if (typeof PDFGen !== 'undefined' && typeof PDFGen.invoice === 'function') {
       PDFGen.invoice(inv);
-    } else if (typeof PdfGen !== 'undefined') {
-      PdfGen.generateInvoice(id);
     } else {
       loadPage('pdfgen');
     }

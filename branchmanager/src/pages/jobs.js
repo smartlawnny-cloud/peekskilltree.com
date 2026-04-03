@@ -278,7 +278,7 @@ var JobsPage = {
     ids.forEach(function(id) {
       var job = DB.jobs.getById(id);
       if (job && !job.invoiceId && (job.status === 'completed' || job.total > 0)) {
-        Workflow.jobToInvoice(id);
+        if (typeof Workflow !== 'undefined') { Workflow.jobToInvoice(id); } else { DB.jobs.update(id, { invoiceId: 'pending' }); }
         created++;
       }
     });

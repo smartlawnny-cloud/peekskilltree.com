@@ -99,13 +99,25 @@ var SettingsPage = {
       + '</div></div>';
 
     // Stripe Payments
-    html += Stripe.renderSettings();
+    if (typeof Stripe !== 'undefined' && Stripe.renderSettings) {
+      html += Stripe.renderSettings();
+    } else {
+      html += '<div style="padding:12px;color:var(--text-light);font-size:13px;">Stripe integration not loaded.</div>';
+    }
 
     // Dialpad Calling & SMS
-    html += Dialpad.renderSettings();
+    if (typeof Dialpad !== 'undefined' && Dialpad.renderSettings) {
+      html += Dialpad.renderSettings();
+    } else {
+      html += '<div style="padding:12px;color:var(--text-light);font-size:13px;">Dialpad integration not loaded.</div>';
+    }
 
     // SendJim Direct Mail
-    html += SendJim.renderSettings();
+    if (typeof SendJim !== 'undefined' && SendJim.renderSettings) {
+      html += SendJim.renderSettings();
+    } else {
+      html += '<div style="padding:12px;color:var(--text-light);font-size:13px;">SendJim integration not loaded.</div>';
+    }
 
     // Custom Fields
     if (typeof CustomFields !== 'undefined') {

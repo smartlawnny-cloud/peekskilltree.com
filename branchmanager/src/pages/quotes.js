@@ -269,7 +269,7 @@ var QuotesPage = {
       + '<h4 style="font-size:15px;">🧮 Job Cost Calculator</h4><span style="color:var(--text-light);">▶</span></div>'
       + '<div id="inline-estimator" style="' + (items.length <= 1 ? '' : 'display:none;') + '">'
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Select crew and equipment → costs auto-calculate → fills line items below.</p>'
-      + Estimator.renderInline()
+      + (typeof Estimator !== 'undefined' ? Estimator.renderInline() : '<p style="font-size:13px;color:var(--text-light);">Estimator not available.</p>')
       + '<button type="button" class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="QuotesPage._applyEstimator()">✅ Apply to Quote</button>'
       + '</div></div>';
 
@@ -663,7 +663,7 @@ var QuotesPage = {
   _copyApprovalLink: function(id) {
     var link = QuotesPage._getApprovalLink(id);
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(link).then(function() { UI.toast('Approval link copied!'); });
+      navigator.clipboard.writeText(link).then(function() { UI.toast('Approval link copied!'); }).catch(function() { UI.toast('Could not copy — use Ctrl+C', 'error'); });
     } else {
       var el = document.getElementById('approval-link-input');
       if (el) { el.select(); document.execCommand('copy'); UI.toast('Approval link copied!'); }
@@ -725,7 +725,7 @@ var QuotesPage = {
     });
   },
 
-  _confirmSend: async function(id) {
+  _confirmSend: function(id) {
     var to = document.getElementById('send-to').value.trim();
     if (!to) { UI.toast('Enter an email address', 'error'); return; }
 
@@ -777,12 +777,15 @@ var QuotesPage = {
       + '</div></div></div>';
 
     if (typeof Email !== 'undefined') {
-      var result = await Email.send(to, subject, body, { htmlBody: htmlBody });
-      if (result && result.ok) {
-        UI.toast('Quote sent to ' + to + ' ✓');
-      } else {
-        UI.toast('Email sent (check for errors)', 'warning');
-      }
+      Email.send(to, subject, body, { htmlBody: htmlBody }).then(function(result) {
+        if (result && result.ok) {
+          UI.toast('Quote sent to ' + to + ' ✓');
+        } else {
+          UI.toast('Email sent (check for errors)', 'warning');
+        }
+      }).catch(function() {
+        UI.toast('Failed to send email', 'error');
+      });
     } else {
       window.open('mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
     }
@@ -799,7 +802,7 @@ var QuotesPage = {
   },
 
   _applyEstimator: function() {
-    var calc = Estimator._lastCalc;
+    var calc = (typeof Estimator !== 'undefined') ? Estimator._lastCalc : null;
     if (!calc) { UI.toast('Calculate a price first', 'error'); return; }
 
     var items = calc.lineItems.map(function(li) {

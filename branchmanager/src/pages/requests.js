@@ -1,8 +1,55 @@
 /**
- * Branch Manager — Requests Page
+ * Branch Manager — Requests Page v2
  */
 var RequestsPage = {
   _search: '', _filter: 'all',
+
+  // Pull new online requests from Supabase and merge into localStorage
+  syncFromSupabase: function() {
+    var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
+    var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+    var btn = document.getElementById('req-sync-btn');
+    if (btn) { btn.textContent = '⏳ Syncing...'; btn.disabled = true; }
+
+    fetch(SUPABASE_URL + '/rest/v1/requests?select=*&order=created_at.desc&limit=50', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      if (!Array.isArray(rows)) return;
+      var existing = DB.requests.getAll();
+      var added = 0;
+      rows.forEach(function(row) {
+        // Match by Supabase id or client_name+property combo
+        var dup = existing.find(function(e) {
+          return (e.supabaseId && e.supabaseId === row.id) ||
+                 (e.clientName && row.client_name && e.clientName.toLowerCase() === row.client_name.toLowerCase() &&
+                  e.property && row.property && e.property.substring(0,8) === row.property.substring(0,8));
+        });
+        if (!dup) {
+          DB.requests.create({
+            supabaseId: row.id,
+            clientName: row.client_name || '',
+            email: row.client_email || '',
+            phone: row.client_phone || '',
+            property: row.property || '',
+            source: row.source || 'Online Form',
+            notes: row.notes || '',
+            status: row.status || 'new',
+            createdAt: row.created_at
+          });
+          added++;
+        }
+      });
+      localStorage.setItem('bm-req-last-sync', new Date().toISOString());
+      UI.toast(added > 0 ? '✅ Synced ' + added + ' new request' + (added>1?'s':'') + ' from website' : '✅ Already up to date');
+      loadPage('requests');
+    })
+    .catch(function() {
+      UI.toast('⚠️ Sync failed — check connection');
+      if (btn) { btn.textContent = '🔄 Sync Online Requests'; btn.disabled = false; }
+    });
+  },
 
   render: function() {
     var self = RequestsPage;
@@ -57,10 +104,18 @@ var RequestsPage = {
       + '<button class="filter-btn' + (self._filter==='assessment_complete'?' active':'') + '" onclick="RequestsPage._setFilter(\'assessment_complete\')" style="font-size:12px;padding:5px 12px;">Assessed</button>'
       + '<button class="filter-btn' + (self._filter==='converted'?' active':'') + '" onclick="RequestsPage._setFilter(\'converted\')" style="font-size:12px;padding:5px 12px;">Converted</button>'
       + '</div>'
-      + '<div class="search-box" style="min-width:200px;max-width:280px;">'
+      + '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<button id="req-sync-btn" class="btn btn-outline" onclick="RequestsPage.syncFromSupabase()" style="font-size:12px;white-space:nowrap;">🔄 Sync Online</button>'
+      + '<button class="btn btn-primary" onclick="RequestsPage.showForm()" style="font-size:12px;white-space:nowrap;">+ New Request</button>'
+      + '</div>'
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
+      + '<div class="search-box" style="flex:1;max-width:320px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
       + '<input type="text" placeholder="Search requests..." value="' + UI.esc(self._search) + '" oninput="RequestsPage._search=this.value;loadPage(\'requests\')">'
-      + '</div></div>';
+      + '</div>'
+      + (localStorage.getItem('bm-req-last-sync') ? '<span style="font-size:11px;color:var(--text-light);">Last sync: ' + UI.dateRelative(localStorage.getItem('bm-req-last-sync')) + '</span>' : '')
+      + '</div>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'

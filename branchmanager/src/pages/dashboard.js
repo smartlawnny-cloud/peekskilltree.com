@@ -83,7 +83,7 @@ var DashboardPage = {
     }
     // === END MONEY ON THE TABLE ===
 
-    if (localClients.length === 0 && SupabaseDB && SupabaseDB.DEFAULT_URL) {
+    if (localClients.length === 0 && typeof SupabaseDB !== 'undefined' && SupabaseDB && SupabaseDB.DEFAULT_URL) {
       html += '<div style="padding:16px;background:#e3f2fd;border-radius:10px;border-left:4px solid #1976d2;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">'
         + '<div><strong style="color:#1565c0;">Your data is in the cloud</strong>'
         + '<div style="font-size:13px;color:#555;margin-top:4px;">535 clients, 433 quotes, 259 jobs, 348 invoices ready to sync.</div></div>'

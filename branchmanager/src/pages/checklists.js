@@ -113,7 +113,7 @@ var Checklists = {
     var item = allItems.find(function(it) { return it.id === itemId; });
     if (item) {
       item.checked = !item.checked;
-      item.checkedBy = item.checked ? (Auth.user ? Auth.user.name : 'User') : '';
+      item.checkedBy = item.checked ? ((typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name : 'User') : '';
       item.checkedAt = item.checked ? new Date().toISOString() : '';
     }
     DB.jobs.update(jobId, { checklist: checklist });

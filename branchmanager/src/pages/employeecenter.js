@@ -11,7 +11,7 @@
  */
 var EmployeeCenter = {
   render: function() {
-    var userName = Auth.user ? Auth.user.name : 'Employee';
+    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name : 'Employee';
     var entries = JSON.parse(localStorage.getItem('bm-time-entries') || '[]')
       .filter(function(e) { return e.user === userName; });
 
@@ -259,7 +259,7 @@ var EmployeeCenter = {
       return;
     }
 
-    var userName = Auth.user ? Auth.user.name : 'Employee';
+    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name : 'Employee';
     var key = 'bm-pto-' + userName.toLowerCase().replace(/\s+/g, '-');
     var all = [];
     try { all = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}

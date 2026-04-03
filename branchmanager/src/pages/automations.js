@@ -12,6 +12,14 @@
  * For now, they show the configuration UI and can trigger manually.
  */
 var AutomationsPage = {
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
   _defaults: {
     quoteFollowup1: { enabled: true, days: 5, channel: 'email', label: 'Quote follow-up #1' },
     quoteFollowup2: { enabled: true, days: 10, channel: 'email', label: 'Quote follow-up #2' },
@@ -182,8 +190,8 @@ var AutomationsPage = {
         var body1 = 'Hi ' + firstName + ',\n\nJust checking in on your quote for work at ' + (q.property || 'your property') + '.\n\n'
           + '📋 Quote #' + q.quoteNumber + ' — ' + UI.money(q.total) + '\n\n'
           + '👉 View & approve online:\n' + approvalLink + '\n\n'
-          + 'Happy to answer any questions — just reply or call (914) 391-5233.\n\n'
-          + 'Thanks,\nDoug Brown\nSecond Nature Tree Service';
+          + 'Happy to answer any questions — just reply or call ' + AutomationsPage._co().phone + '.\n\n'
+          + 'Thanks,\nDoug Brown\n' + AutomationsPage._co().name;
         if (typeof Email !== 'undefined') Email.send(email, sub1, body1);
         DB.quotes.update(q.id, { followup1SentAt: new Date().toISOString(), status: 'awaiting' });
         sent++;
@@ -192,11 +200,11 @@ var AutomationsPage = {
       else if (config.quoteFollowup2 && config.quoteFollowup2.enabled
           && daysSince >= (config.quoteFollowup2.days || 10)
           && !q.followup2SentAt) {
-        var sub2 = 'Last reminder — Quote #' + q.quoteNumber + ' from Second Nature Tree Service';
+        var sub2 = 'Last reminder — Quote #' + q.quoteNumber + ' from ' + AutomationsPage._co().name;
         var body2 = 'Hi ' + firstName + ',\n\nOne last follow-up on your quote for ' + UI.money(q.total) + '.\n\n'
           + '👉 ' + approvalLink + '\n\n'
           + 'If the timing isn\'t right, no worries at all — we\'ll be here when you need us.\n\n'
-          + 'Thanks,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233';
+          + 'Thanks,\nDoug Brown\n' + AutomationsPage._co().name + '\n' + AutomationsPage._co().phone;
         if (typeof Email !== 'undefined') Email.send(email, sub2, body2);
         DB.quotes.update(q.id, { followup2SentAt: new Date().toISOString() });
         sent++;
@@ -230,8 +238,8 @@ var AutomationsPage = {
         var sub1 = 'Invoice #' + inv.invoiceNumber + ' is past due — ' + UI.money(inv.balance || inv.total);
         var body1 = 'Hi ' + firstName + ',\n\nThis is a friendly reminder that Invoice #' + inv.invoiceNumber + ' for ' + UI.money(inv.balance || inv.total) + ' was due on ' + UI.dateShort(inv.dueDate) + '.\n\n'
           + '👉 Pay online:\n' + payLink + '\n\n'
-          + 'We accept credit card, Venmo, Zelle, check, or cash. If you have any questions, please call (914) 391-5233.\n\n'
-          + 'Thanks,\nDoug Brown\nSecond Nature Tree Service';
+          + 'We accept credit card, Venmo, Zelle, check, or cash. If you have any questions, please call ' + AutomationsPage._co().phone + '.\n\n'
+          + 'Thanks,\nDoug Brown\n' + AutomationsPage._co().name;
         if (typeof Email !== 'undefined') Email.send(email, sub1, body1);
         DB.invoices.update(inv.id, { followup1SentAt: new Date().toISOString(), status: 'overdue' });
         sent++;
@@ -243,8 +251,8 @@ var AutomationsPage = {
         var sub2 = 'Second notice — Invoice #' + inv.invoiceNumber + ' overdue ' + daysOverdue + ' days';
         var body2 = 'Hi ' + firstName + ',\n\nInvoice #' + inv.invoiceNumber + ' for ' + UI.money(inv.balance || inv.total) + ' is now ' + daysOverdue + ' days past due.\n\n'
           + '👉 ' + payLink + '\n\n'
-          + 'Please reach out if there\'s an issue — (914) 391-5233 or reply to this email.\n\n'
-          + 'Thanks,\nDoug Brown\nSecond Nature Tree Service';
+          + 'Please reach out if there\'s an issue — ' + AutomationsPage._co().phone + ' or reply to this email.\n\n'
+          + 'Thanks,\nDoug Brown\n' + AutomationsPage._co().name;
         if (typeof Email !== 'undefined') Email.send(email, sub2, body2);
         DB.invoices.update(inv.id, { followup2SentAt: new Date().toISOString() });
         sent++;
@@ -297,13 +305,13 @@ var AutomationsPage = {
       if (!email) { skipped++; return; }
       var firstName = (job.clientName || '').split(' ')[0] || 'there';
       var timeLabel = job.startTime ? ' at ' + job.startTime : (job.arrivalWindow === 'morning' ? ' in the morning (8am–12pm)' : job.arrivalWindow === 'afternoon' ? ' in the afternoon (12pm–5pm)' : '');
-      var subject = 'Reminder: Second Nature Tree Service tomorrow' + timeLabel;
+      var subject = 'Reminder: ' + AutomationsPage._co().name + ' tomorrow' + timeLabel;
       var body = 'Hi ' + firstName + ',\n\nThis is a friendly reminder that your tree service is scheduled for tomorrow, ' + tomorrowStr + timeLabel + '.\n\n'
         + '📍 ' + (job.property || 'Your property') + '\n'
         + (job.description ? '📋 ' + job.description + '\n' : '')
         + (job.crew && job.crew.length ? '👷 Crew: ' + job.crew.join(', ') + '\n' : '')
-        + '\nIf you need to reschedule, please call (914) 391-5233 as soon as possible.\n\n'
-        + 'Thank you,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233';
+        + '\nIf you need to reschedule, please call ' + AutomationsPage._co().phone + ' as soon as possible.\n\n'
+        + 'Thank you,\nDoug Brown\n' + AutomationsPage._co().name + '\n' + AutomationsPage._co().phone;
       if (typeof Email !== 'undefined') Email.send(email, subject, body);
       DB.jobs.update(job.id, { reminderSentAt: new Date().toISOString() });
       sent++;
@@ -362,13 +370,13 @@ var AutomationsPage = {
       var email = job.clientEmail || (client && client.email) || '';
       if (!email) { skipped++; return; }
       var firstName = (job.clientName || '').split(' ')[0] || 'there';
-      var subject = 'How did we do? — Second Nature Tree Service';
+      var subject = 'How did we do? — ' + AutomationsPage._co().name;
       var reviewLink = 'https://g.page/r/CcVkZHV_EKlEEBM/review';
-      var body = 'Hi ' + firstName + ',\n\nThank you so much for choosing Second Nature Tree Service! We hope everything turned out exactly how you imagined.\n\n'
+      var body = 'Hi ' + firstName + ',\n\nThank you so much for choosing ' + AutomationsPage._co().name + '! We hope everything turned out exactly how you imagined.\n\n'
         + 'If you have a moment, we\'d love to hear about your experience. Leaving a quick Google review helps other homeowners in the area find trusted tree care:\n\n'
         + '⭐ Leave a Review: ' + reviewLink + '\n\n'
         + 'It takes less than a minute and means the world to our small business.\n\n'
-        + 'Thank you for your support,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+        + 'Thank you for your support,\nDoug Brown\n' + AutomationsPage._co().name + '\n' + AutomationsPage._co().phone + '\n' + AutomationsPage._co().website;
       if (typeof Email !== 'undefined') Email.send(email, subject, body);
       DB.jobs.update(job.id, { reviewSentAt: new Date().toISOString() });
       sent++;

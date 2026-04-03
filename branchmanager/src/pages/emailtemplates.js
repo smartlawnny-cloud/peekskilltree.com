@@ -311,8 +311,10 @@ var EmailTemplates = {
 
     var mergeData = {};
     // Always fill company fields
-    mergeData.companyName = 'Second Nature Tree Service';
-    mergeData.companyPhone = '(914) 391-5233';
+    mergeData.companyName = localStorage.getItem('bm-co-name') || 'Second Nature Tree Service';
+    mergeData.companyPhone = localStorage.getItem('bm-co-phone') || '(914) 391-5233';
+    mergeData.companyEmail = localStorage.getItem('bm-co-email') || 'info@peekskilltree.com';
+    mergeData.companyWebsite = localStorage.getItem('bm-co-website') || 'peekskilltree.com';
     mergeData.reviewLink = 'https://g.page/r/CcVkZHV_EKlEEBM/review';
 
     // Overlay provided data

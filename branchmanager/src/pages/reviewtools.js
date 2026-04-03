@@ -5,6 +5,15 @@
 var ReviewTools = {
   GOOGLE_REVIEW_URL: 'https://g.page/r/CcVkZHV_EKlEEBM/review',
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   render: function() {
     var html = '<div class="section-header"><h2>⭐ Review Tools</h2></div>';
 
@@ -89,12 +98,12 @@ var ReviewTools = {
       + '.card{width:3.5in;padding:24px;text-align:center;border:2px solid #1a3c12;border-radius:12px;}'
       + '</style></head><body><div class="card">'
       + '<div style="font-size:28px;">🌳</div>'
-      + '<h2 style="color:#1a3c12;font-size:16px;margin:8px 0 4px;">Second Nature Tree Service</h2>'
+      + '<h2 style="color:#1a3c12;font-size:16px;margin:8px 0 4px;">' + ReviewTools._co().name + '</h2>'
       + '<p style="font-size:11px;color:#666;margin:0 0 16px;">Licensed & Insured — Peekskill, NY</p>'
       + '<p style="font-size:13px;font-weight:600;margin:0 0 12px;">Enjoyed our work? We\'d love a review!</p>'
       + '<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(ReviewTools.GOOGLE_REVIEW_URL) + '" style="width:150px;height:150px;">'
       + '<p style="font-size:10px;color:#666;margin:8px 0 0;">Scan to leave a Google review</p>'
-      + '<p style="font-size:10px;color:#999;margin:4px 0 0;">(914) 391-5233 · peekskilltree.com</p>'
+      + '<p style="font-size:10px;color:#999;margin:4px 0 0;">' + ReviewTools._co().phone + ' · ' + ReviewTools._co().website + '</p>'
       + '</div></body></html>';
     var w = window.open('', '_blank');
     w.document.write(html);

@@ -2,6 +2,15 @@
  * Branch Manager — Invoices Page
  */
 var InvoicesPage = {
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   _page: 0, _perPage: 50, _search: '', _filter: 'all', _sortCol: 'invoiceNumber', _sortDir: 'desc',
 
   render: function() {
@@ -344,19 +353,19 @@ var InvoicesPage = {
     var firstName = (inv.clientName || '').split(' ')[0] || 'there';
     var payLink = InvoicesPage._getPayLink(id);
     var amtDue = UI.money(inv.balance || inv.total);
-    var subject = 'Invoice #' + inv.invoiceNumber + ' from Second Nature Tree Service — ' + amtDue;
+    var subject = 'Invoice #' + inv.invoiceNumber + ' from ' + InvoicesPage._co().name + ' — ' + amtDue;
 
     // Plain text fallback
     var body = 'Hi ' + firstName + ',\n\n'
-      + 'Thank you for choosing Second Nature Tree Service! Your invoice is ready:\n\n'
+      + 'Thank you for choosing ' + InvoicesPage._co().name + '! Your invoice is ready:\n\n'
       + '  Invoice #' + inv.invoiceNumber + '\n'
       + (inv.subject ? '  Job: ' + inv.subject + '\n' : '')
       + '  Amount Due: ' + amtDue + '\n'
       + (inv.dueDate ? '  Due: ' + UI.dateShort(inv.dueDate) + '\n' : '') + '\n'
       + 'Pay online (card, or tip optional):\n' + payLink + '\n\n'
       + 'Also accepted: Venmo (@SecondNatureTree), Zelle (info@peekskilltree.com), check, or cash.\n\n'
-      + 'Questions? Reply to this email or call/text (914) 391-5233.\n\n'
-      + 'Thanks,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+      + 'Questions? Reply to this email or call/text ' + InvoicesPage._co().phone + '.\n\n'
+      + 'Thanks,\nDoug Brown\n' + InvoicesPage._co().name + '\n' + InvoicesPage._co().phone + '\n' + InvoicesPage._co().website;
 
     // Branded HTML email
     var lineItemsHtml = '';
@@ -374,7 +383,7 @@ var InvoicesPage = {
       + '<div style="max-width:520px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;">'
       // Header
       + '<div style="background:linear-gradient(135deg,#1a3c12 0%,#00836c 100%);border-radius:12px 12px 0 0;padding:24px 28px;color:#fff;">'
-      + '<div style="font-size:13px;opacity:.8;margin-bottom:4px;">🌳 Second Nature Tree Service</div>'
+      + '<div style="font-size:13px;opacity:.8;margin-bottom:4px;">🌳 ' + InvoicesPage._co().name + '</div>'
       + '<div style="font-size:26px;font-weight:900;letter-spacing:-0.5px;">Invoice #' + inv.invoiceNumber + '</div>'
       + '<div style="font-size:38px;font-weight:900;margin:8px 0 4px;letter-spacing:-1px;">' + amtDue + '</div>'
       + '<div style="font-size:13px;opacity:.75;">' + (inv.dueDate ? 'Due ' + UI.dateShort(inv.dueDate) : 'Balance due') + ' &nbsp;·&nbsp; ' + (inv.clientName||'') + '</div>'
@@ -382,7 +391,7 @@ var InvoicesPage = {
       // Body
       + '<div style="background:#fff;border-radius:0 0 12px 12px;padding:24px 28px;">'
       + '<p style="font-size:15px;color:#2d3748;margin-bottom:16px;">Hi ' + firstName + ',</p>'
-      + '<p style="font-size:14px;color:#4a5568;line-height:1.6;margin-bottom:16px;">Thank you for choosing Second Nature Tree Service! Your invoice is ready to view and pay online.</p>'
+      + '<p style="font-size:14px;color:#4a5568;line-height:1.6;margin-bottom:16px;">Thank you for choosing ' + InvoicesPage._co().name + '! Your invoice is ready to view and pay online.</p>'
       + (inv.subject ? '<p style="font-size:13px;color:#718096;margin-bottom:16px;">📋 <strong>Job:</strong> ' + inv.subject + '</p>' : '')
       + lineItemsHtml
       // Pay button
@@ -396,8 +405,8 @@ var InvoicesPage = {
       + '• <strong>Zelle:</strong> info@peekskilltree.com<br>'
       + '• <strong>Check/Cash:</strong> 1 Highland Industrial Park, Peekskill NY 10566'
       + '</div>'
-      + '<p style="font-size:13px;color:#718096;margin-top:16px;">Questions? Reply to this email or call/text <strong>(914) 391-5233</strong>.</p>'
-      + '<p style="font-size:13px;color:#2d3748;margin-top:12px;">Thanks,<br><strong>Doug Brown</strong><br>Second Nature Tree Service</p>'
+      + '<p style="font-size:13px;color:#718096;margin-top:16px;">Questions? Reply to this email or call/text <strong>' + InvoicesPage._co().phone + '</strong>.</p>'
+      + '<p style="font-size:13px;color:#2d3748;margin-top:12px;">Thanks,<br><strong>Doug Brown</strong><br>' + InvoicesPage._co().name + '</p>'
       + '</div></div></div>';
 
     if (typeof Email !== 'undefined') {

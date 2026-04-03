@@ -3,6 +3,15 @@
  * Matches Jobber: filter chips, stat cards, row actions, detail view
  */
 var RequestsPage = {
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   _search: '', _filter: 'all',
 
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -448,7 +457,7 @@ var RequestsPage = {
       + '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">' + UI.esc(r.clientName || '—') + '</div>'
       + (r.property ? '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">📍 ' + UI.esc(r.property) + '</div>' : '')
       + (r.phone ? '<a href="tel:' + r.phone.replace(/\D/g,'') + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;">📞 ' + UI.phone(r.phone) + '</a>' : '')
-      + (r.phone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;" onclick="if(typeof Dialpad!==\'undefined\'){Dialpad.showTextModal(\'' + r.phone.replace(/\D/g,'') + '\',\'Hi ' + UI.esc((r.clientName||'').split(' ')[0]||'there') + ', thanks for reaching out to Second Nature Tree Service! We received your request and will follow up shortly. Questions? Call (914) 391-5233.\');}else{window.location=\'sms:' + r.phone.replace(/\D/g,'') + '\';}">💬 Text</button>' : '')
+      + (r.phone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;" onclick="if(typeof Dialpad!==\'undefined\'){Dialpad.showTextModal(\'' + r.phone.replace(/\D/g,'') + '\',\'Hi ' + UI.esc((r.clientName||'').split(' ')[0]||'there') + ', thanks for reaching out to \' + RequestsPage._co().name + \'! We received your request and will follow up shortly. Questions? Call \' + RequestsPage._co().phone + \'.\');}else{window.location=\'sms:' + r.phone.replace(/\D/g,'') + '\';}">💬 Text</button>' : '')
       + (r.email ? '<a href="mailto:' + r.email + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;">✉️ ' + UI.esc(r.email) + '</a>' : '')
       + (r.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(r.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:13px;">🗺 Directions</a>' : '')
       + '</div>'
@@ -514,14 +523,15 @@ var RequestsPage = {
     var r = DB.requests.getById(id);
     if (!r || !r.email) { UI.toast('No email on file for this request', 'error'); return; }
     var firstName = (r.clientName || '').split(' ')[0] || 'there';
-    var subject = 'We received your request — Second Nature Tree Service';
+    var co = RequestsPage._co();
+    var subject = 'We received your request — ' + co.name;
     var body = 'Hi ' + firstName + ',\n\n'
-      + 'Thanks for reaching out to Second Nature Tree Service! We\'ve received your request and will be in touch within 1 business day to schedule a free assessment.\n\n'
+      + 'Thanks for reaching out to ' + co.name + '! We\'ve received your request and will be in touch within 1 business day to schedule a free assessment.\n\n'
       + (r.service ? '🌳 Service: ' + r.service + '\n' : '')
       + (r.notes ? '📋 Details: ' + r.notes + '\n' : '')
       + (r.property ? '📍 Property: ' + r.property + '\n' : '')
-      + '\nFeel free to call or text us at (914) 391-5233 with any questions.\n\n'
-      + 'Doug Brown\nSecond Nature Tree Service\n(914) 391-5233\ninfo@peekskilltree.com\nLicensed & Fully Insured';
+      + '\nFeel free to call or text us at ' + co.phone + ' with any questions.\n\n'
+      + 'Doug Brown\n' + co.name + '\n' + co.phone + '\n' + co.email + '\nLicensed & Fully Insured';
 
     var html = '<div style="padding:4px;">'
       + '<div style="background:#e8f5e9;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1a3c12;">📧 Sending to <strong>' + r.email + '</strong></div>'

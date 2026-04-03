@@ -6,6 +6,15 @@ var ReviewsPage = {
   GOOGLE_REVIEW_URL: 'https://g.page/r/CcVkZHV_EKlEEBM/review',
   GOOGLE_PROFILE_URL: 'https://www.google.com/maps/place/?q=place_id:ChIJy2RkfX9kwokRE2TlZH-VZMc',
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   getRequests: function() { return JSON.parse(localStorage.getItem('bm-review-requests') || '[]'); },
   saveRequests: function(arr) { localStorage.setItem('bm-review-requests', JSON.stringify(arr)); },
   getLoggedReviews: function() { return JSON.parse(localStorage.getItem('bm-logged-reviews') || '[]'); },
@@ -33,7 +42,7 @@ var ReviewsPage = {
       + '<div style="font-size:13px;opacity:.8;margin-top:6px;">' + totalCount + ' Google reviews</div>'
       + '</div>'
       + '<div style="flex:1;min-width:200px;">'
-      + '<h2 style="font-size:20px;font-weight:700;margin:0 0 6px;">Second Nature Tree Service</h2>'
+      + '<h2 style="font-size:20px;font-weight:700;margin:0 0 6px;">' + ReviewsPage._co().name + '</h2>'
       + '<p style="font-size:14px;opacity:.8;margin:0 0 16px;">Peekskill, NY · Licensed & Insured</p>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<a href="' + self.GOOGLE_REVIEW_URL + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">⭐ View on Google</a>'

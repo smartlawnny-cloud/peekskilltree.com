@@ -4,6 +4,15 @@
  */
 var Referrals = {
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   render: function() {
     var clients = DB.clients.getAll();
     var html = '<div style="max-width:860px;margin:0 auto;">';
@@ -76,7 +85,7 @@ var Referrals = {
 
   sendRequest: function() {
     var html = UI.field('Client', '<input type="text" id="ref-client" placeholder="Search client name...">')
-      + UI.field('Message', '<textarea id="ref-msg" style="min-height:80px;">Hi! If you\'ve been happy with our tree service, we\'d love a referral. Send a friend our way and we\'ll take care of you both. — Doug, Second Nature Tree Service</textarea>');
+      + UI.field('Message', '<textarea id="ref-msg" style="min-height:80px;">Hi! If you\'ve been happy with our tree service, we\'d love a referral. Send a friend our way and we\'ll take care of you both. — Doug, ' + Referrals._co().name + '</textarea>');
     UI.showModal('Send Referral Request', html, {
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
         + ' <button class="btn btn-primary" onclick="UI.toast(\'Referral request sent! ✅\');UI.closeModal();">Send via SMS</button>'

@@ -15,6 +15,15 @@ var PipelinePage = {
 
   _filterRecent: true,
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   render: function() {
     var allDeals = PipelinePage.getDeals();
     var sixMonthsAgo = new Date(Date.now() - 180 * 86400000);
@@ -416,7 +425,7 @@ var PipelinePage = {
     // Action buttons row
     html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">'
       + (deal.stage !== 'won' && deal.stage !== 'lost' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="PipelinePage.sendFollowUp(\'' + dealId + '\')">📧 Send Follow-up</button>' : '')
-      + (clientPhone ? '<button class="btn btn-outline" style="font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){Dialpad.showTextModal(\'' + cleanPhone + '\',\'Hi ' + firstName + ', this is Doug from Second Nature Tree Service. Just following up on your estimate. Any questions? — Doug (914) 391-5233\');}">📱 Text</button>' : '')
+      + (clientPhone ? '<button class="btn btn-outline" style="font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){var co=PipelinePage._co();Dialpad.showTextModal(\'' + cleanPhone + '\',\'Hi ' + firstName + ', this is Doug from \'+co.name+\'. Just following up on your estimate. Any questions? — Doug \'+co.phone);}">📱 Text</button>' : '')
       + (deal.stage !== 'won' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="UI.closeModal();QuotesPage.showForm(null,\'' + deal.clientId + '\')">📋 Create Quote</button>' : '')
       + (deal.stage === 'won' ? '<button class="btn btn-primary" style="font-size:12px;background:#2e7d32;" onclick="PipelinePage.convertToJob(\'' + dealId + '\')">🔨 Convert to Job</button>' : '')
       + '</div>';
@@ -459,8 +468,9 @@ var PipelinePage = {
       return;
     }
 
-    var subject = 'Following up on your estimate — Second Nature Tree Service';
-    var body = 'Hi ' + firstName + ',\n\nI wanted to follow up on the estimate we discussed' + (deal.description ? ' for ' + deal.description : '') + '. Have you had a chance to review it?\n\nWe have availability coming up and would love to get your project scheduled. Feel free to reply to this email or call/text me at (914) 391-5233.\n\nBest,\nDoug\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+    var co = PipelinePage._co();
+    var subject = 'Following up on your estimate — ' + co.name;
+    var body = 'Hi ' + firstName + ',\n\nI wanted to follow up on the estimate we discussed' + (deal.description ? ' for ' + deal.description : '') + '. Have you had a chance to review it?\n\nWe have availability coming up and would love to get your project scheduled. Feel free to reply to this email or call/text me at ' + co.phone + '.\n\nBest,\nDoug\n' + co.name + '\n' + co.phone + '\n' + co.website;
 
     if (typeof Email !== 'undefined' && Email.send) {
       Email.send({

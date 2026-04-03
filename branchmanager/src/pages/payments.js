@@ -3,6 +3,15 @@
  * Record partial payments, deposits, payment history per invoice
  */
 var Payments = {
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   _filterMethod: 'all',
   _filterPeriod: 'month',
 
@@ -181,8 +190,8 @@ var Payments = {
         + 'Date: ' + UI.dateShort(p.date) + '\n'
         + (invNum ? 'Invoice #: ' + invNum + '\n' : '')
         + (p.note ? 'Note: ' + p.note + '\n' : '')
-        + '\nThank you for choosing Second Nature Tree Service!\n\n'
-        + 'Second Nature Tree Service\n(914) 391-5233\ninfo@peekskilltree.com'
+        + '\nThank you for choosing ' + Payments._co().name + '!\n\n'
+        + Payments._co().name + '\n' + Payments._co().phone + '\n' + Payments._co().email
       );
       var mailtoHref = 'mailto:' + (clientEmail || '') + '?subject=' + receiptSubject + '&body=' + receiptBody;
 

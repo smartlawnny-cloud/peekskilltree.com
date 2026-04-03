@@ -12,6 +12,15 @@ var ClientsPage = {
   _sortDir: 1,
   _tagFilter: '',
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   render: function() {
     var self = ClientsPage;
     var stats = DB.dashboard.getStats();
@@ -314,9 +323,9 @@ var ClientsPage = {
     if (!c) return;
     var link = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/') + 'client.html?id=' + clientId;
     var name = c.name || 'your client';
-    var smsBody = 'Hi! Here\'s your Second Nature Tree Service portal where you can view quotes, invoices, and appointments: ' + link;
-    var emailSubject = 'Your Second Nature Tree Service Portal';
-    var emailBody = 'Hi ' + (name.split(' ')[0] || 'there') + ',\n\nHere\'s your client portal link where you can view quotes, approve work, pay invoices, and check appointments:\n\n' + link + '\n\nLet us know if you have any questions.\n\nThanks,\nDoug\nSecond Nature Tree Service\n(914) 391-5233';
+    var smsBody = 'Hi! Here\'s your ' + ClientsPage._co().name + ' portal where you can view quotes, invoices, and appointments: ' + link;
+    var emailSubject = 'Your ' + ClientsPage._co().name + ' Portal';
+    var emailBody = 'Hi ' + (name.split(' ')[0] || 'there') + ',\n\nHere\'s your client portal link where you can view quotes, approve work, pay invoices, and check appointments:\n\n' + link + '\n\nLet us know if you have any questions.\n\nThanks,\nDoug\n' + ClientsPage._co().name + '\n' + ClientsPage._co().phone;
 
     var html = '<div style="padding:4px 0;">'
       + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;word-break:break-all;background:var(--bg);padding:8px;border-radius:6px;font-size:11px;">' + link + '</div>'
@@ -887,9 +896,9 @@ var ClientsPage = {
     var html = '<div style="max-width:600px;font-family:sans-serif;">'
       // Header
       + '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--border);">'
-      + '<div><div style="font-size:18px;font-weight:800;color:#1a3c12;">Second Nature Tree Service</div>'
+      + '<div><div style="font-size:18px;font-weight:800;color:#1a3c12;">' + ClientsPage._co().name + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">1 Highland Industrial Park · Peekskill, NY 10566</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">(914) 391-5233 · peekskilltree.com</div></div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + ClientsPage._co().phone + ' · ' + ClientsPage._co().website + '</div></div>'
       + '<div style="text-align:right;"><div style="font-size:20px;font-weight:800;">Account Statement</div>'
       + '<div style="font-size:12px;color:var(--text-light);">As of ' + new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) + '</div></div>'
       + '</div>'

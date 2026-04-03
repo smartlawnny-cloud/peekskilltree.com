@@ -12,6 +12,15 @@
  * v3 — stats bar, real newRequest modal, Send Portal Link button, Email Portal Link in preview
  */
 var ClientHub = {
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   render: function() {
     var clients = DB.clients.getAll().slice(0, 200);
     clients.sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
@@ -78,8 +87,8 @@ var ClientHub = {
       var unpaidCount   = cInvoices.filter(function(i) { return i.status !== 'paid' && i.balance > 0; }).length;
       var pendingQuotes = cQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).length;
       var link = ClientHub.getLink(c.id);
-      var mailSubject = 'Your Second Nature Tree Service Portal';
-      var mailBody = 'Hi ' + (c.name ? c.name.split(' ')[0] : 'there') + ',\n\nHere is your private portal link to view quotes, approve work, pay invoices, and submit requests:\n\n' + link + '\n\nThank you,\nSecond Nature Tree Service\n(914) 391-5233';
+      var mailSubject = 'Your ' + ClientHub._co().name + ' Portal';
+      var mailBody = 'Hi ' + (c.name ? c.name.split(' ')[0] : 'there') + ',\n\nHere is your private portal link to view quotes, approve work, pay invoices, and submit requests:\n\n' + link + '\n\nThank you,\n' + ClientHub._co().name + '\n' + ClientHub._co().phone;
 
       html += '<div class="client-hub-row" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
         + '<div style="display:flex;align-items:center;gap:10px;min-width:0;">'
@@ -130,14 +139,14 @@ var ClientHub = {
 
     // Header
     html += '<div style="text-align:center;padding:24px;background:var(--green-dark);border-radius:12px;color:#fff;margin-bottom:20px;">'
-      + '<h2 style="margin-bottom:4px;">🌳 Second Nature Tree Service</h2>'
+      + '<h2 style="margin-bottom:4px;">🌳 ' + ClientHub._co().name + '</h2>'
       + '<p style="opacity:.7;font-size:13px;">Client Portal for ' + UI.esc(c.name) + '</p>'
       + '</div>';
 
     // Quick Actions
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">'
       + '<button class="btn btn-primary" style="padding:16px;font-size:14px;justify-content:center;" onclick="ClientHub.newRequest(\'' + clientId + '\')">📥 New Request</button>'
-      + '<a href="tel:9143915233" class="btn btn-outline" style="padding:16px;font-size:14px;justify-content:center;text-decoration:none;">📞 Call Us</a>'
+      + '<a href="tel:' + ClientHub._co().phone.replace(/\D/g,'') + '" class="btn btn-outline" style="padding:16px;font-size:14px;justify-content:center;text-decoration:none;">📞 Call Us</a>'
       + '</div>';
 
     // Pending Quotes
@@ -203,7 +212,7 @@ var ClientHub = {
 
     // Contact
     html += '<div style="text-align:center;padding:20px;font-size:13px;color:var(--text-light);">'
-      + 'Second Nature Tree Service<br>(914) 391-5233 &bull; info@peekskilltree.com<br>peekskilltree.com'
+      + ClientHub._co().name + '<br>' + ClientHub._co().phone + ' &bull; ' + ClientHub._co().email + '<br>' + ClientHub._co().website
       + '</div>';
 
     html += '</div>';
@@ -215,8 +224,8 @@ var ClientHub = {
     var html = ClientHub.renderPreview(clientId);
     var c = DB.clients.getById(clientId);
     var link = ClientHub.getLink(clientId);
-    var mailSubject = 'Your Second Nature Tree Service Portal';
-    var mailBody = 'Hi ' + (c && c.name ? c.name.split(' ')[0] : 'there') + ',\n\nHere is your private portal link:\n\n' + link + '\n\nThank you,\nSecond Nature Tree Service\n(914) 391-5233';
+    var mailSubject = 'Your ' + ClientHub._co().name + ' Portal';
+    var mailBody = 'Hi ' + (c && c.name ? c.name.split(' ')[0] : 'there') + ',\n\nHere is your private portal link:\n\n' + link + '\n\nThank you,\n' + ClientHub._co().name + '\n' + ClientHub._co().phone;
 
     html += '<div style="margin-top:16px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;">'
       + '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">Share this link with your client:</div>'

@@ -4,6 +4,15 @@
 var JobsPage = {
   _page: 0, _perPage: 50, _search: '', _filter: 'all', _sortCol: 'jobNumber', _sortDir: 'desc',
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   render: function() {
     var self = JobsPage;
     var all = DB.jobs.getAll();
@@ -229,9 +238,9 @@ var JobsPage = {
     var firstName = (j.clientName || '').split(' ')[0] || 'there';
     var reviewLink = 'https://g.page/r/CcVkZHV_EKlEEBM/review';
 
-    var smsMsg = 'Hi ' + firstName + '! It was great working with you. If you have a moment, we\'d really appreciate a quick Google review — it helps us a lot:\n' + reviewLink + '\nThank you! — Doug, Second Nature Tree Service';
+    var smsMsg = 'Hi ' + firstName + '! It was great working with you. If you have a moment, we\'d really appreciate a quick Google review — it helps us a lot:\n' + reviewLink + '\nThank you! — Doug, ' + JobsPage._co().name;
     var emailSubject = 'Quick favor — leave us a review?';
-    var emailBody = 'Hi ' + firstName + ',\n\nThank you for choosing Second Nature Tree Service! We hope you\'re happy with the work.\n\nIf you have a moment, a Google review would mean the world to us:\n' + reviewLink + '\n\nIt only takes 30 seconds and helps us reach more homeowners in the area.\n\nThank you!\n— Doug Brown\nSecond Nature Tree Service\n(914) 391-5233 · peekskilltree.com';
+    var emailBody = 'Hi ' + firstName + ',\n\nThank you for choosing ' + JobsPage._co().name + '! We hope you\'re happy with the work.\n\nIf you have a moment, a Google review would mean the world to us:\n' + reviewLink + '\n\nIt only takes 30 seconds and helps us reach more homeowners in the area.\n\nThank you!\n— Doug Brown\n' + JobsPage._co().name + '\n' + JobsPage._co().phone + ' · ' + JobsPage._co().website;
 
     var html = '<div style="margin-bottom:12px;background:var(--green-bg);border-radius:8px;padding:10px 14px;font-size:13px;">'
       + '⭐ Requesting a review for <strong>' + UI.esc(j.clientName) + '</strong> · Job #' + (j.jobNumber || '') + '</div>'
@@ -775,7 +784,7 @@ var JobsPage = {
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Quick Actions</h4>'
       + (j.clientPhone ? '<a href="tel:' + j.clientPhone + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 Call Client</a>' : '')
-      + (j.clientPhone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){var fn=\'' + UI.esc((j.clientName||'').split(' ')[0]||'there') + '\';var msg=\'Hi \'+fn+\', this is Doug from Second Nature Tree Service.' + (j.scheduledDate ? ' Your job is scheduled for ' + UI.dateShort(j.scheduledDate) + '.' : '') + ' Let us know if you have any questions! (914) 391-5233\';Dialpad.showTextModal(\'' + (j.clientPhone||'').replace(/\D/g,'') + '\',msg);}">📱 Text Client</button>' : '')
+      + (j.clientPhone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){var fn=\'' + UI.esc((j.clientName||'').split(' ')[0]||'there') + '\';var msg=\'Hi \'+fn+\', this is Doug from \'+JobsPage._co().name+\'.' + (j.scheduledDate ? ' Your job is scheduled for ' + UI.dateShort(j.scheduledDate) + '.' : '') + ' Let us know if you have any questions! \'+JobsPage._co().phone;Dialpad.showTextModal(\'' + (j.clientPhone||'').replace(/\D/g,'') + '\',msg);}">📱 Text Client</button>' : '')
       + (j.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">🗺 Navigate</a>' : '')
       + '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="PropertyMap.show(\'' + (j.property || '').replace(/'/g, "\\'") + '\')">📐 Equipment Layout</button>'
       + '</div>'

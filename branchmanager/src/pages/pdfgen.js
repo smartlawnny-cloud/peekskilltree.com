@@ -4,15 +4,17 @@
  * Uses browser print-to-PDF via styled popup window (no external libraries)
  */
 var PDFGen = {
-  COMPANY: {
-    name: 'Second Nature Tree Service',
-    phone: '(914) 391-5233',
-    email: 'info@peekskilltree.com',
-    address: '1 Highland Industrial Park, Peekskill, NY 10566',
-    licenseWC: 'WC-32079',
-    licensePutnam: 'PC-50644',
-    website: 'peekskilltree.com',
-    color: '#2e7d32'
+  get COMPANY() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      address: localStorage.getItem('bm-co-address') || '1 Highland Industrial Park, Peekskill, NY 10566',
+      licenseWC: (localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644').split(',')[0].trim(),
+      licensePutnam: (localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644').split(',')[1] ? (localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644').split(',')[1].trim() : 'PC-50644',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com',
+      color: '#2e7d32'
+    };
   },
 
   /**
@@ -113,14 +115,14 @@ var PDFGen = {
       + '<li>Client is responsible for ensuring site access and identifying underground utilities.</li>'
       + '<li>Cleanup of debris is included. Stump grinding quoted separately if applicable.</li>'
       + '<li>Additional work beyond this scope will be quoted separately.</li>'
-      + '<li>Second Nature Tree Service is not responsible for pre-existing conditions, including but not limited to dead limbs, disease, or structural defects not visible at time of estimate.</li>'
+      + '<li>' + PDFGen.COMPANY.name + ' is not responsible for pre-existing conditions, including but not limited to dead limbs, disease, or structural defects not visible at time of estimate.</li>'
       + '</ul>'
       + '</div>';
 
     // Signature block
     body += '<div class="signature-block">'
       + '<h4>Authorization to Proceed</h4>'
-      + '<p class="sig-desc">I authorize Second Nature Tree Service to perform the work described above at the quoted price.</p>'
+      + '<p class="sig-desc">I authorize ' + PDFGen.COMPANY.name + ' to perform the work described above at the quoted price.</p>'
       + '<div class="sig-grid">'
       + '<div class="sig-field"><div class="sig-line"></div><span>Client Signature</span></div>'
       + '<div class="sig-field"><div class="sig-line"></div><span>Printed Name</span></div>'
@@ -220,7 +222,7 @@ var PDFGen = {
     body += '<div class="payment-options">'
       + '<h4>Payment Options</h4>'
       + '<div class="pay-grid">'
-      + '<div class="pay-method"><strong>Check</strong><span>Payable to:<br>Second Nature Tree Service</span></div>'
+      + '<div class="pay-method"><strong>Check</strong><span>Payable to:<br>' + PDFGen.COMPANY.name + '</span></div>'
       + '<div class="pay-method"><strong>Venmo</strong><span>@SecondNatureTree</span></div>'
       + '<div class="pay-method"><strong>Zelle</strong><span>info@peekskilltree.com</span></div>'
       + '<div class="pay-method"><strong>Credit Card</strong><span>Pay online via<br>emailed link</span></div>'

@@ -3,6 +3,15 @@
  * One-click conversions between pipeline stages
  */
 var Workflow = {
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   render: function() {
     var requests = DB.requests ? DB.requests.getAll() : [];
     var quotes = DB.quotes.getAll();
@@ -263,7 +272,7 @@ var Workflow = {
     var firstName = (q.clientName || '').split(' ')[0] || 'there';
 
     var approveLink = 'https://peekskilltree.com/branchmanager/approve.html?id=' + quoteId;
-    var subject = 'Your estimate from Second Nature Tree — Quote #' + (q.quoteNumber || '');
+    var subject = 'Your estimate from ' + Workflow._co().name + ' — Quote #' + (q.quoteNumber || '');
     var body = 'Hi ' + firstName + ',\n\n'
       + 'Thanks for having us out to take a look! Here\'s your estimate for the work we discussed.\n\n'
       + '📋 Quote #' + (q.quoteNumber || '') + '\n'
@@ -272,8 +281,8 @@ var Workflow = {
       + (q.description ? '📝 ' + q.description + '\n\n' : '')
       + '✅ Review & Approve Online:\n' + approveLink + '\n\n'
       + 'You can approve, request changes, or ask questions directly from that link.\n\n'
-      + 'We can usually schedule within 1-2 weeks of approval. Give us a call anytime at (914) 391-5233.\n\n'
-      + 'Doug Brown\nSecond Nature Tree Service\n(914) 391-5233\ninfo@peekskilltree.com';
+      + 'We can usually schedule within 1-2 weeks of approval. Give us a call anytime at ' + Workflow._co().phone + '.\n\n'
+      + 'Doug Brown\n' + Workflow._co().name + '\n' + Workflow._co().phone + '\n' + Workflow._co().email;
 
     var html = '<div style="padding:16px;">'
       + '<div style="margin-bottom:16px;">'
@@ -316,7 +325,7 @@ var Workflow = {
       + '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">'
       // Header
       + '<tr><td style="background:#1a3c12;padding:28px 32px;">'
-      + '<p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">Second Nature Tree Service</p>'
+      + '<p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">' + Workflow._co().name + '</p>'
       + '<p style="margin:6px 0 0;font-size:13px;color:#a8d5a2;">Licensed &amp; Insured — Westchester &amp; Putnam Counties</p>'
       + '</td></tr>'
       // Body
@@ -344,12 +353,12 @@ var Workflow = {
       + '</table>'
       + '<p style="margin:0 0 8px;font-size:13px;color:#888888;text-align:center;">You can approve, request changes, or ask questions directly from that link.</p>'
       + '<p style="margin:0 0 24px;font-size:12px;color:#aaaaaa;text-align:center;">Direct link: <a href="' + approveLink + '" style="color:#1a3c12;">' + approveLink + '</a></p>'
-      + '<p style="margin:0;font-size:14px;color:#555555;line-height:1.6;">We can usually schedule within 1-2 weeks of approval. Give us a call anytime at (914) 391-5233.</p>'
+      + '<p style="margin:0;font-size:14px;color:#555555;line-height:1.6;">We can usually schedule within 1-2 weeks of approval. Give us a call anytime at ' + Workflow._co().phone + '.</p>'
       + '</td></tr>'
       // Footer
       + '<tr><td style="background:#f0f4ef;border-top:1px solid #d4e6d0;padding:20px 32px;text-align:center;">'
-      + '<p style="margin:0 0 4px;font-size:13px;color:#555555;font-weight:600;">Second Nature Tree Service</p>'
-      + '<p style="margin:0;font-size:12px;color:#888888;">(914) 391-5233 &nbsp;·&nbsp; <a href="mailto:info@peekskilltree.com" style="color:#1a3c12;text-decoration:none;">info@peekskilltree.com</a> &nbsp;·&nbsp; <a href="https://peekskilltree.com" style="color:#1a3c12;text-decoration:none;">peekskilltree.com</a></p>'
+      + '<p style="margin:0 0 4px;font-size:13px;color:#555555;font-weight:600;">' + Workflow._co().name + '</p>'
+      + '<p style="margin:0;font-size:12px;color:#888888;">' + Workflow._co().phone + ' &nbsp;·&nbsp; <a href="mailto:' + Workflow._co().email + '" style="color:#1a3c12;text-decoration:none;">' + Workflow._co().email + '</a> &nbsp;·&nbsp; <a href="https://' + Workflow._co().website + '" style="color:#1a3c12;text-decoration:none;">' + Workflow._co().website + '</a></p>'
       + '<p style="margin:8px 0 0;font-size:11px;color:#aaaaaa;">Licensed &amp; Insured — WC-32079 (Westchester) · PC-50644 (Putnam)</p>'
       + '</td></tr>'
       + '</table>'
@@ -378,16 +387,16 @@ var Workflow = {
     var firstName = (inv.clientName || '').split(' ')[0] || 'there';
 
     var payLink = 'https://peekskilltree.com/branchmanager/pay.html?id=' + invoiceId;
-    var subject = 'Invoice #' + inv.invoiceNumber + ' from Second Nature Tree Service — ' + UI.money(inv.total);
+    var subject = 'Invoice #' + inv.invoiceNumber + ' from ' + Workflow._co().name + ' — ' + UI.money(inv.total);
     var body = 'Hi ' + firstName + ',\n\n'
       + 'Please find your invoice attached for the work completed at your property.\n\n'
       + '🧾 Invoice #' + inv.invoiceNumber + '\n'
       + '💰 Amount Due: ' + UI.money(inv.balance || inv.total) + '\n'
       + '📅 Due: ' + UI.dateShort(inv.dueDate) + '\n\n'
       + '💳 Pay Online (card, Venmo, Zelle):\n' + payLink + '\n\n'
-      + 'Or pay by check payable to Second Nature Tree Service.\n\n'
-      + 'Thank you for choosing Second Nature Tree Service!\n\n'
-      + 'Doug Brown\n(914) 391-5233\ninfo@peekskilltree.com';
+      + 'Or pay by check payable to ' + Workflow._co().name + '.\n\n'
+      + 'Thank you for choosing ' + Workflow._co().name + '!\n\n'
+      + 'Doug Brown\n' + Workflow._co().phone + '\n' + Workflow._co().email;
 
     var html = '<div style="padding:16px;">'
       + '<div style="margin-bottom:16px;">'
@@ -432,7 +441,7 @@ var Workflow = {
       + '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">'
       // Header
       + '<tr><td style="background:#1a3c12;padding:28px 32px;">'
-      + '<p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">Second Nature Tree Service</p>'
+      + '<p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">' + Workflow._co().name + '</p>'
       + '<p style="margin:6px 0 0;font-size:13px;color:#a8d5a2;">Licensed &amp; Insured — Westchester &amp; Putnam Counties</p>'
       + '</td></tr>'
       // Body
@@ -457,13 +466,13 @@ var Workflow = {
       + '<a href="' + payLink + '" style="display:inline-block;background:#1a3c12;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 40px;border-radius:8px;letter-spacing:0.3px;">Pay Online Now</a>'
       + '</td></tr>'
       + '</table>'
-      + '<p style="margin:0 0 8px;font-size:13px;color:#888888;text-align:center;">Or pay by check payable to <strong>Second Nature Tree Service</strong></p>'
+      + '<p style="margin:0 0 8px;font-size:13px;color:#888888;text-align:center;">Or pay by check payable to <strong>' + Workflow._co().name + '</strong></p>'
       + '<p style="margin:0;font-size:12px;color:#aaaaaa;text-align:center;">Direct link: <a href="' + payLink + '" style="color:#1a3c12;">' + payLink + '</a></p>'
       + '</td></tr>'
       // Footer
       + '<tr><td style="background:#f0f4ef;border-top:1px solid #d4e6d0;padding:20px 32px;text-align:center;">'
-      + '<p style="margin:0 0 4px;font-size:13px;color:#555555;font-weight:600;">Second Nature Tree Service</p>'
-      + '<p style="margin:0;font-size:12px;color:#888888;">(914) 391-5233 &nbsp;·&nbsp; <a href="mailto:info@peekskilltree.com" style="color:#1a3c12;text-decoration:none;">info@peekskilltree.com</a> &nbsp;·&nbsp; <a href="https://peekskilltree.com" style="color:#1a3c12;text-decoration:none;">peekskilltree.com</a></p>'
+      + '<p style="margin:0 0 4px;font-size:13px;color:#555555;font-weight:600;">' + Workflow._co().name + '</p>'
+      + '<p style="margin:0;font-size:12px;color:#888888;">' + Workflow._co().phone + ' &nbsp;·&nbsp; <a href="mailto:' + Workflow._co().email + '" style="color:#1a3c12;text-decoration:none;">' + Workflow._co().email + '</a> &nbsp;·&nbsp; <a href="https://' + Workflow._co().website + '" style="color:#1a3c12;text-decoration:none;">' + Workflow._co().website + '</a></p>'
       + '<p style="margin:8px 0 0;font-size:11px;color:#aaaaaa;">Licensed &amp; Insured — WC-32079 (Westchester) · PC-50644 (Putnam)</p>'
       + '</td></tr>'
       + '</table>'
@@ -577,10 +586,10 @@ var Workflow = {
       var clientEmail = inv.clientEmail || '';
       if (clientEmail && typeof Email !== 'undefined' && Email.isConfigured()) {
         var firstName = (inv.clientName || '').split(' ')[0] || 'there';
-        var thankSubject = 'Thank you for your payment — Second Nature Tree Service';
+        var thankSubject = 'Thank you for your payment — ' + Workflow._co().name;
         var thankBody = 'Hi ' + firstName + ',\n\nThank you for your payment of ' + UI.money(amount) + '! Invoice #' + (inv.invoiceNumber || '') + ' is now paid in full.\n\n'
           + 'We appreciate your business and look forward to serving you again.\n\n'
-          + 'Thank you,\nDoug Brown\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+          + 'Thank you,\nDoug Brown\n' + Workflow._co().name + '\n' + Workflow._co().phone + '\n' + Workflow._co().website;
         Email.send(clientEmail, thankSubject, thankBody);
       }
     } else {

@@ -8,6 +8,15 @@ var BeforeAfter = {
 
   _storageKey: 'bm-beforeafter',
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   // ── Data Access ──
 
   getAll: function() {
@@ -701,7 +710,7 @@ var BeforeAfter = {
     if (pair.caption) {
       text += pair.caption + ' ';
     }
-    text += '\n\nBefore & After by Second Nature Tree Service';
+    text += '\n\nBefore & After by ' + BeforeAfter._co().name;
     text += '\n\n#TreeService #BeforeAndAfter #TreeRemoval #Peekskill #SecondNatureTree';
     if (pair.tags && pair.tags.length) {
       pair.tags.forEach(function(tag) {
@@ -754,18 +763,19 @@ var BeforeAfter = {
       }
     }
 
-    var subject = 'Your Project - Before & After Photos | Second Nature Tree Service';
+    var co = BeforeAfter._co();
+    var subject = 'Your Project - Before & After Photos | ' + co.name;
     var body = 'Hi ' + (pair.clientName || 'there') + ',\n\n'
       + 'Here are the before and after photos from your recent project'
       + (pair.caption ? ': ' + pair.caption : '') + '.\n\n'
       + 'We hope you love the results! If you have a moment, we would really appreciate a Google review:\n'
       + 'https://share.google/mLwSzzZXwc5fuFRU4\n\n'
-      + 'Thank you for choosing Second Nature Tree Service!\n\n'
+      + 'Thank you for choosing ' + co.name + '!\n\n'
       + 'Best regards,\n'
       + 'Doug Brown\n'
-      + 'Second Nature Tree Service\n'
-      + '(914) 391-5233\n'
-      + 'info@peekskilltree.com';
+      + co.name + '\n'
+      + co.phone + '\n'
+      + co.email;
 
     var mailtoUrl = 'mailto:' + encodeURIComponent(email)
       + '?subject=' + encodeURIComponent(subject)

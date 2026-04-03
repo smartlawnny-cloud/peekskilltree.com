@@ -7,6 +7,15 @@ var MessagingPage = {
   _selected: null,
   _msgType: 'text',
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   render: function() {
     var clients = DB.clients.getAll().filter(function(c) { return c.phone || c.email; }).slice(0, 50);
     var selectedId = MessagingPage._selected || null;
@@ -153,7 +162,7 @@ var MessagingPage = {
       var phone = client ? client.phone : '';
       Dialpad.sendSMS(phone, notes, clientId);
     } else if (type === 'email' && typeof Email !== 'undefined' && client && client.email) {
-      Email.send(client.email, 'Message from Second Nature Tree Service', notes);
+      Email.send(client.email, 'Message from ' + MessagingPage._co().name, notes);
       Dialpad._logComm(clientId, 'email', 'outbound', notes);
     } else {
       var key = 'bm-comms-' + clientId;

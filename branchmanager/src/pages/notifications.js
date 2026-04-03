@@ -3,6 +3,15 @@
  * Clickable items, inline actions, unread badges
  */
 var NotificationsPage = {
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   _activeFilter: 'all',
 
   render: function() {
@@ -204,7 +213,8 @@ var NotificationsPage = {
     if (!email) { UI.toast('No email on file for this client', 'error'); return; }
     var firstName = (inv.clientName || '').split(' ')[0];
     var subject = 'Invoice #' + (inv.invoiceNumber || '') + ' — Payment Due';
-    var body = 'Hi ' + firstName + ',\n\nThis is a friendly reminder that Invoice #' + (inv.invoiceNumber || '') + ' for ' + UI.money(inv.balance) + ' is overdue.\n\nPlease let me know if you have any questions.\n\nThank you,\nDoug\nSecond Nature Tree Service\n(914) 391-5233\npeekskilltree.com';
+    var co = NotificationsPage._co();
+    var body = 'Hi ' + firstName + ',\n\nThis is a friendly reminder that Invoice #' + (inv.invoiceNumber || '') + ' for ' + UI.money(inv.balance) + ' is overdue.\n\nPlease let me know if you have any questions.\n\nThank you,\nDoug\n' + co.name + '\n' + co.phone + '\n' + co.website;
     if (typeof Email !== 'undefined' && Email.send) {
       Email.send({ to: email, subject: subject, body: body }).then(function(r) {
         UI.toast(r.ok ? 'Reminder sent to ' + email : 'Email failed', r.ok ? 'success' : 'error');

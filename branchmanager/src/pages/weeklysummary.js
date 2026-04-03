@@ -8,6 +8,15 @@ var WeeklySummary = {
 
   // ── Helpers ──
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+    };
+  },
+
   _weekBounds: function() {
     var now = new Date();
     // Monday-based week
@@ -814,9 +823,10 @@ var WeeklySummary = {
     });
 
     var dateRange = WeeklySummary._formatDateRange(week.start, week.end);
-    var subject = 'Weekly Business Summary — ' + dateRange + ' — Second Nature Tree Service';
+    var co = WeeklySummary._co();
+    var subject = 'Weekly Business Summary — ' + dateRange + ' — ' + co.name;
     var body = 'WEEKLY SUMMARY: ' + dateRange + '\n'
-      + 'Second Nature Tree Service\n'
+      + co.name + '\n'
       + '─────────────────────────────\n\n'
       + 'THIS WEEK:\n'
       + '• Revenue collected: $' + Math.round(collected).toLocaleString() + '\n'

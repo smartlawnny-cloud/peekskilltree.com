@@ -566,6 +566,7 @@
         <button class="nav-item" data-page="satisfaction"><span class="icon"><i data-lucide="smile" class="li"></i></span> Satisfaction</button>
         <button class="nav-item" data-page="clienthub"><span class="icon"><i data-lucide="user-check" class="li"></i></span> Client Portal</button>
         <button class="nav-item" data-page="onlinebooking"><span class="icon"><i data-lucide="globe" class="li"></i></span> Online Booking</button>
+        <button class="nav-item" data-page="formbuilder"><span class="icon"><i data-lucide="layout" class="li"></i></span> Form Builder</button>
         <button class="nav-item" data-page="mediacenter"><span class="icon"><i data-lucide="camera" class="li"></i></span> Media Center <span class="badge" id="badge-mediacenter"></span></button>
         <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
         <button class="nav-item" data-page="checklists"><span class="icon"><i data-lucide="check-square" class="li"></i></span> Checklists</button>
@@ -685,6 +686,7 @@
 <script src="src/pages/weeklysummary.js?v=4"></script>
 <script src="src/pages/backup.js?v=2"></script>
 <script src="src/pages/onlinebooking.js?v=3"></script>
+<script src="src/pages/formbuilder.js?v=1"></script>
 <script src="src/pages/import.js?v=2"></script>
 <script src="src/pages/settings.js?v=16"></script>
 <script src="src/pages/propertymap.js?v=2"></script>
@@ -789,6 +791,7 @@ var pageConfigs = {
   reviewtools: { title: 'Review Tools', action: null },
   reports: { title: 'Reports & Exports', action: null },
   onlinebooking: { title: 'Online Booking', action: null },
+  formbuilder: { title: 'Form Builder', action: null },
   import: { title: 'Import Data', action: null },
   backup: { title: 'Backup & Restore', action: null },
   settings: { title: 'Settings', action: null },
@@ -842,6 +845,7 @@ var pageRenderers = {
   reviewtools: function() { return ReviewTools.render(); },
   reports: function() { return ReportsPage.render(); },
   onlinebooking: function() { return OnlineBooking.render(); },
+  formbuilder: function() { return FormBuilderPage.render(); },
   import: function() { return ImportPage.render(); },
   backup: function() { return BackupPage.render(); },
   settings: function() { return SettingsPage.render(); },

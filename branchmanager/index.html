@@ -315,8 +315,34 @@
     /* Filter chips wrap nicely */
     .filter-btn { font-size:11px !important; padding:6px 10px !important; }
 
-    /* Topbar icons — hide less essential ones */
-    .topbar-icons button:nth-child(n+4) { display:none; }
+    /* Topbar icons — keep + and bell visible, hide rest */
+    .topbar-icons > button:not(.topbar-icon-create),
+    .topbar-icons > div:first-of-type { display:none; }
+    .topbar-icons > div:has(#notif-bell-btn) { display:block !important; }
+
+    /* Search: full-screen overlay on mobile */
+    .search-box { position:static !important; }
+    #searchDropdown.mobile-open {
+      position:fixed !important; top:0 !important; left:0 !important; right:0 !important;
+      bottom:0 !important; margin:0 !important; border-radius:0 !important;
+      max-height:none !important; min-width:0 !important; z-index:500 !important;
+      border:none !important; padding-top:64px;
+    }
+    #search-mobile-header {
+      display:none; position:fixed; top:0; left:0; right:0; z-index:501;
+      background:var(--white); border-bottom:1px solid var(--border);
+      padding:10px 12px; align-items:center; gap:10px;
+    }
+    #search-mobile-header.visible { display:flex; }
+    #search-mobile-input {
+      flex:1; border:1px solid var(--border); border-radius:10px; padding:10px 14px;
+      font-size:16px; outline:none; background:var(--bg); color:var(--text);
+    }
+    #search-mobile-input:focus { border-color:var(--accent); }
+    #search-mobile-close {
+      background:none; border:none; font-size:15px; color:var(--text-light);
+      cursor:pointer; font-weight:600; padding:6px 10px; white-space:nowrap;
+    }
   }
   @media (max-width: 480px) {
     .stat-grid { grid-template-columns:1fr; }
@@ -541,6 +567,16 @@
       <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
       <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Reporting</button>
 
+      <div class="nav-label">Marketing</div>
+      <button class="nav-item" data-page="reviews"><span class="icon"><i data-lucide="star" class="li"></i></span> Reviews</button>
+      <button class="nav-item" data-page="reviewtools"><span class="icon"><i data-lucide="award" class="li"></i></span> Review Tools</button>
+      <button class="nav-item" data-page="satisfaction"><span class="icon"><i data-lucide="smile" class="li"></i></span> Satisfaction</button>
+      <button class="nav-item" data-page="onlinebooking"><span class="icon"><i data-lucide="globe" class="li"></i></span> Online Booking</button>
+      <button class="nav-item" data-page="clienthub"><span class="icon"><i data-lucide="user-check" class="li"></i></span> Client Portal</button>
+      <button class="nav-item" data-page="formbuilder"><span class="icon"><i data-lucide="layout" class="li"></i></span> Form Builder</button>
+      <button class="nav-item" data-page="mediacenter"><span class="icon"><i data-lucide="camera" class="li"></i></span> Media Center <span class="badge" id="badge-mediacenter"></span></button>
+      <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
+
       <div style="border-top:1px solid rgba(255,255,255,.06);margin:8px 10px 4px;"></div>
       <button class="nav-item" data-page="settings"><span class="icon"><i data-lucide="settings" class="li"></i></span> Settings</button>
 
@@ -569,14 +605,6 @@
         <button class="nav-item" data-page="weeklysummary"><span class="icon"><i data-lucide="clipboard-list" class="li"></i></span> Weekly Summary</button>
         <button class="nav-item" data-page="reports"><span class="icon"><i data-lucide="download" class="li"></i></span> Export Reports</button>
         <button class="nav-item" data-page="notifications"><span class="icon"><i data-lucide="bell" class="li"></i></span> Activity Feed</button>
-        <button class="nav-item" data-page="reviews"><span class="icon"><i data-lucide="star" class="li"></i></span> Reviews</button>
-        <button class="nav-item" data-page="reviewtools"><span class="icon"><i data-lucide="award" class="li"></i></span> Review Tools</button>
-        <button class="nav-item" data-page="satisfaction"><span class="icon"><i data-lucide="smile" class="li"></i></span> Satisfaction</button>
-        <button class="nav-item" data-page="clienthub"><span class="icon"><i data-lucide="user-check" class="li"></i></span> Client Portal</button>
-        <button class="nav-item" data-page="onlinebooking"><span class="icon"><i data-lucide="globe" class="li"></i></span> Online Booking</button>
-        <button class="nav-item" data-page="formbuilder"><span class="icon"><i data-lucide="layout" class="li"></i></span> Form Builder</button>
-        <button class="nav-item" data-page="mediacenter"><span class="icon"><i data-lucide="camera" class="li"></i></span> Media Center <span class="badge" id="badge-mediacenter"></span></button>
-        <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
         <button class="nav-item" data-page="comms"><span class="icon"><i data-lucide="phone-call" class="li"></i></span> Comms Log</button>
         <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> Claude AI</button>
         <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="wallet" class="li"></i></span> My Pay</button>
@@ -595,6 +623,12 @@
     </div>
   </nav>
 
+  <!-- Mobile Search Overlay Header -->
+  <div id="search-mobile-header">
+    <button id="search-mobile-close" onclick="_closeMobileSearch()">✕ Cancel</button>
+    <input type="text" id="search-mobile-input" placeholder="Search clients, jobs, quotes..." autocomplete="off">
+  </div>
+
   <!-- Main Content -->
   <div class="main">
     <div class="topbar">
@@ -606,7 +640,7 @@
         <div class="search-box" style="position:relative;">
           <i data-lucide="search" style="width:15px;height:15px;stroke:var(--text-light);stroke-width:2;flex-shrink:0;"></i>
           <input type="text" placeholder="Search clients, jobs..." id="globalSearch" autocomplete="off">
-          <div id="searchDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.15);max-height:70vh;overflow-y:auto;z-index:999;min-width:400px;"></div>
+          <div id="searchDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.15);max-height:70vh;overflow-y:auto;z-index:999;min-width:320px;"></div>
         </div>
         <div class="topbar-icons">
           <button class="topbar-icon topbar-icon-create" onclick="QuickCreate.show()" title="New…" style="background:var(--accent);border-radius:8px;width:32px;height:32px;">
@@ -961,12 +995,34 @@ function loadPage(page) {
   }
 }
 
-// ── Global Search (inline dropdown) ──
+// ── Global Search (inline dropdown + mobile overlay) ──
 var searchTimeout;
 var searchDropdown = document.getElementById('searchDropdown');
 var _searchIdx = -1;
+var _isMobile = function() { return window.innerWidth <= 768; };
 
-function _closeSearch() { searchDropdown.style.display='none'; document.getElementById('globalSearch').value=''; _searchIdx=-1; }
+function _closeSearch() {
+  searchDropdown.style.display='none';
+  searchDropdown.classList.remove('mobile-open');
+  document.getElementById('globalSearch').value='';
+  var mhdr = document.getElementById('search-mobile-header');
+  var minput = document.getElementById('search-mobile-input');
+  if (mhdr) { mhdr.classList.remove('visible'); minput.value=''; }
+  document.body.style.overflow='';
+  _searchIdx=-1;
+}
+
+function _closeMobileSearch() { _closeSearch(); }
+
+function _openMobileSearch() {
+  var mhdr = document.getElementById('search-mobile-header');
+  var minput = document.getElementById('search-mobile-input');
+  mhdr.classList.add('visible');
+  searchDropdown.style.display='block';
+  searchDropdown.classList.add('mobile-open');
+  document.body.style.overflow='hidden';
+  setTimeout(function(){ minput.focus(); }, 80);
+}
 
 function _saveRecent(name, onclick) {
   var recents = JSON.parse(localStorage.getItem('bm-recent-search') || '[]');
@@ -976,116 +1032,194 @@ function _saveRecent(name, onclick) {
   localStorage.setItem('bm-recent-search', JSON.stringify(recents));
 }
 
+// Stage label maps
+var _stageLabels = {
+  // Requests
+  new: { label:'New', color:'#1565c0' },
+  assessment_scheduled: { label:'Scheduled', color:'#e07c24' },
+  assessment_complete: { label:'Assessed', color:'#6a1b9a' },
+  converted: { label:'Converted', color:'#2e7d32' },
+  quoted: { label:'Quoted', color:'#2e7d32' },
+  archived: { label:'Archived', color:'#9e9e9e' },
+  // Quotes
+  draft: { label:'Draft', color:'#9e9e9e' },
+  sent: { label:'Sent', color:'#1565c0' },
+  approved: { label:'Approved', color:'#2e7d32' },
+  declined: { label:'Declined', color:'#c62828' },
+  changes_requested: { label:'Changes', color:'#e07c24' },
+  // Jobs
+  active: { label:'Active', color:'#1565c0' },
+  scheduled: { label:'Scheduled', color:'#e07c24' },
+  completed: { label:'Complete', color:'#2e7d32' },
+  complete: { label:'Complete', color:'#2e7d32' },
+  on_hold: { label:'On Hold', color:'#9e9e9e' },
+  // Invoices
+  paid: { label:'Paid', color:'#2e7d32' },
+  overdue: { label:'Overdue', color:'#c62828' },
+  unpaid: { label:'Unpaid', color:'#e07c24' },
+  // Clients
+  lead: { label:'Lead', color:'#e07c24' },
+  inactive: { label:'Inactive', color:'#9e9e9e' }
+};
+
+function _stagePill(status) {
+  if (!status) return '';
+  var s = _stageLabels[status] || { label: status, color: '#9e9e9e' };
+  return '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:' + s.color + '20;color:' + s.color + ';white-space:nowrap;">' + s.label + '</span>';
+}
+
 function _renderSearchResults(q) {
-  // Group by category
-  var groups = {};
-  var addGroup = function(key, items) { if (items.length) groups[key] = items; };
+  var groups = [];
+  var addGroup = function(key, icon, items) { if (items.length) groups.push({ key:key, icon:icon, items:items }); };
 
-  var clients = DB.clients.search(q).slice(0,5).map(function(c) {
-    return { name: c.name, line2: c.address || '', line3: c.phone || c.email || '', status: c.status, onclick: "ClientsPage.showDetail('" + c.id + "')" };
-  });
-  addGroup('Clients', clients);
-
-  var jobs = DB.jobs.search(q).slice(0,5).map(function(j) {
-    return { name: '#' + j.jobNumber + ' ' + (j.clientName || ''), line2: j.description || '', line3: j.property || '', status: j.status, onclick: "JobsPage.showDetail('" + j.id + "')", amount: j.total };
-  });
-  addGroup('Jobs', jobs);
-
-  var quotes = DB.quotes.search(q).slice(0,5).map(function(qr) {
-    return { name: '#' + qr.quoteNumber + ' ' + (qr.clientName || ''), line2: qr.description || '', line3: '', status: qr.status, onclick: "QuotesPage.showDetail('" + qr.id + "')", amount: qr.total };
-  });
-  addGroup('Quotes', quotes);
-
-  var invoices = DB.invoices.search(q).slice(0,3).map(function(i) {
-    return { name: '#' + i.invoiceNumber + ' ' + (i.clientName || ''), line2: i.subject || '', line3: '', status: i.status, onclick: "InvoicesPage.showDetail('" + i.id + "')", amount: i.total || i.balance };
-  });
-  addGroup('Invoices', invoices);
-
-  var requests = DB.requests.search(q).slice(0,3).map(function(r) {
+  var requests = DB.requests.search(q).slice(0,6).map(function(r) {
     return { name: r.clientName || 'Unknown', line2: r.property || r.description || '', line3: r.phone || '', status: r.status, onclick: "RequestsPage.showDetail('" + r.id + "')" };
   });
-  addGroup('Requests', requests);
+  addGroup('Requests', '📥', requests);
 
-  var totalResults = Object.keys(groups).reduce(function(s,k){ return s + groups[k].length; }, 0);
+  var quotes = DB.quotes.search(q).slice(0,6).map(function(qr) {
+    return { name: (qr.clientName || ''), num: qr.quoteNumber ? '#' + qr.quoteNumber : '', line2: qr.description || (qr.lineItems && qr.lineItems[0] && qr.lineItems[0].name) || '', status: qr.status, onclick: "QuotesPage.showDetail('" + qr.id + "')", amount: qr.total };
+  });
+  addGroup('Quotes', '📋', quotes);
+
+  var jobs = DB.jobs.search(q).slice(0,6).map(function(j) {
+    return { name: j.clientName || '', num: j.jobNumber ? '#' + j.jobNumber : '', line2: j.description || j.title || '', line3: j.property || '', status: j.status, onclick: "JobsPage.showDetail('" + j.id + "')", amount: j.total };
+  });
+  addGroup('Jobs', '🔧', jobs);
+
+  var invoices = DB.invoices.search(q).slice(0,4).map(function(i) {
+    return { name: i.clientName || '', num: i.invoiceNumber ? '#' + i.invoiceNumber : '', line2: i.subject || '', status: i.status, onclick: "InvoicesPage.showDetail('" + i.id + "')", amount: i.total };
+  });
+  addGroup('Invoices', '💰', invoices);
+
+  var clients = DB.clients.search(q).slice(0,5).map(function(c) {
+    return { name: c.name, line2: [c.address, c.city].filter(Boolean).join(', '), line3: c.phone || c.email || '', status: c.status, onclick: "ClientsPage.showDetail('" + c.id + "')" };
+  });
+  addGroup('Clients', '👥', clients);
+
+  var totalResults = groups.reduce(function(s,g){ return s + g.items.length; }, 0);
 
   if (totalResults === 0) {
-    searchDropdown.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">'
-      + '<div style="font-size:24px;margin-bottom:8px;">🔍</div>'
+    searchDropdown.innerHTML = '<div style="padding:32px 20px;text-align:center;color:var(--text-light);font-size:13px;">'
+      + '<div style="font-size:32px;margin-bottom:10px;">🔍</div>'
       + 'No results for "<strong>' + UI.esc(q) + '</strong>"'
-      + '<div style="margin-top:8px;font-size:12px;">Try a client name, address, phone, or job number</div></div>';
+      + '<div style="margin-top:8px;font-size:12px;">Try a name, address, phone number, or job number</div></div>';
     searchDropdown.style.display = 'block';
     return;
   }
 
   var html = '';
-  var icons = { Clients: '👥', Jobs: '🔧', Quotes: '📋', Invoices: '💰', Requests: '📥' };
   var itemIdx = 0;
 
-  Object.keys(groups).forEach(function(groupName) {
-    html += '<div style="padding:6px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;background:var(--bg);letter-spacing:.5px;">' + icons[groupName] + ' ' + groupName + '</div>';
+  groups.forEach(function(g) {
+    html += '<div style="padding:7px 14px 4px;font-size:10px;font-weight:800;color:var(--text-light);text-transform:uppercase;background:var(--bg);letter-spacing:.6px;position:sticky;top:0;">'
+      + g.icon + ' ' + g.key
+      + '<span style="float:right;font-weight:400;font-size:11px;text-transform:none;">' + g.items.length + ' result' + (g.items.length > 1 ? 's' : '') + '</span>'
+      + '</div>';
 
-    groups[groupName].forEach(function(r) {
-      html += '<div class="search-item" data-idx="' + itemIdx + '" onclick="_saveRecent(\'' + UI.esc(r.name).replace(/'/g,"\\'") + '\',\'' + r.onclick.replace(/'/g,"\\'") + '\');' + r.onclick + ';_closeSearch();" '
-        + 'style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;transition:background .1s;" '
+    g.items.forEach(function(r) {
+      var nameStr = UI.esc(r.name);
+      var numStr = r.num ? '<span style="color:var(--text-light);font-weight:400;font-size:12px;margin-right:4px;">' + UI.esc(r.num) + '</span>' : '';
+      html += '<div class="search-item" data-idx="' + itemIdx + '" '
+        + 'onclick="_saveRecent(\'' + UI.esc(r.name).replace(/'/g,"\\'") + '\',\'' + r.onclick.replace(/'/g,"\\'") + '\');' + r.onclick + ';_closeSearch();" '
+        + 'style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;transition:background .1s;" '
         + 'onmouseover="this.style.background=\'var(--bg)\';_searchIdx=' + itemIdx + '" onmouseout="this.style.background=\'\'">'
         + '<div style="flex:1;min-width:0;">'
-        + '<div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(r.name) + '</div>';
+        + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
+        + '<span style="font-weight:600;font-size:14px;">' + numStr + nameStr + '</span>'
+        + _stagePill(r.status)
+        + '</div>';
 
-      if (r.line2) html += '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(r.line2) + '</div>';
+      if (r.line2) html += '<div style="font-size:12px;color:var(--text-light);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(r.line2) + '</div>';
       if (r.line3) html += '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(r.line3) + '</div>';
 
       html += '</div>';
-      if (r.amount) html += '<div style="font-weight:700;font-size:13px;color:var(--green-dark);white-space:nowrap;">' + UI.moneyInt(r.amount) + '</div>';
-      html += '<span style="font-size:11px;flex-shrink:0;">' + UI.statusBadge(r.status) + '</span>'
-        + '</div>';
+      if (r.amount) html += '<div style="font-weight:700;font-size:13px;color:var(--green-dark);white-space:nowrap;margin-left:8px;">' + UI.money(r.amount) + '</div>';
+      html += '</div>';
       itemIdx++;
     });
   });
 
   // View all link
-  html += '<div onclick="_closeSearch();currentPage=\'search\';document.querySelectorAll(\'.nav-item\').forEach(function(b){b.classList.remove(\'active\')});document.getElementById(\'pageTitle\').textContent=\'Search\';document.getElementById(\'pageAction\').style.display=\'none\';document.getElementById(\'pageContent\').innerHTML=SearchPage.render(\'' + q.replace(/'/g,"\\'") + '\');" '
-    + 'style="padding:10px 14px;text-align:center;font-size:12px;color:var(--accent);font-weight:700;cursor:pointer;border-top:1px solid var(--border);" '
-    + 'onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">View all ' + totalResults + ' results →</div>';
+  var qSafe = q.replace(/'/g,"\\'");
+  html += '<div onclick="_closeSearch();currentPage=\'search\';document.querySelectorAll(\'.nav-item\').forEach(function(b){b.classList.remove(\'active\')});document.getElementById(\'pageTitle\').textContent=\'Search\';document.getElementById(\'pageAction\').style.display=\'none\';document.getElementById(\'pageContent\').innerHTML=SearchPage.render(\'' + qSafe + '\');" '
+    + 'style="padding:12px 14px;text-align:center;font-size:13px;color:var(--accent);font-weight:700;cursor:pointer;border-top:2px solid var(--border);" '
+    + 'onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">See all ' + totalResults + ' results for "' + UI.esc(q) + '" →</div>';
 
   searchDropdown.innerHTML = html;
   searchDropdown.style.display = 'block';
   _searchIdx = -1;
 }
 
-document.getElementById('globalSearch').addEventListener('input', function() {
-  var q = this.value.trim();
+function _showRecents() {
+  var recents = JSON.parse(localStorage.getItem('bm-recent-search') || '[]');
+  if (recents.length > 0) {
+    var html = '<div style="padding:7px 14px 4px;font-size:10px;font-weight:800;color:var(--text-light);text-transform:uppercase;background:var(--bg);letter-spacing:.6px;">🕐 Recent</div>';
+    recents.forEach(function(r) {
+      html += '<div onclick="' + r.onclick + ';_closeSearch();" style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
+        + '<span style="font-size:16px;color:#ccc;width:20px;text-align:center;">↩</span>'
+        + '<div style="font-weight:600;font-size:14px;">' + UI.esc(r.name) + '</div></div>';
+    });
+    html += '<div onclick="localStorage.removeItem(\'bm-recent-search\');_closeSearch();" style="padding:10px 14px;text-align:center;font-size:12px;color:var(--text-light);cursor:pointer;border-top:1px solid var(--border);">Clear recents</div>';
+    searchDropdown.innerHTML = html;
+    searchDropdown.style.display = 'block';
+  }
+}
+
+function _handleSearchInput(q, fromMobile) {
   clearTimeout(searchTimeout);
   if (!q || q.length < 1) {
-    // Show recent searches when input is focused but empty
-    if (q.length === 0 && document.activeElement === this) {
-      var recents = JSON.parse(localStorage.getItem('bm-recent-search') || '[]');
-      if (recents.length > 0) {
-        var html = '<div style="padding:6px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;background:var(--bg);letter-spacing:.5px;">🕐 Recent</div>';
-        recents.forEach(function(r) {
-          html += '<div onclick="' + r.onclick + ';_closeSearch();" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;transition:background .1s;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
-            + '<span style="font-size:14px;color:#ccc;">↩</span>'
-            + '<div style="font-weight:600;font-size:13px;">' + UI.esc(r.name) + '</div></div>';
-        });
-        html += '<div onclick="localStorage.removeItem(\'bm-recent-search\');_closeSearch();" style="padding:8px 14px;text-align:center;font-size:11px;color:var(--text-light);cursor:pointer;">Clear recents</div>';
-        searchDropdown.innerHTML = html;
-        searchDropdown.style.display = 'block';
-      } else {
-        searchDropdown.style.display = 'none';
-      }
+    if (fromMobile) {
+      var sd = document.getElementById('searchDropdown');
+      sd.innerHTML = '';
+      _showRecents();
     } else {
-      searchDropdown.style.display = 'none';
+      _showRecents();
     }
     return;
   }
   searchTimeout = setTimeout(function() { _renderSearchResults(q); }, 150);
+}
+
+document.getElementById('globalSearch').addEventListener('focus', function() {
+  if (_isMobile()) {
+    // Open full-screen overlay on mobile instead
+    this.blur();
+    _openMobileSearch();
+    _showRecents();
+    return;
+  }
+  if (!this.value.trim()) _showRecents();
 });
 
-// Show recents on focus
-document.getElementById('globalSearch').addEventListener('focus', function() {
-  if (!this.value.trim()) {
-    this.dispatchEvent(new Event('input'));
-  }
+document.getElementById('globalSearch').addEventListener('input', function() {
+  _handleSearchInput(this.value.trim(), false);
 });
+
+// Mobile search input
+var _mobileInput = document.getElementById('search-mobile-input');
+if (_mobileInput) {
+  _mobileInput.addEventListener('input', function() {
+    _handleSearchInput(this.value.trim(), true);
+    // Keep dropdown in mobile-open mode
+    if (!searchDropdown.classList.contains('mobile-open')) {
+      searchDropdown.classList.add('mobile-open');
+    }
+  });
+  _mobileInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      var q = this.value.trim();
+      if (q) {
+        _closeSearch();
+        currentPage='search';
+        document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active');});
+        document.getElementById('pageTitle').textContent='Search';
+        document.getElementById('pageAction').style.display='none';
+        document.getElementById('pageContent').innerHTML=SearchPage.render(q);
+      }
+    }
+  });
+}
 
 // Keyboard navigation
 document.getElementById('globalSearch').addEventListener('keydown', function(e) {

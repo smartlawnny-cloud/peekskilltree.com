@@ -553,14 +553,13 @@ var AutomationsPage = {
       if (!base) return;
       var nextDate;
       try {
-        nextDate = RecurringJobs._getNextDate(base, rec.frequency);
+        nextDate = (typeof RecurringJobs !== 'undefined') ? RecurringJobs._getNextDate(base, rec.frequency) : null;
       } catch(e) { return; }
       if (!nextDate) return;
       var nextMs = new Date(nextDate).getTime();
       if (nextMs <= tomorrow) {
         try {
-          RecurringJobs.generateJob(rec.id);
-          generated++;
+          if (typeof RecurringJobs !== 'undefined') { RecurringJobs.generateJob(rec.id); generated++; }
         } catch(e) {}
       }
     });
@@ -572,30 +571,32 @@ var AutomationsPage = {
     }
   },
 
-  _checkQuoteApprovals: async function() {
+  _checkQuoteApprovals: function() {
     if (typeof SupabaseDB === 'undefined' || !SupabaseDB.ready || !SupabaseDB.client) return;
-    try {
-      var since = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // last 5 min
-      var { data, error } = await SupabaseDB.client
-        .from('quotes')
-        .select('id, quote_number, client_name, total, status, updated_at')
-        .eq('status', 'approved')
-        .gte('updated_at', since);
-      if (error || !data || !data.length) return;
+    var since = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // last 5 min
+    SupabaseDB.client
+      .from('quotes')
+      .select('id, quote_number, client_name, total, status, updated_at')
+      .eq('status', 'approved')
+      .gte('updated_at', since)
+      .then(function(result) {
+        var data = result.data;
+        var error = result.error;
+        if (error || !data || !data.length) return;
 
-      // Check which are new locally
-      var localQuotes = [];
-      try { localQuotes = JSON.parse(localStorage.getItem('bm-quotes') || '[]'); } catch(e) {}
-      data.forEach(function(remote) {
-        var local = localQuotes.find(function(q) { return q.id === remote.id; });
-        if (local && local.status !== 'approved') {
-          local.status = 'approved';
-          UI.toast('✅ Quote #' + remote.quote_number + ' approved by ' + (remote.client_name || 'client') + '!', 'success');
-        }
+        // Check which are new locally
+        var localQuotes = [];
+        try { localQuotes = JSON.parse(localStorage.getItem('bm-quotes') || '[]'); } catch(e) {}
+        data.forEach(function(remote) {
+          var local = localQuotes.find(function(q) { return q.id === remote.id; });
+          if (local && local.status !== 'approved') {
+            local.status = 'approved';
+            if (typeof UI !== 'undefined') UI.toast('Quote #' + remote.quote_number + ' approved by ' + (remote.client_name || 'client') + '!', 'success');
+          }
+        });
+        localStorage.setItem('bm-quotes', JSON.stringify(localQuotes));
+      }).catch(function() {
+        // Silent
       });
-      localStorage.setItem('bm-quotes', JSON.stringify(localQuotes));
-    } catch(e) {
-      // Silent
-    }
   }
 };

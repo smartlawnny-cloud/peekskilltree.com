@@ -117,7 +117,7 @@ var Visits = {
       completedBy: Auth.user ? Auth.user.name : 'User'
     });
     UI.toast('Visit marked complete');
-    JobsPage.showDetail(jobId);
+    if (typeof JobsPage !== 'undefined') JobsPage.showDetail(jobId);
   },
 
   // Delete a visit
@@ -127,7 +127,7 @@ var Visits = {
     j.visits = j.visits.filter(function(v) { return v.id !== visitId; });
     DB.jobs.update(jobId, { visits: j.visits });
     UI.toast('Visit removed');
-    JobsPage.showDetail(jobId);
+    if (typeof JobsPage !== 'undefined') JobsPage.showDetail(jobId);
   },
 
   // Show add visit form
@@ -181,7 +181,7 @@ var Visits = {
       notes: notes
     });
     UI.closeModal();
-    JobsPage.showDetail(jobId);
+    if (typeof JobsPage !== 'undefined') JobsPage.showDetail(jobId);
   },
 
   // Render visits section for job detail

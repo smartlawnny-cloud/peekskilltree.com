@@ -103,7 +103,7 @@ var ImportPage = {
     reader.readAsText(file);
   },
 
-  doImport: async function(type) {
+  doImport: function(type) {
     var data = (ImportPage._pendingData || {})[type];
     if (!data || !data.length) { UI.toast('No data to import', 'error'); return; }
 
@@ -111,39 +111,59 @@ var ImportPage = {
     statusEl.textContent = 'Importing...';
     statusEl.style.color = '#1565c0';
 
-    try {
-      var mapped = data.map(function(row) { return ImportPage.mapRow(type, row); }).filter(Boolean);
+    var mapped = data.map(function(row) { return ImportPage.mapRow(type, row); }).filter(Boolean);
 
-      if (SupabaseDB.ready) {
-        // Batch insert to Supabase in chunks of 50
-        var sb = SupabaseDB.client;
-        var tableName = type === 'timeEntries' ? 'time_entries' : type;
-        var imported = 0;
-        for (var i = 0; i < mapped.length; i += 50) {
-          var chunk = mapped.slice(i, i + 50);
-          var { error } = await sb.from(tableName).upsert(chunk, { onConflict: 'id', ignoreDuplicates: true });
-          if (error) {
-            console.warn('Import chunk error:', error);
-          } else {
-            imported += chunk.length;
-            statusEl.textContent = 'Imported ' + imported + '/' + mapped.length + '...';
-          }
+    if (SupabaseDB.ready) {
+      // Batch insert to Supabase in chunks of 50
+      var sb = SupabaseDB.client;
+      var tableName = type === 'timeEntries' ? 'time_entries' : type;
+      var imported = 0;
+      var chunks = [];
+      for (var i = 0; i < mapped.length; i += 50) {
+        chunks.push(mapped.slice(i, i + 50));
+      }
+
+      function processChunk(idx) {
+        if (idx >= chunks.length) {
+          statusEl.textContent = '✅ ' + imported + ' imported';
+          statusEl.style.color = '#4caf50';
+          UI.toast(imported + ' ' + type + ' imported to Supabase!');
+          return;
         }
-        statusEl.textContent = '✅ ' + imported + ' imported';
-        statusEl.style.color = '#4caf50';
-        UI.toast(imported + ' ' + type + ' imported to Supabase!');
-      } else {
-        // Local storage fallback — convert snake_case keys to camelCase so DB reads work
+        var chunk = chunks[idx];
+        sb.from(tableName).upsert(chunk, { onConflict: 'id', ignoreDuplicates: true })
+          .then(function(result) {
+            var error = result.error;
+            if (error) {
+              console.warn('Import chunk error:', error);
+            } else {
+              imported += chunk.length;
+              statusEl.textContent = 'Imported ' + imported + '/' + mapped.length + '...';
+            }
+            processChunk(idx + 1);
+          })
+          .catch(function(e) {
+            statusEl.textContent = '❌ Error';
+            statusEl.style.color = '#f44336';
+            UI.toast('Import failed: ' + e.message, 'error');
+            console.error('Import error:', e);
+          });
+      }
+
+      processChunk(0);
+    } else {
+      // Local storage fallback — convert snake_case keys to camelCase so DB reads work
+      try {
         mapped.forEach(function(row) { DB[type].create(ImportPage._toCamel(row)); });
         statusEl.textContent = '✅ ' + mapped.length + ' imported (local)';
         statusEl.style.color = '#4caf50';
         UI.toast(mapped.length + ' ' + type + ' imported locally');
+      } catch (e) {
+        statusEl.textContent = '❌ Error';
+        statusEl.style.color = '#f44336';
+        UI.toast('Import failed: ' + e.message, 'error');
+        console.error('Import error:', e);
       }
-    } catch (e) {
-      statusEl.textContent = '❌ Error';
-      statusEl.style.color = '#f44336';
-      UI.toast('Import failed: ' + e.message, 'error');
-      console.error('Import error:', e);
     }
   },
 

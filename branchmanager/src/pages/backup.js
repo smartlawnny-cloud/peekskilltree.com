@@ -38,7 +38,7 @@ var BackupPage = {
       + '</div>'
       + '<div style="display:flex;gap:8px;">'
       + '<button onclick="BackupPage.downloadBackup()" style="background:var(--green-dark);color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">📥 Download Full Backup</button>'
-      + '<button onclick="CloudSync.refresh()" style="background:#1565c0;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">☁️ Sync from Cloud</button>'
+      + '<button onclick="if (typeof CloudSync !== \'undefined\') CloudSync.refresh()" style="background:#1565c0;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">☁️ Sync from Cloud</button>'
       + '</div>'
       + '<p style="font-size:12px;color:var(--text-light);margin-top:8px;">Backup includes all clients, quotes, jobs, invoices, requests, expenses, settings, and communication logs.</p>'
       + '</div>';
@@ -88,7 +88,7 @@ var BackupPage = {
       + '<div style="font-size:13px;color:var(--text-light);line-height:1.8;">'
       + '<div>☁️ <strong>Cloud (Supabase):</strong> ' + (SupabaseDB && SupabaseDB.ready ? '<span style="color:var(--green-dark);">Connected — data syncs automatically</span>' : '<span style="color:var(--red);">Not connected</span>') + '</div>'
       + '<div>💾 <strong>Local Storage:</strong> ' + BackupPage._getLocalSize() + ' used</div>'
-      + '<div>📅 <strong>Last cloud sync:</strong> ' + (CloudSync.lastSync > 0 ? UI.dateRelative(new Date(CloudSync.lastSync).toISOString()) : 'Never') + '</div>'
+      + '<div>📅 <strong>Last cloud sync:</strong> ' + ((typeof CloudSync !== 'undefined' ? CloudSync.lastSync : null) > 0 ? UI.dateRelative(new Date((typeof CloudSync !== 'undefined' ? CloudSync.lastSync : null)).toISOString()) : 'Never') + '</div>'
       + '</div></div>';
 
     return html;

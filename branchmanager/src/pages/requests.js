@@ -26,8 +26,8 @@ var RequestsPage = {
           DB.requests.create({
             supabaseId: row.id,
             clientName: row.client_name || '',
-            email: row.client_email || '',
-            phone: row.client_phone || '',
+            email: row.email || '',
+            phone: row.phone || '',
             property: row.property || '',
             source: row.source || 'Online Form',
             notes: row.notes || '',
@@ -72,8 +72,8 @@ var RequestsPage = {
           DB.requests.create({
             supabaseId: row.id,
             clientName: row.client_name || '',
-            email: row.client_email || '',
-            phone: row.client_phone || '',
+            email: row.email || '',
+            phone: row.phone || '',
             property: row.property || '',
             source: row.source || 'Online Form',
             notes: row.notes || '',

@@ -285,7 +285,7 @@ var QuotesPage = {
     // Total display with tax breakdown (Jobber style)
     var _qSubtotal = 0;
     (q.lineItems || []).forEach(function(it) { _qSubtotal += (it.qty || 1) * (it.rate || 0); });
-    var _qTaxRate = (q.taxRate !== undefined ? q.taxRate : 8.375);
+    var _qTaxRate = (q.taxRate !== undefined ? q.taxRate : (parseFloat(localStorage.getItem('bm-tax-rate')) || 8.375));
     var _qTaxAmt = Math.round(_qSubtotal * _qTaxRate / 100 * 100) / 100;
     var _qGrandTotal = _qSubtotal + _qTaxAmt;
     html += '<div style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'
@@ -470,7 +470,7 @@ var QuotesPage = {
       }
     });
     var taxRateVal = document.getElementById('q-tax-rate');
-    var taxRate = taxRateVal ? (parseFloat(taxRateVal.value) || 0) : 8.375;
+    var taxRate = taxRateVal ? (parseFloat(taxRateVal.value) || 0) : (parseFloat(localStorage.getItem('bm-tax-rate')) || 8.375);
     var taxAmount = Math.round(subtotal * taxRate / 100 * 100) / 100;
     var total = subtotal + taxAmount;
 
@@ -920,7 +920,7 @@ var QuotesPage = {
       html += '</tbody></table>';
 
       // Subtotal / Discount / Grand Total
-      var taxRateDisplay = q.taxRate !== undefined ? q.taxRate : 8.375;
+      var taxRateDisplay = q.taxRate !== undefined ? q.taxRate : (parseFloat(localStorage.getItem('bm-tax-rate')) || 8.375);
       var taxAmtDisplay = Math.round(grandTotal * taxRateDisplay / 100 * 100) / 100;
       var totalWithTax = grandTotal + taxAmtDisplay;
       html += '<div style="padding:12px 16px;border-top:1px solid var(--border);">'

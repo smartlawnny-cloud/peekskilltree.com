@@ -640,7 +640,7 @@ var InvoicesPage = {
     // Total display with tax breakdown (Jobber style)
     var _invSubtotal = 0;
     (inv.lineItems || []).forEach(function(it) { _invSubtotal += (it.qty || 1) * (it.rate || 0); });
-    var _invTaxRate = (inv.taxRate !== undefined ? inv.taxRate : 8.375);
+    var _invTaxRate = (inv.taxRate !== undefined ? inv.taxRate : (parseFloat(localStorage.getItem('bm-tax-rate')) || 8.375));
     var _invTaxAmt = Math.round(_invSubtotal * _invTaxRate / 100 * 100) / 100;
     var _invGrandTotal = _invSubtotal + _invTaxAmt;
     html += '<div style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'
@@ -761,7 +761,7 @@ var InvoicesPage = {
       }
     });
     var invTaxRateEl = document.getElementById('inv-tax-rate');
-    var taxRate = invTaxRateEl ? (parseFloat(invTaxRateEl.value) || 0) : 8.375;
+    var taxRate = invTaxRateEl ? (parseFloat(invTaxRateEl.value) || 0) : (parseFloat(localStorage.getItem('bm-tax-rate')) || 8.375);
     var taxAmount = Math.round(subtotal * taxRate / 100 * 100) / 100;
     var total = subtotal + taxAmount;
 

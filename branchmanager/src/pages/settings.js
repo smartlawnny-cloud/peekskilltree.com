@@ -34,17 +34,54 @@ var SettingsPage = {
         + '</div>';
     }
 
-    // Company Info
+    // Company Info — editable, saved to localStorage
+    var co = {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      address: localStorage.getItem('bm-co-address') || '1 Highland Industrial Park, Peekskill, NY 10566',
+      licenses: localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com',
+      taxRate: localStorage.getItem('bm-tax-rate') || '8.375'
+    };
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
-      + '<h3 style="margin-bottom:16px;">Company Info</h3>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px;">'
-      + '<div><strong>Company:</strong> Second Nature Tree Service</div>'
-      + '<div><strong>Phone:</strong> (914) 391-5233</div>'
-      + '<div><strong>Email:</strong> info@peekskilltree.com</div>'
-      + '<div><strong>Address:</strong> 1 Highland Industrial Park, Peekskill, NY 10566</div>'
-      + '<div><strong>Licenses:</strong> WC-32079, PC-50644</div>'
-      + '<div><strong>Website:</strong> peekskilltree.com</div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;">Company Info</h3>'
+      + '<button onclick="SettingsPage.saveCompany()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Company Name</label><input id="co-name" value="' + UI.esc(co.name) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Phone</label><input id="co-phone" value="' + UI.esc(co.phone) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Email</label><input id="co-email" type="email" value="' + UI.esc(co.email) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Website</label><input id="co-website" value="' + UI.esc(co.website) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div style="grid-column:1/-1;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Address</label><input id="co-address" value="' + UI.esc(co.address) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Licenses</label><input id="co-licenses" value="' + UI.esc(co.licenses) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Default Tax Rate (%)</label>'
+      + '<input id="co-tax-rate" type="number" value="' + co.taxRate + '" step="0.001" min="0" max="100" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;">'
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">Applied to new quotes & invoices (e.g. 8.375 for NYS)</div>'
+      + '</div>'
       + '</div></div>';
+
+    // Products & Services Catalog
+    var allServices = DB.services.getAll();
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<div><h3 style="margin:0;">Products &amp; Services</h3>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + allServices.length + ' items — used in quotes and invoices</div>'
+      + '</div>'
+      + '<button onclick="SettingsPage.addService()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">+ Add Item</button>'
+      + '</div>'
+      + '<div id="services-list">';
+    allServices.forEach(function(svc) {
+      html += '<div style="display:grid;grid-template-columns:2fr 3fr 80px 80px 36px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">'
+        + '<div style="font-size:13px;font-weight:600;">' + UI.esc(svc.name) + '</div>'
+        + '<div style="font-size:12px;color:var(--text-light);">' + UI.esc(svc.description || '') + '</div>'
+        + '<div style="font-size:12px;color:var(--text-light);">' + (svc.type || 'service') + '</div>'
+        + '<div style="font-size:13px;font-weight:600;">' + (svc.price ? UI.money(svc.price) : '—') + '</div>'
+        + '<button onclick="SettingsPage.editService(\'' + svc.id + '\')" style="background:none;border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-size:12px;cursor:pointer;">Edit</button>'
+        + '</div>';
+    });
+    html += '</div></div>';
 
     // Data Summary
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
@@ -531,5 +568,66 @@ var SettingsPage = {
     var el = document.getElementById('expenses-sql-block');
     var sql = el ? el.textContent : '';
     navigator.clipboard.writeText(sql).then(function() { UI.toast('Expenses SQL copied — paste into Supabase SQL Editor!'); });
+  },
+
+  saveCompany: function() {
+    var fields = ['name','phone','email','address','licenses','website'];
+    fields.forEach(function(f) {
+      var el = document.getElementById('co-' + f);
+      if (el) localStorage.setItem('bm-co-' + f, el.value.trim());
+    });
+    var taxEl = document.getElementById('co-tax-rate');
+    if (taxEl) localStorage.setItem('bm-tax-rate', parseFloat(taxEl.value) || 0);
+    UI.toast('Company info saved ✅');
+  },
+
+  addService: function() {
+    UI.showModal('Add Service / Product', '<form id="svc-form" onsubmit="SettingsPage._saveService(event, null)">'
+      + UI.formField('Name *', 'text', 'svc-name', '', { placeholder: 'e.g. Tree Removal' })
+      + UI.formField('Description', 'textarea', 'svc-desc', '', { placeholder: 'Short description shown on quotes' })
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Type</label>'
+      + '<select id="svc-type" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
+      + '<option value="service">Service</option><option value="product">Product</option></select></div>'
+      + UI.formField('Default Price ($)', 'number', 'svc-price', '', { placeholder: '0.00' })
+      + '</div></form>', {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="SettingsPage._saveService(null, null)">Add</button>'
+    });
+  },
+
+  editService: function(id) {
+    var svc = DB.services.getAll().find(function(s) { return s.id === id; });
+    if (!svc) return;
+    UI.showModal('Edit Service', '<form id="svc-form">'
+      + UI.formField('Name *', 'text', 'svc-name', svc.name)
+      + UI.formField('Description', 'textarea', 'svc-desc', svc.description || '')
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Type</label>'
+      + '<select id="svc-type" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
+      + '<option value="service"' + (svc.type !== 'product' ? ' selected' : '') + '>Service</option>'
+      + '<option value="product"' + (svc.type === 'product' ? ' selected' : '') + '>Product</option></select></div>'
+      + UI.formField('Default Price ($)', 'number', 'svc-price', svc.price || '')
+      + '</div></form>', {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn" style="background:var(--red);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;" onclick="DB.services.remove(\'' + id + '\');UI.closeModal();loadPage(\'settings\');">Delete</button>'
+        + ' <button class="btn btn-primary" onclick="SettingsPage._saveService(null, \'' + id + '\')">Save</button>'
+    });
+  },
+
+  _saveService: function(e, id) {
+    if (e) e.preventDefault();
+    var name = (document.getElementById('svc-name') || {}).value;
+    if (!name || !name.trim()) { UI.toast('Name is required', 'error'); return; }
+    var data = {
+      name: name.trim(),
+      description: ((document.getElementById('svc-desc') || {}).value || '').trim(),
+      type: ((document.getElementById('svc-type') || {}).value) || 'service',
+      price: parseFloat(((document.getElementById('svc-price') || {}).value) || 0) || 0
+    };
+    if (id) { DB.services.update(id, data); UI.toast('Service updated'); }
+    else { DB.services.create(data); UI.toast('Service added'); }
+    UI.closeModal();
+    loadPage('settings');
   }
 };

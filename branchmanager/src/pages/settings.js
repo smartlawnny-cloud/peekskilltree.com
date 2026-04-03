@@ -451,14 +451,24 @@ var SettingsPage = {
     });
   },
 
-  syncNow: async function(btn) {
+  syncNow: function(btn) {
     if (btn) { btn.textContent = 'Syncing...'; btn.disabled = true; }
+    function done() {
+      if (btn) { btn.textContent = 'Sync Now'; btn.disabled = false; }
+      loadPage('settings');
+    }
     if (typeof DashboardPage !== 'undefined' && DashboardPage.syncNow) {
-      await DashboardPage.syncNow();
+      try {
+        var result = DashboardPage.syncNow();
+        if (result && typeof result.then === 'function') { result.then(done).catch(done); } else { done(); }
+      } catch(e) { done(); }
     } else if (typeof SupabaseDB !== 'undefined' && SupabaseDB.resync) {
-      await SupabaseDB.resync();
+      try {
+        var r = SupabaseDB.resync();
+        if (r && typeof r.then === 'function') { r.then(done).catch(done); } else { done(); }
+      } catch(e) { done(); }
     } else {
-      // Direct fetch fallback
+      // Direct fetch fallback — sequential table sync
       var url = 'https://ltpivkqahvplapyagljt.supabase.co';
       var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
       var tables = [
@@ -467,29 +477,35 @@ var SettingsPage = {
         {local:'bm-services',remote:'services'},{local:'bm-team',remote:'team_members'}
       ];
       var total = 0;
-      for (var t of tables) {
-        try {
-          var resp = await fetch(url+'/rest/v1/'+t.remote+'?select=*&limit=5000&order=created_at.desc',{
-            headers:{'apikey':key,'Authorization':'Bearer '+key}
-          });
-          var data = await resp.json();
+      var idx = 0;
+      function fetchNext() {
+        if (idx >= tables.length) {
+          if (typeof UI !== 'undefined') UI.toast(total + ' records synced from cloud!');
+          done();
+          return;
+        }
+        var t = tables[idx++];
+        fetch(url + '/rest/v1/' + t.remote + '?select=*&limit=5000&order=created_at.desc', {
+          headers: {'apikey': key, 'Authorization': 'Bearer ' + key}
+        }).then(function(resp) {
+          return resp.json();
+        }).then(function(data) {
           if (data && data.length) {
             var conv = data.map(function(row) {
               var n = {};
               Object.keys(row).forEach(function(k) {
-                n[k.replace(/_([a-z])/g,function(m,p){return p.toUpperCase();})] = row[k];
+                n[k.replace(/_([a-z])/g, function(m, p) { return p.toUpperCase(); })] = row[k];
               });
               return n;
             });
             localStorage.setItem(t.local, JSON.stringify(conv));
             total += conv.length;
           }
-        } catch(e) {}
+          fetchNext();
+        }).catch(function() { fetchNext(); });
       }
-      UI.toast(total + ' records synced from cloud!');
+      fetchNext();
     }
-    if (btn) { btn.textContent = 'Sync Now'; btn.disabled = false; }
-    loadPage('settings');
   },
 
   deduplicateTags: function() {

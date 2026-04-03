@@ -381,9 +381,10 @@ var TimeTrackPage = {
       // Currently clocked in
       var job = activeEntry.jobId ? DB.jobs.getById(activeEntry.jobId) : null;
       var elapsed = ((Date.now() - new Date(activeEntry.clockIn).getTime()) / 3600000).toFixed(1);
+      var clockInMs = new Date(activeEntry.clockIn).getTime();
       html += '<div style="background:var(--green-bg);border:2px solid var(--green-dark);border-radius:10px;padding:16px;text-align:center;">'
         + '<div style="font-size:13px;color:var(--green-dark);font-weight:600;">CLOCKED IN</div>'
-        + '<div style="font-size:2.5rem;font-weight:800;color:var(--green-dark);">' + elapsed + ' hrs</div>'
+        + '<div id="tt-elapsed-display" style="font-size:2.5rem;font-weight:800;color:var(--green-dark);">' + elapsed + ' hrs</div>'
         + (job ? '<div style="font-size:14px;color:var(--text);">' + job.clientName + ' — #' + job.jobNumber + '</div>' : '')
         + '<button class="btn" style="background:var(--red);color:#fff;margin-top:12px;padding:12px 32px;font-size:16px;" onclick="TimeTrackPage.clockOut(\'' + activeEntry.id + '\')">Clock Out</button>'
         + '</div>';
@@ -427,8 +428,25 @@ var TimeTrackPage = {
     }
 
     html += '</div>';
+
+    // Start live tick if clocked in
+    if (activeEntry) {
+      setTimeout(function() {
+        var el = document.getElementById('tt-elapsed-display');
+        if (!el) return;
+        if (TimeTrackPage._tickInterval) clearInterval(TimeTrackPage._tickInterval);
+        TimeTrackPage._tickInterval = setInterval(function() {
+          var el2 = document.getElementById('tt-elapsed-display');
+          if (!el2) { clearInterval(TimeTrackPage._tickInterval); return; }
+          el2.textContent = ((Date.now() - clockInMs) / 3600000).toFixed(2) + ' hrs';
+        }, 30000); // update every 30s
+      }, 100);
+    }
+
     return html;
   },
+
+  _tickInterval: null,
 
   clockIn: function(jobId) {
     var entry = DB.timeEntries.clockIn(TimeTrackPage.currentUser, jobId);

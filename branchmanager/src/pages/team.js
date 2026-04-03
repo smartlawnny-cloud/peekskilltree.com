@@ -148,7 +148,7 @@ var TeamPage = {
     var weekStart = new Date(now);
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
     var startStr = weekStart.toISOString().split('T')[0];
-    return DB.timeEntries.getAll().filter(function(t) { return t.userId === name && t.date >= startStr; })
+    return DB.timeEntries.getAll().filter(function(t) { return (t.user === name || t.userId === name) && t.date >= startStr; })
       .reduce(function(sum, t) { return sum + (t.hours || 0); }, 0);
   },
 
@@ -274,7 +274,7 @@ var TeamPage = {
     html += '</div>';
 
     // Recent time entries
-    var entries = DB.timeEntries.getAll().filter(function(t) { return t.userId === m.name; }).slice(0, 10);
+    var entries = DB.timeEntries.getAll().filter(function(t) { return t.user === m.name || t.userId === m.name; }).slice(0, 10);
     if (entries.length > 0) {
       html += '<h4 style="margin-top:4px;margin-bottom:8px;">Recent Time Entries</h4>';
       entries.forEach(function(t) {

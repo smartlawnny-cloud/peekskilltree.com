@@ -325,7 +325,7 @@ var Payments = {
       method: methodEl ? methodEl.value : 'cash',
       note: noteEl ? noteEl.value : '',
       date: new Date().toISOString(),
-      user: 'Doug'
+      user: (typeof Auth !== 'undefined' && Auth.user && Auth.user.name) ? Auth.user.name : (localStorage.getItem('bm-co-owner') || 'Owner')
     };
 
     // Save payment
@@ -377,7 +377,7 @@ var Payments = {
       method: 'deposit',
       note: percentage * 100 + '% deposit',
       date: new Date().toISOString(),
-      user: 'Doug'
+      user: (typeof Auth !== 'undefined' && Auth.user && Auth.user.name) ? Auth.user.name : (localStorage.getItem('bm-co-owner') || 'Owner')
     };
 
     var key = 'bm-payments-' + invoiceId;

@@ -30,18 +30,31 @@ var PDF = {
       + '</style>';
   },
 
+  _co: function() {
+    return {
+      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
+      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
+      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com',
+      address: localStorage.getItem('bm-co-address') || '1 Highland Industrial Park, Peekskill, NY 10566',
+      licenses: localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644'
+    };
+  },
+
   _companyHeader: function() {
+    var co = PDF._co();
     return '<div class="company">'
-      + '<h1>🌳 Second Nature Tree Service</h1>'
-      + '<p>1 Highland Industrial Park, Peekskill, NY 10566</p>'
-      + '<p>(914) 391-5233 &bull; info@peekskilltree.com</p>'
-      + '<p>Licensed &amp; Insured — WC-32079 / PC-50644</p>'
+      + '<h1>🌳 ' + co.name + '</h1>'
+      + '<p>' + co.address + '</p>'
+      + '<p>' + co.phone + ' &bull; ' + co.email + '</p>'
+      + '<p>Licensed &amp; Insured — ' + co.licenses + '</p>'
       + '</div>';
   },
 
   _footer: function() {
+    var co = PDF._co();
     return '<div class="footer">'
-      + 'Second Nature Tree Service &bull; peekskilltree.com &bull; (914) 391-5233<br>'
+      + co.name + ' &bull; ' + co.website + ' &bull; ' + co.phone + '<br>'
       + 'Licensed &amp; Fully Insured — Westchester &amp; Putnam Counties'
       + '</div>';
   },
@@ -112,7 +125,7 @@ var PDF = {
     // Acceptance signature
     html += '<div style="margin-top:30px;padding:20px;border:2px solid #1a3c12;border-radius:8px;">'
       + '<h4 style="font-size:14px;color:#1a3c12;margin-bottom:16px;">Authorization to Proceed</h4>'
-      + '<p style="font-size:13px;color:#555;margin-bottom:20px;">I authorize Second Nature Tree Service to perform the work described above at the quoted price.</p>'
+      + '<p style="font-size:13px;color:#555;margin-bottom:20px;">I authorize ' + PDF._co().name + ' to perform the work described above at the quoted price.</p>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">'
       + '<div><div style="border-bottom:1px solid #999;height:30px;margin-bottom:4px;"></div><span style="font-size:11px;color:#888;">Client Signature</span></div>'
       + '<div><div style="border-bottom:1px solid #999;height:30px;margin-bottom:4px;"></div><span style="font-size:11px;color:#888;">Date</span></div>'
@@ -171,7 +184,7 @@ var PDF = {
       + '<h4 style="font-size:14px;color:#1a3c12;margin-bottom:10px;">Payment Options</h4>'
       + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center;font-size:13px;">'
       + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>💳 Card</strong><br><span style="font-size:11px;color:#666;">Pay online via link</span></div>'
-      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>📝 Check</strong><br><span style="font-size:11px;color:#666;">Second Nature Tree Service</span></div>'
+      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>📝 Check</strong><br><span style="font-size:11px;color:#666;">' + PDF._co().name + '</span></div>'
       + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>Venmo</strong><br><span style="font-size:11px;color:#666;">@SecondNatureTree</span></div>'
       + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>Zelle</strong><br><span style="font-size:11px;color:#666;">info@peekskilltree.com</span></div>'
       + '</div></div>';

@@ -4,7 +4,49 @@
 var RequestsPage = {
   _search: '', _filter: 'all',
 
-  // Pull new online requests from Supabase and merge into localStorage
+  // Silent background sync (no toast unless new records found)
+  _autoSync: function() {
+    var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
+    var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+    fetch(SUPABASE_URL + '/rest/v1/requests?select=*&order=created_at.desc&limit=50', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      if (!Array.isArray(rows)) return;
+      var existing = DB.requests.getAll();
+      var added = 0;
+      rows.forEach(function(row) {
+        var dup = existing.find(function(e) {
+          return (e.supabaseId && e.supabaseId === row.id) ||
+                 (e.clientName && row.client_name && e.clientName.toLowerCase() === row.client_name.toLowerCase() &&
+                  e.property && row.property && e.property.substring(0,8) === row.property.substring(0,8));
+        });
+        if (!dup) {
+          DB.requests.create({
+            supabaseId: row.id,
+            clientName: row.client_name || '',
+            email: row.client_email || '',
+            phone: row.client_phone || '',
+            property: row.property || '',
+            source: row.source || 'Online Form',
+            notes: row.notes || '',
+            status: row.status || 'new',
+            createdAt: row.created_at
+          });
+          added++;
+        }
+      });
+      localStorage.setItem('bm-req-last-sync', new Date().toISOString());
+      if (added > 0) {
+        UI.toast('📥 ' + added + ' new online request' + (added > 1 ? 's' : '') + ' pulled in!');
+        loadPage('requests');
+      }
+    })
+    .catch(function() {}); // silent fail
+  },
+
+  // Manual sync with feedback
   syncFromSupabase: function() {
     var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
     var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
@@ -52,6 +94,12 @@ var RequestsPage = {
   },
 
   render: function() {
+    // Auto-sync from Supabase silently in background (max once every 5 min)
+    var lastSync = localStorage.getItem('bm-req-last-sync');
+    var fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    if (!lastSync || lastSync < fiveMinAgo) {
+      RequestsPage._autoSync();
+    }
     var self = RequestsPage;
     var all = DB.requests.getAll();
     var newCount = DB.requests.countNew();
@@ -96,43 +144,54 @@ var RequestsPage = {
     var filtered = self._getFiltered();
 
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All requests</h3>'
-      + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
-      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="RequestsPage._setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">Status | All</button>'
-      + '<button class="filter-btn' + (self._filter==='new'?' active':'') + '" onclick="RequestsPage._setFilter(\'new\')" style="font-size:12px;padding:5px 12px;">New</button>'
-      + '<button class="filter-btn' + (self._filter==='assessment_complete'?' active':'') + '" onclick="RequestsPage._setFilter(\'assessment_complete\')" style="font-size:12px;padding:5px 12px;">Assessed</button>'
-      + '<button class="filter-btn' + (self._filter==='converted'?' active':'') + '" onclick="RequestsPage._setFilter(\'converted\')" style="font-size:12px;padding:5px 12px;">Converted</button>'
+      + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ')</span>'
+      + (function() {
+          var chips = [['all','All'],['new','New'],['assessment_complete','Assessment Completed'],['overdue','Overdue'],['unscheduled','Unscheduled'],['converted','Converted']];
+          return chips.map(function(c) {
+            var isActive = self._filter === c[0];
+            return '<button onclick="RequestsPage._setFilter(\'' + c[0] + '\')" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid '
+              + (isActive ? '#1565c0' : 'var(--border)') + ';background:' + (isActive ? '#1565c0' : 'var(--white)')
+              + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';">' + c[1] + '</button>';
+          }).join('');
+        })()
       + '</div>'
       + '<div style="display:flex;gap:8px;align-items:center;">'
-      + '<button id="req-sync-btn" class="btn btn-outline" onclick="RequestsPage.syncFromSupabase()" style="font-size:12px;white-space:nowrap;">🔄 Sync Online</button>'
-      + '<button class="btn btn-primary" onclick="RequestsPage.showForm()" style="font-size:12px;white-space:nowrap;">+ New Request</button>'
-      + '</div>'
-      + '</div>'
-      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
-      + '<div class="search-box" style="flex:1;max-width:320px;">'
+      + '<div class="search-box" style="min-width:180px;max-width:260px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
       + '<input type="text" placeholder="Search requests..." value="' + UI.esc(self._search) + '" oninput="RequestsPage._search=this.value;loadPage(\'requests\')">'
       + '</div>'
-      + (localStorage.getItem('bm-req-last-sync') ? '<span style="font-size:11px;color:var(--text-light);">Last sync: ' + UI.dateRelative(localStorage.getItem('bm-req-last-sync')) + '</span>' : '')
+      + '<button id="req-sync-btn" class="btn btn-outline" onclick="RequestsPage.syncFromSupabase()" style="font-size:12px;white-space:nowrap;">🔄 Sync</button>'
+      + '<button class="btn btn-primary" onclick="RequestsPage.showForm()" style="font-size:12px;white-space:nowrap;">+ New Request</button>'
+      + '</div>'
       + '</div>';
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + '<th>Client</th><th>Property</th><th>Contact</th><th>Source</th><th>Requested</th><th>Status</th>'
+      + '<th>Client</th><th>Property</th><th>Contact</th><th>Source</th><th>Requested</th><th>Status</th><th></th>'
       + '</tr></thead><tbody>';
 
     if (filtered.length === 0) {
-      html += '<tr><td colspan="6">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No requests match "' + UI.esc(self._search) + '"</div>' : UI.emptyState('📥', 'No requests yet', 'New requests from your website form will appear here.', '+ New Request', 'RequestsPage.showForm()')) + '</td></tr>';
+      html += '<tr><td colspan="7">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No requests match "' + UI.esc(self._search) + '"</div>' : UI.emptyState('📥', 'No requests yet', 'New requests from your website form will appear here.', '+ New Request', 'RequestsPage.showForm()')) + '</td></tr>';
     } else {
       filtered.forEach(function(r) {
-        html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')">'
+        // Row-level action buttons
+        var actions = '';
+        if (r.status === 'new' || r.status === 'assessment_complete' || r.status === 'assessment_scheduled') {
+          actions += '<button onclick="event.stopPropagation();RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId||'') + '\',\'' + UI.esc(r.clientName||'') + '\')" style="font-size:11px;padding:3px 8px;background:#1565c0;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;margin-right:4px;">→ Quote</button>';
+        }
+        if (r.status === 'new' && r.email) {
+          actions += '<button onclick="event.stopPropagation();RequestsPage._sendConfirmation(\'' + r.id + '\')" style="font-size:11px;padding:3px 8px;background:#f0f9f4;color:#00836c;border:1px solid #c8e6c9;border-radius:4px;cursor:pointer;white-space:nowrap;">📧</button>';
+        }
+        html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="cursor:pointer;">'
           + '<td><strong>' + UI.esc(r.clientName || '—') + '</strong></td>'
           + '<td style="font-size:13px;color:var(--text-light);">' + UI.esc(r.property || '—') + '</td>'
-          + '<td style="font-size:13px;">' + UI.phone(r.phone) + '<br>' + (r.email || '') + '</td>'
+          + '<td style="font-size:13px;">' + UI.phone(r.phone) + (r.email ? '<br><span style="color:var(--text-light);">' + r.email + '</span>' : '') + '</td>'
           + '<td style="font-size:12px;">' + (r.source || '—') + '</td>'
-          + '<td>' + UI.dateRelative(r.createdAt) + '</td>'
+          + '<td style="white-space:nowrap;">' + UI.dateRelative(r.createdAt) + '</td>'
           + '<td>' + UI.statusBadge(r.status) + '</td>'
+          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:12px;white-space:nowrap;">' + actions + '</td>'
           + '</tr>';
       });
     }
@@ -143,7 +202,10 @@ var RequestsPage = {
   _getFiltered: function() {
     var self = RequestsPage;
     var all = DB.requests.getAll();
-    if (self._filter !== 'all') {
+    if (self._filter === 'unscheduled') {
+      // Requests without an assessment date that aren't converted/archived
+      all = all.filter(function(r) { return !r.assessmentDate && ['new','assessment_complete'].indexOf(r.status) >= 0; });
+    } else if (self._filter !== 'all') {
       all = all.filter(function(r) { return r.status === self._filter; });
     }
     if (self._search && self._search.length >= 2) {

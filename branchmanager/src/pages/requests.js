@@ -181,11 +181,11 @@ var RequestsPage = {
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + '<th>Client</th><th>Service</th><th>Contact</th><th>Source</th><th>Requested</th><th>Status</th><th></th>'
+      + '<th>Client</th><th>Title</th><th>Property</th><th>Contact</th><th>Requested</th><th>Status</th>'
       + '</tr></thead><tbody>';
 
     if (filtered.length === 0) {
-      html += '<tr><td colspan="7">'
+      html += '<tr><td colspan="6">'
         + (self._search
           ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No requests match "' + UI.esc(self._search) + '"</div>'
           : UI.emptyState('📥', 'No requests yet', 'New requests from your website form will appear here.', '+ New Request', 'RequestsPage.showForm()'))
@@ -194,44 +194,21 @@ var RequestsPage = {
       filtered.forEach(function(r) {
         var isOld = self._isOverdue(r);
         var rowBg = isOld ? 'background:#fff8f8;' : '';
-        var service = r.service || (r.notes ? r.notes.split('\n')[0].substring(0, 40) + (r.notes.length > 40 ? '…' : '') : '—');
-
-        var primaryBtn = '';
-        if (r.status === 'new' || r.status === 'assessment_complete' || r.status === 'assessment_scheduled') {
-          primaryBtn = '<button onclick="event.stopPropagation();RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId||'') + '\',\'' + UI.esc(r.clientName||'') + '\')" style="font-size:11px;padding:3px 8px;background:#1565c0;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;margin-right:4px;">→ Quote</button>';
-        }
-
-        var moreMenu = '<div style="position:relative;display:inline-block;">'
-          + '<button onclick="event.stopPropagation();var d=this.nextElementSibling;document.querySelectorAll(\'.more-dd\').forEach(function(x){x.style.display=\'none\'});d.style.display=d.style.display===\'block\'?\'none\':\'block\';" style="font-size:13px;padding:2px 8px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:4px;cursor:pointer;line-height:1.4;">•••</button>'
-          + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 2px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:180px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
-          + (r.status === 'new' || r.status === 'assessment_complete' || r.status === 'assessment_scheduled'
-            ? '<button onclick="event.stopPropagation();RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId||'') + '\',\'' + UI.esc(r.clientName||'') + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📝 Create Quote</button>' : '')
-          + '<button onclick="event.stopPropagation();RequestsPage.showDetail(\'' + r.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📋 View Details</button>'
-          + (r.email ? '<button onclick="event.stopPropagation();RequestsPage._sendConfirmation(\'' + r.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📧 Send Confirmation</button>' : '')
-          + (r.phone ? '<button onclick="event.stopPropagation();window.location=\'sms:' + (r.phone||'').replace(/\D/g,'') + '\'" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">💬 Text Client</button>' : '')
-          + (r.phone ? '<a href="tel:' + (r.phone||'').replace(/\D/g,'') + '" onclick="event.stopPropagation()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);text-decoration:none;">📞 Call Client</a>' : '')
-          + '<div style="height:1px;background:var(--border);margin:4px 0;"></div>'
-          + '<button onclick="event.stopPropagation();RequestsPage._updateStatus(\'' + r.id + '\',\'assessment_complete\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✓ Mark Assessed</button>'
-          + '<button onclick="event.stopPropagation();RequestsPage._updateStatus(\'' + r.id + '\',\'archived\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:#dc3545;">🗑 Archive</button>'
-          + '</div></div>';
+        var title = r.service || (r.notes ? r.notes.split('\n')[0].substring(0, 50) + (r.notes.length > 50 ? '…' : '') : 'Request for ' + (r.clientName || ''));
 
         html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="cursor:pointer;' + rowBg + '">'
-          + '<td>'
-          + '<strong>' + UI.esc(r.clientName || '—') + '</strong>'
-          + (r.property ? '<div style="font-size:11px;color:var(--text-light);margin-top:1px;">📍 ' + UI.esc(r.property.split(',')[0]) + '</div>' : '')
-          + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(service) + '</td>'
+          + '<td><strong>' + UI.esc(r.clientName || '—') + '</strong></td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(title) + '</td>'
+          + '<td style="font-size:12px;color:var(--text-light);max-width:180px;">' + (r.property ? UI.esc(r.property) : '—') + '</td>'
           + '<td style="font-size:13px;">'
           + (r.phone ? '<a href="tel:' + r.phone.replace(/\D/g,'') + '" onclick="event.stopPropagation()" style="color:var(--text);text-decoration:none;">' + UI.phone(r.phone) + '</a>' : '—')
           + (r.email ? '<div style="font-size:11px;color:var(--text-light);">' + r.email + '</div>' : '')
           + '</td>'
-          + '<td style="font-size:12px;color:var(--text-light);">' + (r.source || '—') + '</td>'
           + '<td style="white-space:nowrap;font-size:13px;">'
           + UI.dateRelative(r.createdAt)
           + (isOld ? ' <span style="font-size:10px;font-weight:700;background:#fdecea;color:#c62828;padding:1px 5px;border-radius:3px;">OVERDUE</span>' : '')
           + '</td>'
           + '<td>' + UI.statusBadge(r.status) + '</td>'
-          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:8px;white-space:nowrap;">' + primaryBtn + moreMenu + '</td>'
           + '</tr>';
       });
     }

@@ -123,8 +123,7 @@ var JobsPage = {
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
-      + '<th style="width:32px;"><input type="checkbox" onchange="JobsPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
-      + self._sortTh('Client', 'clientName') + self._sortTh('Job #', 'jobNumber') + '<th>Property</th>' + self._sortTh('Schedule', 'scheduledDate') + self._sortTh('Status', 'status') + '<th>Crew</th>' + self._sortTh('Total', 'total', 'text-align:right;') + '<th></th>'
+      + self._sortTh('Client', 'clientName') + self._sortTh('Job #', 'jobNumber') + '<th>Property</th>' + self._sortTh('Schedule', 'scheduledDate') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
@@ -132,31 +131,13 @@ var JobsPage = {
     } else {
       page.forEach(function(j) {
         html += '<tr style="cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
-          + '<td onclick="event.stopPropagation()"><input type="checkbox" class="job-check" value="' + j.id + '" onchange="JobsPage._updateBulk()" style="width:16px;height:16px;"></td>'
           + '<td><strong>' + UI.esc(j.clientName || '—') + '</strong></td>'
           + '<td>#' + (j.jobNumber || '') + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(j.description || '—') + '</td>'
           + '<td style="white-space:nowrap;">' + UI.dateShort(j.scheduledDate) + '</td>'
           + '<td>' + UI.statusBadge(j.status) + '</td>'
-          + '<td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (j.crew ? j.crew.join(', ') : '—') + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(j.total)
           + (j.satisfaction && j.satisfaction.rating ? '<div style="font-size:10px;color:#ffc107;margin-top:2px;">' + Array(j.satisfaction.rating + 1).join('⭐') + '</div>' : '')
-          + '</td>'
-          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:8px;white-space:nowrap;">'
-          + (j.status === 'scheduled' || j.status === 'in_progress'
-            ? '<button onclick="event.stopPropagation();JobsPage._quickComplete(\'' + j.id + '\')" style="font-size:11px;padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;">✓ Done</button> '
-            : (j.status === 'completed' && !j.invoiceId
-              ? '<button onclick="event.stopPropagation();(function(){var inv=Workflow.jobToInvoice(\'' + j.id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="font-size:11px;padding:3px 8px;background:#1565c0;color:#fff;border:none;border-radius:4px;cursor:pointer;">💰 Invoice</button> '
-              : ''))
-          + '<div style="position:relative;display:inline-block;">'
-          + '<button onclick="event.stopPropagation();var d=this.nextElementSibling;document.querySelectorAll(\'.more-dd\').forEach(function(x){x.style.display=\'none\'});d.style.display=d.style.display===\'block\'?\'none\':\'block\';" style="font-size:13px;padding:2px 8px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:4px;cursor:pointer;line-height:1.4;">•••</button>'
-          + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 2px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
-          + (j.status !== 'completed' ? '<button onclick="event.stopPropagation();JobsPage._quickComplete(\'' + j.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✓ Mark Complete</button>' : '')
-          + (j.status === 'completed' && !j.invoiceId ? '<button onclick="event.stopPropagation();(function(){var inv=Workflow.jobToInvoice(\'' + j.id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">💰 Create Invoice</button>' : '')
-          + (j.status === 'completed' ? '<button onclick="event.stopPropagation();JobsPage._requestReview(\'' + j.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">⭐ Request Review</button>' : '')
-          + '<button onclick="event.stopPropagation();JobsPage.showDetail(\'' + j.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📋 View Details</button>'
-          + '<button onclick="event.stopPropagation();JobsPage.showForm(\'' + j.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit</button>'
-          + '</div></div>'
           + '</td>'
           + '</tr>';
       });

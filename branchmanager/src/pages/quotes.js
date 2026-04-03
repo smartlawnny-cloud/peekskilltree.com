@@ -87,7 +87,7 @@ var QuotesPage = {
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
       + '<th style="width:32px;"><input type="checkbox" onchange="QuotesPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
-      + self._sortTh('Client', 'clientName') + self._sortTh('Quote #', 'quoteNumber') + '<th>Property</th>' + self._sortTh('Created', 'createdAt') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;') + '<th></th>'
+      + self._sortTh('Client', 'clientName') + self._sortTh('Quote #', 'quoteNumber') + '<th>Property</th>' + self._sortTh('Created', 'createdAt') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
       + '</tr></thead><tbody>';
 
     if (page.length === 0) {
@@ -104,18 +104,6 @@ var QuotesPage = {
           + '<td>' + UI.dateShort(q.createdAt) + '</td>'
           + '<td>' + UI.statusBadge(q.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(q.total) + '</td>'
-          + '<td onclick="event.stopPropagation()" style="text-align:right;padding-right:8px;white-space:nowrap;">'
-          + (isStale ? '<button onclick="event.stopPropagation();QuotesPage._quickFollowUp(\'' + q.id + '\')" style="font-size:11px;padding:3px 8px;background:#e6a817;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;margin-right:4px;">📬 Follow up</button>' : '')
-          + '<div style="position:relative;display:inline-block;">'
-          + '<button onclick="event.stopPropagation();var d=this.nextElementSibling;document.querySelectorAll(\'.more-dd\').forEach(function(x){x.style.display=\'none\'});d.style.display=d.style.display===\'block\'?\'none\':\'block\';" style="font-size:13px;padding:2px 8px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:4px;cursor:pointer;line-height:1.4;">•••</button>'
-          + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 2px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:170px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
-          + (q.status !== 'approved' && q.status !== 'won' ? '<button onclick="event.stopPropagation();QuotesPage._confirmSend(\'' + q.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📧 Send Quote</button>' : '')
-          + (q.status === 'approved' || q.status === 'won' ? '<button onclick="event.stopPropagation();(function(){var job=Workflow.quoteToJob(\'' + q.id + '\');loadPage(\'jobs\');if(job)setTimeout(function(){JobsPage.showDetail(job.id);},100);})()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">🔧 Create Job</button>' : '')
-          + '<button onclick="event.stopPropagation();QuotesPage.showDetail(\'' + q.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📋 View Details</button>'
-          + '<button onclick="event.stopPropagation();QuotesPage.showForm(\'' + q.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit</button>'
-          + '<button onclick="event.stopPropagation();QuotesPage._quickFollowUp(\'' + q.id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📬 Follow Up</button>'
-          + '</div></div>'
-          + '</td>'
           + '</tr>';
       });
     }

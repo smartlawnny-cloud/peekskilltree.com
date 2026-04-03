@@ -86,7 +86,7 @@ var BackupPage = {
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
       + '<h3 style="font-size:15px;margin-bottom:8px;">Backup Info</h3>'
       + '<div style="font-size:13px;color:var(--text-light);line-height:1.8;">'
-      + '<div>☁️ <strong>Cloud (Supabase):</strong> ' + (SupabaseDB && SupabaseDB.ready ? '<span style="color:var(--green-dark);">Connected — data syncs automatically</span>' : '<span style="color:var(--red);">Not connected</span>') + '</div>'
+      + '<div>☁️ <strong>Cloud (Supabase):</strong> ' + (typeof SupabaseDB !== 'undefined' && SupabaseDB && SupabaseDB.ready ? '<span style="color:var(--green-dark);">Connected — data syncs automatically</span>' : '<span style="color:var(--red);">Not connected</span>') + '</div>'
       + '<div>💾 <strong>Local Storage:</strong> ' + BackupPage._getLocalSize() + ' used</div>'
       + '<div>📅 <strong>Last cloud sync:</strong> ' + ((typeof CloudSync !== 'undefined' ? CloudSync.lastSync : null) > 0 ? UI.dateRelative(new Date((typeof CloudSync !== 'undefined' ? CloudSync.lastSync : null)).toISOString()) : 'Never') + '</div>'
       + '</div></div>';

@@ -46,7 +46,7 @@ var ReportsPage = {
           + '<td>' + UI.dateShort(inv.dueDate) + '</td>'
           + '<td style="font-weight:700;color:' + color + ';">' + daysLabel + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(inv.balance || inv.total) + '</td>'
-          + '<td><button class="btn btn-outline" style="font-size:11px;padding:4px 10px;" onclick="Workflow.sendInvoice(\'' + inv.id + '\')">Send Reminder</button></td>'
+          + '<td><button class="btn btn-outline" style="font-size:11px;padding:4px 10px;" onclick="if(typeof Workflow!==\'undefined\')Workflow.sendInvoice(\'' + inv.id + '\')">Send Reminder</button></td>'
           + '</tr>';
       });
       html += '</tbody></table>';

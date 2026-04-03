@@ -87,6 +87,7 @@
   .sidebar.collapsed .sidebar-header h1,
   .sidebar.collapsed .sidebar-user,
   .sidebar.collapsed .nav-section,
+  .sidebar.collapsed .nav-label,
   .sidebar.collapsed .nav-item span:not(.icon),
   .sidebar.collapsed .nav-item .badge,
   .sidebar.collapsed > div[style*="padding"]:not(.sidebar-footer) { display:none !important; }
@@ -119,6 +120,7 @@
 
   .sidebar-nav { flex:1; padding:8px 10px; overflow-y:auto; }
   .nav-section { padding:16px 10px 6px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#9ca3af; font-weight:600; }
+  .nav-label { padding:12px 12px 4px; font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:rgba(255,255,255,.35); font-weight:700; }
   .nav-item {
     display:flex; align-items:center; gap:12px; padding:9px 12px;
     font-size:14px; font-weight:400; color:#374151; cursor:pointer;
@@ -518,35 +520,42 @@
       <h1>Branch Manager <span>Second Nature Tree Service</span></h1>
     </div>
     <div class="sidebar-nav">
-      <!-- Core navigation — mirrors Jobber sidebar order exactly -->
       <button class="nav-item active" data-page="dashboard"><span class="icon"><i data-lucide="layout-dashboard" class="li"></i></span> Home</button>
       <button class="nav-item" data-page="schedule"><span class="icon"><i data-lucide="calendar" class="li"></i></span> Calendar</button>
+
+      <div class="nav-label">Work</div>
       <button class="nav-item" data-page="requests"><span class="icon"><i data-lucide="inbox" class="li"></i></span> Requests <span class="badge" id="badge-requests"></span></button>
       <button class="nav-item" data-page="quotes"><span class="icon"><i data-lucide="file-text" class="li"></i></span> Quotes</button>
       <button class="nav-item" data-page="jobs"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Jobs</button>
       <button class="nav-item" data-page="invoices"><span class="icon"><i data-lucide="receipt" class="li"></i></span> Invoices</button>
+      <button class="nav-item" data-page="payments"><span class="icon"><i data-lucide="credit-card" class="li"></i></span> Payments</button>
+
+      <div class="nav-label">Clients</div>
       <button class="nav-item" data-page="clients"><span class="icon"><i data-lucide="users" class="li"></i></span> Clients <span class="badge" id="badge-clients"></span></button>
 
-      <div style="border-top:1px solid rgba(255,255,255,.06);margin:6px 10px;"></div>
-
-      <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team</button>
+      <div class="nav-label">Team</div>
+      <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team Members</button>
       <button class="nav-item" data-page="timesheet"><span class="icon"><i data-lucide="clock" class="li"></i></span> Timesheets</button>
+
+      <div class="nav-label">Money</div>
       <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
       <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Reporting</button>
 
-      <div style="border-top:1px solid rgba(255,255,255,.06);margin:6px 10px;"></div>
-
+      <div style="border-top:1px solid rgba(255,255,255,.06);margin:8px 10px 4px;"></div>
       <button class="nav-item" data-page="settings"><span class="icon"><i data-lucide="settings" class="li"></i></span> Settings</button>
 
-      <!-- More — everything beyond Jobber -->
-      <div class="nav-section" style="cursor:pointer;" onclick="var el=document.getElementById('more-nav');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.more-arrow').textContent=el.style.display==='none'?'&#9656;':'&#9662;';">More <span class="more-arrow" style="float:right;">&#9656;</span></div>
+      <!-- More — everything beyond Jobber's core -->
+      <div class="nav-section" style="cursor:pointer;margin-top:4px;" onclick="var el=document.getElementById('more-nav');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.more-arrow').textContent=el.style.display==='none'?'&#9656;':'&#9662;';">More <span class="more-arrow" style="float:right;">&#9656;</span></div>
       <div id="more-nav" style="display:none;">
         <button class="nav-item" data-page="pipeline"><span class="icon"><i data-lucide="kanban" class="li"></i></span> Pipeline</button>
+        <button class="nav-item" data-page="workflow"><span class="icon"><i data-lucide="workflow" class="li"></i></span> Workflow</button>
         <button class="nav-item" data-page="dispatch"><span class="icon"><i data-lucide="truck" class="li"></i></span> Dispatch</button>
         <button class="nav-item" data-page="messaging"><span class="icon"><i data-lucide="message-square" class="li"></i></span> Messages</button>
-        <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> Claude AI</button>
         <button class="nav-item" data-page="automations"><span class="icon"><i data-lucide="zap" class="li"></i></span> Automations</button>
         <button class="nav-item" data-page="reminders" id="nav-reminders"><span class="icon"><i data-lucide="shield-alert" class="li"></i></span> Compliance <span class="badge" id="badge-reminders"></span></button>
+        <button class="nav-item" data-page="recurring"><span class="icon"><i data-lucide="repeat" class="li"></i></span> Recurring Jobs</button>
+        <button class="nav-item" data-page="visits"><span class="icon"><i data-lucide="calendar-check" class="li"></i></span> Visits</button>
+        <button class="nav-item" data-page="checklists"><span class="icon"><i data-lucide="check-square" class="li"></i></span> Checklists</button>
         <button class="nav-item" data-page="crewview"><span class="icon"><i data-lucide="shield" class="li"></i></span> Crew View</button>
         <button class="nav-item" data-page="crewperformance"><span class="icon"><i data-lucide="trophy" class="li"></i></span> Performance</button>
         <button class="nav-item" data-page="propertymap"><span class="icon"><i data-lucide="map" class="li"></i></span> Property Map</button>
@@ -554,10 +563,9 @@
         <button class="nav-item" data-page="photomap"><span class="icon"><i data-lucide="camera" class="li"></i></span> Photo Map</button>
         <button class="nav-item" data-page="equipment"><span class="icon"><i data-lucide="cog" class="li"></i></span> Equipment</button>
         <button class="nav-item" data-page="materials"><span class="icon"><i data-lucide="package" class="li"></i></span> Materials</button>
-        <button class="nav-item" data-page="recurring"><span class="icon"><i data-lucide="repeat" class="li"></i></span> Recurring Jobs</button>
         <button class="nav-item" data-page="profitloss"><span class="icon"><i data-lucide="line-chart" class="li"></i></span> Profit/Loss</button>
         <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Job Costing</button>
-        <button class="nav-item" data-page="payments"><span class="icon"><i data-lucide="credit-card" class="li"></i></span> Payments</button>
+        <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget</button>
         <button class="nav-item" data-page="weeklysummary"><span class="icon"><i data-lucide="clipboard-list" class="li"></i></span> Weekly Summary</button>
         <button class="nav-item" data-page="reports"><span class="icon"><i data-lucide="download" class="li"></i></span> Export Reports</button>
         <button class="nav-item" data-page="notifications"><span class="icon"><i data-lucide="bell" class="li"></i></span> Activity Feed</button>
@@ -569,12 +577,9 @@
         <button class="nav-item" data-page="formbuilder"><span class="icon"><i data-lucide="layout" class="li"></i></span> Form Builder</button>
         <button class="nav-item" data-page="mediacenter"><span class="icon"><i data-lucide="camera" class="li"></i></span> Media Center <span class="badge" id="badge-mediacenter"></span></button>
         <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
-        <button class="nav-item" data-page="checklists"><span class="icon"><i data-lucide="check-square" class="li"></i></span> Checklists</button>
-        <button class="nav-item" data-page="visits"><span class="icon"><i data-lucide="calendar-check" class="li"></i></span> Visits</button>
-        <button class="nav-item" data-page="workflow"><span class="icon"><i data-lucide="workflow" class="li"></i></span> Workflow</button>
         <button class="nav-item" data-page="comms"><span class="icon"><i data-lucide="phone-call" class="li"></i></span> Comms Log</button>
+        <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> Claude AI</button>
         <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="wallet" class="li"></i></span> My Pay</button>
-        <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget</button>
         <button class="nav-item" data-page="calculators"><span class="icon"><i data-lucide="calculator" class="li"></i></span> Calculators</button>
         <button class="nav-item" data-page="treemeasure"><span class="icon"><i data-lucide="ruler" class="li"></i></span> Tree Measure</button>
         <button class="nav-item" data-page="emailtemplates"><span class="icon"><i data-lucide="mail" class="li"></i></span> Email Templates</button>
@@ -604,6 +609,10 @@
           <div id="searchDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.15);max-height:70vh;overflow-y:auto;z-index:999;min-width:400px;"></div>
         </div>
         <div class="topbar-icons">
+          <button class="topbar-icon topbar-icon-create" onclick="QuickCreate.show()" title="New…" style="background:var(--accent);border-radius:8px;width:32px;height:32px;">
+            <i data-lucide="plus" style="width:18px;height:18px;stroke:#fff;stroke-width:2.5;"></i>
+          </button>
+          <div style="width:1px;height:20px;background:var(--border);margin:0 4px;"></div>
           <div style="position:relative;">
             <button class="topbar-icon" id="notif-bell-btn" onclick="NotifCenter.toggle(event)" title="Notifications">
               <i data-lucide="bell" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i>
@@ -614,19 +623,11 @@
           <button class="topbar-icon" onclick="loadPage('messaging')" title="Messages">
             <i data-lucide="message-square" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i>
           </button>
-          <div style="width:1px;height:20px;background:var(--border);margin:0 2px;"></div>
-          <button class="topbar-icon topbar-icon-create" onclick="QuickCreate.show()" title="New…" style="background:var(--accent);border-radius:8px;width:32px;height:32px;">
-            <i data-lucide="plus" style="width:18px;height:18px;stroke:#fff;stroke-width:2.5;"></i>
-          </button>
-          <div style="width:1px;height:20px;background:var(--border);margin:0 2px;"></div>
           <button class="topbar-icon" onclick="AI.toggle()" title="AI Assistant">
             <i data-lucide="sparkles" style="width:17px;height:17px;stroke:var(--text-light);stroke-width:1.75;"></i>
           </button>
           <button class="topbar-icon" onclick="toggleDarkMode()" id="dark-mode-btn" title="Toggle dark mode">
             <i data-lucide="moon" style="width:17px;height:17px;stroke:var(--text-light);stroke-width:1.75;" id="dark-mode-icon"></i>
-          </button>
-          <button class="topbar-icon" onclick="loadPage('settings')" title="Settings">
-            <i data-lucide="settings" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i>
           </button>
           <div class="topbar-avatar" onclick="this.querySelector('.avatar-menu').classList.toggle('open')">
             <span id="topbar-avatar-initials">DB</span>

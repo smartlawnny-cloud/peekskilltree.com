@@ -146,8 +146,13 @@ var Auth = {
   // Get pages visible for current role
   getVisiblePages: function() {
     var all = ['dashboard','pipeline','schedule','dispatch','clients','requests','quotes','jobs','invoices',
-      'insights','reviews','team','timesheet','automations','calculators','messaging','clientmap',
-      'recurring','notifications','expenses','profitloss','reports','onlinebooking','import','settings'];
+      'payments','insights','reviews','reviewtools','satisfaction','team','timesheet','automations',
+      'calculators','messaging','clientmap','photomap','propertymap','recurring','notifications',
+      'expenses','profitloss','jobcosting','budget','reports','weeklysummary','onlinebooking',
+      'clienthub','formbuilder','mediacenter','beforeafter','campaigns','referrals','receptionist',
+      'import','backup','settings','crewview','crewperformance','employeecenter','equipment',
+      'materials','comms','emailtemplates','customfields','visits','checklists','workflow',
+      'ai','treemeasure','reminders','search'];
 
     if (Auth.role === 'crew_member') {
       return ['crewview','dispatch','schedule','timesheet','employeecenter','budget','notifications'];

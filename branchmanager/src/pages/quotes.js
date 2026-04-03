@@ -282,10 +282,24 @@ var QuotesPage = {
     html += '</div>'
       + '<button type="button" class="btn btn-outline" style="margin-top:8px;" onclick="QuotesPage.addItem()">+ Add Line Item</button>';
 
-    // Total display
-    html += '<div style="margin-top:16px;padding:16px;background:var(--green-dark);color:var(--white);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">'
+    // Total display with tax breakdown (Jobber style)
+    var _qSubtotal = 0;
+    (q.lineItems || []).forEach(function(it) { _qSubtotal += (it.qty || 1) * (it.rate || 0); });
+    var _qTaxRate = (q.taxRate !== undefined ? q.taxRate : 8.375);
+    var _qTaxAmt = Math.round(_qSubtotal * _qTaxRate / 100 * 100) / 100;
+    var _qGrandTotal = _qSubtotal + _qTaxAmt;
+    html += '<div style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'
+      + '<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid var(--border);">'
+      + '<span style="color:var(--text-light);">Subtotal</span><span id="q-subtotal-display" style="font-weight:600;">' + UI.money(_qSubtotal) + '</span>'
+      + '</div>'
+      + '<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid var(--border);">'
+      + '<span style="color:var(--text-light);">Tax (<input type="number" id="q-tax-rate" value="' + _qTaxRate + '" step="0.001" min="0" max="100" oninput="QuotesPage.calcTotal()" style="width:55px;font-size:12px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;text-align:center;">%)</span>'
+      + '<span id="q-tax-display" style="font-weight:600;">' + UI.money(_qTaxAmt) + '</span>'
+      + '</div>'
+      + '<div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;background:var(--green-dark);color:var(--white);">'
       + '<span style="font-weight:600;">Total</span>'
-      + '<span id="q-total-display" style="font-size:1.5rem;font-weight:800;">' + UI.money(q.total || 0) + '</span>'
+      + '<span id="q-total-display" style="font-size:1.5rem;font-weight:800;">' + UI.money(_qGrandTotal) + '</span>'
+      + '</div>'
       + '</div>';
 
     // Property Map button
@@ -407,17 +421,25 @@ var QuotesPage = {
   },
 
   calcTotal: function() {
-    var total = 0;
+    var subtotal = 0;
     document.querySelectorAll('.quote-item-row').forEach(function(row) {
       var qty = parseFloat(row.querySelector('.q-item-qty').value) || 0;
       var rate = parseFloat(row.querySelector('.q-item-rate').value) || 0;
       var lineTotal = qty * rate;
-      total += lineTotal;
+      subtotal += lineTotal;
       var amountEl = row.querySelector('.q-item-amount');
       if (amountEl) amountEl.textContent = UI.money(lineTotal);
     });
-    var el = document.getElementById('q-total-display');
-    if (el) el.textContent = UI.money(total);
+    var taxRateEl = document.getElementById('q-tax-rate');
+    var taxRate = taxRateEl ? (parseFloat(taxRateEl.value) || 0) : 0;
+    var taxAmt = Math.round(subtotal * taxRate / 100 * 100) / 100;
+    var total = subtotal + taxAmt;
+    var subEl = document.getElementById('q-subtotal-display');
+    var taxEl = document.getElementById('q-tax-display');
+    var totEl = document.getElementById('q-total-display');
+    if (subEl) subEl.textContent = UI.money(subtotal);
+    if (taxEl) taxEl.textContent = UI.money(taxAmt);
+    if (totEl) totEl.textContent = UI.money(total);
   },
 
   saveAs: function(status) {
@@ -436,7 +458,7 @@ var QuotesPage = {
     var client = DB.clients.getById(clientId);
 
     var items = [];
-    var total = 0;
+    var subtotal = 0;
     document.querySelectorAll('.quote-item-row').forEach(function(row) {
       var service = row.querySelector('.q-item-service').value;
       var desc = row.querySelector('.q-item-desc').value;
@@ -444,9 +466,13 @@ var QuotesPage = {
       var rate = parseFloat(row.querySelector('.q-item-rate').value) || 0;
       if (service || desc || rate) {
         items.push({ service: service, description: desc, qty: qty, rate: rate, amount: qty * rate });
-        total += qty * rate;
+        subtotal += qty * rate;
       }
     });
+    var taxRateVal = document.getElementById('q-tax-rate');
+    var taxRate = taxRateVal ? (parseFloat(taxRateVal.value) || 0) : 8.375;
+    var taxAmount = Math.round(subtotal * taxRate / 100 * 100) / 100;
+    var total = subtotal + taxAmount;
 
     var depReq = document.getElementById('q-deposit-req');
     var depTypeEl = document.getElementById('q-deposit-type');
@@ -466,6 +492,9 @@ var QuotesPage = {
       property: document.getElementById('q-property').value.trim() || (client && client.address) || '',
       description: document.getElementById('q-description').value.trim(),
       lineItems: items,
+      subtotal: subtotal,
+      taxRate: taxRate,
+      taxAmount: taxAmount,
       total: total,
       notes: document.getElementById('q-notes').value.trim(),
       status: form.dataset.saveStatus || 'draft',
@@ -567,6 +596,8 @@ var QuotesPage = {
       + '<tr><td style="padding:8px 0;color:var(--text-light);width:120px;">Quote #</td><td style="padding:8px 0;font-weight:500;">' + (q.quoteNumber || '') + '</td></tr>'
       + '<tr><td style="padding:8px 0;color:var(--text-light);">Created</td><td style="padding:8px 0;">' + UI.dateShort(q.createdAt) + '</td></tr>'
       + (q.sentAt ? '<tr><td style="padding:8px 0;color:var(--text-light);">Sent</td><td style="padding:8px 0;">' + UI.dateShort(q.sentAt) + '</td></tr>' : '')
+      + (q.subtotal ? '<tr><td style="padding:8px 0;color:var(--text-light);">Subtotal</td><td style="padding:8px 0;">' + UI.money(q.subtotal) + '</td></tr>' : '')
+      + (q.taxRate ? '<tr><td style="padding:8px 0;color:var(--text-light);">Tax (' + q.taxRate + '%)</td><td style="padding:8px 0;">' + UI.money(q.taxAmount || 0) + '</td></tr>' : '')
       + '<tr><td style="padding:8px 0;color:var(--text-light);">Total</td><td style="padding:8px 0;font-weight:700;font-size:16px;">' + UI.money(q.total) + '</td></tr>'
       + (q.source ? '<tr><td style="padding:8px 0;color:var(--text-light);">Lead Source</td><td style="padding:8px 0;">' + UI.esc(q.source) + '</td></tr>' : '')
       + (q.expiresAt ? (function() {
@@ -751,6 +782,10 @@ var QuotesPage = {
         var amt = item.amount || ((item.qty||1) * (item.rate||0));
         lineItemsHtml += '<tr><td style="padding:8px 12px;border-bottom:1px solid #e0e0e0;">' + (item.service||item.description||'Service') + '</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #e0e0e0;font-weight:600;">' + UI.money(amt) + '</td></tr>';
       });
+      if (q.subtotal && q.taxRate) {
+        lineItemsHtml += '<tr><td style="padding:6px 12px;color:#718096;">Subtotal</td><td style="padding:6px 12px;text-align:right;">' + UI.money(q.subtotal) + '</td></tr>';
+        lineItemsHtml += '<tr><td style="padding:6px 12px;color:#718096;">Tax (' + q.taxRate + '%)</td><td style="padding:6px 12px;text-align:right;">' + UI.money(q.taxAmount || 0) + '</td></tr>';
+      }
       lineItemsHtml += '<tr style="background:#f0f9f4;"><td style="padding:10px 12px;font-weight:700;">Quote Total</td><td style="padding:10px 12px;text-align:right;font-weight:800;color:#00836c;font-size:16px;">' + UI.money(q.total) + '</td></tr>';
       lineItemsHtml += '</table>';
     }
@@ -885,6 +920,9 @@ var QuotesPage = {
       html += '</tbody></table>';
 
       // Subtotal / Discount / Grand Total
+      var taxRateDisplay = q.taxRate !== undefined ? q.taxRate : 8.375;
+      var taxAmtDisplay = Math.round(grandTotal * taxRateDisplay / 100 * 100) / 100;
+      var totalWithTax = grandTotal + taxAmtDisplay;
       html += '<div style="padding:12px 16px;border-top:1px solid var(--border);">'
         + '<div style="display:flex;justify-content:flex-end;">'
         + '<table style="font-size:14px;min-width:260px;">'
@@ -893,8 +931,9 @@ var QuotesPage = {
         + '<td style="padding:4px 0;text-align:right;">'
         + '<input type="number" id="li-discount" value="' + discount + '" min="0" step="0.01" style="width:90px;text-align:right;font-size:13px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;" onchange="QuotesPage.updateDiscount(\'' + id + '\',this.value)">'
         + '</td></tr>';
+      html += '<tr><td style="padding:4px 16px 4px 0;text-align:right;color:var(--text-light);">Tax (' + taxRateDisplay + '%)</td><td style="padding:4px 0;text-align:right;font-weight:600;">' + UI.money(taxAmtDisplay) + '</td></tr>';
       html += '<tr style="border-top:2px solid var(--border);"><td style="padding:8px 16px 4px 0;text-align:right;font-weight:700;font-size:15px;">Total</td>'
-        + '<td style="padding:8px 0 4px;text-align:right;font-weight:800;font-size:16px;color:var(--accent);">' + UI.money(grandTotal) + '</td></tr>';
+        + '<td style="padding:8px 0 4px;text-align:right;font-weight:800;font-size:16px;color:var(--accent);">' + UI.money(totalWithTax) + '</td></tr>';
       html += '</table></div></div>';
     } else {
       // No line items — check if services exist
@@ -1158,9 +1197,12 @@ var QuotesPage = {
     var discount = parseFloat(val) || 0;
     var subtotal = 0;
     (q.lineItems || []).forEach(function(it) { subtotal += (it.qty || 0) * (it.rate || 0); });
-    var total = subtotal - discount;
-    if (total < 0) total = 0;
-    DB.quotes.update(quoteId, { discount: discount, total: total });
+    var afterDiscount = subtotal - discount;
+    if (afterDiscount < 0) afterDiscount = 0;
+    var taxRate = q.taxRate !== undefined ? q.taxRate : 8.375;
+    var taxAmount = Math.round(afterDiscount * taxRate / 100 * 100) / 100;
+    var total = afterDiscount + taxAmount;
+    DB.quotes.update(quoteId, { discount: discount, subtotal: subtotal, taxAmount: taxAmount, total: total });
     QuotesPage.showDetail(quoteId);
   },
 

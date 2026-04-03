@@ -474,6 +474,8 @@ var InvoicesPage = {
       + '<tr><td style="padding:4px 0;color:var(--text-light);">Invoice #</td><td style="padding:4px 0;text-align:right;font-weight:600;">' + (inv.invoiceNumber || '—') + '</td></tr>'
       + '<tr><td style="padding:4px 0;color:var(--text-light);">Issued</td><td style="padding:4px 0;text-align:right;">' + UI.dateShort(inv.issuedDate || inv.createdAt) + '</td></tr>'
       + '<tr><td style="padding:4px 0;color:var(--text-light);">Due</td><td style="padding:4px 0;text-align:right;">' + UI.dateShort(inv.dueDate) + '</td></tr>'
+      + (inv.subtotal ? '<tr><td style="padding:4px 0;color:var(--text-light);">Subtotal</td><td style="padding:4px 0;text-align:right;">' + UI.money(inv.subtotal) + '</td></tr>' : '')
+      + (inv.taxRate ? '<tr><td style="padding:4px 0;color:var(--text-light);">Tax (' + inv.taxRate + '%)</td><td style="padding:4px 0;text-align:right;">' + UI.money(inv.taxAmount || 0) + '</td></tr>' : '')
       + '<tr><td style="padding:4px 0;color:var(--text-light);">Total</td><td style="padding:4px 0;text-align:right;font-weight:700;">' + UI.money(inv.total) + '</td></tr>'
       + '<tr><td style="padding:4px 0;color:var(--text-light);">Paid</td><td style="padding:4px 0;text-align:right;font-weight:700;color:var(--accent);">' + UI.money((inv.total||0) - (inv.balance||0)) + '</td></tr>'
       + '<tr style="border-top:1px solid var(--border);"><td style="padding:6px 0;color:var(--text-light);font-weight:700;">Balance</td><td style="padding:6px 0;text-align:right;font-weight:800;font-size:15px;color:' + (inv.balance > 0 ? 'var(--red)' : 'var(--accent)') + ';">' + UI.money(inv.balance || 0) + '</td></tr>'
@@ -492,6 +494,11 @@ var InvoicesPage = {
       inv.lineItems.forEach(function(item) {
         html += '<tr><td style="font-weight:600;">' + (item.service || 'Custom') + '</td><td style="color:var(--text-light);">' + (item.description || '') + '</td><td>' + (item.qty || 1) + '</td><td style="text-align:right;">' + UI.money(item.rate) + '</td><td style="text-align:right;font-weight:600;">' + UI.money(item.amount || (item.qty||1) * item.rate) + '</td></tr>';
       });
+      if (inv.taxRate) {
+        var invSubDisplay = inv.subtotal || (inv.total - (inv.taxAmount || 0));
+        html += '<tr><td colspan="4" style="text-align:right;color:var(--text-light);">Subtotal</td><td style="text-align:right;">' + UI.money(invSubDisplay) + '</td></tr>';
+        html += '<tr><td colspan="4" style="text-align:right;color:var(--text-light);">Tax (' + inv.taxRate + '%)</td><td style="text-align:right;">' + UI.money(inv.taxAmount || 0) + '</td></tr>';
+      }
       html += '<tr style="background:var(--green-bg);"><td colspan="4" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:800;font-size:15px;color:var(--accent);">' + UI.money(inv.total) + '</td></tr>';
       html += '</tbody></table>';
     } else {
@@ -630,10 +637,24 @@ var InvoicesPage = {
     html += '</div>'
       + '<button type="button" class="btn btn-outline" style="margin-top:8px;" onclick="InvoicesPage.addItem()">+ Add Line Item</button>';
 
-    // Total display
-    html += '<div style="margin-top:16px;padding:16px;background:var(--green-dark);color:var(--white);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">'
+    // Total display with tax breakdown (Jobber style)
+    var _invSubtotal = 0;
+    (inv.lineItems || []).forEach(function(it) { _invSubtotal += (it.qty || 1) * (it.rate || 0); });
+    var _invTaxRate = (inv.taxRate !== undefined ? inv.taxRate : 8.375);
+    var _invTaxAmt = Math.round(_invSubtotal * _invTaxRate / 100 * 100) / 100;
+    var _invGrandTotal = _invSubtotal + _invTaxAmt;
+    html += '<div style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'
+      + '<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid var(--border);">'
+      + '<span style="color:var(--text-light);">Subtotal</span><span id="inv-subtotal-display" style="font-weight:600;">' + UI.money(_invSubtotal) + '</span>'
+      + '</div>'
+      + '<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid var(--border);">'
+      + '<span style="color:var(--text-light);">Tax (<input type="number" id="inv-tax-rate" value="' + _invTaxRate + '" step="0.001" min="0" max="100" oninput="InvoicesPage.calcTotal()" style="width:55px;font-size:12px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;text-align:center;">%)</span>'
+      + '<span id="inv-tax-display" style="font-weight:600;">' + UI.money(_invTaxAmt) + '</span>'
+      + '</div>'
+      + '<div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;background:var(--green-dark);color:var(--white);">'
       + '<span style="font-weight:600;">Total</span>'
-      + '<span id="inv-total-display" style="font-size:1.5rem;font-weight:800;">' + UI.money(inv.total || 0) + '</span>'
+      + '<span id="inv-total-display" style="font-size:1.5rem;font-weight:800;">' + UI.money(inv.total || _invGrandTotal) + '</span>'
+      + '</div>'
       + '</div>';
 
     html += UI.formField('Internal Notes', 'textarea', 'inv-notes', inv.notes || '', { placeholder: 'Notes (not shown to client)' })
@@ -692,18 +713,26 @@ var InvoicesPage = {
   },
 
   calcTotal: function() {
-    var total = 0;
+    var subtotal = 0;
     var rows = document.querySelectorAll('.inv-item-row');
     rows.forEach(function(row) {
       var qty = parseFloat(row.querySelector('.inv-item-qty').value) || 0;
       var rate = parseFloat(row.querySelector('.inv-item-rate').value) || 0;
       var amount = qty * rate;
-      total += amount;
+      subtotal += amount;
       var amountEl = row.querySelector('.inv-item-amount');
       if (amountEl) amountEl.textContent = UI.money(amount);
     });
-    var display = document.getElementById('inv-total-display');
-    if (display) display.textContent = UI.money(total);
+    var taxRateEl = document.getElementById('inv-tax-rate');
+    var taxRate = taxRateEl ? (parseFloat(taxRateEl.value) || 0) : 0;
+    var taxAmt = Math.round(subtotal * taxRate / 100 * 100) / 100;
+    var total = subtotal + taxAmt;
+    var subEl = document.getElementById('inv-subtotal-display');
+    var taxEl = document.getElementById('inv-tax-display');
+    var totEl = document.getElementById('inv-total-display');
+    if (subEl) subEl.textContent = UI.money(subtotal);
+    if (taxEl) taxEl.textContent = UI.money(taxAmt);
+    if (totEl) totEl.textContent = UI.money(total);
   },
 
   saveAs: function(status) {
@@ -720,7 +749,7 @@ var InvoicesPage = {
     var client = DB.clients.getById(clientId);
 
     var items = [];
-    var total = 0;
+    var subtotal = 0;
     document.querySelectorAll('.inv-item-row').forEach(function(row) {
       var service = row.querySelector('.inv-item-service').value;
       var desc = row.querySelector('.inv-item-desc').value;
@@ -728,9 +757,13 @@ var InvoicesPage = {
       var rate = parseFloat(row.querySelector('.inv-item-rate').value) || 0;
       if (service || desc || rate) {
         items.push({ service: service, description: desc, qty: qty, rate: rate, amount: qty * rate });
-        total += qty * rate;
+        subtotal += qty * rate;
       }
     });
+    var invTaxRateEl = document.getElementById('inv-tax-rate');
+    var taxRate = invTaxRateEl ? (parseFloat(invTaxRateEl.value) || 0) : 8.375;
+    var taxAmount = Math.round(subtotal * taxRate / 100 * 100) / 100;
+    var total = subtotal + taxAmount;
 
     var form = document.getElementById('inv-form');
     var status = (form && form.dataset.saveStatus) ? form.dataset.saveStatus : 'draft';
@@ -744,6 +777,9 @@ var InvoicesPage = {
       issuedDate: document.getElementById('inv-issueDate').value,
       dueDate: document.getElementById('inv-dueDate').value,
       lineItems: items,
+      subtotal: subtotal,
+      taxRate: taxRate,
+      taxAmount: taxAmount,
       total: total,
       balance: total,
       notes: document.getElementById('inv-notes').value.trim(),

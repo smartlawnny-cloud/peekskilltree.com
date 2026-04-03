@@ -221,7 +221,7 @@ var PipelinePage = {
   // Data management
   getDeals: function() {
     var stored = localStorage.getItem('bm-pipeline');
-    if (stored) return JSON.parse(stored);
+    if (stored) { try { return JSON.parse(stored) || []; } catch(e) { return []; } }
 
     // Seed from existing requests/quotes
     var deals = [];
@@ -539,12 +539,16 @@ var PipelinePage = {
       return;
     }
 
+    var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    var jobDate = deal.scheduledDate || tomorrow.toISOString().split('T')[0];
+
     var job = DB.jobs.create({
       clientId: deal.clientId,
       clientName: deal.clientName,
       description: deal.description || '',
       total: deal.value || 0,
       status: 'scheduled',
+      scheduledDate: jobDate,
       source: deal.source || '',
       notes: deal.notes || '',
       quoteId: deal.quoteId || null,

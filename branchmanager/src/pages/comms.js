@@ -70,7 +70,7 @@ var CommsLog = {
       direction: direction,
       notes: notes,
       date: new Date().toISOString(),
-      user: 'Doug' // Will use auth user later
+      user: (typeof Auth !== 'undefined' && Auth.user && Auth.user.name) ? Auth.user.name : (localStorage.getItem('bm-co-name') || 'Owner').split(' ')[0]
     };
 
     var key = 'bm-comms-' + clientId;
@@ -146,7 +146,7 @@ var CommsLog = {
             + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">'
             + '<span style="font-weight:600;font-size:13px;text-transform:capitalize;">' + c.type
             + ' <span style="font-size:11px;color:' + dirColor + ';font-weight:400;">' + dirLabel + '</span>'
-            + (clientName ? ' <span style="font-size:12px;color:var(--text-light);font-weight:400;">— <a href="#" onclick="loadPage(\'clients\');return false;" style="color:var(--accent);text-decoration:none;">' + UI.esc(clientName) + '</a></span>' : '')
+            + (clientName ? ' <span style="font-size:12px;color:var(--text-light);font-weight:400;">— <a href="#" onclick="if(typeof ClientsPage!==\'undefined\')ClientsPage.showDetail(\'' + c.clientId + '\');else loadPage(\'clients\');return false;" style="color:var(--accent);text-decoration:none;">' + UI.esc(clientName) + '</a></span>' : '')
             + '</span>'
             + '<span style="font-size:11px;color:var(--text-light);">' + UI.timeAgo(c.date) + '</span>'
             + '</div>'

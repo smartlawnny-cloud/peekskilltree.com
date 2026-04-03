@@ -279,7 +279,7 @@ var DispatchPage = {
           + '<div style="margin-top:4px;">' + UI.statusBadge(j.status) + '</div></div></div>'
           + '<div style="display:flex;gap:6px;margin-top:8px;">'
           + '<button onclick="event.stopPropagation();DispatchPage.navigate(\'' + (j.property || j.address || '').replace(/'/g, "\\'") + '\')" style="background:var(--green-bg);border:1px solid #c8e6c9;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:var(--green-dark);">\uD83D\uDDFA Navigate</button>'
-          + '<button onclick="event.stopPropagation();DispatchPage.callClient(\'' + (j.clientPhone || '') + '\')" style="background:#e3f2fd;border:1px solid #bbdefb;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:#1565c0;">\uD83D\uDCDE Call</button>'
+          + '<button onclick="event.stopPropagation();DispatchPage.callClient(\'' + j.id + '\')" style="background:#e3f2fd;border:1px solid #bbdefb;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:#1565c0;">\uD83D\uDCDE Call</button>'
           + (j.status === 'scheduled' ? '<button onclick="event.stopPropagation();DispatchPage.startJob(\'' + j.id + '\')" style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:#e65100;">\u25B6 Start</button>' : '')
           + (j.status === 'in_progress' ? '<button onclick="event.stopPropagation();DispatchPage.completeJob(\'' + j.id + '\')" style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:#2e7d32;">\u2705 Complete</button>' : '')
           + '</div></div></div>';
@@ -310,9 +310,11 @@ var DispatchPage = {
     window.open(url, '_blank');
   },
 
-  callClient: function(phone) {
-    if (!phone) { UI.toast('No phone number', 'error'); return; }
-    window.open('tel:' + phone);
+  callClient: function(jobId) {
+    var j = DB.jobs.getById(jobId);
+    var phone = j && (j.clientPhone || (j.clientId && DB.clients.getById(j.clientId) && DB.clients.getById(j.clientId).phone));
+    if (!phone) { UI.toast('No phone number on file'); return; }
+    window.location.href = 'tel:' + phone.replace(/\D/g,'');
   },
 
   openRoute: function() {
@@ -329,7 +331,7 @@ var DispatchPage = {
 
     // Build Google Maps multi-stop URL
     var origin = '1+Highland+Industrial+Park+Peekskill+NY';
-    var waypoints = jobs.map(function(j) { return encodeURIComponent(j.property || j.address || j.clientName); }).join('/');
+    var waypoints = jobs.map(function(j) { return encodeURIComponent(j.property || j.address || ''); }).join('/');
     var url = 'https://www.google.com/maps/dir/' + origin + '/' + waypoints + '/' + origin;
     window.open(url, '_blank');
   },

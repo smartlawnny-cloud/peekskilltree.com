@@ -36,6 +36,9 @@ var ReviewTools = {
       + '<button onclick="ReviewTools.downloadQR()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">📥 Download QR</button>'
       + '<button onclick="ReviewTools.copyLink()" style="background:#1565c0;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">🔗 Copy Link</button>'
       + '<button onclick="ReviewTools.printCard()" style="background:#6a1b9a;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">🖨 Print Card</button>'
+      + '<button onclick="ReviewTools.generateSocialCard()" style="background:#e07c24;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">📱 Social Card</button>'
+      + '<button onclick="ReviewTools.showTemplateEditor()" style="background:var(--text);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">✏️ Edit Templates</button>'
+      + '<button onclick="ReviewTools.showAutoSettings()" style="background:none;border:2px solid var(--border);color:var(--text);padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">⚙️ Auto Settings</button>'
       + '</div></div>';
 
     // Review request sender
@@ -125,9 +128,69 @@ var ReviewTools = {
       });
     }
 
+    // Also log to ReviewsPage requests
+    if (typeof ReviewsPage !== 'undefined') {
+      var requests = ReviewsPage.getRequests();
+      requests.push({ jobId: job.id, jobNumber: job.jobNumber, clientName: job.clientName, sentAt: new Date().toISOString(), source: 'review-tools' });
+      ReviewsPage.saveRequests(requests);
+    }
+
     // Mark as sent
     localStorage.setItem('bm-review-sent-' + jobId, new Date().toISOString());
     UI.toast('Review request sent to ' + job.clientName);
-    loadPage('reviews');
+    loadPage('reviewtools');
+  },
+
+  showTemplateEditor: function() {
+    var saved = localStorage.getItem('bm-review-sms-template') || 'Hi {name}! Thanks for choosing ' + ReviewTools._co().name + '. If you were happy with our work, a quick Google review would mean a lot: ' + ReviewTools.GOOGLE_REVIEW_URL;
+    var emailSaved = localStorage.getItem('bm-review-email-template') || 'Hi {name},\n\nThank you for trusting ' + ReviewTools._co().name + ' with your tree care needs. We hope you\'re happy with the results!\n\nWould you mind taking a minute to leave us a Google review? It helps other homeowners find reliable tree service.\n\n' + ReviewTools.GOOGLE_REVIEW_URL + '\n\nThank you!\n— Doug, ' + ReviewTools._co().name;
+
+    var html = UI.field('SMS Template', '<textarea id="rt-sms-tpl" style="min-height:80px;font-size:13px;">' + UI.esc(saved) + '</textarea>')
+      + '<div style="font-size:11px;color:var(--text-light);margin:-8px 0 12px;">Use {name} for client name. Max 160 chars for SMS.</div>'
+      + UI.field('Email Template', '<textarea id="rt-email-tpl" style="min-height:120px;font-size:13px;">' + UI.esc(emailSaved) + '</textarea>')
+      + '<div style="font-size:11px;color:var(--text-light);margin:-8px 0 12px;">Use {name} for client name, {service} for service type.</div>';
+
+    UI.showModal('Review Request Templates', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="ReviewTools._saveTemplates()">Save Templates</button>'
+    });
+  },
+
+  _saveTemplates: function() {
+    localStorage.setItem('bm-review-sms-template', document.getElementById('rt-sms-tpl').value);
+    localStorage.setItem('bm-review-email-template', document.getElementById('rt-email-tpl').value);
+    UI.closeModal();
+    UI.toast('Review templates saved!');
+  },
+
+  showAutoSettings: function() {
+    if (typeof ReviewsPage !== 'undefined' && ReviewsPage.showAutoSettings) {
+      ReviewsPage.showAutoSettings();
+    } else {
+      UI.toast('Auto-review settings are on the Reviews page');
+    }
+  },
+
+  // Generate a review card image for social media
+  generateSocialCard: function() {
+    var html = '<!DOCTYPE html><html><head><title>Review Card</title><style>'
+      + 'body{font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f5f5;}'
+      + '.card{width:600px;height:315px;background:linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%);border-radius:16px;color:#fff;display:flex;align-items:center;padding:40px;gap:30px;}'
+      + '</style></head><body><div class="card">'
+      + '<div style="flex:1;">'
+      + '<div style="font-size:48px;margin-bottom:8px;">🌳</div>'
+      + '<h1 style="font-size:24px;margin:0 0 8px;">' + ReviewTools._co().name + '</h1>'
+      + '<div style="font-size:28px;color:#fbbf24;margin-bottom:8px;">★★★★★</div>'
+      + '<p style="font-size:14px;opacity:.8;margin:0;">100+ Five Star Reviews on Google</p>'
+      + '<p style="font-size:13px;opacity:.6;margin:8px 0 0;">Licensed & Insured — Peekskill, NY</p>'
+      + '</div>'
+      + '<div style="text-align:center;">'
+      + '<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=255-255-255&bgcolor=0-0-0-0&data=' + encodeURIComponent(ReviewTools.GOOGLE_REVIEW_URL) + '" style="width:140px;height:140px;border-radius:8px;">'
+      + '<p style="font-size:11px;opacity:.7;margin:8px 0 0;">Scan to review</p>'
+      + '</div></div></body></html>';
+    var w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    UI.toast('Social card opened — screenshot it to share');
   }
 };

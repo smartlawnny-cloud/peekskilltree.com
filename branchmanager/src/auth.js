@@ -100,15 +100,19 @@ var Auth = {
     }
 
     // Local auth fallback — case insensitive email
+    // Uses djb2 hash for password comparison (no plaintext passwords in source)
+    // To generate a hash: Auth._hash('yourpassword') in browser console
     var emailLower = email.toLowerCase();
+    var customHashes = {};
+    try { customHashes = JSON.parse(localStorage.getItem('bm-auth-hashes') || '{}'); } catch(e) {}
     var users = {
-      'info@peekskilltree.com': { password: 'branch2026', role: 'owner', name: 'Doug Brown' },
-      'crew@peekskilltree.com': { password: 'crew2026', role: 'crew_lead', name: 'Crew Lead' },
-      'doug@peekskilltree.com': { password: 'branch2026', role: 'owner', name: 'Doug Brown' }
+      'info@peekskilltree.com': { hash: customHashes['info@peekskilltree.com'] || '28006cfd', role: 'owner', name: 'Doug Brown' },
+      'crew@peekskilltree.com': { hash: customHashes['crew@peekskilltree.com'] || '14b65440', role: 'crew_lead', name: 'Crew Lead' },
+      'doug@peekskilltree.com': { hash: customHashes['doug@peekskilltree.com'] || '28006cfd', role: 'owner', name: 'Doug Brown' }
     };
 
     var user = users[emailLower];
-    if (user && user.password === password) {
+    if (user && Auth._hash(password) === user.hash) {
       Auth.user = { email: email, role: user.role, name: user.name };
       Auth.role = user.role;
       localStorage.setItem('bm-session', JSON.stringify(Auth.user));
@@ -133,14 +137,57 @@ var Auth = {
     window.location.reload();
   },
 
+  // djb2 hash — simple, fast, no dependencies. Returns hex string.
+  // Generate new hash: Auth._hash('yourpassword') in browser console
+  _hash: function(str) {
+    var hash = 5381;
+    for (var i = 0; i < str.length; i++) {
+      hash = ((hash << 5) + hash) + str.charCodeAt(i);
+      hash = hash & 0xffffffff;
+    }
+    return (hash >>> 0).toString(16);
+  },
+
   logout: function() {
     Auth.user = null;
     Auth.role = null;
     localStorage.removeItem('bm-session');
+    // Clear sensitive cached data on logout
+    localStorage.removeItem('bm-recent-search');
+    localStorage.removeItem('bm-recent-searches');
     if (SupabaseDB && SupabaseDB.ready) {
       SupabaseDB.client.auth.signOut().catch(function() {});
     }
+    // Clear service worker cache for security
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        names.forEach(function(n) { caches.delete(n); });
+      });
+    }
     window.location.reload();
+  },
+
+  // Session timeout — auto logout after 30 min inactivity
+  _TIMEOUT_MS: 30 * 60 * 1000,
+  _lastActivity: Date.now(),
+  _timeoutTimer: null,
+
+  resetActivity: function() {
+    Auth._lastActivity = Date.now();
+  },
+
+  startSessionTimer: function() {
+    if (Auth._timeoutTimer) clearInterval(Auth._timeoutTimer);
+    Auth._timeoutTimer = setInterval(function() {
+      if (Auth.isLoggedIn() && (Date.now() - Auth._lastActivity) > Auth._TIMEOUT_MS) {
+        UI.toast('Session expired — logging out for security', 'error');
+        setTimeout(function() { Auth.logout(); }, 1500);
+      }
+    }, 60000); // Check every minute
+    // Track activity
+    ['click', 'keydown', 'scroll', 'touchstart'].forEach(function(evt) {
+      document.addEventListener(evt, Auth.resetActivity, { passive: true });
+    });
   },
 
   // Get pages visible for current role

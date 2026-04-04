@@ -260,18 +260,25 @@ ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE automation_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 
--- Allow authenticated users full access (single-tenant for now)
-CREATE POLICY "Allow all for authenticated" ON clients FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON requests FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON quotes FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON jobs FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON invoices FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON services FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON time_entries FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON expenses FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON team_members FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON notes FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON automation_log FOR ALL USING (true);
+-- ══════════════════════════════════════
+-- AUTHENTICATED USER POLICIES
+-- Only logged-in users (not anon) can access business data
+-- ══════════════════════════════════════
+CREATE POLICY "Auth full access clients" ON clients FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access requests" ON requests FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access quotes" ON quotes FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access jobs" ON jobs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access invoices" ON invoices FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access services" ON services FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access time_entries" ON time_entries FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access expenses" ON expenses FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access team_members" ON team_members FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access notes" ON notes FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth full access automation_log" ON automation_log FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- IMPORTANT: The anon key can NO LONGER read clients, jobs, requests, expenses,
+-- team members, time entries, notes, or automation logs.
+-- Only the specific client-facing policies below grant anon access to quotes/invoices.
 
 -- ══════════════════════════════════════
 -- CLIENT-FACING PAGE POLICIES (anon access)

@@ -24,6 +24,25 @@ var DB = (function() {
   function _id() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
   function _now() { return new Date().toISOString(); }
 
+  // ── Audit Log ──
+  var AUDIT_KEY = 'bm-audit-log';
+  var AUDIT_MAX = 500;
+  function _audit(action, table, recordId, details) {
+    try {
+      var log = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
+      log.unshift({
+        ts: _now(),
+        user: (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name || Auth.user.email : 'system',
+        action: action,
+        table: table.replace('bm-', ''),
+        recordId: recordId,
+        details: details || ''
+      });
+      if (log.length > AUDIT_MAX) log.length = AUDIT_MAX;
+      localStorage.setItem(AUDIT_KEY, JSON.stringify(log));
+    } catch(e) {}
+  }
+
   // ── Generic CRUD ──
   function getAll(key) { return _get(key); }
   function getById(key, id) { return _get(key).find(function(r) { return r.id === id; }) || null; }
@@ -34,6 +53,7 @@ var DB = (function() {
     record.updatedAt = _now();
     all.unshift(record);
     _set(key, all);
+    _audit('create', key, record.id, record.name || record.clientName || '');
     return record;
   }
   function update(key, id, changes) {
@@ -42,9 +62,12 @@ var DB = (function() {
     if (idx < 0) return null;
     Object.assign(all[idx], changes, { updatedAt: _now() });
     _set(key, all);
+    _audit('update', key, id, Object.keys(changes).join(','));
     return all[idx];
   }
   function remove(key, id) {
+    var item = _get(key).find(function(r) { return r.id === id; });
+    _audit('delete', key, id, item ? (item.name || item.clientName || '') : '');
     var all = _get(key).filter(function(r) { return r.id !== id; });
     _set(key, all);
   }
@@ -391,7 +414,17 @@ var DB = (function() {
     dashboard: dashboard,
     importCSV: importCSV,
     seedDemo: seedDemo,
-    KEYS: KEYS
+    KEYS: KEYS,
+    auditLog: {
+      getRecent: function(n) { try { var log = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]'); return n ? log.slice(0, n) : log; } catch(e) { return []; } },
+      clear: function() { localStorage.removeItem(AUDIT_KEY); },
+      getAll: function() { return JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]'); }
+    },
+    getAll: getAll,
+    getById: getById,
+    create: create,
+    update: update,
+    remove: remove
   };
 })();
 

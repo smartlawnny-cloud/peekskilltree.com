@@ -326,12 +326,13 @@
       position:fixed !important; top:0 !important; left:0 !important; right:0 !important;
       bottom:0 !important; margin:0 !important; border-radius:0 !important;
       max-height:none !important; min-width:0 !important; z-index:500 !important;
-      border:none !important; padding-top:64px;
+      border:none !important; padding-top:calc(64px + env(safe-area-inset-top, 0px));
+      -webkit-overflow-scrolling:touch; overflow-y:auto !important;
     }
     #search-mobile-header {
       display:none; position:fixed; top:0; left:0; right:0; z-index:501;
       background:var(--white); border-bottom:1px solid var(--border);
-      padding:10px 12px; align-items:center; gap:10px;
+      padding:calc(10px + env(safe-area-inset-top, 0px)) 12px 10px; align-items:center; gap:10px;
     }
     #search-mobile-header.visible { display:flex; }
     #search-mobile-input {
@@ -1041,6 +1042,8 @@ function _openMobileSearch() {
   searchDropdown.style.display='block';
   searchDropdown.classList.add('mobile-open');
   document.body.style.overflow='hidden';
+  minput.focus();
+  // Capacitor/WKWebView fallback — second attempt after layout settles
   setTimeout(function(){ minput.focus(); }, 80);
 }
 
@@ -1203,7 +1206,6 @@ function _handleSearchInput(q, fromMobile) {
 
 document.getElementById('globalSearch').addEventListener('focus', function() {
   if (_isMobile()) {
-    // Open full-screen overlay on mobile instead
     this.blur();
     _openMobileSearch();
     _showRecents();
@@ -1211,6 +1213,16 @@ document.getElementById('globalSearch').addEventListener('focus', function() {
   }
   if (!this.value.trim()) _showRecents();
 });
+
+// iOS requires focus() to be called synchronously in a touch event.
+// touchstart fires before focus, keeping us inside the user-gesture chain.
+document.getElementById('globalSearch').addEventListener('touchstart', function(e) {
+  if (_isMobile()) {
+    e.preventDefault();
+    _openMobileSearch();
+    _showRecents();
+  }
+}, { passive: false });
 
 document.getElementById('globalSearch').addEventListener('input', function() {
   _handleSearchInput(this.value.trim(), false);
@@ -1272,7 +1284,7 @@ document.getElementById('globalSearch').addEventListener('keydown', function(e) 
 });
 
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.search-box')) searchDropdown.style.display = 'none';
+  if (!e.target.closest('.search-box') && !e.target.closest('#search-mobile-header') && !e.target.closest('#searchDropdown')) searchDropdown.style.display = 'none';
   // Close any open More-actions dropdowns
   if (!e.target.closest('.more-dd') && !e.target.closest('[onclick*="more-dd"]')) {
     document.querySelectorAll('.more-dd').forEach(function(d) { d.style.display = 'none'; });
@@ -1790,6 +1802,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (DB.invoices && DB.invoices.markOverdue) DB.invoices.markOverdue();
       if (DB.jobs && DB.jobs.fixStatuses) DB.jobs.fixStatuses();
     }
+    // Start session timeout timer (auto-logout after 30 min inactivity)
+    if (typeof Auth !== 'undefined' && Auth.startSessionTimer) Auth.startSessionTimer();
+    // Check for auto review requests
+    if (typeof ReviewsPage !== 'undefined' && ReviewsPage.checkAutoReviews) ReviewsPage.checkAutoReviews();
   }, 3000);
 });
 // Initialize Lucide icons after DOM is ready

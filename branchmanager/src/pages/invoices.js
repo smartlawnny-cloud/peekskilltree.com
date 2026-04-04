@@ -83,6 +83,7 @@ var InvoicesPage = {
         return out;
       })()
       + '</div>'
+      + '<button onclick="InvoicesPage._generateFromJobs()" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid #e07c24;background:#fff3e0;color:#e07c24;cursor:pointer;font-weight:600;">⚡ Generate from Jobs</button>'
       + '<div class="search-box" style="min-width:200px;max-width:280px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
       + '<input type="text" placeholder="Search invoices..." value="' + UI.esc(self._search) + '" oninput="InvoicesPage._search=this.value;InvoicesPage._page=0;loadPage(\'invoices\')">'
@@ -101,6 +102,7 @@ var InvoicesPage = {
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
+      + '<th style="width:36px;"><input type="checkbox" onchange="InvoicesPage._toggleAll(this.checked)" title="Select all"></th>'
       + self._sortTh('Client', 'clientName') + self._sortTh('#', 'invoiceNumber') + self._sortTh('Issued', 'createdAt') + '<th>Subject</th>' + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;') + self._sortTh('Balance', 'balance', 'text-align:right;')
       + '</tr></thead><tbody>';
 
@@ -109,6 +111,7 @@ var InvoicesPage = {
     } else {
       page.forEach(function(inv) {
         html += '<tr style="cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')">'
+          + '<td onclick="event.stopPropagation()"><input type="checkbox" class="inv-check" data-id="' + inv.id + '" onchange="InvoicesPage._updateBatch()"></td>'
           + '<td><strong>' + UI.esc(inv.clientName || '—') + '</strong></td>'
           + '<td>#' + (inv.invoiceNumber || '') + '</td>'
           + '<td style="white-space:nowrap;">' + UI.dateShort(inv.createdAt || inv.date) + '</td>'
@@ -186,7 +189,22 @@ var InvoicesPage = {
     if (count) count.textContent = selected.length + ' selected';
   },
   _getSelected: function() {
-    return Array.from(document.querySelectorAll('.inv-check:checked')).map(function(cb) { return cb.value; });
+    return Array.from(document.querySelectorAll('.inv-check:checked')).map(function(cb) { return cb.getAttribute('data-id') || cb.value; });
+  },
+  _toggleAll: function(checked) {
+    document.querySelectorAll('.inv-check').forEach(function(cb) { cb.checked = checked; });
+    InvoicesPage._updateBatch();
+  },
+  _updateBatch: function() {
+    var selected = InvoicesPage._getSelected();
+    var bar = document.getElementById('inv-batch-bar');
+    var count = document.getElementById('inv-batch-count');
+    if (selected.length > 0) {
+      bar.style.display = 'flex';
+      count.textContent = selected.length + ' selected';
+    } else {
+      bar.style.display = 'none';
+    }
   },
   _sendInvoice: function(id) {
     var inv = DB.invoices.getById(id);
@@ -300,7 +318,67 @@ var InvoicesPage = {
     document.querySelectorAll('.inv-check').forEach(function(cb) { cb.checked = false; });
     var headerCheck = document.querySelector('th input[type="checkbox"]');
     if (headerCheck) headerCheck.checked = false;
-    InvoicesPage._updateBatchBar();
+    InvoicesPage._updateBatch();
+  },
+
+  _generateFromJobs: function() {
+    var allJobs = DB.jobs.getAll();
+    var allInvoices = DB.invoices.getAll();
+    var invoicedJobIds = allInvoices.map(function(i) { return i.jobId; }).filter(Boolean);
+    var uninvoiced = allJobs.filter(function(j) {
+      return j.status === 'completed' && invoicedJobIds.indexOf(j.id) === -1;
+    });
+
+    if (uninvoiced.length === 0) {
+      UI.toast('All completed jobs already have invoices', 'error');
+      return;
+    }
+
+    var html = '<p style="margin:0 0 16px;font-size:13px;color:var(--text-light);">' + uninvoiced.length + ' completed jobs without invoices. Select which ones to generate:</p>';
+    html += '<div style="max-height:350px;overflow-y:auto;">';
+    uninvoiced.forEach(function(j) {
+      html += '<label style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:6px;cursor:pointer;">'
+        + '<input type="checkbox" checked class="gen-inv-check" data-id="' + j.id + '">'
+        + '<div style="flex:1;"><div style="font-weight:600;font-size:13px;">' + UI.esc(j.clientName || '—') + ' — #' + (j.jobNumber || '') + '</div>'
+        + '<div style="font-size:11px;color:var(--text-light);">' + UI.esc(j.description || j.property || '') + ' · ' + UI.money(j.total || 0) + '</div></div>'
+        + '</label>';
+    });
+    html += '</div>';
+
+    UI.showModal('Generate Invoices (' + uninvoiced.length + ' jobs)', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="InvoicesPage._doGenerate()">Generate Selected</button>'
+    });
+  },
+
+  _doGenerate: function() {
+    var checks = document.querySelectorAll('.gen-inv-check:checked');
+    var count = 0;
+    checks.forEach(function(cb) {
+      var jobId = cb.getAttribute('data-id');
+      var j = DB.jobs.getById(jobId);
+      if (!j) return;
+      var invNum = DB.invoices.getAll().length + count + 1;
+      DB.invoices.create({
+        invoiceNumber: invNum,
+        clientId: j.clientId,
+        clientName: j.clientName,
+        clientEmail: j.clientEmail,
+        clientPhone: j.clientPhone,
+        jobId: j.id,
+        subject: 'For Services Rendered',
+        lineItems: j.lineItems || [],
+        total: j.total || 0,
+        balance: j.total || 0,
+        issuedDate: new Date().toISOString().split('T')[0],
+        status: 'draft'
+      });
+      DB.jobs.update(jobId, { invoiceId: 'generated' });
+      count++;
+    });
+    UI.closeModal();
+    UI.toast(count + ' invoice' + (count !== 1 ? 's' : '') + ' generated! 🧾');
+    loadPage('invoices');
   },
 
   _getPayLink: function(id) {

@@ -58,7 +58,10 @@ var ReviewsPage = {
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
       + '<h3 style="font-size:15px;font-weight:700;margin:0;">Send Review Request</h3>'
-      + '<span style="font-size:12px;color:var(--text-light);">Recent completed jobs</span>'
+      + '<div style="display:flex;gap:8px;">'
+      + '<button class="btn btn-primary" style="font-size:12px;" onclick="ReviewsPage.batchSend()">📤 Batch Send</button>'
+      + '<button class="btn btn-outline" style="font-size:12px;" onclick="ReviewsPage.showAutoSettings()">⚙️ Auto Settings</button>'
+      + '</div>'
       + '</div>';
 
     var recentCompleted = completedJobs.slice().reverse().slice(0, 8);
@@ -196,6 +199,112 @@ var ReviewsPage = {
       var input = document.getElementById('review-link');
       if (input) { input.select(); document.execCommand('copy'); }
       UI.toast('Review link copied!');
+    }
+  },
+
+  // ── Batch send review requests ──
+  batchSend: function() {
+    var completedJobs = DB.jobs.getAll().filter(function(j) { return j.status === 'completed'; });
+    var requests = ReviewsPage.getRequests();
+    var sentIds = requests.map(function(r) { return r.jobId; });
+    var unsent = completedJobs.filter(function(j) {
+      return sentIds.indexOf(j.id) === -1 && (j.clientPhone || j.clientEmail);
+    });
+
+    if (unsent.length === 0) {
+      UI.toast('All eligible clients already have review requests', 'error');
+      return;
+    }
+
+    var html = '<p style="margin:0 0 16px;font-size:13px;color:var(--text-light);">' + unsent.length + ' completed jobs without a review request. Select which ones to send:</p>';
+    html += '<div style="max-height:300px;overflow-y:auto;">';
+    unsent.slice(0, 30).forEach(function(j, i) {
+      html += '<label style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:6px;cursor:pointer;">'
+        + '<input type="checkbox" checked class="batch-rev-check" data-id="' + j.id + '">'
+        + '<div style="flex:1;"><div style="font-weight:600;font-size:13px;">' + UI.esc(j.clientName || '—') + '</div>'
+        + '<div style="font-size:11px;color:var(--text-light);">#' + (j.jobNumber || '') + ' · ' + UI.esc(j.description || j.property || '') + '</div></div>'
+        + '</label>';
+    });
+    html += '</div>';
+
+    UI.showModal('Batch Review Requests (' + unsent.length + ')', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="ReviewsPage._sendBatch()">Send Selected</button>'
+    });
+  },
+
+  _sendBatch: function() {
+    var checks = document.querySelectorAll('.batch-rev-check:checked');
+    var requests = ReviewsPage.getRequests();
+    var count = 0;
+    checks.forEach(function(cb) {
+      var jobId = cb.getAttribute('data-id');
+      var j = DB.jobs.getById(jobId);
+      if (j) {
+        requests.push({ jobId: j.id, jobNumber: j.jobNumber, clientName: j.clientName, sentAt: new Date().toISOString(), source: 'batch' });
+        count++;
+      }
+    });
+    ReviewsPage.saveRequests(requests);
+    UI.closeModal();
+    UI.toast(count + ' review requests sent! ⭐');
+    loadPage('reviews');
+  },
+
+  // ── Auto-send settings ──
+  getAutoSettings: function() {
+    return JSON.parse(localStorage.getItem('bm-review-auto') || '{"enabled":false,"daysAfter":3}');
+  },
+
+  saveAutoSettings: function(settings) {
+    localStorage.setItem('bm-review-auto', JSON.stringify(settings));
+  },
+
+  showAutoSettings: function() {
+    var s = ReviewsPage.getAutoSettings();
+    var html = '<div style="margin-bottom:16px;">'
+      + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
+      + '<input type="checkbox" id="rev-auto-enabled" ' + (s.enabled ? 'checked' : '') + '>'
+      + '<div><div style="font-weight:600;font-size:14px;">Auto-send review requests</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Automatically send a review request after a job is completed</div></div>'
+      + '</label></div>'
+      + UI.field('Days after completion', '<input type="number" id="rev-auto-days" value="' + (s.daysAfter || 3) + '" min="1" max="30" style="width:80px;">')
+      + UI.field('Message template', '<textarea id="rev-auto-msg" style="min-height:80px;">' + UI.esc(s.message || 'Hi! Thanks for choosing ' + ReviewsPage._co().name + '. We\'d love your feedback — it helps us serve our community better. Leave us a quick Google review: ' + ReviewsPage.GOOGLE_REVIEW_URL) + '</textarea>');
+
+    UI.showModal('Auto Review Settings', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="ReviewsPage._saveAutoSettings()">Save</button>'
+    });
+  },
+
+  _saveAutoSettings: function() {
+    ReviewsPage.saveAutoSettings({
+      enabled: document.getElementById('rev-auto-enabled').checked,
+      daysAfter: parseInt(document.getElementById('rev-auto-days').value) || 3,
+      message: document.getElementById('rev-auto-msg').value
+    });
+    UI.closeModal();
+    UI.toast('Auto-review settings saved!');
+    loadPage('reviews');
+  },
+
+  // Check for jobs that need auto review requests (called on app load)
+  checkAutoReviews: function() {
+    var settings = ReviewsPage.getAutoSettings();
+    if (!settings.enabled) return;
+    var requests = ReviewsPage.getRequests();
+    var sentIds = requests.map(function(r) { return r.jobId; });
+    var cutoff = new Date(Date.now() - settings.daysAfter * 86400000).toISOString();
+    var eligible = DB.jobs.getAll().filter(function(j) {
+      return j.status === 'completed' && sentIds.indexOf(j.id) === -1
+        && j.completedAt && j.completedAt <= cutoff
+        && (j.clientPhone || j.clientEmail);
+    });
+    eligible.forEach(function(j) {
+      requests.push({ jobId: j.id, jobNumber: j.jobNumber, clientName: j.clientName, sentAt: new Date().toISOString(), source: 'auto' });
+    });
+    if (eligible.length > 0) {
+      ReviewsPage.saveRequests(requests);
     }
   }
 };

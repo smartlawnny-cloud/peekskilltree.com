@@ -4,6 +4,16 @@
  * When connected, all data syncs to cloud — works across devices
  *
  * Uses Supabase JS client v2 (loaded from CDN)
+ *
+ * SECURITY MODEL:
+ * The anon key below is safe to expose in client-side code IF Row Level Security
+ * (RLS) policies are properly configured in Supabase. With RLS enabled:
+ *   - Anon key can ONLY read non-draft quotes/invoices (for approve.html & pay.html)
+ *   - All other data requires authentication (Supabase Auth sign-in)
+ *   - Team members, clients, jobs, expenses, etc. are NOT accessible to anon
+ *
+ * WITHOUT RLS: The anon key grants FULL read/write access to ALL tables.
+ * Run migrate-rls.sql in Supabase SQL Editor to enable proper RLS policies.
  */
 var SupabaseDB = {
   client: null,
@@ -38,6 +48,9 @@ var SupabaseDB = {
       SupabaseDB.ready = true;
       console.log('Supabase connected:', url);
 
+      // Check if RLS policies are properly configured
+      SupabaseDB._checkRLS();
+
       // Override DB methods to use Supabase
       SupabaseDB._overrideDB();
 
@@ -46,6 +59,20 @@ var SupabaseDB = {
     } catch (e) {
       console.error('Supabase connection failed:', e);
     }
+  },
+
+  _checkRLS: function() {
+    // Test if anon key can read team_members — it shouldn't with proper RLS
+    SupabaseDB.client.from('team_members').select('id').limit(1).then(function(res) {
+      if (res.data && res.data.length > 0) {
+        console.warn('⚠️ WARNING: Supabase RLS policies are NOT configured properly.');
+        console.warn('The anon key can read team_members — this means ALL tables are exposed.');
+        console.warn('Run migrate-rls.sql in your Supabase SQL Editor to fix this.');
+        console.warn('See: https://supabase.com/dashboard/project/ltpivkqahvplapyagljt/sql');
+      } else if (res.error && res.error.code === '42501') {
+        console.log('✅ Supabase RLS policies are active — anon key is restricted.');
+      }
+    }).catch(function() {});
   },
 
   _overrideDB: function() {

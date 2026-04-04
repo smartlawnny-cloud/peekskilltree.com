@@ -197,6 +197,55 @@ var ProfitLossPage = {
       html += '</div></div>';
     }
 
+    // Export button
+    html += '<div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">'
+      + '<button onclick="ProfitLossPage.exportCSV(\'' + periodLabel + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;">📥 Export CSV</button>'
+      + '<button onclick="window.print()" style="background:none;border:2px solid var(--border);padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;">🖨 Print</button>'
+      + '</div>';
+
     return html;
+  },
+
+  exportCSV: function(period) {
+    var invoices = DB.invoices.getAll();
+    var expenses = DB.expenses ? DB.expenses.getAll() : [];
+
+    var rows = ['Type,Category,Description,Amount,Date'];
+
+    // Revenue rows
+    invoices.forEach(function(i) {
+      if (i.status === 'paid') {
+        rows.push('Revenue,Invoice #' + (i.invoiceNumber || '') + ',' + (i.clientName || '').replace(/,/g, '') + ',' + (i.total || 0) + ',' + (i.createdAt || '').split('T')[0]);
+      }
+    });
+
+    // Expense rows
+    expenses.forEach(function(e) {
+      rows.push('Expense,' + (e.category || 'Other').replace(/,/g, '') + ',' + (e.description || '').replace(/,/g, '') + ',' + (e.amount || 0) + ',' + (e.date || '').split('T')[0]);
+    });
+
+    // Fixed costs
+    var fixedItems = [
+      { label: 'Truck Payment', key: 'truck_payment', default: 1912 },
+      { label: 'Pickup Payment', key: 'pickup_payment', default: 1000 },
+      { label: 'Insurance', key: 'insurance_monthly', default: 1300 },
+      { label: 'Repair Fund', key: 'repair_fund', default: 1000 }
+    ];
+    fixedItems.forEach(function(f) {
+      var val = parseFloat(localStorage.getItem('bm-fixed-' + f.key)) || f.default;
+      if (val > 0) rows.push('Fixed Cost,' + f.label + ',Monthly,' + val + ',');
+    });
+
+    var csv = rows.join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'profit-loss-' + (period || 'report') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    UI.toast('P&L exported as CSV');
   }
 };

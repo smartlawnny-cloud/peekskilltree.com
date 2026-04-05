@@ -16,6 +16,7 @@ interface MenuItem {
   label: string;
   desc: string;
   screen?: string;
+  ownerOnly?: boolean;
 }
 
 const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
@@ -23,8 +24,8 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
     title: 'Team',
     items: [
       { icon: '👥', label: 'Employees', desc: 'Manage team members', screen: 'EmployeeProfile' },
-      { icon: '💰', label: 'Payroll', desc: 'Review & submit payroll', screen: 'PayrollReview' },
-      { icon: '🛡️', label: 'Permissions', desc: 'Role-based access control' },
+      { icon: '💰', label: 'Payroll', desc: 'Review & submit payroll', screen: 'PayrollReview', ownerOnly: true },
+      { icon: '🛡️', label: 'Permissions', desc: 'Role-based access control', ownerOnly: true },
     ],
   },
   {
@@ -32,8 +33,8 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
     items: [
       { icon: '🧾', label: 'Invoices', desc: 'View & manage invoices', screen: 'Search' },
       { icon: '💳', label: 'Payments', desc: 'Track payments', screen: 'Search' },
-      { icon: '📊', label: 'Reports', desc: 'Revenue & analytics', screen: 'Reports' },
-      { icon: '💵', label: 'Expenses', desc: 'Track business expenses', screen: 'Expenses' },
+      { icon: '📊', label: 'Reports', desc: 'Revenue & analytics', screen: 'Reports', ownerOnly: true },
+      { icon: '💵', label: 'Expenses', desc: 'Track business expenses', screen: 'Expenses', ownerOnly: true },
     ],
   },
   {
@@ -56,7 +57,10 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
   },
 ];
 
+import { useAuth } from '../hooks/useAuth';
+
 export function MoreScreen({ navigation }: any) {
+  const { user, hasPermission, isOwner } = useAuth();
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
@@ -74,11 +78,14 @@ export function MoreScreen({ navigation }: any) {
           </View>
         </Card>
 
-        {MENU_SECTIONS.map(section => (
+        {MENU_SECTIONS.map(section => {
+          const visibleItems = section.items.filter(item => !item.ownerOnly || isOwner);
+          if (visibleItems.length === 0) return null;
+          return (
           <View key={section.title}>
             <Text style={styles.sectionTitle}>{section.title}</Text>
             <Card style={styles.menuCard}>
-              {section.items.map((item, i) => (
+              {visibleItems.map((item, i) => (
                 <TouchableOpacity
                   key={item.label}
                   style={[styles.menuItem, i < section.items.length - 1 && styles.menuItemBorder]}
@@ -106,7 +113,8 @@ export function MoreScreen({ navigation }: any) {
               ))}
             </Card>
           </View>
-        ))}
+          );
+        })}
 
         {/* Version */}
         <Text style={styles.version}>Branch Manager v1.0.0</Text>

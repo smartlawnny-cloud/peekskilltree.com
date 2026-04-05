@@ -14,6 +14,7 @@ import {
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { ApprovalBadge } from '../components/ApprovalBadge';
+import { HourEntryCard } from '../components/HourEntryCard';
 import { formatDateFull, formatTime } from '../utils/date';
 import { hours as fmtHours, currency } from '../utils/format';
 import type { HourEntry } from '../models/types';
@@ -115,36 +116,20 @@ export function DayDetailModal({
               </Card>
             ) : (
               entries.map(entry => (
-                <Card key={entry.id} style={styles.entryCard}>
-                  <View style={styles.entryTop}>
-                    <Text style={styles.entryHours}>
-                      {entry.hours > 0 ? entry.hours.toFixed(1) + ' hrs' : '—'}
-                    </Text>
-                    {entry.clockIn && (
-                      <Text style={styles.entryTime}>
-                        {formatTime(entry.clockIn)}
-                        {entry.clockOut ? ` – ${formatTime(entry.clockOut)}` : ' (no clock-out)'}
-                      </Text>
-                    )}
-                  </View>
-
-                  {entry.jobId && (
-                    <Text style={styles.entryJob}>Job: {entry.jobId}</Text>
-                  )}
-
-                  {entry.notes && (
-                    <Text style={styles.entryNotes}>{entry.notes}</Text>
-                  )}
-
-                  <View style={styles.entryActions}>
-                    <TouchableOpacity style={styles.editBtn}>
-                      <Text style={styles.editBtnText}>Edit</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.deleteBtn}>
-                      <Text style={styles.deleteBtnText}>Delete</Text>
-                    </TouchableOpacity>
-                  </View>
-                </Card>
+                <HourEntryCard
+                  key={entry.id}
+                  entry={entry}
+                  onEdit={() => {
+                    setAddHoursVal(entry.hours?.toString() || '');
+                    setAddNotes(entry.notes || '');
+                    setShowAddForm(true);
+                  }}
+                  onDelete={async () => {
+                    const { supabase } = await import('../api/supabase');
+                    await supabase.from('time_entries').delete().eq('id', entry.id);
+                    onClose(); // Refresh parent
+                  }}
+                />
               ))
             )}
 

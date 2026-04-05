@@ -11,11 +11,17 @@ import { CreateJobScreen } from '../screens/CreateJobScreen';
 import { EmployeeProfileScreen } from '../screens/EmployeeProfileScreen';
 import { PayrollReviewScreen } from '../screens/PayrollReviewScreen';
 import { PayrollConfirmScreen } from '../screens/PayrollConfirmScreen';
+import { PaymentScreen } from '../screens/PaymentScreen';
 import { QuoteBuilderScreen } from '../screens/QuoteBuilderScreen';
 import { QuoteDetailScreen } from '../screens/QuoteDetailScreen';
 import { InvoiceBuilderScreen } from '../screens/InvoiceBuilderScreen';
 import { InvoiceDetailScreen } from '../screens/InvoiceDetailScreen';
 import { ClientPortalScreen } from '../screens/ClientPortalScreen';
+import { RecurringScreen } from '../screens/RecurringScreen';
+import { ExpensesScreen } from '../screens/ExpensesScreen';
+import { MessagingScreen } from '../screens/MessagingScreen';
+import { ReportsScreen } from '../screens/ReportsScreen';
+import { DispatchScreen } from '../screens/DispatchScreen';
 import { VoiceToQuoteScreen } from '../screens/VoiceToQuoteScreen';
 import { AssistantScreen } from '../screens/AssistantScreen';
 
@@ -35,19 +41,25 @@ export function AppNavigator() {
       <Stack.Screen name="QuoteDetail" component={QuoteDetailScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="InvoiceDetail" component={InvoiceDetailScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="ClientPortal" component={ClientPortalScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="Dispatch" component={DispatchScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="Reports" component={ReportsScreen} options={{ animation: 'slide_from_right' }} />
 
       {/* Builder/create screens */}
       <Stack.Screen name="QuoteBuilder" component={QuoteBuilderScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="InvoiceBuilder" component={InvoiceBuilderScreen} options={{ animation: 'slide_from_right' }} />
-      <Stack.Screen name="CreateClient" component={CreateClientScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="CreateRequest" component={CreateRequestScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="CreateJob" component={CreateJobScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Payment" component={PaymentScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="Recurring" component={RecurringScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="Expenses" component={ExpensesScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="Messaging" component={MessagingScreen} options={{ animation: 'slide_from_right' }} />
 
       {/* Payroll */}
       <Stack.Screen name="PayrollReview" component={PayrollReviewScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="PayrollConfirm" component={PayrollConfirmScreen} options={{ animation: 'slide_from_right' }} />
 
       {/* Modals */}
+      <Stack.Screen name="CreateClient" component={CreateClientScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="CreateRequest" component={CreateRequestScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="CreateJob" component={CreateJobScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="VoiceToQuote" component={VoiceToQuoteScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Assistant" component={AssistantScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
     </Stack.Navigator>

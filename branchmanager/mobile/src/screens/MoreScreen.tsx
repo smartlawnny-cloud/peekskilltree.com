@@ -30,10 +30,10 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
   {
     title: 'Financial',
     items: [
-      { icon: '🧾', label: 'Invoices', desc: 'View & manage invoices' },
-      { icon: '💳', label: 'Payments', desc: 'Track payments' },
-      { icon: '📊', label: 'Insights', desc: 'Revenue & analytics' },
-      { icon: '💵', label: 'Expenses', desc: 'Track business expenses' },
+      { icon: '🧾', label: 'Invoices', desc: 'View & manage invoices', screen: 'Search' },
+      { icon: '💳', label: 'Payments', desc: 'Track payments', screen: 'Search' },
+      { icon: '📊', label: 'Reports', desc: 'Revenue & analytics', screen: 'Reports' },
+      { icon: '💵', label: 'Expenses', desc: 'Track business expenses', screen: 'Expenses' },
     ],
   },
   {
@@ -41,8 +41,9 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
     items: [
       { icon: '🤖', label: 'AI Assistant', desc: 'Ask Claude anything', screen: 'Assistant' },
       { icon: '🎤', label: 'Voice to Quote', desc: 'Describe a job, get a quote', screen: 'VoiceToQuote' },
-      { icon: '📋', label: 'Quotes', desc: 'Manage estimates' },
-      { icon: '📦', label: 'Equipment', desc: 'Track equipment & materials' },
+      { icon: '📋', label: 'Dispatch', desc: 'Assign crew to jobs', screen: 'Dispatch' },
+      { icon: '💬', label: 'Messaging', desc: 'SMS & email clients', screen: 'Messaging' },
+      { icon: '🔄', label: 'Recurring', desc: 'Recurring jobs & invoices', screen: 'Recurring' },
     ],
   },
   {

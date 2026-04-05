@@ -84,9 +84,14 @@ export function HomeScreen({ navigation }: any) {
           <Text style={styles.headerTitle}>Branch Manager</Text>
           <Text style={styles.headerSub}>Second Nature Tree Service</Text>
         </View>
-        <TouchableOpacity style={styles.avatarBtn}>
-          <Avatar name="Doug Brown" size={36} color={colors.white + '30'} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity onPress={() => navigation.navigate('Assistant')} style={{ opacity: 0.9 }}>
+            <Text style={{ fontSize: 24 }}>🤖</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.avatarBtn}>
+            <Avatar name="Doug Brown" size={36} color={colors.white + '30'} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView

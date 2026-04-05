@@ -39,10 +39,10 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
   {
     title: 'Operations',
     items: [
+      { icon: '🤖', label: 'AI Assistant', desc: 'Ask Claude anything', screen: 'Assistant' },
+      { icon: '🎤', label: 'Voice to Quote', desc: 'Describe a job, get a quote', screen: 'VoiceToQuote' },
       { icon: '📋', label: 'Quotes', desc: 'Manage estimates' },
       { icon: '📦', label: 'Equipment', desc: 'Track equipment & materials' },
-      { icon: '🗺️', label: 'Property Maps', desc: 'Satellite job planning' },
-      { icon: '🤖', label: 'Automations', desc: 'Email & SMS workflows' },
     ],
   },
   {

@@ -4,6 +4,7 @@ import { BottomTabs } from './BottomTabs';
 import { EmployeeProfileScreen } from '../screens/EmployeeProfileScreen';
 import { PayrollReviewScreen } from '../screens/PayrollReviewScreen';
 import { VoiceToQuoteScreen } from '../screens/VoiceToQuoteScreen';
+import { AssistantScreen } from '../screens/AssistantScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +25,11 @@ export function AppNavigator() {
       <Stack.Screen
         name="VoiceToQuote"
         component={VoiceToQuoteScreen}
+        options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+      />
+      <Stack.Screen
+        name="Assistant"
+        component={AssistantScreen}
         options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
       />
     </Stack.Navigator>

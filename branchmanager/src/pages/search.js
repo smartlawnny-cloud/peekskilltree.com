@@ -40,7 +40,7 @@ var SearchPage = {
   // ── Category selector ──────────────────────────────────────────
   _setCategory: function(cat) {
     SearchPage._activeCategory = cat;
-    var searchEl = document.getElementById('global-search-input');
+    var searchEl = document.getElementById('search-page-input') || document.getElementById('global-search-input');
     var q = searchEl ? searchEl.value.trim() : '';
     var content = document.getElementById('search-results-area');
     if (content) content.innerHTML = SearchPage._renderResults(q);
@@ -51,8 +51,19 @@ var SearchPage = {
     var self = SearchPage;
     self._activeCategory = 'all';
 
+    // Search input bar (always visible on the search page)
+    var html = '<div style="position:relative;margin-bottom:16px;">'
+      + '<input type="text" id="search-page-input" placeholder="Search clients, jobs, quotes, invoices..." '
+      + 'value="' + UI.esc(query || '') + '" '
+      + 'oninput="SearchPage._onPageSearch(this.value)" '
+      + 'autocomplete="off" autocorrect="off" autocapitalize="off" '
+      + 'style="width:100%;padding:12px 16px 12px 40px;border:2px solid var(--border);border-radius:12px;font-size:15px;background:var(--white);outline:none;-webkit-appearance:none;" '
+      + 'onfocus="this.style.borderColor=\'var(--accent)\'" onblur="this.style.borderColor=\'var(--border)\'">'
+      + '<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;">🔍</span>'
+      + '</div>';
+
     // Quick Actions bar
-    var html = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">'
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">'
       + '<button class="btn btn-primary" onclick="loadPage(\'clients\');setTimeout(function(){ClientsPage.showAddForm&&ClientsPage.showAddForm();},200)" style="font-size:13px;padding:8px 14px;">+ New Client</button>'
       + '<button class="btn btn-primary" onclick="loadPage(\'jobs\');setTimeout(function(){JobsPage.showAddForm&&JobsPage.showAddForm();},200)" style="font-size:13px;padding:8px 14px;">+ New Job</button>'
       + '<button class="btn btn-primary" onclick="loadPage(\'invoices\');setTimeout(function(){InvoicesPage.showAddForm&&InvoicesPage.showAddForm();},200)" style="font-size:13px;padding:8px 14px;">+ New Invoice</button>'
@@ -60,11 +71,11 @@ var SearchPage = {
 
     // Category filter tabs
     var cats = ['all', 'clients', 'jobs', 'invoices', 'quotes', 'requests'];
-    html += '<div id="search-cat-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;">';
+    html += '<div id="search-cat-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;">';
     cats.forEach(function(cat) {
       var active = self._activeCategory === cat;
       html += '<button onclick="SearchPage._setCategory(\'' + cat + '\')" id="search-tab-' + cat + '" style="'
-        + 'padding:6px 14px;border-radius:20px;border:1px solid var(--border);font-size:13px;cursor:pointer;font-weight:600;'
+        + 'padding:6px 14px;border-radius:20px;border:1px solid var(--border);font-size:13px;cursor:pointer;font-weight:600;white-space:nowrap;'
         + (active ? 'background:var(--green-dark);color:#fff;border-color:var(--green-dark);' : 'background:var(--white);color:var(--text-light);')
         + '">' + cat.charAt(0).toUpperCase() + cat.slice(1) + '</button>';
     });
@@ -74,6 +85,16 @@ var SearchPage = {
     html += '<div id="search-results-area">' + self._renderResults(query) + '</div>';
 
     return html;
+  },
+
+  // ── Live search from the page input ───────────────────────────
+  _pageSearchTimeout: null,
+  _onPageSearch: function(q) {
+    clearTimeout(SearchPage._pageSearchTimeout);
+    SearchPage._pageSearchTimeout = setTimeout(function() {
+      var content = document.getElementById('search-results-area');
+      if (content) content.innerHTML = SearchPage._renderResults(q);
+    }, 200);
   },
 
   // ── Build result list HTML ─────────────────────────────────────
@@ -98,55 +119,29 @@ var SearchPage = {
       });
     }, 0);
 
-    // No query — show empty state with recent searches
-    if (!query || query.trim().length < 2) {
-      var recent = self._getRecent();
-      var html = '<div class="empty-state" style="text-align:center;padding:40px 20px;">'
-        + '<div style="font-size:48px;margin-bottom:12px;">🔍</div>'
-        + '<h3 style="margin-bottom:8px;">Search everything</h3>'
-        + '<p style="color:var(--text-light);margin-bottom:8px;">Search across clients, jobs, invoices, quotes, and requests.</p>'
-        + '<p style="font-size:13px;color:var(--text-light);background:var(--bg);display:inline-block;padding:6px 14px;border-radius:20px;margin-bottom:20px;">Press <kbd style="font-size:12px;background:#fff;border:1px solid var(--border);padding:2px 6px;border-radius:4px;">/</kbd> to search from anywhere</p>';
+    // Gather results — if no query, show ALL by most recent (Jobber-style)
+    var isSearch = query && query.trim().length >= 2;
+    var q = isSearch ? query.trim().toLowerCase() : '';
 
-      if (recent.length > 0) {
-        html += '<div style="max-width:400px;margin:0 auto;text-align:left;">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
-          + '<span style="font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;">Recent Searches</span>'
-          + '<button onclick="SearchPage._clearRecent()" style="font-size:11px;color:var(--text-light);background:none;border:none;cursor:pointer;padding:2px 6px;">Clear</button>'
-          + '</div>';
-        recent.forEach(function(r) {
-          html += '<div onclick="SearchPage._runRecent(\'' + UI.esc(r) + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:6px;font-size:14px;" onmouseover="this.style.background=\'#fafafa\'" onmouseout="this.style.background=\'#fff\'">'
-            + '<span style="color:var(--text-light);font-size:16px;">🕐</span>'
-            + '<span>' + UI.esc(r) + '</span>'
-            + '</div>';
-        });
-        html += '</div>';
-      }
+    if (isSearch) self._saveRecent(query.trim());
 
-      html += '</div>';
-      return html;
-    }
-
-    var q = query.trim().toLowerCase();
-    self._saveRecent(query.trim());
-
-    // Gather results by type
     var byType = { clients: [], jobs: [], invoices: [], quotes: [], requests: [] };
 
-    DB.clients.search(q).forEach(function(c) {
-      byType.clients.push(c);
-    });
-    DB.jobs.search(q).forEach(function(j) {
-      byType.jobs.push(j);
-    });
-    DB.invoices.search(q).forEach(function(i) {
-      byType.invoices.push(i);
-    });
-    DB.quotes.search(q).forEach(function(qr) {
-      byType.quotes.push(qr);
-    });
-    DB.requests.search(q).forEach(function(r) {
-      byType.requests.push(r);
-    });
+    if (isSearch) {
+      byType.clients = DB.clients.search(q);
+      byType.jobs = DB.jobs.search(q);
+      byType.invoices = DB.invoices.search(q);
+      byType.quotes = DB.quotes.search(q);
+      byType.requests = DB.requests.search(q);
+    } else {
+      // No query — show all records sorted by most recent (updatedAt or createdAt)
+      var sortRecent = function(a, b) { return (b.updatedAt || b.createdAt || '').localeCompare(a.updatedAt || a.createdAt || ''); };
+      byType.clients = DB.clients.getAll().sort(sortRecent);
+      byType.jobs = DB.jobs.getAll().sort(sortRecent);
+      byType.invoices = DB.invoices.getAll().sort(sortRecent);
+      byType.quotes = DB.quotes.getAll().sort(sortRecent);
+      byType.requests = DB.requests.getAll().sort(sortRecent);
+    }
 
     var totalClients   = byType.clients.length;
     var totalJobs      = byType.jobs.length;
@@ -155,11 +150,18 @@ var SearchPage = {
     var totalRequests  = byType.requests.length;
     var grandTotal     = totalClients + totalJobs + totalInvoices + totalQuotes + totalRequests;
 
-    if (grandTotal === 0) {
+    if (grandTotal === 0 && isSearch) {
       return '<div class="empty-state" style="text-align:center;padding:40px 20px;">'
         + '<div style="font-size:48px;margin-bottom:12px;">🔍</div>'
         + '<h3 style="margin-bottom:8px;">No results for &ldquo;' + UI.esc(query) + '&rdquo;</h3>'
         + '<p style="color:var(--text-light);">Try searching for a client name, address, phone number, or invoice #.</p>'
+        + '</div>';
+    }
+    if (grandTotal === 0) {
+      return '<div class="empty-state" style="text-align:center;padding:40px 20px;">'
+        + '<div style="font-size:48px;margin-bottom:12px;">📂</div>'
+        + '<h3 style="margin-bottom:8px;">No records yet</h3>'
+        + '<p style="color:var(--text-light);">Add clients, jobs, quotes, or invoices to see them here.</p>'
         + '</div>';
     }
 
@@ -173,7 +175,8 @@ var SearchPage = {
 
     var html = '<div style="font-size:13px;color:var(--text-light);margin-bottom:16px;">'
       + parts.join(' &bull; ')
-      + ' for &ldquo;' + UI.esc(query) + '&rdquo;</div>';
+      + (isSearch ? ' for &ldquo;' + UI.esc(query) + '&rdquo;' : ' — most recent first')
+      + '</div>';
 
     // Helper: render a section
     function renderSection(title, icon, items, renderFn) {

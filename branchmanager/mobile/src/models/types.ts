@@ -34,8 +34,11 @@ export interface HourEntry {
   id: string;
   employeeId: string;
   date: string; // YYYY-MM-DD
-  clockIn?: string; // ISO
-  clockOut?: string; // ISO
+  start?: string; // ISO
+  end?: string; // ISO
+  clockIn?: string; // ISO alias for start
+  clockOut?: string; // ISO alias for end
+  totalHours?: number;
   hours: number;
   type: HourType;
   jobId?: string;
@@ -45,13 +48,17 @@ export interface HourEntry {
   updatedAt?: string;
 }
 
+export type TimesheetStatus = 'ok' | 'issues' | 'approved' | 'editedAfterApproval';
+
 export interface TimesheetDay {
+  id: string;
+  employeeId: string;
   date: string;
-  entries: HourEntry[];
+  hours: HourEntry[];
+  notes: Note[];
+  photos: Photo[];
   totalHours: number;
-  status: 'pending' | 'approved' | 'needs_reapproval';
-  notes: string[];
-  photos: string[];
+  status: TimesheetStatus;
 }
 
 // ── Payroll ──
@@ -109,6 +116,95 @@ export interface Client {
   email?: string;
   status: 'active' | 'lead' | 'archived';
   tags?: string[];
+}
+
+// ── Notes & Photos ──
+export interface Note {
+  id: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+}
+
+export interface Photo {
+  id: string;
+  uri: string;
+  caption?: string;
+  createdAt: string;
+}
+
+// ── Quotes ──
+export type QuoteStatus = 'draft' | 'sent' | 'viewed' | 'approved' | 'changesRequested' | 'expired';
+
+export interface LineItem {
+  id: string;
+  name: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface Quote {
+  id: string;
+  quoteNumber: number;
+  clientId: string;
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  property?: string;
+  description?: string;
+  lineItems: LineItem[];
+  photos?: Photo[];
+  notes?: string;
+  total: number;
+  status: QuoteStatus;
+  expiresAt?: string;
+  depositRequired?: boolean;
+  depositDue?: number;
+  depositPaid?: boolean;
+  sentAt?: string;
+  approvedAt?: string;
+  clientChanges?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ── Invoices ──
+export type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'partial' | 'paid' | 'pastDue' | 'overdue' | 'cancelled';
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: number;
+  clientId: string;
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  jobId?: string;
+  quoteId?: string;
+  subject: string;
+  lineItems: LineItem[];
+  total: number;
+  balance: number;
+  amountPaid: number;
+  issuedDate?: string;
+  dueDate?: string;
+  status: InvoiceStatus;
+  paidDate?: string;
+  paymentMethod?: string;
+  notes?: string;
+  sentAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ── Roles ──
+export interface Role {
+  id: string;
+  name: string;
+  inheritsFrom: string[];
+  permissions: string[];
 }
 
 // ── Approvals ──

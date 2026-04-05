@@ -677,6 +677,23 @@ var QuotesPage = {
 
       // Notes + Actions
       + '<div>'
+      // Video walkthrough
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Video Walkthrough</h4>'
+      + (q.videoUrl
+        ? '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-bottom:8px;">'
+          + '<iframe src="' + q.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/') + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe></div>'
+          + '<div style="display:flex;gap:6px;">'
+          + '<button class="btn btn-outline" style="font-size:11px;" onclick="navigator.clipboard.writeText(\'' + UI.esc(q.videoUrl) + '\');UI.toast(\'Video link copied!\')">🔗 Copy Link</button>'
+          + '<button class="btn btn-outline" style="font-size:11px;" onclick="QuotesPage._removeVideo(\'' + id + '\')">🗑 Remove</button>'
+          + '</div>'
+        : '<div style="text-align:center;padding:16px;background:var(--bg);border-radius:8px;">'
+          + '<div style="font-size:24px;margin-bottom:8px;">🎥</div>'
+          + '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">Record a property walkthrough and attach it to this quote</div>'
+          + '<button class="btn btn-primary" style="font-size:12px;" onclick="QuotesPage._addVideo(\'' + id + '\')">+ Add Video</button>'
+          + '</div>')
+      + '</div>'
+
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Internal Notes</h4>'
       + (q.notes ? '<div style="font-size:13px;line-height:1.6;">' + UI.esc(q.notes) + '</div>' : '<div style="color:var(--text-light);font-size:13px;">No notes</div>')
@@ -1237,5 +1254,47 @@ var QuotesPage = {
     UI.toast('Job #' + job.jobNumber + ' created from quote');
     UI.closeModal();
     loadPage('jobs');
+  },
+
+  // ── Video Walkthrough ──
+  _addVideo: function(quoteId) {
+    var html = '<div style="text-align:center;margin-bottom:16px;">'
+      + '<div style="font-size:48px;margin-bottom:8px;">🎥</div>'
+      + '<p style="font-size:13px;color:var(--text-light);">Record a walkthrough of the property on your phone, upload it to YouTube as Unlisted, then paste the link below.</p>'
+      + '</div>'
+      + '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:12px;">'
+      + '<div style="font-size:12px;font-weight:700;margin-bottom:8px;">Quick steps:</div>'
+      + '<div style="font-size:12px;color:var(--text-light);line-height:1.6;">'
+      + '1. Open Camera app \u2192 Record video walking the property<br>'
+      + '2. Open YouTube app \u2192 Tap + \u2192 Upload \u2192 Select video<br>'
+      + '3. Set visibility to <strong>Unlisted</strong><br>'
+      + '4. Copy the link \u2192 Paste below'
+      + '</div></div>'
+      + UI.field('YouTube Link', '<input type="url" id="vw-url" placeholder="https://youtu.be/... or https://youtube.com/watch?v=...">')
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">Unlisted = only people with the link can see it. Not public, not searchable.</div>';
+
+    UI.showModal('Add Video Walkthrough', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="QuotesPage._saveVideo(\'' + quoteId + '\')">Save Video</button>'
+    });
+  },
+
+  _saveVideo: function(quoteId) {
+    var url = document.getElementById('vw-url').value.trim();
+    if (!url) { UI.toast('Paste a YouTube link', 'error'); return; }
+    if (url.indexOf('youtu') === -1 && url.indexOf('youtube') === -1) {
+      UI.toast('Please use a YouTube link', 'error'); return;
+    }
+    DB.quotes.update(quoteId, { videoUrl: url });
+    UI.closeModal();
+    UI.toast('Video walkthrough added! \uD83C\uDFAC');
+    QuotesPage.showDetail(quoteId);
+  },
+
+  _removeVideo: function(quoteId) {
+    if (!confirm('Remove video from this quote?')) return;
+    DB.quotes.update(quoteId, { videoUrl: null });
+    UI.toast('Video removed');
+    QuotesPage.showDetail(quoteId);
   }
 };

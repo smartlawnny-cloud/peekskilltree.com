@@ -578,6 +578,8 @@
         <!-- Team -->
         <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team</button>
         <button class="nav-item" data-page="timesheet"><span class="icon"><i data-lucide="clock" class="li"></i></span> Timesheets</button>
+        <button class="nav-item" data-page="payroll"><span class="icon"><i data-lucide="wallet" class="li"></i></span> Payroll</button>
+        <button class="nav-item" data-page="permissions"><span class="icon"><i data-lucide="shield" class="li"></i></span> Permissions</button>
         <!-- Money -->
         <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
         <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Reporting</button>
@@ -778,6 +780,8 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script src="src/pages/beforeafter.js?v=3"></script>
 <script src="src/pages/mediacenter.js?v=2"></script>
 <script src="src/pages/reminders.js?v=3"></script>
+<script src="src/pages/payroll.js?v=80"></script>
+<script src="src/pages/permissions.js?v=80"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';
@@ -863,7 +867,9 @@ var pageConfigs = {
   clienthub: { title: 'Client Portal', action: null },
   visits: { title: 'Visits', action: null },
   workflow: { title: 'Workflow', action: null },
-  propertymap: { title: 'Property Map', action: null }
+  propertymap: { title: 'Property Map', action: null },
+  payroll: { title: 'Payroll', action: '📊 Summary', actionFn: 'PayrollPage.showPayrollSummary(PayrollPage._getWeekDates(PayrollPage._weekOffset)[0])' },
+  permissions: { title: 'Permissions & Roles', action: null }
 };
 
 var pageRenderers = {
@@ -922,6 +928,8 @@ var pageRenderers = {
   visits: function() { return Visits.render(); },
   workflow: function() { return Workflow.render(); },
   propertymap: function() { return PropertyMap.render(); },
+  payroll: function() { return PayrollPage.render(); },
+  permissions: function() { return RBAC.render(); },
   calculators: function() {
     return '<div class="stat-grid">'
       + '<div class="stat-card" style="cursor:pointer;" onclick="Estimator.show()">'
@@ -1461,7 +1469,7 @@ document.addEventListener('keydown', function(e) {
     <button class="bottom-nav-btn" onclick="QuickCreate.show()" style="position:relative;">
       <span class="bnav-icon" style="background:var(--accent);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:-8px auto 0;">+</span>New
     </button>
-    <button class="bottom-nav-btn" onclick="document.getElementById('globalSearch').focus();window.scrollTo(0,0);">
+    <button class="bottom-nav-btn" onclick="if(typeof _openMobileSearch==='function'){_openMobileSearch();_showRecents();}else{document.getElementById('globalSearch').focus();window.scrollTo(0,0);}">
       <svg class="bnav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Search
     </button>
     <button class="bottom-nav-btn" onclick="document.getElementById('mobile-more-menu').style.display=document.getElementById('mobile-more-menu').style.display==='block'?'none':'block'">

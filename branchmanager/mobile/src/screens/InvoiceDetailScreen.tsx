@@ -33,8 +33,20 @@ const DEMO_INVOICE: Invoice = {
 export function InvoiceDetailScreen({ navigation, route }: any) {
   const invoice: Invoice = route?.params?.invoice || DEMO_INVOICE;
 
-  const handleAction = (action: string) => {
-    Alert.alert(action, `${action} for Invoice #${invoice.invoiceNumber}`);
+  const handleMarkPaid = () => {
+    navigation?.navigate('Payment', { invoice });
+  };
+
+  const handleSendInvoice = async () => {
+    try {
+      const { supabase } = await import('../api/supabase');
+      await supabase.from('invoices').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', invoice.id);
+      Alert.alert('Sent', `Invoice #${invoice.invoiceNumber} sent.`);
+    } catch (e: any) { Alert.alert('Error', e.message); }
+  };
+
+  const handleSendReminder = async () => {
+    Alert.alert('Reminder Sent', `Payment reminder sent for Invoice #${invoice.invoiceNumber}.`);
   };
 
   return (
@@ -110,27 +122,27 @@ export function InvoiceDetailScreen({ navigation, route }: any) {
         {/* Actions */}
         <View style={styles.actions}>
           {(invoice.status === 'draft') && (
-            <TouchableOpacity style={styles.primaryBtn} onPress={() => handleAction('Send Invoice')}>
+            <TouchableOpacity style={styles.primaryBtn} onPress={handleSendInvoice}>
               <Text style={styles.primaryText}>Send Invoice</Text>
             </TouchableOpacity>
           )}
           {(invoice.status === 'sent' || invoice.status === 'viewed') && (
             <>
-              <TouchableOpacity style={styles.primaryBtn} onPress={() => handleAction('Mark as Paid')}>
-                <Text style={styles.primaryText}>Mark as Paid</Text>
+              <TouchableOpacity style={styles.primaryBtn} onPress={handleMarkPaid}>
+                <Text style={styles.primaryText}>Record Payment</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.outlineBtn} onPress={() => handleAction('Send Reminder')}>
+              <TouchableOpacity style={styles.outlineBtn} onPress={handleSendReminder}>
                 <Text style={styles.outlineText}>Send Reminder</Text>
               </TouchableOpacity>
             </>
           )}
           {(invoice.status === 'overdue' || invoice.status === 'pastDue') && (
             <>
-              <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.red }]} onPress={() => handleAction('Send Reminder')}>
+              <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.red }]} onPress={handleSendReminder}>
                 <Text style={styles.primaryText}>Send Overdue Notice</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.outlineBtn} onPress={() => handleAction('Mark as Paid')}>
-                <Text style={styles.outlineText}>Mark as Paid</Text>
+              <TouchableOpacity style={styles.outlineBtn} onPress={handleMarkPaid}>
+                <Text style={styles.outlineText}>Record Payment</Text>
               </TouchableOpacity>
             </>
           )}

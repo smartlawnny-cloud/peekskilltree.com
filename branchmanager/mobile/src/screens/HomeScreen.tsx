@@ -58,14 +58,37 @@ export function HomeScreen({ navigation }: any) {
     loadData().finally(() => setRefreshing(false));
   }, [loadData]);
 
-  const handleClockIn = () => {
-    setClockedIn(true);
-    setClockInTime(new Date().toISOString());
+  const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
+
+  const handleClockIn = async () => {
+    try {
+      const { clockIn } = await import('../api/timesheets');
+      const entry = await clockIn('owner');
+      setActiveEntryId(entry.id);
+      setClockedIn(true);
+      setClockInTime(new Date().toISOString());
+    } catch (e) {
+      console.warn('Clock in error:', e);
+      // Offline fallback
+      const { enqueue } = await import('../utils/offline');
+      await enqueue({ table: 'time_entries', type: 'insert', data: { user_name: 'Doug Brown', date: new Date().toISOString().split('T')[0], clock_in: new Date().toISOString(), hours: 0 } });
+      setClockedIn(true);
+      setClockInTime(new Date().toISOString());
+    }
   };
 
-  const handleClockOut = () => {
+  const handleClockOut = async () => {
+    try {
+      if (activeEntryId) {
+        const { clockOut } = await import('../api/timesheets');
+        await clockOut(activeEntryId);
+      }
+    } catch (e) {
+      console.warn('Clock out error:', e);
+    }
     setClockedIn(false);
     setClockInTime(null);
+    setActiveEntryId(null);
   };
 
   return (

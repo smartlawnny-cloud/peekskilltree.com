@@ -145,7 +145,15 @@ export function JobDetailScreen({ navigation, route }: any) {
             <Text style={styles.quickIcon}>📞</Text>
             <Text style={styles.quickLabel}>Call</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickBtn} onPress={() => {}}>
+          <TouchableOpacity style={styles.quickBtn} onPress={async () => {
+            const { pickOrTakePhoto } = await import('../utils/photos');
+            const photo = await pickOrTakePhoto();
+            if (photo && job) {
+              const photos = [...(job.photos || []), photo.uri];
+              await updateJob(job.id, { photos } as any);
+              setJob({ ...job, photos });
+            }
+          }}>
             <Text style={styles.quickIcon}>📷</Text>
             <Text style={styles.quickLabel}>Photo</Text>
           </TouchableOpacity>

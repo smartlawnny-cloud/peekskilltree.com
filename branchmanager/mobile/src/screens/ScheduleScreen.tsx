@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  RefreshControl,
 } from 'react-native';
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
@@ -13,11 +14,26 @@ import { Avatar } from '../components/Avatar';
 import { StatusBadge } from '../components/StatusBadge';
 import { today as getToday, formatDate } from '../utils/date';
 import { currency } from '../utils/format';
+import { fetchJobsByDate } from '../api/jobs';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export function ScheduleScreen() {
+export function ScheduleScreen({ navigation }: any) {
   const [selectedDate, setSelectedDate] = useState(getToday());
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadJobs = useCallback(async () => {
+    try {
+      const data = await fetchJobsByDate(selectedDate);
+      setJobs(data.map(j => ({
+        id: j.id, num: j.jobNumber, client: j.clientName, address: j.property,
+        desc: j.description, time: '', crew: j.crew || [], status: j.status, total: j.total,
+      })));
+    } catch (e) { console.warn('Schedule load error:', e); }
+  }, [selectedDate]);
+
+  useEffect(() => { loadJobs(); }, [loadJobs]);
 
   // Build a week of dates starting Monday
   const now = new Date();
@@ -29,12 +45,6 @@ export function ScheduleScreen() {
     d.setDate(d.getDate() + i);
     weekDates.push(d.toISOString().split('T')[0]);
   }
-
-  // Demo jobs for selected day
-  const jobs = selectedDate === getToday() ? [
-    { id: '1', num: 315, client: 'Brian Heermance', address: '7 Lynwood Ct, Cortlandt Manor', desc: 'Pruning - 3 oaks', time: '8:00 AM', crew: ['Doug B.', 'Ryan K.'], status: 'scheduled', total: 1800 },
-    { id: '2', num: 316, client: 'Marlene Colangelo', address: '25 Oak Dr, Peekskill', desc: 'Tree removal', time: '1:00 PM', crew: ['Doug B.', 'Catherine C.'], status: 'in_progress', total: 3200 },
-  ] : [];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -87,7 +97,7 @@ export function ScheduleScreen() {
                 <Text style={styles.jobAddr}>{job.address}</Text>
                 <Text style={styles.jobDesc}>{job.desc}</Text>
                 <View style={styles.crewRow}>
-                  {job.crew.map((c, i) => (
+                  {job.crew.map((c: string, i: number) => (
                     <View key={i} style={styles.crewChip}>
                       <Text style={styles.crewText}>{c}</Text>
                     </View>

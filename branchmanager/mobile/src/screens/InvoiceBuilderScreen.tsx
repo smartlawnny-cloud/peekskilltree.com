@@ -117,10 +117,24 @@ export function InvoiceBuilderScreen({ navigation, route }: any) {
 
         {/* Actions */}
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.draftBtn} onPress={() => { Alert.alert('Saved', 'Invoice draft saved.'); navigation?.goBack(); }}>
+          <TouchableOpacity style={styles.draftBtn} onPress={async () => {
+            try {
+              const { supabase } = await import('../api/supabase');
+              await supabase.from('invoices').insert({ client_name: clientName, client_email: clientEmail, subject, due_date: dueDate, line_items: lineItems, total: subtotal, balance: subtotal, status: 'draft', notes });
+              Alert.alert('Saved', 'Invoice draft saved.');
+              navigation?.goBack();
+            } catch (e: any) { Alert.alert('Error', e.message); }
+          }}>
             <Text style={styles.draftText}>Save Draft</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.sendBtn} onPress={() => { Alert.alert('Sent', 'Invoice sent to ' + clientEmail); navigation?.goBack(); }}>
+          <TouchableOpacity style={styles.sendBtn} onPress={async () => {
+            try {
+              const { supabase } = await import('../api/supabase');
+              await supabase.from('invoices').insert({ client_name: clientName, client_email: clientEmail, subject, due_date: dueDate, line_items: lineItems, total: subtotal, balance: subtotal, status: 'sent', sent_at: new Date().toISOString(), notes });
+              Alert.alert('Sent', 'Invoice sent to ' + (clientEmail || clientName));
+              navigation?.goBack();
+            } catch (e: any) { Alert.alert('Error', e.message); }
+          }}>
             <Text style={styles.sendText}>Send Invoice</Text>
           </TouchableOpacity>
         </View>

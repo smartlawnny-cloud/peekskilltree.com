@@ -82,7 +82,16 @@ export function MoreScreen({ navigation }: any) {
                 <TouchableOpacity
                   key={item.label}
                   style={[styles.menuItem, i < section.items.length - 1 && styles.menuItemBorder]}
-                  onPress={() => {
+                  onPress={async () => {
+                    if (item.label === 'Sign Out') {
+                      const { signOut } = await import('../api/auth');
+                      const { Alert } = await import('react-native');
+                      Alert.alert('Sign Out', 'Are you sure?', [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Sign Out', style: 'destructive', onPress: async () => { await signOut(); /* App.tsx re-renders to LoginScreen */ } },
+                      ]);
+                      return;
+                    }
                     if (item.screen) navigation?.navigate(item.screen);
                   }}
                   activeOpacity={0.6}

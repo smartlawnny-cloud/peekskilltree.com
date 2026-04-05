@@ -35,7 +35,7 @@ const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'error' | 'info' | 
   declined: 'error', awaiting: 'warning', converted: 'success',
 };
 
-export function SearchScreen() {
+export function SearchScreen({ navigation }: any) {
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<Tab>('all');
   const [loading, setLoading] = useState(true);
@@ -160,7 +160,7 @@ export function SearchScreen() {
           {(tab === 'all' || tab === 'clients') && filtered.clients.length > 0 && (
             <Section title="Clients" icon="👥" count={filtered.clients.length}>
               {filtered.clients.map(c => (
-                <TouchableOpacity key={c.id} activeOpacity={0.7} style={styles.resultRow}>
+                <TouchableOpacity key={c.id} activeOpacity={0.7} style={styles.resultRow} onPress={() => navigation.navigate('ClientDetail', { id: c.id, client: c })}>
                   <Avatar name={c.name || ''} size={38} color={c.status === 'lead' ? colors.orange : colors.accent} />
                   <View style={styles.resultInfo}>
                     <Text style={styles.resultName}>{c.name}</Text>
@@ -177,7 +177,7 @@ export function SearchScreen() {
           {(tab === 'all' || tab === 'jobs') && filtered.jobs.length > 0 && (
             <Section title="Jobs" icon="🔧" count={filtered.jobs.length}>
               {filtered.jobs.map(j => (
-                <TouchableOpacity key={j.id} activeOpacity={0.7} style={styles.resultRow}>
+                <TouchableOpacity key={j.id} activeOpacity={0.7} style={styles.resultRow} onPress={() => navigation.navigate('JobDetail', { id: j.id })}>
                   <View style={styles.resultInfo}>
                     <View style={styles.resultTop}>
                       <Text style={styles.resultNum}>#{j.job_number}</Text>
@@ -198,7 +198,7 @@ export function SearchScreen() {
           {(tab === 'all' || tab === 'invoices') && filtered.invoices.length > 0 && (
             <Section title="Invoices" icon="💰" count={filtered.invoices.length}>
               {filtered.invoices.map(i => (
-                <TouchableOpacity key={i.id} activeOpacity={0.7} style={styles.resultRow}>
+                <TouchableOpacity key={i.id} activeOpacity={0.7} style={styles.resultRow} onPress={() => navigation.navigate('InvoiceDetail', { invoice: i })}>
                   <View style={styles.resultInfo}>
                     <View style={styles.resultTop}>
                       <Text style={styles.resultNum}>#{i.invoice_number}</Text>
@@ -221,7 +221,7 @@ export function SearchScreen() {
           {(tab === 'all' || tab === 'quotes') && filtered.quotes.length > 0 && (
             <Section title="Quotes" icon="📋" count={filtered.quotes.length}>
               {filtered.quotes.map(qr => (
-                <TouchableOpacity key={qr.id} activeOpacity={0.7} style={styles.resultRow}>
+                <TouchableOpacity key={qr.id} activeOpacity={0.7} style={styles.resultRow} onPress={() => navigation.navigate('QuoteDetail', { quote: qr })}>
                   <View style={styles.resultInfo}>
                     <View style={styles.resultTop}>
                       <Text style={styles.resultNum}>#{qr.quote_number}</Text>
@@ -242,7 +242,7 @@ export function SearchScreen() {
           {(tab === 'all' || tab === 'requests') && filtered.requests.length > 0 && (
             <Section title="Requests" icon="📥" count={filtered.requests.length}>
               {filtered.requests.map(r => (
-                <TouchableOpacity key={r.id} activeOpacity={0.7} style={styles.resultRow}>
+                <TouchableOpacity key={r.id} activeOpacity={0.7} style={styles.resultRow} onPress={() => navigation.navigate('RequestDetail', { id: r.id, request: r })}>
                   <View style={styles.resultInfo}>
                     <Text style={styles.resultName}>{r.client_name}</Text>
                     {r.property ? <Text style={styles.resultSub} numberOfLines={1}>{r.property}</Text> : null}

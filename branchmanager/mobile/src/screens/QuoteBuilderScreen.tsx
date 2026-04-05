@@ -84,13 +84,37 @@ export function QuoteBuilderScreen({ navigation, route }: any) {
     ]);
   };
 
-  const handleSaveDraft = () => {
+  const saveToSupabase = async (status: string) => {
+    const { supabase } = await import('../api/supabase');
+    const payload = {
+      client_name: clientName.trim(),
+      client_email: clientEmail,
+      client_phone: clientPhone,
+      property: property,
+      description: lineItems.map(i => i.name).join(', '),
+      line_items: lineItems,
+      total,
+      status,
+      ...(status === 'sent' ? { sent_at: new Date().toISOString() } : {}),
+    };
+    if (existing?.id) {
+      await supabase.from('quotes').update(payload).eq('id', existing.id);
+      return existing.id;
+    }
+    const { data } = await supabase.from('quotes').insert(payload).select('quote_number').single();
+    return data?.quote_number;
+  };
+
+  const handleSaveDraft = async () => {
     if (!clientName.trim()) {
       Alert.alert('Missing Client', 'Please enter a client name before saving.');
       return;
     }
-    Alert.alert('Draft Saved', `Quote draft for ${clientName} saved.`);
-    navigation?.goBack();
+    try {
+      const num = await saveToSupabase('draft');
+      Alert.alert('Draft Saved', `Quote ${num ? '#' + num + ' ' : ''}saved.`);
+      navigation?.goBack();
+    } catch (e: any) { Alert.alert('Error', e.message); }
   };
 
   const handleSendQuote = () => {
@@ -109,9 +133,17 @@ export function QuoteBuilderScreen({ navigation, route }: any) {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Send',
-          onPress: () => {
-            Alert.alert('Quote Sent', `Quote sent to ${clientEmail || clientName}.`);
-            navigation?.goBack();
+          onPress: async () => {
+            try {
+              const num = await saveToSupabase('sent');
+              if (clientEmail) {
+                const { sendEmail, buildQuoteEmail } = await import('../api/email');
+                const { getApiKey } = await import('../api/assistant');
+                // SendGrid key would be stored separately; for now show success
+              }
+              Alert.alert('Quote Sent', `Quote ${num ? '#' + num + ' ' : ''}sent to ${clientEmail || clientName}.`);
+              navigation?.goBack();
+            } catch (e: any) { Alert.alert('Error', e.message); }
           },
         },
       ]

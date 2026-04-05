@@ -43,8 +43,9 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   // Get Expo push token
+  // Use Constants.expoConfig.extra.eas.projectId in production
   const tokenData = await Notifications.getExpoPushTokenAsync({
-    projectId: '', // Set this to your EAS project ID
+    projectId: undefined as any, // Auto-resolved from app.json in EAS builds
   });
   const token = tokenData.data;
 

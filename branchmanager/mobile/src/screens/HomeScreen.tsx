@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,35 +16,9 @@ import { Avatar } from '../components/Avatar';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatTime, today as getToday } from '../utils/date';
 import { currency } from '../utils/format';
+import { fetchTodayJobs } from '../api/jobs';
+import { supabase } from '../api/supabase';
 import type { Job } from '../models/types';
-
-// Demo data until Supabase is wired up
-const DEMO_JOBS: Job[] = [
-  {
-    id: '1',
-    jobNumber: 315,
-    clientId: 'c1',
-    clientName: 'Brian Heermance',
-    property: '7 Lynwood Court, Cortlandt Manor, NY',
-    description: 'Pruning - 3 oaks',
-    scheduledDate: getToday(),
-    status: 'scheduled',
-    total: 1800,
-    crew: ['Doug Brown', 'Ryan Knapp'],
-  },
-  {
-    id: '2',
-    jobNumber: 316,
-    clientId: 'c2',
-    clientName: 'Marlene Colangelo',
-    property: '25 Oak Drive, Peekskill, NY',
-    description: 'Tree removal - dead ash',
-    scheduledDate: getToday(),
-    status: 'in_progress',
-    total: 3200,
-    crew: ['Doug Brown', 'Catherine Conway'],
-  },
-];
 
 const STATUS_VARIANT: Record<string, 'info' | 'success' | 'warning' | 'error'> = {
   scheduled: 'info',
@@ -57,12 +31,32 @@ export function HomeScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [clockedIn, setClockedIn] = useState(false);
   const [clockInTime, setClockInTime] = useState<string | null>(null);
-  const jobs = DEMO_JOBS;
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [stats, setStats] = useState({ unpaid: 0, todayValue: 0, clients: 0 });
+
+  const loadData = useCallback(async () => {
+    try {
+      const todayJobs = await fetchTodayJobs();
+      setJobs(todayJobs);
+
+      const [invRes, clientRes] = await Promise.all([
+        supabase.from('invoices').select('balance,status').neq('status', 'paid'),
+        supabase.from('clients').select('id', { count: 'exact', head: true }),
+      ]);
+      const unpaid = (invRes.data || []).filter((i: any) => parseFloat(i.balance) > 0).length;
+      const todayValue = todayJobs.reduce((s, j) => s + (j.total || 0), 0);
+      setStats({ unpaid, todayValue, clients: clientRes.count || 0 });
+    } catch (e) {
+      console.warn('Home load error:', e);
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    loadData().finally(() => setRefreshing(false));
+  }, [loadData]);
 
   const handleClockIn = () => {
     setClockedIn(true);
@@ -135,7 +129,7 @@ export function HomeScreen({ navigation }: any) {
           <TouchableOpacity
             key={job.id}
             activeOpacity={0.7}
-            onPress={() => {/* navigation.navigate('JobDetail', { id: job.id }) */}}
+            onPress={() => navigation.navigate('JobDetail', { id: job.id, job })}
           >
             <Card style={styles.jobCard}>
               <View style={styles.jobTop}>
@@ -174,19 +168,19 @@ export function HomeScreen({ navigation }: any) {
         </View>
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
-            <Text style={styles.statValue}>2</Text>
+            <Text style={styles.statValue}>{jobs.length}</Text>
             <Text style={styles.statLabel}>Jobs Today</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={styles.statValue}>$5,000</Text>
+            <Text style={styles.statValue}>{currency(stats.todayValue)}</Text>
             <Text style={styles.statLabel}>Today's Value</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={styles.statValue}>4</Text>
-            <Text style={styles.statLabel}>Crew Members</Text>
+            <Text style={styles.statValue}>{stats.clients}</Text>
+            <Text style={styles.statLabel}>Clients</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={[styles.statValue, { color: colors.red }]}>3</Text>
+            <Text style={[styles.statValue, stats.unpaid > 0 ? { color: colors.red } : {}]}>{stats.unpaid}</Text>
             <Text style={styles.statLabel}>Unpaid Invoices</Text>
           </Card>
         </View>

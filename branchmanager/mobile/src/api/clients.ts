@@ -32,6 +32,29 @@ export async function fetchClient(id: string): Promise<Client | null> {
   return mapClient(data);
 }
 
+export async function createClient(client: Partial<Client>): Promise<Client> {
+  const { data, error } = await supabase
+    .from('clients')
+    .insert({
+      name: client.name,
+      company: client.company,
+      phone: client.phone,
+      email: client.email,
+      address: client.address,
+      status: client.status || 'lead',
+      tags: client.tags || [],
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapClient(data);
+}
+
+export async function updateClient(id: string, changes: Partial<Client>): Promise<void> {
+  const { error } = await supabase.from('clients').update(changes).eq('id', id);
+  if (error) throw error;
+}
+
 function mapClient(row: any): Client {
   return {
     id: row.id,

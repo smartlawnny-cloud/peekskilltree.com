@@ -35,6 +35,30 @@ export async function searchRequests(query: string): Promise<ServiceRequest[]> {
   return (data || []).map(mapRequest);
 }
 
+export async function createRequest(req: Partial<ServiceRequest>): Promise<ServiceRequest> {
+  const { data, error } = await supabase
+    .from('requests')
+    .insert({
+      client_id: req.clientId,
+      client_name: req.clientName,
+      property: req.property,
+      phone: req.phone,
+      email: req.email,
+      source: req.source,
+      notes: req.notes,
+      status: 'new',
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRequest(data);
+}
+
+export async function updateRequest(id: string, changes: Partial<ServiceRequest>): Promise<void> {
+  const { error } = await supabase.from('requests').update(changes).eq('id', id);
+  if (error) throw error;
+}
+
 function mapRequest(row: any): ServiceRequest {
   return {
     id: row.id,

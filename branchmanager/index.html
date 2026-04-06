@@ -318,13 +318,33 @@
     /* Filter chips wrap nicely */
     .filter-btn { font-size:11px !important; padding:6px 10px !important; }
 
-    /* Topbar icons — keep + and bell visible, hide rest */
-    .topbar-icons > button:not(.topbar-icon-create),
-    .topbar-icons > div:first-of-type { display:none; }
-    .topbar-icons > div:has(#notif-bell-btn) { display:block !important; }
+    /* Jobber-style topbar: hamburger + Menu left, icon row right */
+    .topbar h2 { display:none; }
+    .hamburger { display:flex !important; align-items:center; gap:6px; }
+    .hamburger::after { content:'Menu'; font-size:14px; font-weight:600; color:var(--text); }
 
-    /* Search: full-screen overlay on mobile */
-    .search-box { position:static !important; }
+    /* Hide full search input bar — use icon instead */
+    .search-box { display:none !important; }
+
+    /* Show all topbar icons */
+    .topbar-icons { display:flex !important; gap:6px; }
+    .topbar-icons > button,
+    .topbar-icons > div { display:flex !important; }
+    .topbar-icons > div:first-of-type { display:none !important; } /* hide divider */
+
+    /* Show mobile search icon */
+    .mobile-search-icon { display:flex !important; }
+
+    /* Hide avatar, dark mode, AI sparkle on mobile — match Jobber */
+    div.topbar-avatar { display:none !important; }
+    button#dark-mode-btn { display:none !important; }
+    button[onclick*="AI.toggle"] { display:none !important; }
+
+    /* Compact + button */
+    .topbar-icon-create { width:28px !important; height:28px !important; }
+
+    /* Topbar compact padding */
+    .topbar { padding:8px 12px !important; gap:8px; }
     #searchDropdown.mobile-open {
       position:fixed !important; top:0 !important; left:0 !important; right:0 !important;
       bottom:0 !important; margin:0 !important; border-radius:0 !important;
@@ -654,6 +674,9 @@
         <h2 id="pageTitle">Dashboard</h2>
       </div>
       <div class="topbar-actions">
+        <button class="topbar-icon mobile-search-icon" onclick="loadPage('search')" title="Search" style="display:none;">
+          <i data-lucide="search" style="width:18px;height:18px;stroke:var(--text-light);stroke-width:1.75;"></i>
+        </button>
         <div class="search-box" style="position:relative;">
           <i data-lucide="search" style="width:15px;height:15px;stroke:var(--text-light);stroke-width:2;flex-shrink:0;"></i>
           <input type="text" placeholder="Search clients, jobs..." id="globalSearch" autocomplete="off">

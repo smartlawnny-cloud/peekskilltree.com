@@ -861,6 +861,21 @@ var QuotesPage = {
 
   setStatus: function(id, status) {
     DB.quotes.update(id, { status: status });
+
+    // Auto-convert approved quotes to jobs (Jobber-style pipeline)
+    if (status === 'approved') {
+      var q = DB.quotes.getById(id);
+      if (q && !q.jobId) {
+        UI.confirm('Quote approved! Create a job from this quote?', function() {
+          if (typeof Workflow !== 'undefined') {
+            var job = Workflow.quoteToJob(id);
+            if (job) { UI.toast('✅ Job #' + job.jobNumber + ' created'); loadPage('jobs'); return; }
+          }
+          QuotesPage.showDetail(id);
+        }, function() { UI.toast('Quote approved'); QuotesPage.showDetail(id); });
+        return;
+      }
+    }
     UI.toast('Quote status: ' + status);
     QuotesPage.showDetail(id);
   },

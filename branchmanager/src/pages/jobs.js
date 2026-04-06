@@ -268,8 +268,20 @@ var JobsPage = {
     var j = DB.jobs.getById(id);
     if (!j) return;
     DB.jobs.update(id, { status: 'completed', completedAt: new Date().toISOString() });
-    UI.toast('Job #' + j.jobNumber + ' marked complete');
-    loadPage('jobs');
+
+    // Jobber-style: prompt to create invoice after completing a job
+    if (!j.invoiceId && j.total > 0) {
+      UI.confirm('Job #' + j.jobNumber + ' complete! Create invoice for ' + UI.money(j.total) + '?', function() {
+        if (typeof Workflow !== 'undefined') {
+          var inv = Workflow.jobToInvoice(id);
+          if (inv) { UI.toast('✅ Invoice #' + inv.invoiceNumber + ' created'); loadPage('invoices'); return; }
+        }
+        loadPage('jobs');
+      }, function() { UI.toast('Job completed'); loadPage('jobs'); });
+    } else {
+      UI.toast('Job #' + j.jobNumber + ' marked complete');
+      loadPage('jobs');
+    }
   },
   _batchComplete: function() {
     var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });

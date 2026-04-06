@@ -121,9 +121,11 @@ var UI = (function() {
   }
 
   // ── Confirm Dialog ──
-  function confirm(message, onYes) {
+  function confirm(message, onYes, onNo) {
+    window._uiConfirmYes = onYes;
+    window._uiConfirmNo = onNo;
     showModal('Confirm', '<p style="font-size:15px;margin-bottom:16px;">' + message + '</p>',
-      { footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button> <button class="btn btn-primary" onclick="UI.closeModal();(' + onYes.toString() + ')()">Yes, Continue</button>' });
+      { footer: '<button class="btn btn-outline" onclick="UI.closeModal();if(window._uiConfirmNo)window._uiConfirmNo();">Cancel</button> <button class="btn btn-primary" onclick="UI.closeModal();if(window._uiConfirmYes)window._uiConfirmYes();">Yes, Continue</button>' });
   }
 
   // ── Toast / Notification ──

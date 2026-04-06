@@ -84,6 +84,7 @@
 
     var params = new URLSearchParams(window.location.search);
     var quoteId = params.get('id');
+    var urlToken = params.get('token');
 
     function el(id) { return document.getElementById(id); }
     function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -95,7 +96,13 @@
       try {
         var result = await sb.from('quotes').select('*').eq('id', quoteId).single();
         if (result.error) throw result.error;
-        renderQuote(result.data);
+        // Validate approval token if one exists on the quote
+        var q = result.data;
+        if (q.approval_token && urlToken !== q.approval_token) {
+          showError('This link has expired or is invalid. Please request a new quote link.');
+          return;
+        }
+        renderQuote(q);
       } catch(e) {
         showError('Quote not found. The link may be expired or incorrect.<br><br>Please contact us and we\'ll resend it.');
       }
@@ -217,7 +224,14 @@
         + '<div><div class="section-label">Valid Until</div><div class="meta-val">' + expiryMeta + '</div></div>'
         + '</div>'
         + (q.description ? '<div class="desc-box">' + esc(q.description).replace(/\n/g,'<br>') + '</div>' : '')
-        + (q.videoUrl || q.video_url ? '<div style="margin-bottom:20px;"><div class="section-label">Property Walkthrough</div><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;"><iframe src="' + (q.videoUrl || q.video_url).replace('watch?v=','embed/').replace('youtu.be/','youtube.com/embed/') + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe></div></div>' : '')
+        + (function() {
+          var vUrl = q.videoUrl || q.video_url;
+          if (!vUrl) return '';
+          // Only allow YouTube URLs for security
+          var safeUrl = vUrl.replace('watch?v=','embed/').replace('youtu.be/','youtube.com/embed/');
+          if (!safeUrl.match(/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//)) return '';
+          return '<div style="margin-bottom:20px;"><div class="section-label">Property Walkthrough</div><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;"><iframe src="' + esc(safeUrl) + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe></div></div>';
+        })()
         + '<div class="section-label">Services</div>'
         + '<table class="line-table"><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th>Rate</th><th>Total</th></tr></thead>'
         + '<tbody>' + lineRows + '</tbody>'

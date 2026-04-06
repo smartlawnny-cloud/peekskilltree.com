@@ -7,7 +7,7 @@ var FormBuilderPage = {
 
   _STORAGE_KEY: 'bm-form-config',
   _SUPABASE_URL: 'https://ltpivkqahvplapyagljt.supabase.co',
-  _SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI',
+  _SUPABASE_KEY: (typeof SupabaseDB !== 'undefined' && SupabaseDB.ANON_KEY) || '',
 
   _defaultConfig: function() {
     return {

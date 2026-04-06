@@ -24,7 +24,17 @@ var CloudSync = {
 
       try {
         // Pull all rows from Supabase
-        var { data, error } = await sb.from(table).select('*').order('created_at', { ascending: false }).limit(1000);
+        // Paginate: fetch up to 5000 rows in batches of 1000
+        var allData = [];
+        var page = 0;
+        var hasMore = true;
+        while (hasMore && page < 5) {
+          var { data: batch, error } = await sb.from(table).select('*').order('created_at', { ascending: false }).range(page * 1000, (page + 1) * 1000 - 1);
+          if (error) break;
+          if (batch && batch.length > 0) { allData = allData.concat(batch); page++; }
+          if (!batch || batch.length < 1000) hasMore = false;
+        }
+        var data = allData;
         if (error) {
           // Table doesn't exist in Supabase yet — remove from sync list silently
           if (error.message && error.message.includes('schema cache')) {
@@ -89,8 +99,11 @@ var CloudSync = {
         var cloudRecord = CloudSync._toSnake(result);
         // ID is already a UUID — no need to overwrite
         sb.from(table).insert(cloudRecord).then(function(res) {
-          if (res.error) console.warn('Cloud create error (' + table + '):', res.error.message);
-        });
+          if (res.error) {
+            console.warn('Cloud create error (' + table + '):', res.error.message);
+            CloudSync._markUnsynced();
+          }
+        }).catch(function() { CloudSync._markUnsynced(); });
         return result;
       };
 
@@ -126,6 +139,26 @@ var CloudSync = {
     console.log('CloudSync: write methods wrapped');
   },
 
+  // Show unsynced indicator in topbar
+  _markUnsynced: function() {
+    var el = document.getElementById('sync-indicator');
+    if (!el) {
+      var topbar = document.querySelector('.topbar-actions');
+      if (topbar) {
+        var indicator = document.createElement('span');
+        indicator.id = 'sync-indicator';
+        indicator.title = 'Some changes not synced to cloud';
+        indicator.style.cssText = 'width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;margin-right:4px;animation:pulse 2s infinite;';
+        topbar.insertBefore(indicator, topbar.firstChild);
+      }
+    }
+  },
+
+  _clearUnsynced: function() {
+    var el = document.getElementById('sync-indicator');
+    if (el) el.remove();
+  },
+
   // Convert camelCase object to snake_case
   _toSnake: function(obj) {
     var result = {};
@@ -137,8 +170,10 @@ var CloudSync = {
   },
 
   _uuid: function() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    // Fallback for older browsers
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0;
+      var r = (crypto.getRandomValues(new Uint8Array(1))[0] & 15);
       return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
   },

@@ -22,6 +22,8 @@ var SupabaseDB = {
   // Default credentials — auto-connect
   DEFAULT_URL: 'https://ltpivkqahvplapyagljt.supabase.co',
   DEFAULT_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI',
+  // Expose for other modules (centralized)
+  get ANON_KEY() { return this.DEFAULT_KEY; },
 
   init: function() {
     var url = localStorage.getItem('bm-supabase-url') || SupabaseDB.DEFAULT_URL;
@@ -336,8 +338,9 @@ var SupabaseDB = {
   },
 
   _uuid: function() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0;
+      var r = (crypto.getRandomValues(new Uint8Array(1))[0] & 15);
       return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
   },

@@ -30,7 +30,7 @@ var RequestsPage = {
   // ── Background Supabase sync ──────────────────────────────────────────────
   _autoSync: function() {
     var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
-    var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+    var SUPABASE_KEY = (typeof SupabaseDB !== 'undefined' && SupabaseDB.ANON_KEY) || '';
     fetch(SUPABASE_URL + '/rest/v1/requests?select=*&order=created_at.desc&limit=50', {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
     })
@@ -71,7 +71,7 @@ var RequestsPage = {
 
   syncFromSupabase: function() {
     var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
-    var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+    var SUPABASE_KEY = (typeof SupabaseDB !== 'undefined' && SupabaseDB.ANON_KEY) || '';
     var btn = document.getElementById('req-sync-btn');
     if (btn) { btn.textContent = '⏳ Syncing...'; btn.disabled = true; }
     fetch(SUPABASE_URL + '/rest/v1/requests?select=*&order=created_at.desc&limit=50', {

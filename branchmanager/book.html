@@ -208,6 +208,18 @@ function _getFieldValues() {
 
 function submitRequest(e) {
   e.preventDefault();
+
+  // Bot protection: honeypot field + timing check
+  var hp = document.getElementById('website_url');
+  if (hp && hp.value) { console.warn('Bot detected (honeypot)'); return; }
+  var loadTime = window._bookFormLoadTime || Date.now();
+  if (Date.now() - loadTime < 3000) { alert('Please wait a moment before submitting.'); return; }
+
+  // Rate limit: max 1 submission per 30 seconds
+  var lastSubmit = parseInt(sessionStorage.getItem('bm-last-book-submit') || '0');
+  if (Date.now() - lastSubmit < 30000) { alert('Please wait before submitting again.'); return; }
+  sessionStorage.setItem('bm-last-book-submit', Date.now().toString());
+
   var btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = 'Sending...';

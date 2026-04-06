@@ -771,7 +771,14 @@ var QuotesPage = {
   },
 
   _getApprovalLink: function(id) {
-    return 'https://peekskilltree.com/branchmanager/approve.html?id=' + id;
+    // Generate or retrieve approval token for CSRF protection
+    var q = DB.quotes.getById(id);
+    var token = q && q.approvalToken;
+    if (!token) {
+      token = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).slice(0, 16);
+      DB.quotes.update(id, { approvalToken: token });
+    }
+    return 'https://peekskilltree.com/branchmanager/approve.html?id=' + id + '&token=' + token;
   },
 
   _copyApprovalLink: function(id) {

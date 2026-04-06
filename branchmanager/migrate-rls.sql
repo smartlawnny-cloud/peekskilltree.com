@@ -63,12 +63,22 @@ CREATE POLICY "Anon read invoices" ON invoices FOR SELECT TO anon USING (status 
 DROP POLICY IF EXISTS "Anon read services" ON services;
 CREATE POLICY "Anon read services" ON services FOR SELECT TO anon USING (true);
 
+-- Allow anon to INSERT new requests (for book.html public booking form)
+DROP POLICY IF EXISTS "Anon insert requests" ON requests;
+CREATE POLICY "Anon insert requests" ON requests FOR INSERT TO anon WITH CHECK (status = 'new');
+
+-- Allow anon to read settings (for form config in book.html)
+DROP POLICY IF EXISTS "Anon read settings" ON settings;
+CREATE POLICY "Anon read settings" ON settings FOR SELECT TO anon USING (true);
+
 -- ══════════════════════════════════════
 -- Done! Your anon key can now only:
 -- 1. Read non-draft quotes (approve.html)
 -- 2. Update sent/awaiting quotes to approved (approve.html)
 -- 3. Read non-draft invoices (pay.html)
 -- 4. Read services catalog (online booking)
+-- 5. INSERT new requests with status='new' (book.html)
+-- 6. Read settings (form config)
 --
 -- Everything else requires authentication.
 -- ══════════════════════════════════════

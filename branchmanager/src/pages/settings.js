@@ -102,10 +102,10 @@ var SettingsPage = {
       + '<div><h3 style="margin:0;">SendGrid Email</h3>'
       + '<div style="font-size:12px;color:' + (sgOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (sgOk ? '✅ Connected — automated emails active' : '⚠️ Not connected — paste your key below') + '</div>'
       + '</div></div>'
-      + '<div style="margin-bottom:8px;"><input type="text" id="sendgrid-key" value="' + sgKey + '" placeholder="SG.xxxxxxxxxxxxxxx..." style="width:100%;padding:10px;border:2px solid ' + (sgOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div style="margin-bottom:8px;"><input type="password" id="sendgrid-key" value="' + sgKey + '" placeholder="SG.xxxxxxxxxxxxxxx..." style="width:100%;padding:10px;border:2px solid ' + (sgOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="var k=document.getElementById(\'sendgrid-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-sendgrid-key\',k);if(typeof Email!==\'undefined\'){Email.apiKey=k;}UI.toast(\'SendGrid connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
-      + (sgOk ? '<button onclick="if(typeof Email!==\'undefined\'){Email.testSend();}else{Email={apiKey:localStorage.getItem(\'bm-sendgrid-key\')};fetch(\'https://api.sendgrid.com/v3/mail/send\',{method:\'POST\',headers:{\'Content-Type\':\'application/json\',\'Authorization\':\'Bearer \'+Email.apiKey},body:JSON.stringify({personalizations:[{to:[{email:\'info@peekskilltree.com\'}]}],from:{email:\'info@peekskilltree.com\',name:\'Branch Manager\'},subject:\'Test Email\',content:[{type:\'text/plain\',value:\'SendGrid is connected!\'}]})}).then(function(r){UI.toast(r.ok||r.status===202?\'Test sent! Check info@peekskilltree.com\':\'Failed: \'+r.status,r.ok||r.status===202?\'success\':\'error\');})}" style="background:#1a82e2;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Send Test Email</button>' : '')
+      + (sgOk ? '<button onclick="if(typeof Email!==\'undefined\'){Email.send(\'info@peekskilltree.com\',\'Branch Manager Test\',\'SendGrid is connected and working!\').then(function(){UI.toast(\'Test sent! Check info@peekskilltree.com\');}).catch(function(e){UI.toast(\'Failed: \'+e.message,\'error\');});}else{UI.toast(\'Email module not loaded\',\'error\');}" style="background:#1a82e2;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Send Test Email</button>' : '')
       + (sgOk ? '<button onclick="localStorage.removeItem(\'bm-sendgrid-key\');UI.toast(\'Key removed\');loadPage(\'settings\');" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Enables: automated quote follow-ups, invoice reminders, visit reminders, review requests. Free: 100 emails/day.</p>'
@@ -722,15 +722,26 @@ var SettingsPage = {
   _savePassword: function() {
     var current = document.getElementById('pw-current').value;
     var newPw = document.getElementById('pw-new').value;
-    var confirm = document.getElementById('pw-confirm').value;
+    var confirmPw = document.getElementById('pw-confirm').value;
+    if (!current) { UI.toast('Enter your current password', 'error'); return; }
     if (newPw.length < 8) { UI.toast('Password must be at least 8 characters', 'error'); return; }
-    if (newPw !== confirm) { UI.toast('Passwords do not match', 'error'); return; }
+    if (newPw !== confirmPw) { UI.toast('Passwords do not match', 'error'); return; }
+
+    // Verify current password
     var email = Auth.user ? Auth.user.email : '';
     var hashes = {};
     try { hashes = JSON.parse(localStorage.getItem('bm-auth-hashes') || '{}'); } catch(e) {}
+    var storedHash = hashes[email.toLowerCase()];
+    var defaultUsers = { 'info@peekskilltree.com': '28006cfd', 'crew@peekskilltree.com': '14b65440', 'doug@peekskilltree.com': '28006cfd' };
+    var expectedHash = storedHash || defaultUsers[email.toLowerCase()];
+    if (expectedHash && Auth._hash(current) !== expectedHash) {
+      UI.toast('Current password is incorrect', 'error');
+      return;
+    }
+
     hashes[email.toLowerCase()] = Auth._hash(newPw);
     localStorage.setItem('bm-auth-hashes', JSON.stringify(hashes));
     UI.closeModal();
-    UI.toast('Password updated! Use the new password next time you log in.');
+    UI.toast('Password updated!');
   }
 };

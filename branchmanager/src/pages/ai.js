@@ -403,19 +403,15 @@ var AI = {
         apiMessages.push({ role: m.role, content: m.content });
       });
 
-      fetch('https://api.anthropic.com/v1/messages', {
+      fetch('https://ltpivkqahvplapyagljt.supabase.co/functions/v1/ai-chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': AI._apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-5-20250514',
           max_tokens: 1024,
           system: systemPrompt,
-          messages: apiMessages
+          messages: apiMessages,
+          apiKey: AI._apiKey
         })
       })
       .then(function(res) {

@@ -597,7 +597,11 @@ var JobsPage = {
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
       + '<button class="btn btn-outline" onclick="loadPage(\'jobs\')" style="padding:6px 12px;font-size:12px;">← Back to Jobs</button>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
-      + (j.clientPhone ? '<a href="tel:' + (j.clientPhone||'').replace(/\D/g,'') + '" class="btn btn-outline" style="font-size:12px;">📞 Call</a>' : '')
+      + (function() {
+        var phone = j.clientPhone || (client && client.phone) || '';
+        return phone ? '<a href="tel:' + phone.replace(/\D/g,'') + '" class="btn btn-outline" style="font-size:12px;">📞 Call</a>'
+          + '<a href="sms:' + phone.replace(/\D/g,'') + '" class="btn btn-outline" style="font-size:12px;">💬 Text</a>' : '';
+      })()
       + (j.status === 'completed' ? '<button class="btn btn-outline" style="font-size:12px;color:#f9a825;border-color:#f9a825;" onclick="JobsPage._requestReview(\'' + id + '\')">⭐ Request Review</button>' : '')
       + (j.status === 'scheduled' || j.status === 'in_progress' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage._getSignature(\'' + id + '\')">✓ Mark Complete</button>' : '')
       + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" style="font-size:12px;" onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()">💰 Create Invoice</button>' : '')

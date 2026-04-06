@@ -28,6 +28,18 @@ var DashboardPage = {
     var localClients = JSON.parse(localStorage.getItem('bm-clients') || '[]');
     var html = '';
 
+    // === GREETING (show first on mobile) ===
+    var now = new Date();
+    var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var monthFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var hour = now.getHours();
+    var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name || 'Doug' : 'Doug';
+    html += '<div style="margin-bottom:16px;">'
+      + '<div style="font-size:13px;color:var(--text-light);">' + dayNames[now.getDay()] + ', ' + monthFull[now.getMonth()] + ' ' + now.getDate() + '</div>'
+      + '<h2 style="font-size:28px;font-weight:700;margin-top:2px;">' + greeting + ', ' + userName.split(' ')[0] + '</h2>'
+      + '</div>';
+
     // === MONEY ON THE TABLE widget ===
     var now0 = new Date();
     var todayDateStr = now0.getFullYear() + '-' + (now0.getMonth()+1<10?'0':'') + (now0.getMonth()+1) + '-' + (now0.getDate()<10?'0':'') + now0.getDate();
@@ -146,16 +158,7 @@ var DashboardPage = {
       html += '</div>';
     }
 
-    // Jobber-style date greeting
-    var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    var monthFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    var hour = now.getHours();
-    var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name || 'Doug' : 'Doug';
-    html += '<div style="margin-bottom:20px;">'
-      + '<div style="font-size:13px;color:var(--text-light);">' + dayNames[now.getDay()] + ', ' + monthFull[now.getMonth()] + ' ' + now.getDate() + '</div>'
-      + '<h2 style="font-size:28px;font-weight:700;margin-top:2px;">' + greeting + ', ' + userName.split(' ')[0] + '</h2>'
-      + '</div>';
+    // Greeting moved to top of page (above MOTT)
 
     // Smart Daily Briefing
     var briefingDismissed = localStorage.getItem('bm-briefing-dismissed');

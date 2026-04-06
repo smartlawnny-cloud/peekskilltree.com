@@ -540,6 +540,7 @@ var JobsPage = {
   save: function(e, jobId) {
     e.preventDefault();
     var clientId = document.getElementById('j-clientId').value;
+    if (!clientId) { UI.toast('Select a client', 'error'); return; }
     // Get client from localStorage directly
     var allClients = [];
     try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}

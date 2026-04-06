@@ -69,6 +69,32 @@
   [data-theme="dark"] .nav-item.active .li { stroke: #fff; }
   [data-theme="dark"] .sidebar-footer { color: rgba(255,255,255,.4); }
   [data-theme="dark"] .sidebar.collapsed .sidebar-footer #sidebar-toggle-btn { color: rgba(255,255,255,.5); }
+  /* Dark theme overrides for JS-generated content */
+  [data-theme="dark"] .content div[style*="background:#fff"],
+  [data-theme="dark"] .content div[style*="background: #fff"],
+  [data-theme="dark"] .content div[style*="background:white"],
+  [data-theme="dark"] .content div[style*="background:var(--white)"] { background:var(--white) !important; }
+  [data-theme="dark"] .content div[style*="color:#333"],
+  [data-theme="dark"] .content div[style*="color:#1a1a1a"],
+  [data-theme="dark"] .content span[style*="color:#333"] { color:var(--text) !important; }
+  [data-theme="dark"] .content div[style*="border:1px solid #e"],
+  [data-theme="dark"] .content div[style*="border:2px solid #e"],
+  [data-theme="dark"] .content div[style*="border:1px solid var(--border)"] { border-color:var(--border) !important; }
+  [data-theme="dark"] .content div[style*="background:var(--bg)"],
+  [data-theme="dark"] .content div[style*="background:#f5f5f5"],
+  [data-theme="dark"] .content div[style*="background:#f8f8f8"],
+  [data-theme="dark"] .content div[style*="background:#fafafa"] { background:var(--bg) !important; }
+  [data-theme="dark"] .content tr:hover { background:rgba(255,255,255,.03) !important; }
+  [data-theme="dark"] .content .data-table td { color:var(--text); border-color:var(--border); }
+  [data-theme="dark"] .content .form-group label { color:var(--text-light); }
+  [data-theme="dark"] .content .empty-state { color:var(--text-light); }
+  [data-theme="dark"] .content .empty-state h3 { color:var(--text); }
+  [data-theme="dark"] .topbar { background:var(--white); border-color:var(--border); }
+  [data-theme="dark"] .topbar h2 { color:var(--text); }
+  [data-theme="dark"] .topbar-avatar { background:#4a5568; }
+  [data-theme="dark"] .avatar-menu { background:var(--white); border-color:var(--border); }
+  [data-theme="dark"] .avatar-menu button { color:var(--text); }
+  [data-theme="dark"] .notif-dropdown { background:var(--white); border-color:var(--border); }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; font-size:14px; }
   /* Font loaded via <link> tag above */
@@ -711,54 +737,54 @@
 <script src="src/auth.js?v=80"></script>
 <script src="src/db.js?v=80"></script>
 <script src="src/ui.js?v=2"></script>
-<script src="src/pages/dashboard.js?v=11"></script>
-<script src="src/pages/clients.js?v=14"></script>
-<script src="src/pages/requests.js?v=9"></script>
-<script src="src/pages/quotes.js?v=17"></script>
-<script src="src/pages/jobs.js?v=17"></script>
-<script src="src/pages/invoices.js?v=80"></script>
-<script src="src/pages/schedule.js?v=7"></script>
-<script src="src/pages/insights.js?v=7"></script>
+<script defer src="src/pages/dashboard.js?v=11"></script>
+<script defer src="src/pages/clients.js?v=14"></script>
+<script defer src="src/pages/requests.js?v=9"></script>
+<script defer src="src/pages/quotes.js?v=17"></script>
+<script defer src="src/pages/jobs.js?v=17"></script>
+<script defer src="src/pages/invoices.js?v=80"></script>
+<script defer src="src/pages/schedule.js?v=7"></script>
+<script defer src="src/pages/insights.js?v=7"></script>
 <script src="src/geofence.js"></script>
 <script src="src/weather.js"></script>
-<script src="src/pages/comms.js?v=80"></script>
-<script src="src/pages/messaging.js?v=5"></script>
-<script src="src/pages/profitloss.js?v=80"></script>
+<script defer src="src/pages/comms.js?v=80"></script>
+<script defer src="src/pages/messaging.js?v=5"></script>
+<script defer src="src/pages/profitloss.js?v=80"></script>
 <script src="src/photos.js"></script>
-<script src="src/pages/clientmap.js"></script>
-<script src="src/pages/photomap.js"></script>
-<script src="src/pages/crewview.js?v=5"></script>
-<script src="src/pages/employeecenter.js?v=3"></script>
-<script src="src/pages/budget.js?v=3"></script>
-<script src="src/pages/equipment.js?v=2"></script>
-<script src="src/pages/jobcosting.js?v=2"></script>
-<script src="src/pages/dispatch.js?v=4"></script>
-<script src="src/pages/recurring.js?v=3"></script>
-<script src="src/pages/notifications.js?v=6"></script>
-<script src="src/pages/expenses.js?v=4"></script>
+<script defer src="src/pages/clientmap.js"></script>
+<script defer src="src/pages/photomap.js"></script>
+<script defer src="src/pages/crewview.js?v=5"></script>
+<script defer src="src/pages/employeecenter.js?v=3"></script>
+<script defer src="src/pages/budget.js?v=3"></script>
+<script defer src="src/pages/equipment.js?v=2"></script>
+<script defer src="src/pages/jobcosting.js?v=2"></script>
+<script defer src="src/pages/dispatch.js?v=4"></script>
+<script defer src="src/pages/recurring.js?v=3"></script>
+<script defer src="src/pages/notifications.js?v=6"></script>
+<script defer src="src/pages/expenses.js?v=4"></script>
 <script src="src/dialpad.js?v=1"></script>
 <script src="src/email.js?v=4"></script>
-<script src="src/pages/reports.js?v=5"></script>
-<script src="src/pages/reviewtools.js?v=80"></script>
-<script src="src/pages/weeklysummary.js?v=5"></script>
-<script src="src/pages/backup.js?v=4"></script>
-<script src="src/pages/onlinebooking.js?v=4"></script>
-<script src="src/pages/formbuilder.js?v=1"></script>
-<script src="src/pages/receptionist.js?v=80"></script>
-<script src="src/pages/campaigns.js?v=80"></script>
-<script src="src/pages/referrals.js?v=80"></script>
-<script src="src/pages/import.js?v=3"></script>
+<script defer src="src/pages/reports.js?v=5"></script>
+<script defer src="src/pages/reviewtools.js?v=80"></script>
+<script defer src="src/pages/weeklysummary.js?v=5"></script>
+<script defer src="src/pages/backup.js?v=4"></script>
+<script defer src="src/pages/onlinebooking.js?v=4"></script>
+<script defer src="src/pages/formbuilder.js?v=1"></script>
+<script defer src="src/pages/receptionist.js?v=80"></script>
+<script defer src="src/pages/campaigns.js?v=80"></script>
+<script defer src="src/pages/referrals.js?v=80"></script>
+<script defer src="src/pages/import.js?v=3"></script>
 <script src="src/stripe.js?v=3"></script>
-<script src="src/sendjim.js"></script>
-<script src="src/pages/settings.js?v=80"></script>
-<script src="src/pages/propertymap.js?v=2"></script>
-<script src="src/pages/estimator.js"></script>
-<script src="src/pages/treemeasure.js"></script>
-<script src="src/pages/search.js?v=2"></script>
-<script src="src/pages/clienthub.js?v=4"></script>
-<script src="src/pages/team.js?v=4"></script>
-<script src="src/pages/automations.js?v=12"></script>
-<script src="src/pages/pipeline.js?v=6"></script>
+<script defer src="src/sendjim.js"></script>
+<script defer src="src/pages/settings.js?v=80"></script>
+<script defer src="src/pages/propertymap.js?v=2"></script>
+<script defer src="src/pages/estimator.js"></script>
+<script defer src="src/pages/treemeasure.js"></script>
+<script defer src="src/pages/search.js?v=2"></script>
+<script defer src="src/pages/clienthub.js?v=4"></script>
+<script defer src="src/pages/team.js?v=4"></script>
+<script defer src="src/pages/automations.js?v=12"></script>
+<script defer src="src/pages/pipeline.js?v=6"></script>
 <script src="src/supabase.js?v=80"></script>
 <script>
 // Auto-configure Supabase connection
@@ -767,29 +793,29 @@ if (!localStorage.getItem('bm-supabase-url')) {
   localStorage.setItem('bm-supabase-key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI');
 }
 </script>
-<script src="src/pdf.js"></script>
-<script src="src/pages/pdfgen.js"></script>
+<script defer src="src/pdf.js"></script>
+<script defer src="src/pages/pdfgen.js"></script>
 <!-- photos.js moved earlier, before photomap.js -->
 <script src="src/templates.js"></script>
 <script src="src/supacloud.js?v=2"></script>
-<script src="src/pages/payments.js?v=5"></script>
-<script src="src/pages/workflow.js?v=12"></script>
-<script src="src/pages/reviews.js?v=80"></script>
-<script src="src/pages/timetrack.js?v=5"></script>
-<script src="src/pages/checklists.js?v=3"></script>
-<script src="src/pages/visits.js?v=3"></script>
-<script src="src/pages/customfields.js?v=2"></script>
-<script src="src/pages/commandpalette.js"></script>
-<script src="src/pages/ai.js?v=7"></script>
-<script src="src/pages/satisfaction.js?v=2"></script>
-<script src="src/pages/emailtemplates.js?v=3"></script>
-<script src="src/pages/crewperformance.js?v=2"></script>
-<script src="src/pages/materials.js"></script>
-<script src="src/pages/beforeafter.js?v=3"></script>
-<script src="src/pages/mediacenter.js?v=2"></script>
-<script src="src/pages/reminders.js?v=3"></script>
-<script src="src/pages/payroll.js?v=80"></script>
-<script src="src/pages/permissions.js?v=80"></script>
+<script defer src="src/pages/payments.js?v=5"></script>
+<script defer src="src/pages/workflow.js?v=12"></script>
+<script defer src="src/pages/reviews.js?v=80"></script>
+<script defer src="src/pages/timetrack.js?v=5"></script>
+<script defer src="src/pages/checklists.js?v=3"></script>
+<script defer src="src/pages/visits.js?v=3"></script>
+<script defer src="src/pages/customfields.js?v=2"></script>
+<script defer src="src/pages/commandpalette.js"></script>
+<script defer src="src/pages/ai.js?v=7"></script>
+<script defer src="src/pages/satisfaction.js?v=2"></script>
+<script defer src="src/pages/emailtemplates.js?v=3"></script>
+<script defer src="src/pages/crewperformance.js?v=2"></script>
+<script defer src="src/pages/materials.js"></script>
+<script defer src="src/pages/beforeafter.js?v=3"></script>
+<script defer src="src/pages/mediacenter.js?v=2"></script>
+<script defer src="src/pages/reminders.js?v=3"></script>
+<script defer src="src/pages/payroll.js?v=80"></script>
+<script defer src="src/pages/permissions.js?v=80"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';

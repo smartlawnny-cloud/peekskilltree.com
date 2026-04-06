@@ -117,8 +117,8 @@ var CloudSync = {
           var record = all.find(function(r) { return r.id === id; });
           if (record && record.id) {
             sb.from(table).update(cloudChanges).eq('id', record.id).then(function(res) {
-              if (res.error) console.warn('Cloud update error (' + table + '):', res.error.message);
-            });
+              if (res.error) { console.warn('Cloud update error (' + table + '):', res.error.message); CloudSync._markUnsynced(); }
+            }).catch(function() { CloudSync._markUnsynced(); });
           }
           return result;
         };
@@ -129,8 +129,8 @@ var CloudSync = {
         dbSection.remove = function(id) {
           var result = origRemove.call(dbSection, id);
           sb.from(table).delete().eq('id', id).then(function(res) {
-            if (res.error) console.warn('Cloud delete error (' + table + '):', res.error.message);
-          });
+            if (res.error) { console.warn('Cloud delete error (' + table + '):', res.error.message); CloudSync._markUnsynced(); }
+          }).catch(function() { CloudSync._markUnsynced(); });
           return result;
         };
       }

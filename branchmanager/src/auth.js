@@ -135,18 +135,6 @@ var Auth = {
     }
   },
 
-  showQuickLogin: function() {
-    document.getElementById('quick-login').style.display = 'block';
-  },
-
-  quickLogin: function(role) {
-    var names = { owner: 'Doug Brown', crew_lead: 'Crew Lead', crew_member: 'Crew Member' };
-    Auth.user = { email: role + '@demo', role: role, name: names[role] };
-    Auth.role = role;
-    localStorage.setItem('bm-session', JSON.stringify(Auth.user));
-    window.location.reload();
-  },
-
   // djb2 hash — simple, fast, no dependencies. Returns hex string.
   // Generate new hash: Auth._hash('yourpassword') in browser console
   _hash: function(str) {

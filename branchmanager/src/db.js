@@ -19,7 +19,17 @@ var DB = (function() {
     try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e) { return []; }
   }
   function _set(key, data) {
-    try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch(e) {
+      // localStorage quota exceeded — warn user
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        console.error('localStorage full! Data may not be saved for: ' + key);
+        if (typeof UI !== 'undefined' && UI.toast) {
+          UI.toast('Storage full — some data may not save. Clear old data in Settings.', 'error');
+        }
+      }
+    }
   }
   function _id() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
   function _now() { return new Date().toISOString(); }

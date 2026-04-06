@@ -566,7 +566,7 @@
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
   <!-- Sidebar -->
-  <nav class="sidebar" id="sidebar">
+  <nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
     <div class="sidebar-header" onclick="toggleSidebar()">
       <div class="sidebar-logo">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -675,10 +675,10 @@
   </div>
 
   <!-- Main Content -->
-  <div class="main">
+  <div class="main" role="main">
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:12px;">
-        <button class="hamburger" onclick="toggleSidebar()"><i data-lucide="menu" style="width:22px;height:22px;stroke:var(--text);stroke-width:1.75;"></i></button>
+        <button class="hamburger" onclick="toggleSidebar()" aria-label="Open navigation menu" role="button"><i data-lucide="menu" style="width:22px;height:22px;stroke:var(--text);stroke-width:1.75;"></i></button>
         <h2 id="pageTitle">Dashboard</h2>
       </div>
       <div class="topbar-actions">
@@ -1036,7 +1036,7 @@ function loadPage(page) {
   if (config.action) {
     actionBtn.textContent = config.action;
     actionBtn.style.display = '';
-    actionBtn.onclick = config.actionFn ? new Function(config.actionFn) : null;
+    actionBtn.onclick = config.actionFn ? function() { try { (new Function(config.actionFn))(); } catch(e) { console.warn('Action error:', e); } } : null;
   } else {
     actionBtn.style.display = 'none';
   }

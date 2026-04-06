@@ -581,9 +581,9 @@
       <button class="nav-item" data-page="schedule"><span class="icon"><i data-lucide="calendar" class="li"></i></span> Calendar</button>
       <button class="nav-item" data-page="clients"><span class="icon"><i data-lucide="users" class="li"></i></span> Clients <span class="badge" id="badge-clients"></span></button>
       <button class="nav-item" data-page="requests"><span class="icon"><i data-lucide="inbox" class="li"></i></span> Requests <span class="badge" id="badge-requests"></span></button>
-      <button class="nav-item" data-page="quotes"><span class="icon"><i data-lucide="file-text" class="li"></i></span> Quotes</button>
-      <button class="nav-item" data-page="jobs"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Jobs</button>
-      <button class="nav-item" data-page="invoices"><span class="icon"><i data-lucide="receipt" class="li"></i></span> Invoices</button>
+      <button class="nav-item" data-page="quotes"><span class="icon"><i data-lucide="file-text" class="li"></i></span> Quotes <span class="badge" id="badge-quotes"></span></button>
+      <button class="nav-item" data-page="jobs"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Jobs <span class="badge" id="badge-jobs"></span></button>
+      <button class="nav-item" data-page="invoices"><span class="icon"><i data-lucide="receipt" class="li"></i></span> Invoices <span class="badge" id="badge-invoices"></span></button>
       <button class="nav-item" data-page="payments"><span class="icon"><i data-lucide="credit-card" class="li"></i></span> Payments</button>
 
       <!-- Marketing (collapsible, matches App exactly) -->
@@ -691,7 +691,7 @@
           <div id="searchDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.15);max-height:70vh;overflow-y:auto;z-index:999;min-width:320px;"></div>
         </div>
         <div class="topbar-icons">
-          <button class="topbar-icon topbar-icon-create" onclick="QuickCreate.show()" title="New…" style="background:var(--accent);border-radius:8px;width:32px;height:32px;">
+          <button class="topbar-icon topbar-icon-create" onclick="BM_contextCreate()" title="New…" style="background:var(--accent);border-radius:8px;width:32px;height:32px;">
             <i data-lucide="plus" style="width:18px;height:18px;stroke:#fff;stroke-width:2.5;"></i>
           </button>
           <div style="width:1px;height:20px;background:var(--border);margin:0 4px;"></div>
@@ -1023,6 +1023,22 @@ function checkAuth() {
   return true;
 }
 
+// Context-aware + button — creates the right thing for the current page
+function BM_contextCreate() {
+  var page = window._currentPage || 'dashboard';
+  var contextActions = {
+    clients: function() { ClientsPage.showForm(); },
+    requests: function() { RequestsPage.showForm(); },
+    quotes: function() { QuotesPage.showForm(); },
+    jobs: function() { JobsPage.showForm(); },
+    invoices: function() { InvoicesPage.showForm(); },
+    team: function() { TeamPage.showForm(); },
+    expenses: function() { if (typeof ExpensesPage !== 'undefined') loadPage('expenses'); },
+  };
+  if (contextActions[page]) { contextActions[page](); }
+  else { QuickCreate.show(); }
+}
+
 function loadPage(page) {
   if (!checkAuth()) return;
   // Update URL hash for browser back button
@@ -1041,10 +1057,22 @@ function loadPage(page) {
     actionBtn.style.display = 'none';
   }
 
-  // Update badges
+  // Update sidebar badges
   var newReqs = DB.requests.countNew();
   document.getElementById('badge-requests').textContent = newReqs > 0 ? newReqs : '';
   document.getElementById('badge-clients').textContent = '';
+  // Quotes awaiting response
+  var awaitingQuotes = DB.quotes.count(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
+  var qBadge = document.getElementById('badge-quotes');
+  if (qBadge) qBadge.textContent = awaitingQuotes > 0 ? awaitingQuotes : '';
+  // Active jobs
+  var activeJobs = DB.jobs.count(function(j) { return j.status === 'scheduled' || j.status === 'in_progress'; });
+  var jBadge = document.getElementById('badge-jobs');
+  if (jBadge) jBadge.textContent = activeJobs > 0 ? activeJobs : '';
+  // Unpaid invoices
+  var unpaidInv = DB.invoices.count(function(i) { return i.status !== 'paid' && i.status !== 'cancelled' && i.balance > 0; });
+  var iBadge = document.getElementById('badge-invoices');
+  if (iBadge) iBadge.textContent = unpaidInv > 0 ? unpaidInv : '';
   // Media center unreviewed badge
   var mediaBadgeEl = document.getElementById('badge-mediacenter');
   if (mediaBadgeEl && typeof MediaCenter !== 'undefined') {
@@ -1353,7 +1381,12 @@ var QuickCreate = {
 
 // ── Init ──
 if (checkAuth()) {
-  loadPage('dashboard');
+  // Role-based default page
+  var hashPage = window.location.hash ? window.location.hash.slice(1) : '';
+  var defaultPage = 'dashboard';
+  if (Auth.role === 'crew_member') defaultPage = 'crewview';
+  else if (Auth.role === 'crew_lead') defaultPage = 'dispatch';
+  loadPage((hashPage && pageRenderers[hashPage]) ? hashPage : defaultPage);
   // Show compliance popup after a short delay so the page settles first
   setTimeout(function() {
     if (typeof Reminders !== 'undefined') Reminders.checkLoginPopup();

@@ -48,7 +48,7 @@ var SchedulePage = {
           + '<div style="flex:1;min-width:0;">'
           + '<div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.clientName || '') + '</div>'
           + '<div style="font-size:12px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '#' + j.jobNumber) + '</div>'
-          + (j.property ? '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">📍 ' + UI.esc(j.property) + '</div>' : '')
+          + (j.property ? '<div style="font-size:11px;margin-top:2px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" style="color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(j.property) + ' →</a></div>' : '')
           + '</div>'
           + '<div style="text-align:right;flex-shrink:0;margin-right:8px;">'
           + '<div style="font-weight:700;color:var(--green-dark);font-size:14px;">' + UI.moneyInt(j.total) + '</div>'

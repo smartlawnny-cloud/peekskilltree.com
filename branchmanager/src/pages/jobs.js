@@ -229,6 +229,45 @@ var JobsPage = {
     if (bar) bar.style.display = selected.length > 0 ? 'flex' : 'none';
     if (count) count.textContent = selected.length + ' selected';
   },
+  _textCrew: function(id) {
+    var j = DB.jobs.getById(id);
+    if (!j || !j.crew || !j.crew.length) return;
+
+    // Look up crew phone numbers from team_members
+    var team = JSON.parse(localStorage.getItem('bm-team') || '[]');
+    var phones = [];
+    j.crew.forEach(function(name) {
+      var member = team.find(function(t) { return t.name === name; });
+      if (member && member.phone) phones.push(member.phone.replace(/\D/g, ''));
+    });
+
+    // Build the message with job details + clickable address
+    var addr = j.property || '';
+    var mapLink = addr ? 'https://maps.apple.com/?daddr=' + encodeURIComponent(addr) : '';
+    var jobLink = 'https://peekskilltree.com/branchmanager/#jobs';
+
+    var msg = 'Job #' + (j.jobNumber || '') + ' — ' + (j.clientName || '') + '\n'
+      + (j.description ? j.description + '\n' : '')
+      + (addr ? '\n📍 ' + addr + '\n' + mapLink + '\n' : '')
+      + '\nOpen in Branch Manager: ' + jobLink;
+
+    if (phones.length > 0) {
+      // Multi-recipient SMS
+      window.open('sms:' + phones.join(',') + '?&body=' + encodeURIComponent(msg));
+    } else {
+      // No phone numbers found — show the message to copy
+      UI.showModal('Text Crew', '<div style="padding:4px;">'
+        + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">No phone numbers found for crew. Copy this message and send manually:</p>'
+        + '<textarea id="crew-msg" rows="8" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">' + UI.esc(msg) + '</textarea>'
+        + '<div style="display:flex;gap:8px;margin-top:8px;">'
+        + '<strong>Crew:</strong> ' + j.crew.join(', ')
+        + '</div></div>', {
+        footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
+          + ' <button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById(\'crew-msg\').value);UI.toast(\'Copied!\')">Copy Message</button>'
+      });
+    }
+  },
+
   _requestReview: function(id) {
     var j = DB.jobs.getById(id);
     if (!j) return;
@@ -602,6 +641,7 @@ var JobsPage = {
         return phone ? '<a href="tel:' + phone.replace(/\D/g,'') + '" class="btn btn-outline" style="font-size:12px;">📞 Call</a>'
           + '<a href="sms:' + phone.replace(/\D/g,'') + '" class="btn btn-outline" style="font-size:12px;">💬 Text</a>' : '';
       })()
+      + (j.crew && j.crew.length > 0 ? '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage._textCrew(\'' + id + '\')">📲 Text Crew</button>' : '')
       + (j.status === 'completed' ? '<button class="btn btn-outline" style="font-size:12px;color:#f9a825;border-color:#f9a825;" onclick="JobsPage._requestReview(\'' + id + '\')">⭐ Request Review</button>' : '')
       + (j.status === 'scheduled' || j.status === 'in_progress' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage._getSignature(\'' + id + '\')">✓ Mark Complete</button>' : '')
       + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" style="font-size:12px;" onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()">💰 Create Invoice</button>' : '')

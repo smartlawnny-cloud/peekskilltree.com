@@ -208,13 +208,9 @@ var SupabaseDB = {
       UI.toast(totalPulled + ' records synced from cloud');
       // Refresh current page to show data
       if (typeof loadPage === 'function') {
-        var currentPage = document.querySelector('.nav-item.active');
-        if (currentPage) {
-          var page = currentPage.getAttribute('onclick');
-          if (page) {
-            var match = page.match(/loadPage\('(\w+)'\)/);
-            if (match) loadPage(match[1]);
-          }
+        var activeNav = document.querySelector('.nav-item.active');
+        if (activeNav && activeNav.dataset.page) {
+          loadPage(activeNav.dataset.page);
         } else {
           loadPage('dashboard');
         }
@@ -261,8 +257,8 @@ var SupabaseDB = {
       localStorage.setItem('bm-requests', JSON.stringify(localReqs));
 
       // Refresh requests page badge
-      if (typeof NotificationCenter !== 'undefined' && NotificationCenter.updateBadge) {
-        NotificationCenter.updateBadge();
+      if (typeof NotifCenter !== 'undefined' && NotifCenter.updateBadge) {
+        NotifCenter.updateBadge();
       }
     } catch(e) {}
   },
@@ -326,11 +322,11 @@ var SupabaseDB = {
           UI.toast('💳 Payment received! Invoice #' + p.invoice_number + ' — ' + amt + ' (Stripe)', 'success');
         });
         // Refresh page if on invoices
-        if (typeof loadPage === 'function' && document.querySelector('.nav-item.active')) {
+        if (typeof loadPage === 'function') {
           var active = document.querySelector('.nav-item.active');
-          var match = (active.getAttribute('onclick') || '').match(/loadPage\('(\w+)'\)/);
-          if (match && (match[1] === 'invoices' || match[1] === 'dashboard' || match[1] === 'payments')) {
-            loadPage(match[1]);
+          var pg = active && active.dataset.page;
+          if (pg && (pg === 'invoices' || pg === 'dashboard' || pg === 'payments')) {
+            loadPage(pg);
           }
         }
       }

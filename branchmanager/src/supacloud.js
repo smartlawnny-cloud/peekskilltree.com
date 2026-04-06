@@ -20,7 +20,7 @@ var CloudSync = {
 
     for (var i = 0; i < CloudSync.tables.length; i++) {
       var table = CloudSync.tables[i];
-      var localKey = 'bm-' + table.replace('_', '-');
+      var localKey = 'bm-' + table.replace(/_/g, '-');
 
       try {
         // Pull all rows from Supabase
@@ -71,7 +71,7 @@ var CloudSync = {
     var sb = SupabaseDB.client;
 
     CloudSync.tables.forEach(function(table) {
-      var localKey = 'bm-' + table.replace('_', '-');
+      var localKey = 'bm-' + table.replace(/_/g, '-');
       var dbSection = table === 'time_entries' ? DB.timeEntries : DB[table];
       if (!dbSection) return;
 

@@ -529,12 +529,12 @@ var JobsPage = {
     });
   },
 
-  _setArrival: function(btn, window) {
+  _setArrival: function(btn, arrival) {
     document.querySelectorAll('.arr-btn').forEach(function(b) {
       b.classList.remove('btn-primary'); b.classList.add('btn-outline');
     });
     btn.classList.remove('btn-outline'); btn.classList.add('btn-primary');
-    document.getElementById('j-arrival').value = window;
+    document.getElementById('j-arrival').value = arrival;
   },
 
   save: function(e, jobId) {

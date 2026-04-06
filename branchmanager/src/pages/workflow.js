@@ -128,8 +128,7 @@ var Workflow = {
       status: 'scheduled',
       quoteId: quoteId,
       lineItems: quote.lineItems || [],
-      source: 'quote',
-      jobNumber: DB.jobs.getAll().length + 1
+      source: 'quote'
     });
 
     // Update quote status

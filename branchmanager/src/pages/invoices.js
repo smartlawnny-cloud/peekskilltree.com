@@ -682,8 +682,16 @@ var InvoicesPage = {
   },
 
   // ── New Invoice Form ──
-  showForm: function(invoiceId) {
+  showForm: function(invoiceId, clientId) {
     var inv = invoiceId ? DB.invoices.getById(invoiceId) : {};
+    // Pre-fill client from parameter (e.g., from client detail page)
+    if (!inv.clientId && clientId) {
+      var prefillClient = DB.clients.getById(clientId);
+      if (prefillClient) {
+        inv.clientId = clientId;
+        inv.clientName = prefillClient.name;
+      }
+    }
     var items = inv.lineItems || [{ description: '', qty: 1, rate: 0 }];
     var services = DB.services.getAll();
 

@@ -248,27 +248,7 @@
   .empty-state h3 { font-size:16px; color:var(--text); margin-bottom:6px; font-weight:600; }
   .empty-state p { font-size:13px; max-width:380px; margin:0 auto; }
 
-  /* ── Mobile Bottom Nav (Jobber-style) ── */
-  .bottom-nav {
-    display:none; position:fixed; bottom:0; left:0; right:0; z-index:150;
-    background:var(--white); border-top:1px solid var(--border);
-    padding:6px 0 env(safe-area-inset-bottom, 8px);
-    box-shadow:0 -4px 20px rgba(0,0,0,.08);
-  }
-  .bottom-nav-inner {
-    display:flex; justify-content:space-around; align-items:center;
-  }
-  .bottom-nav-btn {
-    display:flex; flex-direction:column; align-items:center; gap:3px;
-    background:none; border:none; padding:4px 12px; cursor:pointer;
-    font-size:10px; color:var(--text-light); font-weight:600;
-    transition:color .15s; -webkit-tap-highlight-color:transparent;
-  }
-  .bottom-nav-btn.active { color:var(--accent); }
-  .bottom-nav-btn:active { transform:scale(.9); }
-  .bottom-nav-btn .bnav-icon { font-size:20px; display:block; margin:0 auto 2px; }
-  .bottom-nav-btn svg.bnav-icon { width:22px; height:22px; }
-  .bottom-nav-btn svg.bnav-icon.active-icon { stroke:var(--accent); }
+  /* Bottom nav removed — using sidebar on all viewports */
 
   /* ── Responsive ── */
   @media (max-width: 768px) {
@@ -280,7 +260,7 @@
     .content { padding:16px; padding-bottom:24px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
     .topbar { padding:10px 16px; padding-top:max(10px,env(safe-area-inset-top)); }
     .search-box { min-width:auto; flex:1; }
-    .bottom-nav { display:block; }
+    /* bottom-nav removed */
     .detail-grid { grid-template-columns:1fr !important; }
     .option-grid { grid-template-columns:1fr !important; }
 
@@ -290,7 +270,7 @@
     .sidebar-overlay { display:none; }
     .sidebar-overlay.open { display:block !important; }
     .hamburger { display:block !important; }
-    .bottom-nav { display:none !important; }
+    /* bottom-nav removed */
     .main { margin-left:0 !important; }
 
     /* Rounded cards */
@@ -992,9 +972,7 @@ function checkAuth() {
     return false;
   }
   var appEl = document.querySelector('.app');
-  var bottomNav = document.querySelector('.bottom-nav');
   if (appEl) appEl.style.display = '';
-  if (bottomNav) bottomNav.style.display = '';
   var loginDiv = document.getElementById('login-screen');
   if (loginDiv) loginDiv.innerHTML = '';
 
@@ -1022,6 +1000,11 @@ function checkAuth() {
 
 function loadPage(page) {
   if (!checkAuth()) return;
+  // Update URL hash for browser back button
+  if (window.location.hash !== '#' + page) {
+    history.pushState({ page: page }, '', '#' + page);
+  }
+  window._currentPage = page;
   var config = pageConfigs[page] || { title: page, action: null };
   document.getElementById('pageTitle').textContent = config.title;
   var actionBtn = document.getElementById('pageAction');
@@ -1433,13 +1416,14 @@ function toggleDarkMode() {
   var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
   localStorage.setItem('bm-dark-mode', isDark ? '' : 'dark');
-  var btn = document.getElementById('dark-mode-btn');
-  if (btn) btn.textContent = isDark ? '🌙' : '☀️';
+  var icon = document.getElementById('dark-mode-icon');
+  if (icon) icon.setAttribute('data-lucide', isDark ? 'moon' : 'sun');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 // Restore on load
 if (localStorage.getItem('bm-dark-mode') === 'dark') {
   document.documentElement.setAttribute('data-theme', 'dark');
-  setTimeout(function() { var btn = document.getElementById('dark-mode-btn'); if (btn) btn.textContent = '☀️'; }, 100);
+  setTimeout(function() { var icon = document.getElementById('dark-mode-icon'); if (icon) icon.setAttribute('data-lucide', 'sun'); if (typeof lucide !== 'undefined') lucide.createIcons(); }, 100);
 }
 
 // ── Keyboard Shortcuts ──
@@ -1486,58 +1470,7 @@ document.addEventListener('keydown', function(e) {
 });
 </script>
 
-<!-- Mobile Bottom Nav (Jobber-style: Home, Schedule, +New, Clients, More) -->
-<nav class="bottom-nav">
-  <div class="bottom-nav-inner">
-    <button class="bottom-nav-btn active" data-page="dashboard" onclick="loadPage('dashboard')">
-      <svg class="bnav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
-    </button>
-    <button class="bottom-nav-btn" data-page="schedule" onclick="loadPage('schedule')">
-      <svg class="bnav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule
-    </button>
-    <button class="bottom-nav-btn" onclick="QuickCreate.show()" style="position:relative;">
-      <span class="bnav-icon" style="background:var(--accent);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:-8px auto 0;">+</span>New
-    </button>
-    <button class="bottom-nav-btn" data-page="search" onclick="loadPage('search')">
-      <svg class="bnav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Search
-    </button>
-    <button class="bottom-nav-btn" onclick="document.getElementById('mobile-more-menu').style.display=document.getElementById('mobile-more-menu').style.display==='block'?'none':'block'">
-      <svg class="bnav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More
-    </button>
-  </div>
-  <!-- Mobile More Menu (slides up like Jobber) -->
-  <div id="mobile-more-menu" style="display:none;position:absolute;bottom:100%;left:0;right:0;background:var(--white);border-top:1px solid var(--border);box-shadow:0 -8px 30px rgba(0,0,0,.12);border-radius:16px 16px 0 0;padding:16px;max-height:60vh;overflow-y:auto;">
-    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center;">
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('requests')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">📥</div><div style="font-size:11px;font-weight:600;color:var(--text);">Requests</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('quotes')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">📋</div><div style="font-size:11px;font-weight:600;color:var(--text);">Quotes</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('jobs')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">🔧</div><div style="font-size:11px;font-weight:600;color:var(--text);">Jobs</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('invoices')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">💰</div><div style="font-size:11px;font-weight:600;color:var(--text);">Invoices</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('pipeline')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">📊</div><div style="font-size:11px;font-weight:600;color:var(--text);">Pipeline</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('timesheet')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">⏱</div><div style="font-size:11px;font-weight:600;color:var(--text);">Timesheets</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('expenses')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">💸</div><div style="font-size:11px;font-weight:600;color:var(--text);">Expenses</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('insights')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">📈</div><div style="font-size:11px;font-weight:600;color:var(--text);">Reporting</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('team')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">👷</div><div style="font-size:11px;font-weight:600;color:var(--text);">Team</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('notifications')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">🔔</div><div style="font-size:11px;font-weight:600;color:var(--text);">Activity</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('messaging')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">💬</div><div style="font-size:11px;font-weight:600;color:var(--text);">Messages</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('ai')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">🤖</div><div style="font-size:11px;font-weight:600;color:var(--text);">Claude AI</div></button>
-      <button onclick="document.getElementById('mobile-more-menu').style.display='none';loadPage('settings')" style="background:none;border:none;padding:12px 4px;cursor:pointer;border-radius:12px;">
-        <div style="font-size:24px;margin-bottom:4px;">⚙️</div><div style="font-size:11px;font-weight:600;color:var(--text);">Settings</div></button>
-    </div>
-  </div>
-</nav>
+<!-- Bottom nav removed — using sidebar on all viewports -->
 <script>
 /* ── Notification Center Dropdown ── */
 var NotifCenter = (function() {
@@ -1854,6 +1787,18 @@ if (localStorage.getItem('bm-sidebar-collapsed') === 'true') {
   document.getElementById('sidebar').classList.add('collapsed');
   var tb = document.getElementById('sidebar-toggle-btn');
   if (tb) tb.textContent = '▶';
+}
+// Browser back/forward button support
+window.addEventListener('popstate', function(e) {
+  var page = (e.state && e.state.page) || (window.location.hash ? window.location.hash.slice(1) : 'dashboard');
+  if (page && typeof loadPage === 'function') loadPage(page);
+});
+// Load page from URL hash on initial load
+if (window.location.hash && window.location.hash.length > 1) {
+  var hashPage = window.location.hash.slice(1);
+  if (typeof loadPage === 'function' && typeof pageRenderers !== 'undefined' && pageRenderers[hashPage]) {
+    setTimeout(function() { loadPage(hashPage); }, 100);
+  }
 }
 </script>
 </body>

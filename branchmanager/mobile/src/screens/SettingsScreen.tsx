@@ -29,7 +29,7 @@ export function SettingsScreen({ navigation }: any) {
 
   const handleSaveClaude = async () => {
     await saveApiKey(claudeKey.trim());
-    Alert.alert('Saved', 'Claude API key updated.');
+    Alert.alert('Saved', 'AI API key updated.');
   };
 
   const handleSaveGusto = async () => {
@@ -77,7 +77,7 @@ export function SettingsScreen({ navigation }: any) {
         </Card>
 
         {/* AI Assistant */}
-        <Text style={styles.sectionTitle}>AI Assistant (Claude)</Text>
+        <Text style={styles.sectionTitle}>AI Assistant</Text>
         <Card>
           <Text style={styles.fieldLabel}>API Key</Text>
           <TextInput

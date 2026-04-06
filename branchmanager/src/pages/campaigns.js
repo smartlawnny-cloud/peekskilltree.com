@@ -1,6 +1,6 @@
 /**
  * Branch Manager — Campaigns v2
- * Email & SMS marketing campaigns (mirrors Jobber Campaigns)
+ * Email & SMS marketing campaigns (mirrors the industry Campaigns)
  */
 var Campaigns = {
   _filter: 'all',

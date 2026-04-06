@@ -28,7 +28,7 @@ var PipelinePage = {
     var allDeals = PipelinePage.getDeals();
     var sixMonthsAgo = new Date(Date.now() - 180 * 86400000);
 
-    // Filter: when recent mode, hide old assessment/quote_sent deals (Jobber import noise)
+    // Filter: when recent mode, hide old assessment/quote_sent deals (import noise)
     var deals = PipelinePage._filterRecent
       ? allDeals.filter(function(d) {
           if (d.stage === 'won' || d.stage === 'lost' || d.stage === 'new_lead' || d.stage === 'follow_up') return true;
@@ -130,7 +130,7 @@ var PipelinePage = {
     html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">'
       + '<button class="btn ' + (PipelinePage._filterRecent ? 'btn-primary' : 'btn-outline') + '" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage._filterRecent=true;loadPage(\'pipeline\')">6 Months</button>'
       + '<button class="btn ' + (!PipelinePage._filterRecent ? 'btn-primary' : 'btn-outline') + '" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage._filterRecent=false;loadPage(\'pipeline\')">All Time</button>'
-      + (hiddenOld > 0 ? '<span style="font-size:12px;color:var(--text-light);">' + hiddenOld + ' older Jobber deals hidden</span>' : '')
+      + (hiddenOld > 0 ? '<span style="font-size:12px;color:var(--text-light);">' + hiddenOld + ' older deals hidden</span>' : '')
       + '<div style="margin-left:auto;display:flex;gap:8px;">'
       + (openQuotes.length > 0 ? '<button class="btn btn-outline" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage.importFromQuotes()">📋 Import ' + openQuotes.length + ' Quote' + (openQuotes.length !== 1 ? 's' : '') + '</button>' : '')
       + '<button class="btn btn-primary" style="font-size:12px;padding:5px 14px;" onclick="PipelinePage.addDeal(\'new_lead\')">+ New Deal</button>'

@@ -1,12 +1,12 @@
 /**
- * Branch Manager — Jobber CSV Import Page
+ * Branch Manager — CSV Import Page
  * Reads Jobber export CSVs and imports into Supabase
  */
 var ImportPage = {
   render: function() {
     var connected = SupabaseDB.ready;
-    var html = '<div class="section-header"><h2>Import Jobber Data</h2>'
-      + '<p style="color:var(--text-light);margin-top:4px;">Upload your Jobber CSV exports to migrate all data into Branch Manager.</p></div>';
+    var html = '<div class="section-header"><h2>Import Data</h2>'
+      + '<p style="color:var(--text-light);margin-top:4px;">Upload your CSV exports to migrate all data into Branch Manager.</p></div>';
 
     // Connection status
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
@@ -48,8 +48,8 @@ var ImportPage = {
 
     // Quick import from URL (for Jobber email links)
     html += '<div style="background:#f0f8e8;border-radius:12px;padding:20px;border:1px solid #c8e6c9;margin-top:16px;">'
-      + '<h3 style="font-size:15px;margin-bottom:8px;">💡 Tip: Jobber emails your exports</h3>'
-      + '<p style="font-size:13px;color:var(--text-light);margin:0;">Check <strong>info@peekskilltree.com</strong> for emails from Jobber with CSV attachments. Download each one, then upload it above.</p>'
+      + '<h3 style="font-size:15px;margin-bottom:8px;">💡 Tip: Your old system emails exports</h3>'
+      + '<p style="font-size:13px;color:var(--text-light);margin:0;">Check <strong>info@peekskilltree.com</strong> for export emails with CSV attachments. Download each one, then upload it above.</p>'
       + '</div>';
 
     return html;
@@ -167,7 +167,7 @@ var ImportPage = {
     }
   },
 
-  // Map Jobber CSV columns to Branch Manager schema
+  // Map CSV columns to Branch Manager schema
   mapRow: function(type, row) {
     switch (type) {
       case 'clients':

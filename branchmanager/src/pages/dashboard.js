@@ -10,6 +10,14 @@ var DashboardPage = {
       });
       localStorage.setItem('bm-legacy-jobs-fixed', '1');
     }
+    // Auto-expire quotes past their expiry date
+    var today = new Date().toISOString().split('T')[0];
+    DB.quotes.getAll().forEach(function(q) {
+      if (q.expiresAt && q.expiresAt < today && (q.status === 'sent' || q.status === 'awaiting')) {
+        DB.quotes.update(q.id, { status: 'expired' });
+      }
+    });
+
     var stats = DB.dashboard.getStats();
     var todayJobs = DB.jobs.getToday();
     var upcoming = DB.jobs.getUpcoming().slice(0, 5);
@@ -129,7 +137,7 @@ var DashboardPage = {
         html += '<div style="display:flex;align-items:center;justify-content:space-between;">'
           + '<div style="display:flex;align-items:center;gap:8px;">'
           + '<span style="font-size:18px;">🤖</span>'
-          + '<div><div style="font-size:13px;font-weight:600;">Claude AI</div>'
+          + '<div><div style="font-size:13px;font-weight:600;">AI Assistant</div>'
           + '<div style="font-size:12px;color:#666;">AI pricing, email drafts &amp; business insights</div></div>'
           + '</div>'
           + '<button class="btn btn-sm" style="font-size:12px;white-space:nowrap;" onclick="loadPage(\'ai\')">Connect →</button>'

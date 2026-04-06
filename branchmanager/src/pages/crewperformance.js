@@ -1,7 +1,7 @@
 /**
  * Branch Manager — Crew Performance
  * Per-crew-member analytics, leaderboard, trends, and team overview.
- * Goes beyond Jobber with revenue-per-hour, utilization, and rating breakdowns.
+ * Goes beyond the industry with revenue-per-hour, utilization, and rating breakdowns.
  */
 var CrewPerformance = {
 

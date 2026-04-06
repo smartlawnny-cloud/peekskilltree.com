@@ -1,6 +1,6 @@
 /**
  * Branch Manager — Settings Page
- * Company info, Supabase config, Jobber CSV import, data management
+ * Company info, Supabase config, previous system CSV import, data management
  */
 var SettingsPage = {
   render: function() {
@@ -111,18 +111,18 @@ var SettingsPage = {
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Enables: automated quote follow-ups, invoice reminders, visit reminders, review requests. Free: 100 emails/day.</p>'
       + '</div>';
 
-    // Claude AI Assistant
+    // AI Assistant
     var aiKey = localStorage.getItem('bm-claude-key') || '';
     var aiOk = aiKey.length > 10;
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
       + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
       + '<div style="width:40px;height:40px;background:linear-gradient(135deg,#D4A574,#C4956A);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🤖</div>'
-      + '<div><h3 style="margin:0;">Claude AI Assistant</h3>'
+      + '<div><h3 style="margin:0;">AI Assistant</h3>'
       + '<div style="font-size:12px;color:' + (aiOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (aiOk ? '✅ Connected — AI estimates & emails active' : '⚠️ Not connected — paste your Anthropic API key') + '</div>'
       + '</div></div>'
       + '<div style="margin-bottom:8px;"><input type="password" id="claude-ai-key" value="' + aiKey + '" placeholder="sk-ant-api03-..." style="width:100%;padding:10px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      + '<button onclick="var k=document.getElementById(\'claude-ai-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-claude-key\',k);if(typeof AI!==\'undefined\'){AI._apiKey=k;}UI.toast(\'Claude AI connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
+      + '<button onclick="var k=document.getElementById(\'claude-ai-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-claude-key\',k);if(typeof AI!==\'undefined\'){AI._apiKey=k;}UI.toast(\'AI Assistant connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
       + (aiOk ? '<button onclick="localStorage.removeItem(\'bm-claude-key\');UI.toast(\'Key removed\');loadPage(\'settings\');" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at console.anthropic.com → API Keys → Create Key (free tier available)</p>'
@@ -308,10 +308,10 @@ var SettingsPage = {
     }
     html += '</div>';
 
-    // Import from Jobber
+    // Import from previous system
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
-      + '<h3 style="margin-bottom:8px;">Import from Jobber</h3>'
-      + '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Export CSVs from Jobber (Clients → More Actions → Export) and import them here.</p>'
+      + '<h3 style="margin-bottom:8px;">Import from previous system</h3>'
+      + '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Export CSVs from previous system (Clients → More Actions → Export) and import them here.</p>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
       + '<div>'
       + '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Clients CSV</label>'
@@ -389,7 +389,7 @@ var SettingsPage = {
       + '<div><strong>Stack:</strong> Vanilla JS + Supabase + Stripe + MapLibre</div>'
       + '<div><strong>Storage:</strong> localStorage + Supabase cloud sync</div>'
       + '<div><strong>PWA:</strong> Installable, offline capable</div>'
-      + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;">Built for Second Nature Tree Service. Replaces Jobber ($50-130/mo) with a $0/mo custom solution.</div>'
+      + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;">Built for Second Nature Tree Service. Replaces previous system ($50-130/mo) with a $0/mo custom solution.</div>'
       + '</div></div>';
 
     html += '</div>';

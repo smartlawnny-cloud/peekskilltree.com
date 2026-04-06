@@ -18,12 +18,22 @@
       "bundleIdentifier": "com.peekskilltree.branchmanager",
       "buildNumber": "1",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Branch Manager uses your location to show nearby jobs and clock in at job sites.",
-        "NSCameraUsageDescription": "Branch Manager uses the camera to take job site photos and document work.",
-        "NSPhotoLibraryUsageDescription": "Branch Manager accesses photos to attach job site images to work orders."
+        "NSLocationWhenInUseUsageDescription": "Branch Manager uses your location to show nearby jobs and provide directions to job sites.",
+        "NSCameraUsageDescription": "Branch Manager uses the camera to take before/after photos of tree work for documentation.",
+        "NSPhotoLibraryUsageDescription": "Branch Manager accesses your photo library to attach job site images to work orders and quotes.",
+        "NSMicrophoneUsageDescription": "Branch Manager uses the microphone for voice-to-quote dictation on job sites.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
       }
     },
     "android": {
@@ -37,12 +47,30 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "CAMERA"
+        "CAMERA",
+        "RECORD_AUDIO"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      "expo-location",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Branch Manager needs access to your photos for job documentation.",
+          "cameraPermission": "Branch Manager needs camera access for job site photos."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1b5e20"
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": ""

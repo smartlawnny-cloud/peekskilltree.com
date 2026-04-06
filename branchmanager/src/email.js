@@ -32,22 +32,17 @@ var Email = {
     }
 
     try {
-      // Send via SendGrid API
-      var response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      // Send via Supabase Edge Function (avoids CORS) → forwards to SendGrid
+      var SUPA_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
+      var response = await fetch(SUPA_URL + '/functions/v1/send-email', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + Email.apiKey
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          personalizations: [{ to: [{ email: to }] }],
-          from: { email: 'info@peekskilltree.com', name: 'Second Nature Tree Service' },
-          reply_to: { email: 'info@peekskilltree.com', name: 'Doug Brown' },
+          to: to,
           subject: subject,
-          content: [
-            { type: 'text/plain', value: body },
-            { type: 'text/html', value: options.htmlBody || Email.htmlWrap(body) }
-          ]
+          text: body,
+          html: options.htmlBody || Email.htmlWrap(body),
+          apiKey: Email.apiKey
         })
       });
 

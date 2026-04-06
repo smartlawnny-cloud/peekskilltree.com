@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Second Nature Tree — Onboarding</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,system-ui,'Segoe UI',sans-serif; background:#f8fafc; color:#0f172a; }
+
+  /* Trainual-style top bar */
+  .topbar { background:#fff; border-bottom:1px solid #e2e8f0; padding:12px 20px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:10; }
+  .topbar-logo { width:36px; height:36px; background:#1b5e20; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; }
+  .topbar-title { font-size:15px; font-weight:700; }
+  .topbar-sub { font-size:12px; color:#64748b; }
+  .topbar-progress { margin-left:auto; text-align:right; }
+  .topbar-pct { font-size:20px; font-weight:800; color:#1b5e20; }
+  .topbar-label { font-size:11px; color:#94a3b8; }
+
+  .wrap { max-width:640px; margin:0 auto; padding:20px; }
+
+  /* Progress bar */
+  .progress-track { background:#e2e8f0; border-radius:99px; height:4px; margin-bottom:24px; }
+  .progress-fill { background:#1b5e20; border-radius:99px; height:100%; transition:width .4s ease; }
+
+  /* Step card (Trainual-style) */
+  .step { background:#fff; border-radius:12px; margin-bottom:12px; border:1px solid #e2e8f0; overflow:hidden; transition:box-shadow .2s; }
+  .step:hover { box-shadow:0 2px 8px rgba(0,0,0,.04); }
+  .step-header { padding:16px 20px; display:flex; align-items:center; gap:14px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .step-check { width:28px; height:28px; border-radius:50%; border:2px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; transition:all .2s; }
+  .step-check.done { background:#1b5e20; border-color:#1b5e20; color:#fff; }
+  .step-check.active { border-color:#1b5e20; }
+  .step-info { flex:1; }
+  .step-label { font-size:14px; font-weight:600; }
+  .step-meta { font-size:12px; color:#94a3b8; margin-top:2px; }
+  .step-tag { font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; background:#fef2f2; color:#dc2626; }
+  .step-arrow { font-size:16px; color:#cbd5e1; transition:transform .2s; }
+  .step.open .step-arrow { transform:rotate(90deg); }
+
+  /* Step body (Trainual content area) */
+  .step-body { display:none; padding:0 20px 20px; }
+  .step.open .step-body { display:block; }
+
+  /* Video */
+  .video { width:100%; aspect-ratio:16/9; border-radius:8px; border:none; margin-bottom:16px; background:#000; }
+
+  /* Content text */
+  .content { font-size:14px; line-height:1.7; color:#334155; }
+  .content strong { color:#0f172a; }
+  .content ul { margin:8px 0 8px 20px; }
+  .content li { margin-bottom:4px; }
+
+  /* Callout */
+  .callout { background:#fef2f2; border-left:3px solid #dc2626; padding:12px 16px; border-radius:0 8px 8px 0; margin:12px 0; font-size:13px; color:#7f1d1d; }
+  .callout.green { background:#f0fdf4; border-color:#16a34a; color:#14532d; }
+
+  /* Sign-off area */
+  .signoff { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-top:16px; }
+  .signoff-title { font-size:13px; font-weight:700; color:#475569; margin-bottom:10px; }
+  .signoff label { display:flex; align-items:flex-start; gap:8px; font-size:13px; cursor:pointer; margin-bottom:10px; }
+  .signoff input[type=checkbox] { margin-top:2px; width:16px; height:16px; accent-color:#1b5e20; }
+  .signoff input[type=text] { width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:6px; font-size:14px; margin-bottom:8px; }
+  .signoff input[type=text]:focus { outline:none; border-color:#1b5e20; }
+  .signoff-btn { width:100%; padding:12px; background:#1b5e20; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; }
+  .signoff-btn:hover { background:#166534; }
+  .signoff-btn:disabled { background:#cbd5e1; cursor:default; }
+
+  /* Completion */
+  .complete-card { display:none; background:#f0fdf4; border:2px solid #22c55e; border-radius:12px; padding:28px; text-align:center; margin-bottom:16px; }
+  .complete-card h2 { color:#166534; font-size:18px; margin-top:8px; }
+  .complete-card p { color:#15803d; font-size:14px; margin-top:6px; }
+  .print-btn { margin-top:14px; padding:10px 24px; background:#166534; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; }
+
+  /* Section divider */
+  .section-label { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin:20px 0 8px 4px; }
+
+  @media print { .topbar,.signoff-btn,.print-btn { display:none; } .step-body { display:block!important; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">🌳</div>
+  <div>
+    <div class="topbar-title">Second Nature Tree</div>
+    <div class="topbar-sub" id="topbar-emp">New Hire Onboarding</div>
+  </div>
+  <div class="topbar-progress">
+    <div class="topbar-pct" id="pct">0%</div>
+    <div class="topbar-label" id="pct-label">0 / 11 steps</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="progress-track"><div class="progress-fill" id="bar"></div></div>
+
+  <div class="complete-card" id="complete-card">
+    <div style="font-size:40px;">🎉</div>
+    <h2>Onboarding Complete</h2>
+    <p>All required paperwork and safety training is done. You're cleared for field work.</p>
+    <button class="print-btn" onclick="window.print()">🖨 Print Record</button>
+  </div>
+
+  <!-- ═══ SECTION 1: PAPERWORK ═══ -->
+  <div class="section-label">📄 Paperwork — Day 1</div>
+
+  <!-- 1 -->
+  <div class="step" id="s1">
+    <div class="step-header" onclick="toggle('s1')">
+      <div class="step-check" id="s1c"></div>
+      <div class="step-info">
+        <div class="step-label">I-9 Employment Eligibility <span class="step-tag">FEDERAL</span></div>
+        <div class="step-meta">2 min · Bring valid ID</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="content">
+        <p>Federal law requires every employee to prove they're authorized to work in the U.S. <strong>This is the actual federal form — cannot be replaced with a checkbox.</strong></p>
+        <ul>
+          <li><strong>What to bring:</strong> Driver's license + Social Security card, OR a valid U.S. passport</li>
+          <li><strong>Deadline:</strong> Must be completed within 3 business days of your first day</li>
+          <li><strong>Employer retains</strong> the signed I-9 for 3 years after hire or 1 year after termination (whichever is later)</li>
+        </ul>
+        <p style="margin-top:10px;"><a href="https://www.uscis.gov/i-9" target="_blank" style="color:#1b5e20;font-weight:600;">📄 Download I-9 Form from USCIS →</a></p>
+      </div>
+      <div class="callout">⚠️ You must physically verify the employee's ID documents. A photocopy or video is not sufficient. The employer (Doug or crew lead) examines the originals and signs Section 2.</div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Mark Complete</div>
+        <label><input type="checkbox" id="s1ack"> I-9 completed — original IDs examined in person and Section 2 signed by employer</label>
+        <input type="text" id="s1sig" placeholder="Employer name (who verified IDs)">
+        <button class="signoff-btn" onclick="done('s1')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="step" id="s2">
+    <div class="step-header" onclick="toggle('s2')">
+      <div class="step-check" id="s2c"></div>
+      <div class="step-info">
+        <div class="step-label">W-4 + IT-2104 Tax Withholding <span class="step-tag">FEDERAL + NY</span></div>
+        <div class="step-meta">2 min · Federal + NY State forms</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="content">
+        <p><strong>Gusto handles W-4, IT-2104, and Direct Deposit automatically.</strong></p>
+        <ul>
+          <li>Doug sends you a Gusto invitation email</li>
+          <li>You set up your account — Gusto walks you through W-4, state tax, and bank info</li>
+          <li>Everything is filed electronically. No paper forms needed.</li>
+        </ul>
+        <p style="margin-top:10px;"><a href="https://app.gusto.com" target="_blank" style="color:#1b5e20;font-weight:600;">🔗 Open Gusto →</a></p>
+      </div>
+      <div class="callout green">Gusto handles: W-4, IT-2104, direct deposit, pay stubs, tax filings. You don't need to fill these out separately.</div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Mark Complete</div>
+        <label><input type="checkbox" id="s2ack"> Gusto account set up — W-4, state tax, and bank info completed in Gusto</label>
+        <input type="text" id="s2sig" placeholder="Employee name">
+        <button class="signoff-btn" onclick="done('s2')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="step" id="s3">
+    <div class="step-header" onclick="toggle('s3')">
+      <div class="step-check" id="s3c"></div>
+      <div class="step-info">
+        <div class="step-label">NY Wage Theft Prevention Notice <span class="step-tag">NY STATE</span></div>
+        <div class="step-meta">1 min · Sign acknowledgment</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="content">
+        <p>NY law requires your employer to give you written notice of your pay rate, overtime rate, and payday <strong>before your first day of work.</strong></p>
+        <p><a href="wage-theft-notice.html" style="color:#1b5e20;font-weight:600;">📄 View & Print the Notice →</a></p>
+      </div>
+      <div class="callout">Penalty for not providing: $50/day per employee, up to $5,000.</div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Mark Complete</div>
+        <label><input type="checkbox" id="s3ack"> I received and signed the Wage Theft Prevention Notice</label>
+        <input type="text" id="s3sig" placeholder="Employee name">
+        <button class="signoff-btn" onclick="done('s3')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="step" id="s4">
+    <div class="step-header" onclick="toggle('s4')">
+      <div class="step-check" id="s4c"></div>
+      <div class="step-info">
+        <div class="step-label">Direct Deposit + Emergency Contact</div>
+        <div class="step-meta">2 min</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="content">
+        <ul>
+          <li><strong>Direct Deposit:</strong> Handled in Gusto (step 2 above)</li>
+          <li><strong>Emergency Contact:</strong> Name, phone number, relationship — collected in intake form</li>
+        </ul>
+        <p style="margin-top:8px;font-size:13px;color:#64748b;">If you used the <a href="new-hire.html" style="color:#1b5e20;">intake form</a>, emergency contact is already on file.</p>
+      </div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Mark Complete</div>
+        <label><input type="checkbox" id="s4ack"> Direct deposit and emergency contact submitted</label>
+        <input type="text" id="s4sig" placeholder="Employee name">
+        <button class="signoff-btn" onclick="done('s4')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 2: REQUIRED TRAINING ═══ -->
+  <div class="section-label">⚠️ Safety Training — Before Field Work</div>
+
+  <!-- 5: PPE -->
+  <div class="step" id="s5">
+    <div class="step-header" onclick="toggle('s5')">
+      <div class="step-check" id="s5c"></div>
+      <div class="step-info">
+        <div class="step-label">PPE Training <span class="step-tag">OSHA</span></div>
+        <div class="step-meta">12 min video · Quiz</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <iframe class="video" src="https://www.youtube.com/embed/BmWVfg_hbbU" allowfullscreen loading="lazy"></iframe>
+      <div class="content">
+        <p><strong>Your required PPE at Second Nature Tree:</strong></p>
+        <ul>
+          <li>Hard hat (Class E) — always on site</li>
+          <li>Safety glasses + face shield (when running saw)</li>
+          <li>Hearing protection (chipper/chainsaw running)</li>
+          <li>Chainsaw chaps — always when operating a saw</li>
+          <li>Steel-toe boots</li>
+          <li>Cut-resistant gloves</li>
+        </ul>
+      </div>
+      <div class="callout green">PPE is provided by the company at no cost to you. You're responsible for wearing it.</div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Employee + Trainer Sign-Off</div>
+        <label><input type="checkbox" id="s5ack"> I watched the PPE video and understand the requirements</label>
+        <input type="text" id="s5sig" placeholder="Employee name">
+        <input type="text" id="s5trainer" placeholder="Trainer/Manager name" style="margin-top:6px;">
+        <button class="signoff-btn" onclick="done('s5')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6: Fall Protection -->
+  <div class="step" id="s6">
+    <div class="step-header" onclick="toggle('s6')">
+      <div class="step-check" id="s6c"></div>
+      <div class="step-info">
+        <div class="step-label">Fall Protection <span class="step-tag">OSHA</span></div>
+        <div class="step-meta">15 min video · #1 cause of tree worker deaths</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <iframe class="video" src="https://www.youtube.com/embed/6NsBN42B80Q" allowfullscreen loading="lazy"></iframe>
+      <div class="content">
+        <ul>
+          <li>Fall protection required at <strong>6 feet</strong> (general industry)</li>
+          <li>Climbing saddle + climbing line = your fall protection in the tree</li>
+          <li>Bucket truck: full body harness + lanyard to anchor point</li>
+          <li>Inspect all gear daily — no exceptions</li>
+        </ul>
+      </div>
+      <div class="callout">Falls are the #1 killer of tree workers. 45% of all tree care fatalities.</div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Employee + Trainer Sign-Off</div>
+        <label><input type="checkbox" id="s6ack"> I completed fall protection training including hands-on harness demonstration</label>
+        <input type="text" id="s6sig" placeholder="Employee name">
+        <input type="text" id="s6trainer" placeholder="Trainer/Manager who observed hands-on demo" style="margin-top:6px;">
+        <button class="signoff-btn" onclick="done('s6')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7: Electrical -->
+  <div class="step" id="s7">
+    <div class="step-header" onclick="toggle('s7')">
+      <div class="step-check" id="s7c"></div>
+      <div class="step-info">
+        <div class="step-label">Electrical Hazard Awareness <span class="step-tag">OSHA</span></div>
+        <div class="step-meta">10 min video · #2 cause of tree worker deaths</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <iframe class="video" src="https://www.youtube.com/embed/W-GN0YC8g80" allowfullscreen loading="lazy"></iframe>
+      <div class="content">
+        <ul>
+          <li><strong>10 feet minimum</strong> from any power line — no exceptions</li>
+          <li>Only the utility company works within 10 feet</li>
+          <li>Assume ALL lines are energized, even downed ones</li>
+          <li>Con Ed: (914) 681-6500 · NYSEG: (800) 572-1131</li>
+        </ul>
+      </div>
+      <div class="callout">Electrocution is the #2 cause of death in tree care. One touch = fatal. 7,200+ volts on residential lines.</div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Employee + Trainer Sign-Off</div>
+        <label><input type="checkbox" id="s7ack"> I will never work within 10 feet of a power line</label>
+        <input type="text" id="s7sig" placeholder="Employee name">
+        <input type="text" id="s7trainer" placeholder="Trainer/Manager name" style="margin-top:6px;">
+        <button class="signoff-btn" onclick="done('s7')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8: HazCom -->
+  <div class="step" id="s8">
+    <div class="step-header" onclick="toggle('s8')">
+      <div class="step-check" id="s8c"></div>
+      <div class="step-info">
+        <div class="step-label">Hazard Communication <span class="step-tag">OSHA</span></div>
+        <div class="step-meta">8 min video · Chemical safety</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <iframe class="video" src="https://www.youtube.com/embed/xLbJP8TjlYE" allowfullscreen loading="lazy"></iframe>
+      <div class="content">
+        <ul>
+          <li>We use: bar oil, 2-cycle fuel, hydraulic fluid</li>
+          <li>Safety Data Sheets (SDS) binder is on the truck — know where it is</li>
+          <li>Never remove labels. Never put chemicals in unmarked containers.</li>
+          <li>No smoking within 20 feet of fuel. Refuel with engine off and cool.</li>
+        </ul>
+      </div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Employee + Trainer Sign-Off</div>
+        <label><input type="checkbox" id="s8ack"> I know where the SDS binder is and understand chemical handling</label>
+        <input type="text" id="s8sig" placeholder="Employee name">
+        <input type="text" id="s8trainer" placeholder="Trainer/Manager name" style="margin-top:6px;">
+        <button class="signoff-btn" onclick="done('s8')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9: NY Sexual Harassment -->
+  <div class="step" id="s9">
+    <div class="step-header" onclick="toggle('s9')">
+      <div class="step-check" id="s9c"></div>
+      <div class="step-info">
+        <div class="step-label">NY Sexual Harassment Prevention <span class="step-tag">NY STATE</span></div>
+        <div class="step-meta">20 min video · Required annually</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <iframe class="video" src="https://www.youtube.com/embed/wFHNjNDDSFk" allowfullscreen loading="lazy"></iframe>
+      <div class="content">
+        <ul>
+          <li>All NY employers must provide this training at hire and annually</li>
+          <li>Zero tolerance policy at Second Nature Tree</li>
+          <li>Report to Doug Brown (owner) — no retaliation</li>
+          <li>External: NY Division of Human Rights (888) 392-3644</li>
+        </ul>
+      </div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Employee + Trainer Sign-Off</div>
+        <label><input type="checkbox" id="s9ack"> I completed NY sexual harassment prevention training</label>
+        <input type="text" id="s9sig" placeholder="Employee name">
+        <input type="text" id="s9trainer" placeholder="Trainer/Manager name" style="margin-top:6px;">
+        <button class="signoff-btn" onclick="done('s9')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10: Emergency Plan -->
+  <div class="step" id="s10">
+    <div class="step-header" onclick="toggle('s10')">
+      <div class="step-check" id="s10c"></div>
+      <div class="step-info">
+        <div class="step-label">Emergency Action Plan <span class="step-tag">OSHA</span></div>
+        <div class="step-meta">5 min · Save these numbers</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="content">
+        <p><strong>Save these numbers in your phone right now:</strong></p>
+        <ul>
+          <li><strong>911</strong> — call first, always</li>
+          <li><strong>Doug Brown:</strong> (914) 391-5233 — report within 1 hour</li>
+          <li><strong>Hudson Valley Hospital:</strong> (914) 737-9000 — 1980 Crompond Rd, Cortlandt Manor</li>
+          <li><strong>Poison Control:</strong> (800) 222-1222</li>
+        </ul>
+        <p style="margin-top:8px;"><strong>First aid kit + fire extinguisher</strong> are on every truck. Check location at start of each day.</p>
+        <p style="margin-top:8px;"><strong>Workers' Comp:</strong> All injuries covered through NYSIF. File through Doug immediately.</p>
+      </div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Employee + Trainer Sign-Off</div>
+        <label><input type="checkbox" id="s10ack"> I saved emergency numbers and know first aid kit / extinguisher locations</label>
+        <input type="text" id="s10sig" placeholder="Employee name">
+        <input type="text" id="s10trainer" placeholder="Trainer/Manager name" style="margin-top:6px;">
+        <button class="signoff-btn" onclick="done('s10')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11: PPE Issued -->
+  <div class="step" id="s11">
+    <div class="step-header" onclick="toggle('s11')">
+      <div class="step-check" id="s11c"></div>
+      <div class="step-info">
+        <div class="step-label">PPE Issued & Fitted <span class="step-tag">OSHA</span></div>
+        <div class="step-meta">Crew lead verifies</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="content">
+        <p><strong>Crew lead: verify all PPE has been issued and fits properly:</strong></p>
+        <ul>
+          <li>☐ Hard hat (Class E)</li>
+          <li>☐ Safety glasses</li>
+          <li>☐ Ear protection (muffs or plugs)</li>
+          <li>☐ Work gloves</li>
+          <li>☐ Steel-toe boots (employee provides, or issued)</li>
+          <li>☐ Chainsaw chaps</li>
+          <li>☐ High-vis vest</li>
+        </ul>
+      </div>
+      <div class="signoff">
+        <div class="signoff-title">✓ Crew Lead Sign-Off</div>
+        <label><input type="checkbox" id="s11ack"> All PPE issued, fitted, and in good condition</label>
+        <input type="text" id="s11sig" placeholder="Crew Lead name">
+        <button class="signoff-btn" onclick="done('s11')">Complete Step</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTIONAL: CERTIFICATIONS ═══ -->
+  <div class="section-label" style="margin-top:28px;">🎓 Optional Certifications (Extra Credit)</div>
+
+  <div style="background:#fff;border-radius:12px;padding:20px;border:1px solid #e2e8f0;margin-bottom:12px;">
+    <p style="font-size:13px;color:#64748b;margin-bottom:16px;">These aren't required but they <strong>save money on insurance, win more bids, and increase your pay rate.</strong> Doug covers the cost for active employees.</p>
+
+    <div style="border-bottom:1px solid #f1f5f9;padding:12px 0;">
+      <div style="font-size:15px;font-weight:700;">🌳 ISA Certified Arborist</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">International Society of Arboriculture. Gold standard for tree care. Study online, take proctored exam.</div>
+      <div style="font-size:12px;margin-top:6px;">
+        <strong style="color:#1b5e20;">Benefits:</strong> Higher pay rate · Required for arborist letters ($250 each) · Insurance discount · Marketing ("ISA Certified" on trucks/website) · Win municipal contracts
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px;">Cost: ~$200 exam · Study: 2-4 months · Renew: every 3 years (30 CEUs)</div>
+      <a href="https://www.treesaregood.org/certification" target="_blank" style="display:inline-block;margin-top:8px;padding:6px 14px;background:#1b5e20;color:#fff;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">ISA Website →</a>
+    </div>
+
+    <div style="border-bottom:1px solid #f1f5f9;padding:12px 0;">
+      <div style="font-size:15px;font-weight:700;">🪢 TCIA Certified Treecare Safety Professional (CTSP)</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">Tree Care Industry Association safety certification. Online course + exam.</div>
+      <div style="font-size:12px;margin-top:6px;">
+        <strong style="color:#1b5e20;">Benefits:</strong> Up to 10% workers' comp insurance discount · OSHA compliance documentation · Marketing credibility
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px;">Cost: ~$500 · Study: 2-3 days online · Renew: every 3 years</div>
+      <a href="https://www.tcia.org/TCIA/Programs_and_Services/CTSP/CTSP.aspx" target="_blank" style="display:inline-block;margin-top:8px;padding:6px 14px;background:#1b5e20;color:#fff;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">TCIA CTSP →</a>
+    </div>
+
+    <div style="border-bottom:1px solid #f1f5f9;padding:12px 0;">
+      <div style="font-size:15px;font-weight:700;">🏗️ OSHA 10-Hour Construction</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">Free online through OSHA Education Center. Covers fall protection, electrical, excavation, PPE. 10 hours total.</div>
+      <div style="font-size:12px;margin-top:6px;">
+        <strong style="color:#1b5e20;">Benefits:</strong> OSHA card (wallet) · Required for some municipal jobs · Insurance documentation · Shows due diligence
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px;">Cost: Free – $25 for card · Time: 10 hours online at your own pace</div>
+      <a href="https://www.osha.gov/training/outreach" target="_blank" style="display:inline-block;margin-top:8px;padding:6px 14px;background:#1b5e20;color:#fff;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">OSHA Outreach →</a>
+    </div>
+
+    <div style="border-bottom:1px solid #f1f5f9;padding:12px 0;">
+      <div style="font-size:15px;font-weight:700;">🔗 EHAP — Electrical Hazards Awareness Program</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">TCIA program specifically for tree workers near power lines. Online course.</div>
+      <div style="font-size:12px;margin-top:6px;">
+        <strong style="color:#1b5e20;">Benefits:</strong> Required by many utilities for line-clearance work · Insurance documentation · Can bid on utility contracts
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px;">Cost: ~$35 · Time: 2-3 hours online</div>
+      <a href="https://www.tcia.org/TCIA/Programs_and_Services/EHAP/EHAP.aspx" target="_blank" style="display:inline-block;margin-top:8px;padding:6px 14px;background:#1b5e20;color:#fff;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">TCIA EHAP →</a>
+    </div>
+
+    <div style="padding:12px 0;">
+      <div style="font-size:15px;font-weight:700;">🚑 First Aid / CPR / AED</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">American Red Cross or American Heart Association. Online + skills check.</div>
+      <div style="font-size:12px;margin-top:6px;">
+        <strong style="color:#1b5e20;">Benefits:</strong> OSHA recommends for all field workers · Insurance documentation · Can save a life
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px;">Cost: ~$35 online · Time: 4-5 hours · Renew: every 2 years</div>
+      <a href="https://www.redcross.org/take-a-class/first-aid" target="_blank" style="display:inline-block;margin-top:8px;padding:6px 14px;background:#1b5e20;color:#fff;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">Red Cross →</a>
+    </div>
+  </div>
+
+  <div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#166534;">
+    💡 <strong>Doug pays for all certifications</strong> for employees who've been here 90+ days. ISA Arborist = automatic $2/hr raise. CTSP = up to 10% off workers' comp premium. Talk to Doug about which one to pursue first.
+  </div>
+
+  <div style="text-align:center;padding:20px;font-size:11px;color:#94a3b8;">
+    Second Nature Tree Service LLC · 1 Highland Industrial Park, Peekskill, NY 10566<br>
+    Retain records: 6 years (NY) · Training records: employment + 30 years (OSHA)
+  </div>
+</div>
+
+<script>
+var TOTAL = 11;
+var state = JSON.parse(localStorage.getItem('onboard-v2') || '{}');
+
+function toggle(id) {
+  var el = document.getElementById(id);
+  var wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.step.open').forEach(function(s) { s.classList.remove('open'); });
+  if (!wasOpen) el.classList.add('open');
+}
+
+function done(id) {
+  var ack = document.getElementById(id + 'ack');
+  var sig = document.getElementById(id + 'sig');
+  var trainer = document.getElementById(id + 'trainer');
+  if (!ack || !ack.checked) { alert('Check the acknowledgment box first.'); return; }
+  if (!sig || !sig.value.trim()) { alert('Employee: type your name to sign.'); return; }
+  if (trainer && !trainer.value.trim()) { alert('Trainer/Manager must also sign.'); return; }
+  state[id] = { name: sig.value.trim(), trainer: trainer ? trainer.value.trim() : '', date: new Date().toISOString() };
+  localStorage.setItem('onboard-v2', JSON.stringify(state));
+  render();
+  // Auto-open next step
+  var next = 's' + (parseInt(id.replace('s','')) + 1);
+  if (document.getElementById(next) && !state[next]) {
+    document.getElementById(id).classList.remove('open');
+    setTimeout(function() { toggle(next); }, 300);
+  } else {
+    document.getElementById(id).classList.remove('open');
+  }
+}
+
+function render() {
+  var count = 0;
+  for (var i = 1; i <= TOTAL; i++) {
+    var id = 's' + i;
+    var check = document.getElementById(id + 'c');
+    if (state[id]) {
+      check.classList.add('done');
+      check.textContent = '✓';
+      count++;
+    } else {
+      check.classList.remove('done');
+      check.textContent = '';
+    }
+  }
+  var pct = Math.round((count / TOTAL) * 100);
+  document.getElementById('bar').style.width = pct + '%';
+  document.getElementById('pct').textContent = pct + '%';
+  document.getElementById('pct-label').textContent = count + ' / ' + TOTAL + ' steps';
+  document.getElementById('complete-card').style.display = count === TOTAL ? 'block' : 'none';
+
+  // When 100% complete, auto-download training record
+  if (count === TOTAL && !state._downloaded) {
+    state._downloaded = true;
+    localStorage.setItem('onboard-v2', JSON.stringify(state));
+    var emp = {};
+    try { emp = JSON.parse(localStorage.getItem('new-hire-data') || '{}'); } catch(e) {}
+    var record = {
+      employee: emp.fullName || 'Unknown',
+      role: emp.role || '',
+      startDate: emp.startDate || '',
+      completedAt: new Date().toISOString(),
+      steps: state,
+      company: 'Second Nature Tree Service LLC',
+      address: '1 Highland Industrial Park, Peekskill, NY 10566',
+    };
+    var blob = new Blob([JSON.stringify(record, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (emp.lastName || 'employee') + '_training_record_' + new Date().toISOString().split('T')[0] + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+}
+
+render();
+
+// Show employee name from intake form if available
+try {
+  var emp = JSON.parse(localStorage.getItem('new-hire-data') || '{}');
+  if (emp.fullName) {
+    document.getElementById('topbar-emp').textContent = emp.fullName + ' — ' + (emp.role || '').replace('_',' ');
+  }
+} catch(e) {}
+</script>
+</body>
+</html>

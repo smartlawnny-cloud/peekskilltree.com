@@ -172,16 +172,24 @@ var SearchPage = {
       + '</div>';
 
     // Helper: render a section
+    var PAGE_SIZE = cat === 'all' ? 15 : 100;
     function renderSection(title, icon, items, renderFn) {
       if (!items.length) return '';
       if (cat !== 'all' && cat !== title.toLowerCase()) return '';
-      var out = '<div style="margin-bottom:20px;">'
+      var sectionId = 'search-section-' + title.toLowerCase();
+      var showing = Math.min(items.length, PAGE_SIZE);
+      var out = '<div style="margin-bottom:20px;" id="' + sectionId + '">'
         + '<div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">'
         + icon + ' ' + title + ' <span style="font-weight:400;">(' + items.length + ')</span></div>'
         + '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">';
-      items.forEach(function(item, idx) {
-        out += renderFn(item, idx === items.length - 1);
+      items.slice(0, PAGE_SIZE).forEach(function(item, idx) {
+        out += renderFn(item, idx === showing - 1 && items.length <= PAGE_SIZE);
       });
+      if (items.length > PAGE_SIZE) {
+        out += '<div style="padding:10px 16px;text-align:center;border-top:1px solid #f0f0f0;">'
+          + '<button onclick="SearchPage._showMore(\'' + sectionId + '\',\'' + title.toLowerCase() + '\')" style="background:none;border:none;color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;">Show all ' + items.length + ' ' + title.toLowerCase() + ' ↓</button>'
+          + '</div>';
+      }
       out += '</div></div>';
       return out;
     }
@@ -266,6 +274,15 @@ var SearchPage = {
   },
 
   // Re-run a recent search by populating the search bar + re-rendering
+  _showMore: function(sectionId, type) {
+    // Switch to that category tab which shows ALL items (no pagination for filtered view)
+    SearchPage._activeCategory = type;
+    var searchEl = document.getElementById('search-page-input');
+    var q = searchEl ? searchEl.value.trim() : '';
+    var content = document.getElementById('search-results-area');
+    if (content) content.innerHTML = SearchPage._renderResults(q);
+  },
+
   _runRecent: function(query) {
     var searchEl = document.getElementById('search-page-input') || document.getElementById('globalSearch');
     if (searchEl) {

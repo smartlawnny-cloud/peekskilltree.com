@@ -100,23 +100,26 @@ export function LoginScreen({ onLogin, onDemoLogin }: Props) {
             </TouchableOpacity>
           </View>
 
-          {/* Demo Login */}
-          <TouchableOpacity onPress={() => setShowDemo(!showDemo)}>
-            <Text style={styles.demoToggle}>Quick login (demo)</Text>
-          </TouchableOpacity>
-
-          {showDemo && (
-            <View style={styles.demoOptions}>
-              <TouchableOpacity style={[styles.demoBtn, styles.demoBtnOwner]} onPress={() => handleDemo('owner')}>
-                <Text style={styles.demoBtnText}>👑 Owner — Full access</Text>
+          {/* Quick role login — hidden in production, visible in __DEV__ only */}
+          {__DEV__ && (
+            <>
+              <TouchableOpacity onPress={() => setShowDemo(!showDemo)}>
+                <Text style={styles.demoToggle}>Quick login (dev)</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.demoBtn, styles.demoBtnLead]} onPress={() => handleDemo('crew_lead')}>
-                <Text style={styles.demoBtnText}>👷 Crew Lead — Jobs, schedule</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.demoBtn, styles.demoBtnCrew]} onPress={() => handleDemo('crew_member')}>
-                <Text style={styles.demoBtnText}>🧑‍🔧 Crew Member — Clock in/out</Text>
-              </TouchableOpacity>
-            </View>
+              {showDemo && (
+                <View style={styles.demoOptions}>
+                  <TouchableOpacity style={[styles.demoBtn, styles.demoBtnOwner]} onPress={() => handleDemo('owner')}>
+                    <Text style={styles.demoBtnText}>👑 Owner</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.demoBtn, styles.demoBtnLead]} onPress={() => handleDemo('crew_lead')}>
+                    <Text style={styles.demoBtnText}>👷 Crew Lead</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.demoBtn, styles.demoBtnCrew]} onPress={() => handleDemo('crew_member')}>
+                    <Text style={styles.demoBtnText}>🧑‍🔧 Crew Member</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
           )}
         </View>
       </KeyboardAvoidingView>

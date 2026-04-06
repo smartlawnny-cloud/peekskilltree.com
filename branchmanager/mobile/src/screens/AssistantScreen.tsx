@@ -1,6 +1,6 @@
 /**
  * AI Assistant Chat Screen
- * Talk to Claude to create quotes, look up clients, schedule jobs
+ * Talk to the AI assistant to create quotes, look up clients, schedule jobs
  */
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -143,8 +143,8 @@ export function AssistantScreen({ navigation }: any) {
 
   const handleSetupKey = () => {
     Alert.prompt(
-      'Claude API Key',
-      'Enter your Anthropic API key to enable the AI assistant.',
+      'AI API Key',
+      'Enter your AI API key to enable the AI assistant.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -182,7 +182,7 @@ export function AssistantScreen({ navigation }: any) {
           <Text style={styles.setupIcon}>🤖</Text>
           <Text style={styles.setupTitle}>Set Up AI Assistant</Text>
           <Text style={styles.setupText}>
-            Connect your Claude API key to enable the AI assistant. It can create quotes, look up
+            Connect your AI API key to enable the AI assistant. It can create quotes, look up
             clients, schedule jobs, and more — just by asking.
           </Text>
           <TouchableOpacity style={styles.setupBtn} onPress={handleSetupKey}>

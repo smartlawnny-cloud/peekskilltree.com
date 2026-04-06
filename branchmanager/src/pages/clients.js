@@ -26,7 +26,7 @@ var ClientsPage = {
     var stats = DB.dashboard.getStats();
     var clients = self._getFiltered();
 
-    // Jobber-style stat cards row
+    // previous system-style stat cards row
     var now = new Date();
     var ago30 = new Date(); ago30.setDate(ago30.getDate()-30);
     var allClients = DB.clients.getAll();
@@ -60,7 +60,7 @@ var ClientsPage = {
       + '</div>'
       + '</div>';
 
-    // Jobber-style header + filter/search
+    // previous system-style header + filter/search
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">Clients</h3>'
@@ -103,7 +103,7 @@ var ClientsPage = {
       + '</tr></thead><tbody>';
 
     if (pageClients.length === 0) {
-      html += '<tr><td colspan="5">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No clients match "' + self._search + '"</div>' : UI.emptyState('👥', 'No clients yet', 'Add your first client or import from Jobber.', '+ Add Client', 'ClientsPage.showForm()')) + '</td></tr>';
+      html += '<tr><td colspan="5">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No clients match "' + self._search + '"</div>' : UI.emptyState('👥', 'No clients yet', 'Add your first client or import.', '+ Add Client', 'ClientsPage.showForm()')) + '</td></tr>';
     } else {
       pageClients.forEach(function(c) {
         html += '<tr onclick="ClientsPage.showDetail(\'' + c.id + '\')" style="cursor:pointer;" data-status="' + c.status + '">'
@@ -467,7 +467,7 @@ var ClientsPage = {
     var sortedJobsByDate = clientJobs.slice().sort(function(a, b) { return (b.scheduledDate || b.createdAt || '') > (a.scheduledDate || a.createdAt || '') ? 1 : -1; });
     var lastJobDate = sortedJobsByDate.length ? (sortedJobsByDate[0].scheduledDate || sortedJobsByDate[0].createdAt) : null;
 
-    // Jobber-style client detail
+    // previous system-style client detail
     var html = ''
       // Breadcrumb
       + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;">'
@@ -484,7 +484,7 @@ var ClientsPage = {
       + '<button class="btn btn-outline" style="font-size:12px;" onclick="ClientsPage.showStatement(\'' + id + '\')">📄 Statement</button>'
       + '</div>'
 
-      // Client name (big, like Jobber)
+      // Client name (big, like previous system)
       + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">'
       + '<div style="width:48px;height:48px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text-light);">👤</div>'
       + '<h2 style="font-size:28px;font-weight:700;">' + UI.esc(c.name) + '</h2>'

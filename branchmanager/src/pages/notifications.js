@@ -72,7 +72,7 @@ var NotificationsPage = {
         html += NotificationsPage._renderActivity(a);
       });
     } else {
-      html += '<div style="text-align:center;padding:40px;color:var(--text-light);">No activity yet. Import your Jobber data to see your history.</div>';
+      html += '<div style="text-align:center;padding:40px;color:var(--text-light);">No activity yet. Import your data to see your history.</div>';
     }
     html += '</div>';
     return html;

@@ -267,8 +267,14 @@ var QuotesPage = {
       html += '<input type="hidden" id="q-clientId" value="' + client.id + '">'
         + '<div class="form-group"><label>Client</label><div style="padding:8px 12px;background:var(--bg);border-radius:8px;font-weight:600;">' + client.name + '<br><span style="font-weight:400;font-size:13px;color:var(--text-light);">' + (client.address || '') + '</span></div></div>';
     } else {
-      var clientOptions = allClients.map(function(c) { return { value: c.id, label: c.name + (c.address ? ' — ' + c.address : '') }; });
-      html += UI.formField('Client *', 'select', 'q-clientId', '', { options: [{ value: '', label: 'Select a client...' }].concat(clientOptions) });
+      // Search-as-you-type client selector (fast, handles 500+ clients)
+      html += '<div class="form-group"><label>Client *</label>'
+        + '<input type="hidden" id="q-clientId" value="">'
+        + '<input type="text" id="q-client-search" placeholder="Type client name..." autocomplete="off" '
+        + 'oninput="QuotesPage._searchClient(this.value)" '
+        + 'style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;">'
+        + '<div id="q-client-results" style="display:none;position:relative;z-index:10;"></div>'
+        + '</div>';
     }
 
     html += UI.formField('Property Address', 'text', 'q-property', q.property || (client ? client.address : ''), { placeholder: 'Job site address' })
@@ -293,6 +299,40 @@ var QuotesPage = {
     html += '</div>'
       + '<button type="button" class="btn btn-outline" style="margin-top:8px;" onclick="QuotesPage.addItem()">+ Add Line Item</button>';
 
+    // Quote Options (Good / Better / Best)
+    var hasOptions = q.options && q.options.length > 0;
+    html += '<div style="margin:16px 0;background:#f0f9f4;border:2px solid #c8e6c9;border-radius:10px;padding:16px;">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+      + '<h4 style="font-size:14px;">📦 Quote Options (Optional)</h4>'
+      + '<label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-enable-options" onchange="document.getElementById(\'q-options-fields\').style.display=this.checked?\'block\':\'none\'" style="width:16px;height:16px;"' + (hasOptions ? ' checked' : '') + '></label>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Let the client choose from up to 3 options. Line items above become the default.</div>'
+      + '<div id="q-options-fields" style="' + (hasOptions ? '' : 'display:none;') + '">';
+
+    // Option 1 (Good)
+    var opt1 = (q.options && q.options[0]) || {};
+    var opt2 = (q.options && q.options[1]) || {};
+    var opt3 = (q.options && q.options[2]) || {};
+    html += '<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;">'
+      + '<div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:6px;">OPTION 1 — Good</div>'
+      + '<input type="text" id="q-opt1-name" placeholder="e.g. Basic trim only" value="' + UI.esc(opt1.name || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-bottom:4px;">'
+      + '<input type="number" id="q-opt1-price" placeholder="Price" value="' + (opt1.price || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+      + '</div>';
+
+    html += '<div style="background:#fff;border:2px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:8px;">'
+      + '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px;">OPTION 2 — Better ⭐ Recommended</div>'
+      + '<input type="text" id="q-opt2-name" placeholder="e.g. Trim + remove dead wood" value="' + UI.esc(opt2.name || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-bottom:4px;">'
+      + '<input type="number" id="q-opt2-price" placeholder="Price" value="' + (opt2.price || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+      + '</div>';
+
+    html += '<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;">'
+      + '<div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:6px;">OPTION 3 — Best</div>'
+      + '<input type="text" id="q-opt3-name" placeholder="e.g. Full removal + stump grind + cleanup" value="' + UI.esc(opt3.name || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-bottom:4px;">'
+      + '<input type="number" id="q-opt3-price" placeholder="Price" value="' + (opt3.price || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+      + '</div>';
+
+    html += '</div></div>';
+
     // Total display with tax breakdown (Jobber style)
     var _qSubtotal = 0;
     (q.lineItems || []).forEach(function(it) { _qSubtotal += (it.qty || 1) * (it.rate || 0); });
@@ -310,6 +350,10 @@ var QuotesPage = {
       + '<div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;background:var(--green-dark);color:var(--white);">'
       + '<span style="font-weight:600;">Total</span>'
       + '<span id="q-total-display" style="font-size:1.5rem;font-weight:800;">' + UI.money(_qGrandTotal) + '</span>'
+      + '</div>'
+      + '<div style="padding:8px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px;background:#f0fdf4;border-top:1px solid #c8e6c9;">'
+      + '<span style="color:var(--text-light);">Est. Profit Margin <span id="q-margin-pct" style="font-weight:700;color:var(--green-dark);"></span></span>'
+      + '<span style="color:var(--text-light);">Cost: <input type="number" id="q-est-cost" value="' + (q.estimatedCost || '') + '" placeholder="0" oninput="QuotesPage._updateMargin()" style="width:70px;font-size:12px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;text-align:center;"> → Profit: <span id="q-profit-display" style="font-weight:700;color:var(--green-dark);">—</span></span>'
       + '</div>'
       + '</div>';
 
@@ -513,7 +557,18 @@ var QuotesPage = {
       depositType: depositType,
       depositAmount: depositAmount,
       depositDue: depositDue,
-      expiresAt: expiresAt
+      expiresAt: expiresAt,
+      options: (function() {
+        var optEnabled = document.getElementById('q-enable-options');
+        if (!optEnabled || !optEnabled.checked) return null;
+        var opts = [];
+        for (var oi = 1; oi <= 3; oi++) {
+          var oName = (document.getElementById('q-opt' + oi + '-name') || {}).value;
+          var oPrice = parseFloat((document.getElementById('q-opt' + oi + '-price') || {}).value) || 0;
+          if (oName && oPrice > 0) opts.push({ name: oName, price: oPrice });
+        }
+        return opts.length > 0 ? opts : null;
+      })()
     };
 
     var savedId;
@@ -878,6 +933,72 @@ var QuotesPage = {
     }
     UI.toast('Quote status: ' + status);
     QuotesPage.showDetail(id);
+  },
+
+  _updateMargin: function() {
+    var costEl = document.getElementById('q-est-cost');
+    var totalEl = document.getElementById('q-total-display');
+    var profitEl = document.getElementById('q-profit-display');
+    var pctEl = document.getElementById('q-margin-pct');
+    if (!costEl || !totalEl || !profitEl) return;
+    var cost = parseFloat(costEl.value) || 0;
+    var total = parseFloat((totalEl.textContent || '').replace(/[^0-9.]/g, '')) || 0;
+    var profit = total - cost;
+    var margin = total > 0 ? Math.round((profit / total) * 100) : 0;
+    profitEl.textContent = UI.money(profit);
+    profitEl.style.color = profit >= 0 ? 'var(--green-dark)' : 'var(--red)';
+    pctEl.textContent = '(' + margin + '%)';
+    pctEl.style.color = margin >= 40 ? 'var(--green-dark)' : margin >= 20 ? '#e07c24' : 'var(--red)';
+  },
+
+  _clientSearchTimeout: null,
+  _searchClient: function(query) {
+    clearTimeout(QuotesPage._clientSearchTimeout);
+    var results = document.getElementById('q-client-results');
+    if (!query || query.length < 2) { results.style.display = 'none'; return; }
+    QuotesPage._clientSearchTimeout = setTimeout(function() {
+      var q = query.toLowerCase();
+      var allClients = [];
+      try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
+      var matches = allClients.filter(function(c) {
+        return (c.name || '').toLowerCase().indexOf(q) >= 0 || (c.address || '').toLowerCase().indexOf(q) >= 0 || (c.phone || '').indexOf(q) >= 0;
+      }).slice(0, 8);
+      if (matches.length === 0) {
+        results.innerHTML = '<div style="padding:10px 14px;font-size:13px;color:var(--text-light);background:var(--white);border:1px solid var(--border);border-radius:8px;margin-top:4px;">No clients found. <button type="button" style="color:var(--accent);background:none;border:none;cursor:pointer;font-weight:600;text-decoration:underline;" onclick="QuotesPage._newClientInline()">+ Create new</button></div>';
+        results.style.display = 'block';
+        return;
+      }
+      var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:250px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);">';
+      matches.forEach(function(c) {
+        html += '<div onclick="QuotesPage._selectClient(\'' + c.id + '\',\'' + UI.esc(c.name).replace(/'/g,"\\'") + '\')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;font-size:14px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
+          + '<strong>' + UI.esc(c.name) + '</strong>'
+          + (c.address ? '<div style="font-size:12px;color:var(--text-light);margin-top:1px;">' + UI.esc(c.address) + '</div>' : '')
+          + '</div>';
+      });
+      html += '</div>';
+      results.innerHTML = html;
+      results.style.display = 'block';
+    }, 150);
+  },
+
+  _selectClient: function(id, name) {
+    document.getElementById('q-clientId').value = id;
+    document.getElementById('q-client-search').value = name;
+    document.getElementById('q-client-results').style.display = 'none';
+    // Auto-fill property from client
+    var client = DB.clients.getById(id);
+    if (client && client.address) {
+      var prop = document.getElementById('q-property');
+      if (prop && !prop.value) prop.value = client.address;
+    }
+  },
+
+  _newClientInline: function() {
+    var name = document.getElementById('q-client-search').value.trim();
+    if (!name) return;
+    var newClient = DB.clients.create({ name: name, status: 'lead' });
+    QuotesPage._selectClient(newClient.id, newClient.name);
+    UI.toast('Client "' + name + '" created');
   },
 
   _applyEstimator: function() {

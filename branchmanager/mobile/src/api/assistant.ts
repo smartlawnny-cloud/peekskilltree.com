@@ -81,7 +81,7 @@ export async function sendMessage(
 ): Promise<{ text: string; action?: AssistantAction }> {
   const apiKey = await getApiKey();
   if (!apiKey) {
-    throw new Error('Claude API key not configured. Go to Settings to add it.');
+    throw new Error('AI API key not configured. Go to Settings to add it.');
   }
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -101,7 +101,7 @@ export async function sendMessage(
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Claude API error: ${response.status} ${err}`);
+    throw new Error(`AI API error: ${response.status} ${err}`);
   }
 
   const data = await response.json();

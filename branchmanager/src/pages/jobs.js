@@ -21,11 +21,11 @@ var JobsPage = {
     var inProgress = all.filter(function(j) { return j.status === 'in_progress'; }).length;
     var completed = all.filter(function(j) { return j.status === 'completed'; }).length;
 
-    // Jobber-style stat cards row
+    // previous system-style stat cards row
     var activeJobs = all.filter(function(j) { return j.status === 'in_progress' || j.status === 'scheduled'; });
     var cutoff60 = new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0];
     var cutoff7 = new Date(Date.now() - 7 * 86400000).toISOString();
-    // Recent = jobs with scheduledDate in last 60 days (excludes old Jobber imports)
+    // Recent = jobs with scheduledDate in last 60 days (excludes old previous system imports)
     var recentNeedsInvoicing = all.filter(function(j) {
       return j.status === 'completed' && !j.invoiceId
         && ((j.scheduledDate && j.scheduledDate >= cutoff60)
@@ -88,18 +88,18 @@ var JobsPage = {
         + '<button onclick="JobsPage._batchInvoiceAll()" style="background:#fff;color:#2e7d32;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);">Create Invoices</button>'
         + '</div>';
     }
-    // Legacy Jobber jobs banner (dismissible)
+    // Legacy previous system jobs banner (dismissible)
     if (legacyNeedsInvoicing.length > 0) {
       html += '<div style="background:#f5f5f5;border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">'
-        + '<div style="font-size:13px;color:var(--text-light);">📦 <strong>' + legacyNeedsInvoicing.length + ' older Jobber jobs</strong> were already invoiced before migration — click to dismiss.</div>'
-        + '<button onclick="JobsPage._markAllLegacyInvoiced()" style="background:var(--border);color:var(--text);border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Mark as Invoiced (Jobber)</button>'
+        + '<div style="font-size:13px;color:var(--text-light);">📦 <strong>' + legacyNeedsInvoicing.length + ' older previous system jobs</strong> were already invoiced before migration — click to dismiss.</div>'
+        + '<button onclick="JobsPage._markAllLegacyInvoiced()" style="background:var(--border);color:var(--text);border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Mark as Invoiced (previous system)</button>'
         + '</div>';
     }
 
     var filtered = self._getFiltered();
     var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
-    // Jobber-style header + filter chips + search
+    // previous system-style header + filter chips + search
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
       + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">All jobs</h3>'
@@ -269,7 +269,7 @@ var JobsPage = {
     if (!j) return;
     DB.jobs.update(id, { status: 'completed', completedAt: new Date().toISOString() });
 
-    // Jobber-style: prompt to create invoice after completing a job
+    // previous system-style: prompt to create invoice after completing a job
     if (!j.invoiceId && j.total > 0) {
       UI.confirm('Job #' + j.jobNumber + ' complete! Create invoice for ' + UI.money(j.total) + '?', function() {
         if (typeof Workflow !== 'undefined') {
@@ -308,7 +308,7 @@ var JobsPage = {
   },
   _markAllLegacyInvoiced: function() {
     var needsInvoicing = DB.jobs.getAll().filter(function(j) { return j.status === 'completed' && !j.invoiceId; });
-    UI.confirm('Mark all ' + needsInvoicing.length + ' completed jobs as already invoiced in Jobber? This clears the banner — no new invoices will be created.', function() {
+    UI.confirm('Mark all ' + needsInvoicing.length + ' completed jobs as already invoiced in previous system? This clears the banner — no new invoices will be created.', function() {
       needsInvoicing.forEach(function(j) { DB.jobs.update(j.id, { invoiceId: 'legacy' }); });
       UI.toast(needsInvoicing.length + ' jobs marked as legacy-invoiced');
       loadPage('jobs');
@@ -464,7 +464,7 @@ var JobsPage = {
     var team = [];
     try { team = JSON.parse(localStorage.getItem('bm-team') || '[]'); } catch(e) {}
 
-    // Time slots (Jobber style - 30 min increments)
+    // Time slots (previous system style - 30 min increments)
     var timeSlots = [];
     for (var h = 6; h <= 18; h++) {
       for (var m = 0; m < 60; m += 30) {
@@ -481,14 +481,14 @@ var JobsPage = {
       + UI.formField('Property Address', 'text', 'j-property', j.property, { placeholder: 'Job site address' })
       + UI.formField('Description', 'text', 'j-description', j.description, { placeholder: 'e.g., Remove 2 dead oaks' })
 
-      // Date + Time (Jobber style)
+      // Date + Time (previous system style)
       + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'
       + UI.formField('Date *', 'date', 'j-date', (j.scheduledDate ? j.scheduledDate.split('T')[0] : '') || opts.date || '')
       + UI.formField('Start Time', 'select', 'j-starttime', j.startTime || '08:00', { options: [{ value: '', label: 'Anytime' }].concat(timeSlots) })
       + UI.formField('End Time', 'select', 'j-endtime', j.endTime || '', { options: [{ value: '', label: 'Open' }].concat(timeSlots) })
       + '</div>'
 
-      // Arrival window (Jobber style)
+      // Arrival window (previous system style)
       + '<div style="margin-bottom:12px;">'
       + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Arrival Window</label>'
       + '<div style="display:flex;gap:4px;flex-wrap:wrap;">'
@@ -586,7 +586,7 @@ var JobsPage = {
     var timeEntries = DB.timeEntries ? DB.timeEntries.getAll().filter(function(te) { return te.jobId === id; }) : [];
     var totalHours = timeEntries.reduce(function(s, te) { return s + (te.hours || 0); }, 0);
 
-    // Jobber-style job detail
+    // previous system-style job detail
     var statusColors = {scheduled:'#1565c0',in_progress:'#e07c24',completed:'#2e7d32',invoiced:'#2e7d32',late:'#dc3545',cancelled:'#6c757d'};
     var statusColor = statusColors[j.status] || '#2e7d32';
     var client = j.clientId ? DB.clients.getById(j.clientId) : null;
@@ -598,7 +598,7 @@ var JobsPage = {
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
       + (j.clientPhone ? '<a href="tel:' + (j.clientPhone||'').replace(/\D/g,'') + '" class="btn btn-outline" style="font-size:12px;">📞 Call</a>' : '')
       + (j.status === 'completed' ? '<button class="btn btn-outline" style="font-size:12px;color:#f9a825;border-color:#f9a825;" onclick="JobsPage._requestReview(\'' + id + '\')">⭐ Request Review</button>' : '')
-      + (j.status === 'scheduled' || j.status === 'in_progress' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage._markComplete(\'' + id + '\')">✓ Mark Complete</button>' : '')
+      + (j.status === 'scheduled' || j.status === 'in_progress' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage._getSignature(\'' + id + '\')">✓ Mark Complete</button>' : '')
       + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" style="font-size:12px;" onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()">💰 Create Invoice</button>' : '')
       + (j.status !== 'completed' || j.invoiceId ? '<button class="btn btn-outline" style="font-size:12px;" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>' : '')
       + '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage.showForm(\'' + id + '\')">✏️ Edit</button>'
@@ -608,7 +608,7 @@ var JobsPage = {
       + '<button onclick="JobsPage.showForm(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit Job</button>'
       + '<button onclick="PDF.generateJobSheet(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📄 Job Sheet PDF</button>'
       + (j.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.property) + '" target="_blank" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);text-decoration:none;">🗺 Navigate to Property</a>' : '')
-      + (j.status !== 'completed' ? '<button onclick="JobsPage._markComplete(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✓ Mark Complete</button>' : '')
+      + (j.status !== 'completed' ? '<button onclick="JobsPage._getSignature(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✓ Mark Complete</button>' : '')
       + (j.status === 'completed' && !j.invoiceId ? '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">💰 Create Invoice</button>' : '')
       + '<button onclick="JobsPage._requestReview(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">⭐ Request Review</button>'
       + '<div style="height:1px;background:var(--border);margin:4px 0;"></div>'
@@ -869,6 +869,53 @@ var JobsPage = {
     UI.showModal('Job', '<p>Use full-page view.</p>', {
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
     });
+  },
+
+  _getSignature: function(id, callback) {
+    var html = '<div style="text-align:center;">'
+      + '<p style="font-size:14px;color:var(--text-light);margin-bottom:12px;">Client signature confirms work is complete and satisfactory.</p>'
+      + '<canvas id="job-sig-canvas" width="600" height="180" style="border:2px solid var(--border);border-radius:8px;width:100%;touch-action:none;cursor:crosshair;background:#fff;"></canvas>'
+      + '<div style="display:flex;gap:8px;margin-top:8px;">'
+      + '<button type="button" class="btn btn-outline" style="flex:1;font-size:12px;" onclick="var c=document.getElementById(\'job-sig-canvas\');if(c){c.getContext(\'2d\').clearRect(0,0,c.width,c.height);}">Clear</button>'
+      + '</div>'
+      + '<div style="margin-top:12px;">'
+      + '<input type="text" id="job-sig-name" placeholder="Client name (print)" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:15px;text-align:center;">'
+      + '</div>'
+      + '</div>';
+
+    UI.showModal('Client Sign-Off', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal();JobsPage._markComplete(\'' + id + '\')">Skip Signature</button>'
+        + ' <button class="btn btn-primary" onclick="JobsPage._saveSignature(\'' + id + '\')">Save & Complete</button>'
+    });
+
+    // Setup canvas drawing
+    setTimeout(function() {
+      var canvas = document.getElementById('job-sig-canvas');
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var drawing = false;
+      var rect = canvas.getBoundingClientRect();
+      function getPos(e) {
+        var t = e.touches ? e.touches[0] : e;
+        return { x: (t.clientX - rect.left) * (canvas.width / rect.width), y: (t.clientY - rect.top) * (canvas.height / rect.height) };
+      }
+      function start(e) { e.preventDefault(); drawing = true; ctx.beginPath(); var p = getPos(e); ctx.moveTo(p.x, p.y); }
+      function draw(e) { if (!drawing) return; e.preventDefault(); var p = getPos(e); ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.lineTo(p.x, p.y); ctx.stroke(); }
+      function stop() { drawing = false; }
+      canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop); canvas.addEventListener('mouseleave', stop);
+      canvas.addEventListener('touchstart', start, { passive: false }); canvas.addEventListener('touchmove', draw, { passive: false }); canvas.addEventListener('touchend', stop);
+    }, 100);
+  },
+
+  _saveSignature: function(id) {
+    var canvas = document.getElementById('job-sig-canvas');
+    var nameEl = document.getElementById('job-sig-name');
+    var name = nameEl ? nameEl.value.trim() : '';
+    if (!name) { alert('Client must print their name.'); return; }
+    var sigData = canvas ? canvas.toDataURL('image/png') : '';
+    DB.jobs.update(id, { clientSignature: sigData, signedBy: name, signedAt: new Date().toISOString() });
+    UI.closeModal();
+    JobsPage._markComplete(id);
   },
 
   _markComplete: function(id) {

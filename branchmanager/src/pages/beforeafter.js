@@ -2,7 +2,7 @@
  * Branch Manager — Before/After Photo Comparison
  * Capture dramatic before/after transformations for jobs.
  * Interactive slider comparison, gallery, social sharing.
- * Something Jobber doesn't have.
+ * Something the industry doesn't have.
  */
 var BeforeAfter = {
 

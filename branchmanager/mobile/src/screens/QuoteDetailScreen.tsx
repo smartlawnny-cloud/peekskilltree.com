@@ -3,7 +3,7 @@
  * Read-only view of a quote. Shows status, client info, line items,
  * notes, totals, a status-flow timeline, and context-aware action buttons.
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,36 +12,15 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { LineItemRow } from '../components/LineItemRow';
 import { QuoteStatusBadge } from '../components/QuoteStatusBadge';
 import { currency } from '../utils/format';
+import { supabase } from '../api/supabase';
 import type { Quote, QuoteStatus, LineItem } from '../models/types';
-
-// ── Demo data (replaced by route.params.quote in production) ──────────────────
-const DEMO_QUOTE: Quote = {
-  id: 'q-1',
-  quoteNumber: 1042,
-  clientId: 'c-1',
-  clientName: 'Maria Torres',
-  clientEmail: 'maria.torres@email.com',
-  clientPhone: '9145550177',
-  property: '48 Overlook Rd, Cortlandt Manor, NY',
-  description: 'Large oak removal + stump grinding + debris haul',
-  lineItems: [
-    { id: 'li-1', name: 'Tree Removal', description: '24" DBH oak, leaning toward house', quantity: 1, unitPrice: 2400, total: 2400 },
-    { id: 'li-2', name: 'Bucket Truck', description: 'Bucket truck with operator', quantity: 1, unitPrice: 600, total: 600 },
-    { id: 'li-3', name: 'Stump Grinding', description: '2 stumps', quantity: 2, unitPrice: 150, total: 300 },
-    { id: 'li-4', name: 'Haul Debris', description: 'Haul all debris from site', quantity: 1, unitPrice: 350, total: 350 },
-  ],
-  notes: 'Access through side gate. Power lines on east side — bucket placement must clear by 10 ft.',
-  total: 3650,
-  status: 'sent',
-  sentAt: '2026-04-02T14:30:00Z',
-  createdAt: '2026-04-01T10:00:00Z',
-};
 
 // ── Timeline step config ──────────────────────────────────────────────────────
 type TimelineStep = {
@@ -72,54 +51,67 @@ function formatDate(iso?: string): string {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function QuoteDetailScreen({ navigation, route }: any) {
-  const quote: Quote = route?.params?.quote ?? DEMO_QUOTE;
+  const [quote, setQuote] = useState<Quote | null>(route?.params?.quote || null);
+  const [loading, setLoading] = useState(!quote);
+
+  useEffect(() => {
+    if (!quote && route?.params?.id) {
+      supabase.from('quotes').select('*').eq('id', route.params.id).single()
+        .then(({ data }) => {
+          if (data) {
+            setQuote({
+              id: data.id, quoteNumber: data.quote_number, clientId: data.client_id,
+              clientName: data.client_name, clientEmail: data.client_email, clientPhone: data.client_phone,
+              property: data.property, description: data.description,
+              lineItems: data.line_items || [], notes: data.notes,
+              total: parseFloat(data.total) || 0, status: data.status || 'draft',
+              sentAt: data.sent_at, approvedAt: data.approved_at, clientChanges: data.client_changes,
+              createdAt: data.created_at,
+            });
+          }
+          setLoading(false);
+        });
+    }
+  }, []);
+
+  if (loading) return <SafeAreaView style={styles.safe}><View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color={colors.greenDark} /></View></SafeAreaView>;
+  if (!quote) return <SafeAreaView style={styles.safe}><View style={styles.header}><TouchableOpacity onPress={() => navigation?.goBack()}><Text style={styles.backBtn}>← Back</Text></TouchableOpacity><Text style={styles.headerTitle}>Quote Not Found</Text><View style={{ width: 50 }} /></View></SafeAreaView>;
+
   const { quoteNumber, clientName, clientEmail, clientPhone, property, lineItems, notes, total, status, sentAt, approvedAt, clientChanges } = quote;
 
-  const handleEdit = () => {
-    navigation?.navigate('QuoteBuilder', { quote });
+  const updateStatus = async (newStatus: string) => {
+    await supabase.from('quotes').update({ status: newStatus, ...(newStatus === 'sent' ? { sent_at: new Date().toISOString() } : {}) }).eq('id', quote.id);
+    setQuote({ ...quote, status: newStatus as QuoteStatus });
   };
 
+  const handleEdit = () => navigation?.navigate('QuoteBuilder', { quote });
+
   const handleSend = () => {
-    Alert.alert(
-      'Send Quote',
-      `Send Quote #${quoteNumber} to ${clientEmail || clientName}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Send', onPress: () => Alert.alert('Sent', `Quote #${quoteNumber} sent.`) },
-      ]
-    );
+    Alert.alert('Send Quote', `Send Quote #${quoteNumber} to ${clientEmail || clientName}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Send', onPress: async () => { await updateStatus('sent'); Alert.alert('Sent', `Quote #${quoteNumber} sent.`); } },
+    ]);
   };
 
   const handleResend = () => {
-    Alert.alert(
-      'Resend Quote',
-      `Resend Quote #${quoteNumber} to ${clientEmail || clientName}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Resend', onPress: () => Alert.alert('Resent', `Quote #${quoteNumber} resent.`) },
-      ]
-    );
+    Alert.alert('Resend Quote', `Resend Quote #${quoteNumber}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Resend', onPress: async () => { await updateStatus('sent'); Alert.alert('Resent', `Quote #${quoteNumber} resent.`); } },
+    ]);
   };
 
-  const handleViewChanges = () => {
-    Alert.alert('Client Changes', clientChanges || 'No details provided.');
-  };
+  const handleViewChanges = () => Alert.alert('Client Changes', clientChanges || 'No details provided.');
 
   const handleConvertToJob = () => {
-    Alert.alert(
-      'Convert to Job',
-      `Create a job from Quote #${quoteNumber} — ${currency(total)}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Create Job',
-          onPress: () => {
-            Alert.alert('Job Created', `Job created from Quote #${quoteNumber}.`);
-            navigation?.goBack();
-          },
+    Alert.alert('Convert to Job', `Create a job from Quote #${quoteNumber} — ${currency(total)}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Create Job',
+        onPress: () => {
+          navigation?.navigate('CreateJob', { fromQuote: quote });
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // ── Action button(s) based on status ──

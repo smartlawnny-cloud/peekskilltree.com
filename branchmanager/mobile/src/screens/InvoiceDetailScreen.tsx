@@ -1,37 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, ActivityIndicator,
 } from 'react-native';
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { LineItemRow } from '../components/LineItemRow';
 import { InvoiceStatusBadge } from '../components/InvoiceStatusBadge';
 import { currency } from '../utils/format';
+import { supabase } from '../api/supabase';
 import type { Invoice, InvoiceStatus, LineItem } from '../models/types';
 
-const DEMO_INVOICE: Invoice = {
-  id: 'inv-1',
-  invoiceNumber: 378,
-  clientId: 'c1',
-  clientName: 'George Grant',
-  clientEmail: 'george@email.com',
-  subject: 'For Services Rendered',
-  lineItems: [
-    { id: '1', name: 'Tree Pruning', description: '2 maples, front yard', quantity: 1, unitPrice: 350, total: 350 },
-    { id: '2', name: 'Haul Debris', description: 'Haul all debris from site', quantity: 1, unitPrice: 150, total: 150 },
-  ],
-  total: 500,
-  balance: 500,
-  amountPaid: 0,
-  issuedDate: '2026-03-28',
-  dueDate: '2026-04-11',
-  status: 'sent',
-  createdAt: '2026-03-28',
-  updatedAt: '2026-04-01',
-};
+function mapInvoice(data: any): Invoice {
+  return {
+    id: data.id, invoiceNumber: data.invoice_number, clientId: data.client_id,
+    clientName: data.client_name, clientEmail: data.client_email, clientPhone: data.client_phone,
+    subject: data.subject || '', lineItems: data.line_items || [],
+    total: parseFloat(data.total) || 0, balance: parseFloat(data.balance) || 0,
+    amountPaid: parseFloat(data.amount_paid) || 0, issuedDate: data.issued_date,
+    dueDate: data.due_date, status: data.status || 'draft',
+    paidDate: data.paid_date, paymentMethod: data.payment_method,
+    notes: data.notes, sentAt: data.sent_at, createdAt: data.created_at, updatedAt: data.updated_at,
+  };
+}
 
 export function InvoiceDetailScreen({ navigation, route }: any) {
-  const invoice: Invoice = route?.params?.invoice || DEMO_INVOICE;
+  const raw = route?.params?.invoice;
+  const [invoice, setInvoice] = useState<Invoice | null>(
+    raw ? (raw.invoiceNumber ? raw : mapInvoice(raw)) : null
+  );
+  const [loading, setLoading] = useState(!invoice);
+
+  useEffect(() => {
+    if (!invoice && route?.params?.id) {
+      supabase.from('invoices').select('*').eq('id', route.params.id).single()
+        .then(({ data }) => { if (data) setInvoice(mapInvoice(data)); setLoading(false); });
+    }
+  }, []);
+
+  if (loading) return <SafeAreaView style={styles.safe}><View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color={colors.greenDark} /></View></SafeAreaView>;
+  if (!invoice) return <SafeAreaView style={styles.safe}><View style={styles.header}><TouchableOpacity onPress={() => navigation?.goBack()}><Text style={styles.backBtn}>← Back</Text></TouchableOpacity><Text style={styles.headerTitle}>Not Found</Text><View style={{ width: 50 }} /></View></SafeAreaView>;
 
   const handleMarkPaid = () => {
     navigation?.navigate('Payment', { invoice });

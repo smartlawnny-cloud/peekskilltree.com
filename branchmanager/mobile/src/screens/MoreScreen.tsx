@@ -50,7 +50,7 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
   {
     title: 'Settings',
     items: [
-      { icon: '⚙️', label: 'Settings', desc: 'App preferences' },
+      { icon: '⚙️', label: 'Settings', desc: 'App preferences', screen: 'Settings' },
       { icon: '💾', label: 'Backup', desc: 'Data import/export' },
       { icon: '🚪', label: 'Sign Out', desc: 'Log out of your account' },
     ],

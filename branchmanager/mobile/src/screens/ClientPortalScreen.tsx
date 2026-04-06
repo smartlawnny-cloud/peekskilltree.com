@@ -12,33 +12,35 @@ import type { Quote, Invoice, LineItem } from '../models/types';
 
 type Tab = 'quote' | 'invoice' | 'messages';
 
-const DEMO_QUOTE: Quote = {
-  id: 'q1', quoteNumber: 501, clientId: 'c1', clientName: 'Brian Heermance',
-  property: '7 Lynwood Court, Cortlandt Manor, NY',
-  lineItems: [
-    { id: '1', name: 'Tree Removal', description: '2x 24" DBH oaks', quantity: 2, unitPrice: 2400, total: 4800 },
-    { id: '2', name: 'Stump Grinding', description: '2 stumps', quantity: 2, unitPrice: 150, total: 300 },
-    { id: '3', name: 'Haul Debris', description: 'All debris from site', quantity: 1, unitPrice: 350, total: 350 },
-  ],
-  total: 5450, status: 'sent', createdAt: '2026-04-01',
-};
-
-const DEMO_INVOICE: Invoice = {
-  id: 'i1', invoiceNumber: 379, clientId: 'c1', clientName: 'Brian Heermance',
-  subject: 'For Services Rendered',
-  lineItems: [
-    { id: '1', name: 'Tree Removal', description: '2x 24" DBH oaks', quantity: 2, unitPrice: 2400, total: 4800 },
-  ],
-  total: 4800, balance: 4800, amountPaid: 0, status: 'sent', dueDate: '2026-04-15',
-};
-
 export function ClientPortalScreen({ navigation, route }: any) {
   const [tab, setTab] = useState<Tab>('quote');
   const [message, setMessage] = useState('');
-  const quote = route?.params?.quote || DEMO_QUOTE;
-  const invoice = route?.params?.invoice || DEMO_INVOICE;
+  const quoteParam: Quote | null = route?.params?.quote || null;
+  const invoiceParam: Invoice | null = route?.params?.invoice || null;
+
+  if (!quoteParam && !invoiceParam) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation?.goBack()}><Text style={styles.backBtn}>← Back</Text></TouchableOpacity>
+          <Text style={styles.headerTitle}>Client Portal</Text>
+          <View style={{ width: 50 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+          <Text style={{ fontSize: 48, marginBottom: 16 }}>📋</Text>
+          <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 8 }}>No Data</Text>
+          <Text style={{ color: colors.textLight, textAlign: 'center' }}>Navigate here from a quote or invoice to see the client portal view.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // After the null guard above, at least one is non-null
+  const quote = quoteParam || { id: '', quoteNumber: 0, clientId: '', clientName: '', lineItems: [] as LineItem[], total: 0, status: 'draft' as const } as Quote;
+  const invoice = invoiceParam || { id: '', invoiceNumber: 0, clientId: '', clientName: '', subject: '', lineItems: [] as LineItem[], total: 0, balance: 0, amountPaid: 0, status: 'draft' as const } as Invoice;
 
   const handleApproveQuote = () => {
+    if (!quoteParam) return;
     Alert.alert('Approve Quote', `Approve Quote #${quote.quoteNumber} for ${currency(quote.total)}?`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Approve', onPress: () => Alert.alert('Approved', 'Quote approved! Work will be scheduled.') },

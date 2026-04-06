@@ -24,6 +24,7 @@ import { ReportsScreen } from '../screens/ReportsScreen';
 import { DispatchScreen } from '../screens/DispatchScreen';
 import { VoiceToQuoteScreen } from '../screens/VoiceToQuoteScreen';
 import { AssistantScreen } from '../screens/AssistantScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -60,6 +61,7 @@ export function AppNavigator() {
       <Stack.Screen name="CreateClient" component={CreateClientScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="CreateRequest" component={CreateRequestScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="CreateJob" component={CreateJobScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="VoiceToQuote" component={VoiceToQuoteScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Assistant" component={AssistantScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
     </Stack.Navigator>

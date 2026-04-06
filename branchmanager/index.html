@@ -869,7 +869,8 @@ var pageConfigs = {
   workflow: { title: 'Workflow', action: null },
   propertymap: { title: 'Property Map', action: null },
   payroll: { title: 'Payroll', action: '📊 Summary', actionFn: 'PayrollPage.showPayrollSummary(PayrollPage._getWeekDates(PayrollPage._weekOffset)[0])' },
-  permissions: { title: 'Permissions & Roles', action: null }
+  permissions: { title: 'Permissions & Roles', action: null },
+  search: { title: 'Search', action: null }
 };
 
 var pageRenderers = {
@@ -1174,7 +1175,7 @@ function _renderSearchResults(q) {
 
   // View all link
   var qSafe = q.replace(/'/g,"\\'");
-  html += '<div onclick="_closeSearch();currentPage=\'search\';document.querySelectorAll(\'.nav-item\').forEach(function(b){b.classList.remove(\'active\')});document.getElementById(\'pageTitle\').textContent=\'Search\';document.getElementById(\'pageAction\').style.display=\'none\';document.getElementById(\'pageContent\').innerHTML=SearchPage.render(\'' + qSafe + '\');" '
+  html += '<div onclick="_closeSearch();loadPage(\'search\');setTimeout(function(){var el=document.getElementById(\'search-page-input\');if(el){el.value=\'' + qSafe + '\';SearchPage._onPageSearch(\'' + qSafe + '\');}},100);" '
     + 'style="padding:12px 14px;text-align:center;font-size:13px;color:var(--accent);font-weight:700;cursor:pointer;border-top:2px solid var(--border);" '
     + 'onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">See all ' + totalResults + ' results for "' + UI.esc(q) + '" →</div>';
 

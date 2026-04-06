@@ -274,12 +274,13 @@ var SearchPage = {
 
   // Re-run a recent search by populating the search bar + re-rendering
   _runRecent: function(query) {
-    var searchEl = document.getElementById('global-search-input');
+    var searchEl = document.getElementById('search-page-input') || document.getElementById('globalSearch');
     if (searchEl) {
       searchEl.value = query;
       searchEl.dispatchEvent(new Event('input'));
-    } else {
-      loadPage('search', query);
     }
+    // Also update results area directly
+    var content = document.getElementById('search-results-area');
+    if (content) content.innerHTML = SearchPage._renderResults(query);
   }
 };

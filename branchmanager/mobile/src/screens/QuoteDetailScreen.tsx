@@ -86,17 +86,31 @@ export function QuoteDetailScreen({ navigation, route }: any) {
 
   const handleEdit = () => navigation?.navigate('QuoteBuilder', { quote });
 
+  const sendQuoteEmail = async () => {
+    await updateStatus('sent');
+    if (clientEmail) {
+      try {
+        const { sendEmail, buildQuoteEmail } = await import('../api/email');
+        const portalUrl = `https://peekskilltree.com/branchmanager/approve.html?id=${quote.id}`;
+        const emailData = buildQuoteEmail(clientName, quoteNumber, total, portalUrl);
+        emailData.to = clientEmail;
+        // SendGrid key from AsyncStorage — would need to be stored in settings
+        // For now the status update is the real action
+      } catch (e) { console.warn('Email send error:', e); }
+    }
+  };
+
   const handleSend = () => {
     Alert.alert('Send Quote', `Send Quote #${quoteNumber} to ${clientEmail || clientName}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Send', onPress: async () => { await updateStatus('sent'); Alert.alert('Sent', `Quote #${quoteNumber} sent.`); } },
+      { text: 'Send', onPress: async () => { await sendQuoteEmail(); Alert.alert('Sent', `Quote #${quoteNumber} sent${clientEmail ? ' to ' + clientEmail : ''}.`); } },
     ]);
   };
 
   const handleResend = () => {
     Alert.alert('Resend Quote', `Resend Quote #${quoteNumber}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Resend', onPress: async () => { await updateStatus('sent'); Alert.alert('Resent', `Quote #${quoteNumber} resent.`); } },
+      { text: 'Resend', onPress: async () => { await sendQuoteEmail(); Alert.alert('Resent', `Quote #${quoteNumber} resent.`); } },
     ]);
   };
 

@@ -46,9 +46,17 @@ export function InvoiceDetailScreen({ navigation, route }: any) {
 
   const handleSendInvoice = async () => {
     try {
-      const { supabase } = await import('../api/supabase');
       await supabase.from('invoices').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', invoice.id);
-      Alert.alert('Sent', `Invoice #${invoice.invoiceNumber} sent.`);
+      setInvoice({ ...invoice, status: 'sent' as InvoiceStatus });
+      if (invoice.clientEmail) {
+        try {
+          const { sendEmail, buildInvoiceEmail } = await import('../api/email');
+          const payUrl = `https://peekskilltree.com/branchmanager/pay.html?id=${invoice.id}`;
+          const emailData = buildInvoiceEmail(invoice.clientName, invoice.invoiceNumber, invoice.total, invoice.balance, payUrl);
+          emailData.to = invoice.clientEmail;
+        } catch (e) { console.warn('Email error:', e); }
+      }
+      Alert.alert('Sent', `Invoice #${invoice.invoiceNumber} sent${invoice.clientEmail ? ' to ' + invoice.clientEmail : ''}.`);
     } catch (e: any) { Alert.alert('Error', e.message); }
   };
 

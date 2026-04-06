@@ -20,10 +20,16 @@ const queryClient = new QueryClient({
 function AppContent() {
   const auth = useAuthState();
 
-  // Register for push notifications once logged in
+  // Register for push notifications + sync offline queue once logged in
   useEffect(() => {
     if (auth.user) {
       registerForPushNotifications().catch(() => {});
+      // Sync any queued offline actions
+      import('./src/utils/offline').then(({ syncQueue }) => {
+        syncQueue().then(result => {
+          if (result.synced > 0) console.log(`[Offline] Synced ${result.synced} queued actions`);
+        }).catch(() => {});
+      });
     }
   }, [auth.user]);
 

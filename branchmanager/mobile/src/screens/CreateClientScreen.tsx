@@ -5,6 +5,7 @@ import {
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { createClient } from '../api/clients';
+import { smartInsert } from '../utils/offline';
 
 export function CreateClientScreen({ navigation }: any) {
   const [name, setName] = useState('');
@@ -18,8 +19,8 @@ export function CreateClientScreen({ navigation }: any) {
     if (!name.trim()) { Alert.alert('Required', 'Client name is required.'); return; }
     setSaving(true);
     try {
-      const client = await createClient({ name: name.trim(), company, phone, email, address, status: 'lead' });
-      Alert.alert('Client Created', `${client.name} added.`);
+      const result = await smartInsert('clients', { name: name.trim(), company, phone, email, address, status: 'lead' });
+      Alert.alert('Client Created', result._offline ? `${name} saved offline — will sync when back online.` : `${name} added.`);
       navigation?.goBack();
     } catch (e: any) {
       Alert.alert('Error', e.message);

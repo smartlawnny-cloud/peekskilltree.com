@@ -5,6 +5,7 @@ import {
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { createRequest } from '../api/requests';
+import { smartInsert } from '../utils/offline';
 
 const SOURCES = ['Google Search', 'Facebook', 'Instagram', 'Nextdoor', 'Referral', 'Repeat Client', 'Yelp', 'Phone Call', 'Other'];
 
@@ -21,8 +22,8 @@ export function CreateRequestScreen({ navigation }: any) {
     if (!clientName.trim()) { Alert.alert('Required', 'Client name is required.'); return; }
     setSaving(true);
     try {
-      await createRequest({ clientName: clientName.trim(), phone, email, property, source, notes });
-      Alert.alert('Request Created', 'New request added.');
+      const result = await smartInsert('requests', { client_name: clientName.trim(), phone, email, property, source, notes, status: 'new' });
+      Alert.alert('Request Created', result._offline ? 'Saved offline — will sync when back online.' : 'New request added.');
       navigation?.goBack();
     } catch (e: any) {
       Alert.alert('Error', e.message);

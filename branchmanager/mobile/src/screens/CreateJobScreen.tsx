@@ -5,6 +5,7 @@ import {
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { createJob } from '../api/jobs';
+import { smartInsert } from '../utils/offline';
 
 export function CreateJobScreen({ navigation, route }: any) {
   const fromQuote = route?.params?.fromQuote;
@@ -22,15 +23,15 @@ export function CreateJobScreen({ navigation, route }: any) {
     if (!scheduledDate) { Alert.alert('Required', 'Scheduled date is required.'); return; }
     setSaving(true);
     try {
-      const job = await createJob({
-        clientName: clientName.trim(),
+      const result = await smartInsert('jobs', {
+        client_name: clientName.trim(),
         property, description,
-        scheduledDate,
+        scheduled_date: scheduledDate,
         crew: crew.split(',').map(c => c.trim()).filter(Boolean),
         total: parseFloat(total) || 0,
-        notes,
+        notes, status: 'scheduled',
       });
-      Alert.alert('Job Created', `Job #${job.jobNumber} scheduled.`);
+      Alert.alert('Job Created', result._offline ? 'Saved offline — will sync when back online.' : `Job #${result.job_number || ''} scheduled.`);
       navigation?.goBack();
     } catch (e: any) {
       Alert.alert('Error', e.message);

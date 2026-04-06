@@ -414,7 +414,7 @@
         + '<div class="error-card">'
         + '<div style="font-size:40px;margin-bottom:16px;">⚠️</div>'
         + '<h2 style="margin-bottom:8px;">Link Not Found</h2>'
-        + '<p style="color:#666;" id="err-msg">' + msg + '</p>'
+        + '<p style="color:#666;" id="err-msg">' + esc(msg).replace(/&lt;br&gt;/g, '<br>') + '</p>'
         + '<p style="margin-top:20px;"><a href="tel:9143915233" style="color:#1a3c12;font-weight:700;text-decoration:none;">📞 (914) 391-5233</a></p>'
         + '</div></div>'
         + '<div class="footer"><a href="https://peekskilltree.com">peekskilltree.com</a></div>';

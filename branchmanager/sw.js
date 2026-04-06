@@ -73,7 +73,6 @@ var ASSETS = [
   './src/pages/materials.js',
   './src/pages/reminders.js',
   './src/pages/crewperformance.js',
-  './src/pages/pipeline.js',
   './src/pages/campaigns.js',
   './src/pages/formbuilder.js',
   './src/pages/mediacenter.js',

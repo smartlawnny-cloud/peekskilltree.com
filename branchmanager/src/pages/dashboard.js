@@ -3,6 +3,13 @@
  */
 var DashboardPage = {
   render: function() {
+    // One-time fix: mark Jobber-migrated completed jobs as already invoiced
+    if (!localStorage.getItem('bm-legacy-jobs-fixed')) {
+      DB.jobs.getAll().forEach(function(j) {
+        if (j.status === 'completed' && !j.invoiceId) DB.jobs.update(j.id, { invoiceId: 'legacy' });
+      });
+      localStorage.setItem('bm-legacy-jobs-fixed', '1');
+    }
     var stats = DB.dashboard.getStats();
     var todayJobs = DB.jobs.getToday();
     var upcoming = DB.jobs.getUpcoming().slice(0, 5);

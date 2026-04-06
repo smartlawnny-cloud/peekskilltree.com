@@ -62,13 +62,6 @@ var SearchPage = {
       + '<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;">🔍</span>'
       + '</div>';
 
-    // Quick Actions bar
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">'
-      + '<button class="btn btn-primary" onclick="loadPage(\'clients\');setTimeout(function(){ClientsPage.showAddForm&&ClientsPage.showAddForm();},200)" style="font-size:13px;padding:8px 14px;">+ New Client</button>'
-      + '<button class="btn btn-primary" onclick="loadPage(\'jobs\');setTimeout(function(){JobsPage.showAddForm&&JobsPage.showAddForm();},200)" style="font-size:13px;padding:8px 14px;">+ New Job</button>'
-      + '<button class="btn btn-primary" onclick="loadPage(\'invoices\');setTimeout(function(){InvoicesPage.showAddForm&&InvoicesPage.showAddForm();},200)" style="font-size:13px;padding:8px 14px;">+ New Invoice</button>'
-      + '</div>';
-
     // Category filter tabs
     var cats = ['all', 'clients', 'jobs', 'invoices', 'quotes', 'requests'];
     html += '<div id="search-cat-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;">';

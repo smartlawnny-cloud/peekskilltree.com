@@ -276,17 +276,20 @@
     .sidebar-overlay.open { display:block; }
     .hamburger { display:block; }
     .stat-grid { grid-template-columns:1fr 1fr; }
-    .content { padding:16px; padding-bottom:88px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+    .content { padding:16px; padding-bottom:24px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
     .topbar { padding:10px 16px; padding-top:max(10px,env(safe-area-inset-top)); }
     .search-box { min-width:auto; flex:1; }
     .bottom-nav { display:block; }
     .detail-grid { grid-template-columns:1fr !important; }
     .option-grid { grid-template-columns:1fr !important; }
 
-    /* Jobber-style native feel */
-    .sidebar { display:none !important; }
-    .sidebar-overlay { display:none !important; }
-    .hamburger { display:none !important; }
+    /* Full sidebar on mobile — slide in/out via hamburger */
+    .sidebar { display:flex !important; transform:translateX(-100%); z-index:200; }
+    .sidebar.open { transform:translateX(0); }
+    .sidebar-overlay { display:none; }
+    .sidebar-overlay.open { display:block !important; }
+    .hamburger { display:block !important; }
+    .bottom-nav { display:none !important; }
     .main { margin-left:0 !important; }
 
     /* Rounded cards */
@@ -305,8 +308,8 @@
     input, select, textarea { font-size:16px !important; padding:12px !important; border-radius:10px !important; }
     .btn { min-height:44px; border-radius:12px !important; }
 
-    /* Toast above tabs */
-    .toast { bottom:96px !important; left:16px !important; right:16px !important; border-radius:12px !important; }
+    /* Toast */
+    .toast { bottom:24px !important; left:16px !important; right:16px !important; border-radius:12px !important; }
 
     /* Modal slides up from bottom */
     .modal { max-width:100% !important; max-height:95vh !important; border-radius:20px 20px 0 0 !important; margin-top:auto !important; }

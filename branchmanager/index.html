@@ -649,6 +649,7 @@
         <div class="nav-section">Tools</div>
         <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> AI Assistant</button>
         <button class="nav-item" data-page="calculators"><span class="icon"><i data-lucide="calculator" class="li"></i></span> Calculators</button>
+        <button class="nav-item" data-page="aitreeid"><span class="icon"><i data-lucide="scan-eye" class="li"></i></span> AI Tree ID <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
         <button class="nav-item" data-page="treemeasure"><span class="icon"><i data-lucide="ruler" class="li"></i></span> Tree Measure</button>
         <button class="nav-item" data-page="customfields"><span class="icon"><i data-lucide="sliders" class="li"></i></span> Custom Fields</button>
         <button class="nav-item" data-page="backup"><span class="icon"><i data-lucide="database" class="li"></i></span> Backup</button>
@@ -769,6 +770,7 @@
 <script defer src="src/pages/settings.js?v=80"></script>
 <script defer src="src/pages/propertymap.js?v=2"></script>
 <script defer src="src/pages/estimator.js"></script>
+<script defer src="src/pages/aitreeid.js?v=1"></script>
 <script defer src="src/pages/treemeasure.js"></script>
 <script defer src="src/pages/search.js?v=2"></script>
 <script defer src="src/pages/clienthub.js?v=4"></script>
@@ -851,6 +853,7 @@ var pageConfigs = {
   timesheet: { title: 'Timesheet', action: null },
   automations: { title: 'Automations', action: null },
   calculators: { title: 'Calculators', action: null },
+  aitreeid: { title: 'AI Tree ID', action: null },
   treemeasure: { title: 'Tree Measure', action: null },
   crewview: { title: 'Crew View', action: null },
   employeecenter: { title: 'My Pay & Hours', action: null },
@@ -936,6 +939,7 @@ var pageRenderers = {
   import: function() { return ImportPage.render(); },
   backup: function() { return BackupPage.render(); },
   settings: function() { return SettingsPage.render(); },
+  aitreeid: function() { return AITreeID.render(); },
   treemeasure: function() { return TreeMeasure.render(); },
   crewperformance: function() { return CrewPerformance.render(); },
   materials: function() { return Materials.render(); },

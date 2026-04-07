@@ -121,45 +121,148 @@ var RequestsPage = {
     if (!lastSync || lastSync < fiveMinAgo) RequestsPage._autoSync();
 
     var self = RequestsPage;
-    var all = DB.requests.getAll();
+    var allRequests = DB.requests.getAll();
 
-    // Stats
-    var newCount   = all.filter(function(r){ return r.status === 'new'; }).length;
-    var assessed   = all.filter(function(r){ return r.status === 'assessment_complete'; }).length;
-    var overdue    = all.filter(function(r){ return self._isOverdue(r); }).length;
-    var converted  = all.filter(function(r){ return r.status === 'converted' || r.status === 'quoted'; }).length;
-    var convRate   = all.length > 0 ? Math.round(converted / all.length * 100) : 0;
-    var recentNew  = all.filter(function(r) {
-      var ago = new Date(); ago.setDate(ago.getDate()-30);
-      return new Date(r.createdAt) >= ago && r.status === 'new';
+    // ── Counts ──
+    var newCount   = allRequests.filter(function(r){ return r.status === 'new'; }).length;
+    var quotedCount = allRequests.filter(function(r){ return r.status === 'quoted'; }).length;
+    var overdueCount = allRequests.filter(function(r){ return self._isOverdue(r); }).length;
+    var convertedCount = allRequests.filter(function(r){ return r.status === 'converted' || r.status === 'quoted'; }).length;
+    var thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 30);
+    var recentNew = allRequests.filter(function(r) {
+      return new Date(r.createdAt) >= thirtyAgo;
     });
+    var recentNewCount = recentNew.filter(function(r){ return r.status === 'new'; }).length;
+    var recentConverted = recentNew.filter(function(r){ return r.status === 'converted' || r.status === 'quoted'; }).length;
+    var convRate = recentNew.length > 0 ? Math.round(recentConverted / recentNew.length * 100) : 0;
 
-    // Simple list — new requests at top, tap to open → convert to quote
-    var newRequests = all.filter(function(r) { return r.status === 'new'; });
-    var otherRequests = all.filter(function(r) { return r.status !== 'new'; });
-    var filtered = newRequests.concat(otherRequests);
+    // ── New request alert cards at top ──
+    var newRequests = allRequests.filter(function(r){ return r.status === 'new'; });
+    newRequests.sort(function(a,b){ return new Date(b.createdAt||0) - new Date(a.createdAt||0); });
 
     var html = '';
 
-    if (filtered.length === 0) {
-      html += UI.emptyState('📥', 'No requests yet', 'New requests from your website form will appear here.');
-    } else {
-      filtered.forEach(function(r) {
+    // New request cards
+    if (newRequests.length > 0) {
+      html += '<div style="margin-bottom:20px;">';
+      newRequests.forEach(function(r) {
         var ageMs = Date.now() - new Date(r.createdAt || 0).getTime();
         var ageHrs = Math.floor(ageMs / 3600000);
-        var ageStr = ageHrs < 1 ? 'Received just now' : ageHrs < 24 ? 'Received ' + ageHrs + ' hour' + (ageHrs !== 1 ? 's' : '') + ' ago' : 'Received ' + Math.floor(ageHrs / 24) + ' day' + (Math.floor(ageHrs / 24) !== 1 ? 's' : '') + ' ago';
+        var ageStr = ageHrs < 1 ? 'just now' : ageHrs < 24 ? ageHrs + ' hour' + (ageHrs !== 1 ? 's' : '') + ' ago' : Math.floor(ageHrs / 24) + ' day' + (Math.floor(ageHrs / 24) !== 1 ? 's' : '') + ' ago';
 
         html += '<div onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="'
-          + 'background:var(--white);border:2px solid var(--border);'
-          + 'border-radius:12px;padding:20px 22px;margin-bottom:10px;cursor:pointer;'
-          + 'transition:transform .1s;-webkit-tap-highlight-color:transparent;" '
-          + 'onmousedown="this.style.transform=\'scale(0.98)\'" onmouseup="this.style.transform=\'\'" onmouseleave="this.style.transform=\'\'">'
-          + '<div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">' + ageStr + '</div>'
-          + '<div style="font-size:18px;font-weight:800;">' + UI.esc(r.clientName || 'Unknown') + '</div>'
-          + (r.property ? '<div style="font-size:14px;color:var(--text-light);margin-top:4px;">' + UI.esc(r.property) + '</div>' : '')
-          + '</div>';
+          + 'background:#fffde7;border:1px solid #ffe082;border-left:4px solid #f9a825;'
+          + 'border-radius:10px;padding:14px 18px;margin-bottom:8px;cursor:pointer;'
+          + 'transition:transform .1s, box-shadow .1s;'
+          + '" onmouseenter="this.style.boxShadow=\'0 2px 8px rgba(249,168,37,.25)\'" onmouseleave="this.style.boxShadow=\'none\'">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">'
+          + '<div style="flex:1;min-width:200px;">'
+          + '<div style="font-size:11px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">New Request</div>'
+          + '<div style="font-size:15px;font-weight:700;color:var(--text);">' + UI.esc(r.clientName || 'Unknown')
+          + '<span style="font-weight:400;color:var(--text-light);font-size:13px;margin-left:8px;">'
+          + (r.property ? ' — ' + UI.esc(r.property) : '')
+          + ' — Received ' + ageStr
+          + '</span></div>'
+          + '</div>'
+          + '<button onclick="event.stopPropagation();RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId||'') + '\',\'' + UI.esc(r.clientName||'').replace(/'/g,"\\'") + '\')" '
+          + 'style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:1px solid #e65100;background:#fff3e0;color:#e65100;cursor:pointer;white-space:nowrap;">'
+          + 'Create Quote &rarr;</button>'
+          + '</div></div>';
       });
+      html += '</div>';
     }
+
+    // ── Stats row (3 cards like Jobber) ──
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;" class="detail-grid">';
+
+    // Card 1: Overview
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;">'
+      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Overview</div>'
+      + '<div style="display:flex;gap:16px;flex-wrap:wrap;">'
+      + '<div><div style="font-size:22px;font-weight:800;color:#1565c0;">' + newCount + '</div><div style="font-size:11px;color:var(--text-light);">New</div></div>'
+      + '<div><div style="font-size:22px;font-weight:800;color:#7b1fa2;">' + quotedCount + '</div><div style="font-size:11px;color:var(--text-light);">Quoted</div></div>'
+      + '<div><div style="font-size:22px;font-weight:800;color:' + (overdueCount > 0 ? '#c62828' : 'var(--text)') + ';">' + overdueCount + '</div><div style="font-size:11px;color:var(--text-light);">Overdue</div></div>'
+      + '</div></div>';
+
+    // Card 2: New Requests (30 days)
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;">'
+      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">New Requests</div>'
+      + '<div style="font-size:28px;font-weight:800;color:var(--text);">' + recentNewCount + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);">Past 30 days</div>'
+      + '</div>';
+
+    // Card 3: Conversion Rate (30 days)
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;">'
+      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Conversion Rate</div>'
+      + '<div style="font-size:28px;font-weight:800;color:' + (convRate >= 50 ? '#2e7d32' : convRate >= 25 ? '#e07c24' : '#c62828') + ';">' + convRate + '%</div>'
+      + '<div style="font-size:11px;color:var(--text-light);">Past 30 days</div>'
+      + '</div>';
+
+    html += '</div>';
+
+    // ── Filter chips + search ──
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">';
+
+    // Filter chips
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    var filters = [['all','All'],['new','New'],['quoted','Quoted'],['converted','Converted'],['archived','Archived']];
+    filters.forEach(function(f) {
+      var isActive = self._filter === f[0];
+      html += '<button onclick="RequestsPage._setFilter(\'' + f[0] + '\')" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid '
+        + (isActive ? '#1565c0' : 'var(--border)') + ';background:' + (isActive ? '#1565c0' : 'var(--white)') + ';color:'
+        + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '700' : '500') + ';">' + f[1] + '</button>';
+    });
+    html += '</div>';
+
+    // Search input
+    html += '<div style="position:relative;">'
+      + '<input type="text" placeholder="Search requests..." value="' + UI.esc(self._search) + '" '
+      + 'oninput="RequestsPage._search=this.value;loadPage(\'requests\')" '
+      + 'style="font-size:13px;padding:7px 12px 7px 32px;border:1px solid var(--border);border-radius:8px;width:220px;background:var(--white);">'
+      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text-light);">&#128269;</span>'
+      + '</div>';
+
+    html += '</div>';
+
+    // ── Table ──
+    var filtered = self._getFiltered();
+
+    if (filtered.length === 0) {
+      html += UI.emptyState('&#128229;', 'No requests found', self._search ? 'Try a different search term.' : 'New requests from your website form will appear here.');
+    } else {
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;">';
+
+      // Table header
+      html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+        + '<thead><tr style="background:var(--bg);border-bottom:1px solid var(--border);">'
+        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Client</th>'
+        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Description</th>'
+        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Property</th>'
+        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Requested</th>'
+        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Status</th>'
+        + '</tr></thead><tbody>';
+
+      filtered.forEach(function(r) {
+        var isOverdue = self._isOverdue(r);
+        var displayStatus = isOverdue && r.status === 'new' ? 'overdue' : r.status;
+        var desc = r.service || r.notes || '';
+        if (desc.length > 50) desc = desc.substring(0, 50) + '...';
+        var prop = r.property || '';
+        if (prop.length > 35) prop = prop.substring(0, 35) + '...';
+
+        html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;" '
+          + 'onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'transparent\'">'
+          + '<td style="padding:12px 14px;font-weight:600;">' + UI.esc(r.clientName || 'Unknown') + '</td>'
+          + '<td style="padding:12px 14px;color:var(--text-light);">' + UI.esc(desc || '—') + '</td>'
+          + '<td style="padding:12px 14px;color:var(--text-light);font-size:12px;">' + UI.esc(prop || '—') + '</td>'
+          + '<td style="padding:12px 14px;white-space:nowrap;">' + UI.dateShort(r.createdAt) + '</td>'
+          + '<td style="padding:12px 14px;">' + UI.statusBadge(displayStatus) + '</td>'
+          + '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+    }
+
     return html;
   },
 

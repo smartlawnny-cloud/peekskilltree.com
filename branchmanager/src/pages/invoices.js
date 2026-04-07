@@ -744,7 +744,7 @@ var InvoicesPage = {
       + '<span style="color:var(--text-light);">Subtotal</span><span id="inv-subtotal-display" style="font-weight:600;">' + UI.money(_invSubtotal) + '</span>'
       + '</div>'
       + '<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid var(--border);">'
-      + '<span style="color:var(--text-light);">Tax (<input type="number" id="inv-tax-rate" value="' + _invTaxRate + '" step="0.001" min="0" max="100" oninput="InvoicesPage.calcTotal()" style="width:55px;font-size:12px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;text-align:center;">%)</span>'
+      + '<span style="color:var(--text-light);">Tax (' + _invTaxRate + '%)</span><input type="hidden" id="inv-tax-rate" value="' + _invTaxRate + '">'
       + '<span id="inv-tax-display" style="font-weight:600;">' + UI.money(_invTaxAmt) + '</span>'
       + '</div>'
       + '<div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;background:var(--green-dark);color:var(--white);">'

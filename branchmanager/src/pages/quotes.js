@@ -341,7 +341,7 @@ var QuotesPage = {
       + '<span style="color:var(--text-light);">Subtotal</span><span id="q-subtotal-display" style="font-weight:600;">' + UI.money(_qSubtotal) + '</span>'
       + '</div>'
       + '<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid var(--border);">'
-      + '<span style="color:var(--text-light);">Tax (<input type="number" id="q-tax-rate" value="' + _qTaxRate + '" step="0.001" min="0" max="100" oninput="QuotesPage.calcTotal()" style="width:55px;font-size:12px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;text-align:center;">%)</span>'
+      + '<span style="color:var(--text-light);">Tax (' + _qTaxRate + '%)</span><input type="hidden" id="q-tax-rate" value="' + _qTaxRate + '">'
       + '<span id="q-tax-display" style="font-weight:600;">' + UI.money(_qTaxAmt) + '</span>'
       + '</div>'
       + '<div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;background:var(--green-dark);color:var(--white);">'
@@ -357,27 +357,6 @@ var QuotesPage = {
     // Property Map moved to Step 2
 
     html += UI.formField('Internal Notes', 'textarea', 'q-notes', q.notes, { placeholder: 'Notes (not shown to client)' });
-
-    // Deposit section
-    var depRequired = q.depositRequired || false;
-    var depType = q.depositType || 'percent';
-    var depAmount = q.depositAmount || 50;
-    html += '<div style="background:#f8faf8;border:2px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
-      + '<div><h4 style="font-size:14px;font-weight:700;">Require Deposit</h4><div style="font-size:12px;color:var(--text-light);">Client pays deposit before job is scheduled</div></div>'
-      + '<label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-deposit-req" onchange="QuotesPage._toggleDeposit(this.checked)" style="width:18px;height:18px;"' + (depRequired ? ' checked' : '') + '><span style="font-size:13px;font-weight:600;">' + (depRequired ? 'On' : 'Off') + '</span></label>'
-      + '</div>'
-      + '<div id="q-deposit-fields" style="' + (depRequired ? '' : 'display:none;') + 'display:' + (depRequired ? 'grid' : 'none') + ';grid-template-columns:1fr 1fr;gap:12px;">'
-      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Deposit Type</label>'
-      + '<select id="q-deposit-type" onchange="QuotesPage._calcDeposit()" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
-      + '<option value="percent"' + (depType === 'percent' ? ' selected' : '') + '>Percentage (%)</option>'
-      + '<option value="flat"' + (depType === 'flat' ? ' selected' : '') + '>Flat Amount ($)</option>'
-      + '</select></div>'
-      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Amount</label>'
-      + '<input type="number" id="q-deposit-amount" value="' + depAmount + '" min="1" oninput="QuotesPage._calcDeposit()" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;"></div>'
-      + '</div>'
-      + '<div id="q-deposit-preview" style="margin-top:10px;font-size:13px;color:var(--green-dark);font-weight:600;' + (depRequired ? '' : 'display:none;') + '"></div>'
-      + '</div>'
 
       // Expiry
       + '<div style="margin-bottom:16px;">'
@@ -608,13 +587,11 @@ var QuotesPage = {
     var taxAmount = Math.round(subtotal * taxRate / 100 * 100) / 100;
     var total = subtotal + taxAmount;
 
-    var depReq = document.getElementById('q-deposit-req');
-    var depTypeEl = document.getElementById('q-deposit-type');
-    var depAmtEl = document.getElementById('q-deposit-amount');
-    var depositRequired = depReq && depReq.checked;
-    var depositType = depTypeEl ? depTypeEl.value : 'percent';
-    var depositAmount = depAmtEl ? parseFloat(depAmtEl.value) || 0 : 0;
-    var depositDue = depositRequired ? (depositType === 'percent' ? Math.round(total * depositAmount / 100 * 100) / 100 : depositAmount) : 0;
+    // Deposit handled in settings/PDF, not on quote form
+    var depositRequired = false;
+    var depositType = 'percent';
+    var depositAmount = 0;
+    var depositDue = 0;
     var expiresEl = document.getElementById('q-expires');
     var expiresAt = expiresEl ? expiresEl.value : new Date(Date.now() + 30*86400000).toISOString().split('T')[0];
 

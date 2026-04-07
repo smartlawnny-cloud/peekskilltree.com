@@ -479,19 +479,42 @@ var QuotesPage = {
       + '</div>';
   },
 
+  // Service-specific measurement prompts → auto-price
+  _servicePricing: {
+    'Tree Removal': { prompt: 'DBH (inches):', unit: 'inch', rate: 100, desc: function(v) { return v + '" DBH tree removal'; } },
+    'Stump Removal': { prompt: 'Total stump radius (inches):', unit: 'inch', rate: 10, desc: function(v) { return v + '" radius stump grinding'; } },
+    'Cabling': { prompt: 'Cable length (feet):', unit: 'foot', rate: 10, desc: function(v) { return v + '\' cable installation'; } }
+  },
+
   _onServiceChange: function(sel) {
     var row = sel.closest('.quote-item-row');
     var svc = sel.value;
-    var rate = QuotesPage._defaultRates[svc];
-    if (rate && rate > 0) {
-      row.querySelector('.q-item-rate').value = rate;
-    }
-    // Auto-fill description from service catalog
-    var services = DB.services.getAll();
-    var match = services.find(function(s) { return s.name === svc; });
+    var rateInput = row.querySelector('.q-item-rate');
     var descInput = row.querySelector('.q-item-desc');
-    if (match && match.description && !descInput.value) {
-      descInput.value = match.description;
+
+    // Check for measurement-based pricing
+    var pricing = QuotesPage._servicePricing[svc];
+    if (pricing) {
+      var measurement = prompt(pricing.prompt);
+      if (measurement && !isNaN(parseFloat(measurement))) {
+        var m = parseFloat(measurement);
+        var price = Math.round(m * pricing.rate);
+        rateInput.value = price;
+        if (!descInput.value) descInput.value = pricing.desc(m);
+      }
+    } else {
+      // Use default flat rate if set
+      var rate = QuotesPage._defaultRates[svc];
+      if (rate && rate > 0) {
+        rateInput.value = rate;
+      }
+    }
+
+    // Auto-fill description from service catalog if still empty
+    if (!descInput.value) {
+      var services = DB.services.getAll();
+      var match = services.find(function(s) { return s.name === svc; });
+      if (match && match.description) descInput.value = match.description;
     }
     QuotesPage.calcTotal();
   },

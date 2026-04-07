@@ -18,7 +18,7 @@ var Templates = {
       name: 'Request Received',
       trigger: 'New request submitted',
       channel: 'sms',
-      body: 'Hi {{name}}, thanks for your request! We got it and will be in touch within 2 hours to schedule your free estimate. — Doug, Second Nature Tree (914) 391-5233'
+      body: 'Hi {{name}}, thanks for your request! We got it and will be in touch within 2 hours to schedule your free estimate. — Doug, Second Nature Tree Service (914) 391-5233'
     },
 
     // ── Quote Sent ──
@@ -33,7 +33,7 @@ var Templates = {
       name: 'Quote Sent',
       trigger: 'Quote sent to client',
       channel: 'sms',
-      body: 'Hi {{name}}, your estimate (#{{quoteNumber}}) for {{amount}} is ready! Reply YES to approve or call (914) 391-5233 with questions. — Doug, Second Nature Tree'
+      body: 'Hi {{name}}, your estimate (#{{quoteNumber}}) for {{amount}} is ready! Reply YES to approve or call (914) 391-5233 with questions. — Doug, Second Nature Tree Service'
     },
 
     // ── Quote Follow-Up (5 days) ──
@@ -66,7 +66,7 @@ var Templates = {
       name: 'Booking Confirmation',
       trigger: 'Job scheduled',
       channel: 'sms',
-      body: 'Hi {{name}}, your tree service (Job #{{jobNumber}}) is confirmed for {{date}} at {{address}}. Crew arrives 8-9am. Call (914) 391-5233 to reschedule. — Second Nature Tree'
+      body: 'Hi {{name}}, your tree service (Job #{{jobNumber}}) is confirmed for {{date}} at {{address}}. Crew arrives 8-9am. Call (914) 391-5233 to reschedule. — Second Nature Tree Service'
     },
 
     // ── Visit Reminder (1 day before) ──
@@ -81,7 +81,7 @@ var Templates = {
       name: 'Visit Reminder (1 hr)',
       trigger: '1 hour before scheduled visit',
       channel: 'sms',
-      body: 'Hi {{name}}, reminder: our crew is headed to {{address}} shortly for your tree service (Job #{{jobNumber}}). See you soon! — Second Nature Tree'
+      body: 'Hi {{name}}, reminder: our crew is headed to {{address}} shortly for your tree service (Job #{{jobNumber}}). See you soon! — Second Nature Tree Service'
     },
 
     // ── Invoice Sent ──

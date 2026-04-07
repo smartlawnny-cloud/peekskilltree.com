@@ -327,56 +327,6 @@ var QuotesPage = {
       + '<div id="q-pertree-total" style="margin-top:12px;text-align:right;font-size:15px;font-weight:700;color:var(--green-dark);"></div>'
       + '</div>';
 
-    // ═══ STEP 2: Time & Material (verify production) ═══
-    // Hidden until user clicks "Done — verify with T&M"
-    html += '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;">Step 2: Verify with Time & Material →</button>'
-
-      + '<div id="q-mode-tm" style="display:' + (tmData.totalHrs ? 'block' : 'none') + ';border:2px solid var(--accent);border-radius:10px;padding:16px;margin-bottom:12px;">'
-      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Step 2: Production Estimate</div>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Map the job site, estimate crew + equipment to verify pricing.</p>'
-
-      // Property Map (part of Step 2)
-      + '<div style="margin-bottom:16px;"><button type="button" class="btn btn-outline" style="width:100%;" onclick="PropertyMap.show(document.getElementById(\'q-property\').value)">🗺️ Open Property Map — Place Equipment</button></div>'
-
-      // Crew
-      + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Crew</div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Climber</label>'
-      + '<input type="number" id="q-tm-climber-hrs" value="' + (tmData.climberHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground crew</label>'
-      + '<input type="number" id="q-tm-ground-count" value="' + (tmData.groundCount || '2') + '" placeholder="#" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground hrs</label>'
-      + '<input type="number" id="q-tm-ground-hrs" value="' + (tmData.groundHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      + '</div>'
-
-      // Equipment
-      + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Equipment</div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
-      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-bucket" onchange="QuotesPage._calcTM()"' + (tmData.bucket ? ' checked' : '') + '> Bucket truck</label>'
-      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-chipper" onchange="QuotesPage._calcTM()"' + (tmData.chipper ? ' checked' : '') + '> Chipper</label>'
-      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-crane" onchange="QuotesPage._calcTM()"' + (tmData.crane ? ' checked' : '') + '> Crane</label>'
-      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-stumpgrinder" onchange="QuotesPage._calcTM()"' + (tmData.stumpGrinder ? ' checked' : '') + '> Stump grinder</label>'
-      + '</div>'
-
-      // Duration
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Total job hours</label>'
-      + '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Dump / disposal</label>'
-      + '<input type="number" id="q-tm-disposal" value="' + (tmData.disposal || '') + '" placeholder="$" min="0" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      + '</div>'
-
-      // T&M Total
-      + '<div id="q-tm-breakdown" style="background:var(--bg);border-radius:8px;padding:12px;font-size:13px;"></div>'
-      + '<div id="q-tm-total" style="margin-top:8px;text-align:right;font-size:15px;font-weight:700;color:var(--accent);"></div>'
-      + '</div>';
-
-    // ── COMPARE BUTTON (shows after both modes have data) ──
-    html += '<button type="button" id="q-compare-btn" onclick="QuotesPage._showPriceComparison()" style="display:none;margin-top:12px;width:100%;padding:14px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">📊 Compare Pricing Methods</button>'
-
-    // Price comparison panel (hidden until clicked)
-      + '<div id="q-comparison" style="display:none;margin-top:12px;background:#f5f3ff;border:2px solid #c4b5fd;border-radius:10px;padding:16px;"></div>'
-
       + '</div>';
 
 
@@ -434,6 +384,54 @@ var QuotesPage = {
       + '<input type="hidden" id="q-expires" value="' + (q.expiresAt ? q.expiresAt.substring(0,10) : new Date(Date.now() + 30*86400000).toISOString().substring(0,10)) + '">'
       + '<div style="font-size:11px;color:var(--text-light);">Quote valid for 30 days.</div>'
       + '</div>'
+
+      // ═══ TIME & EQUIPMENT (at the bottom, after all line items) ═══
+      + '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin:16px 0 12px;">✅ Finished Line Items — Time & Equipment</button>'
+
+      + '<div id="q-mode-tm" style="display:' + (tmData.totalHrs ? 'block' : 'none') + ';border:2px solid var(--accent);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Production Estimate</div>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Map the job site, estimate crew + equipment to verify pricing.</p>'
+
+      // Property Map
+      + '<div style="margin-bottom:16px;"><button type="button" class="btn btn-outline" style="width:100%;" onclick="PropertyMap.show(document.getElementById(\'q-property\').value)">🗺️ Open Property Map — Place Equipment</button></div>'
+
+      // Crew
+      + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Crew</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Climber</label>'
+      + '<input type="number" id="q-tm-climber-hrs" value="' + (tmData.climberHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground crew</label>'
+      + '<input type="number" id="q-tm-ground-count" value="' + (tmData.groundCount || '2') + '" placeholder="#" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground hrs</label>'
+      + '<input type="number" id="q-tm-ground-hrs" value="' + (tmData.groundHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '</div>'
+
+      // Equipment
+      + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Equipment</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
+      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-bucket" onchange="QuotesPage._calcTM()"' + (tmData.bucket ? ' checked' : '') + '> Bucket truck</label>'
+      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-chipper" onchange="QuotesPage._calcTM()"' + (tmData.chipper ? ' checked' : '') + '> Chipper</label>'
+      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-crane" onchange="QuotesPage._calcTM()"' + (tmData.crane ? ' checked' : '') + '> Crane</label>'
+      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-stumpgrinder" onchange="QuotesPage._calcTM()"' + (tmData.stumpGrinder ? ' checked' : '') + '> Stump grinder</label>'
+      + '</div>'
+
+      // Duration
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Total job hours</label>'
+      + '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Dump / disposal</label>'
+      + '<input type="number" id="q-tm-disposal" value="' + (tmData.disposal || '') + '" placeholder="$" min="0" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '</div>'
+
+      // T&M Total
+      + '<div id="q-tm-breakdown" style="background:var(--bg);border-radius:8px;padding:12px;font-size:13px;"></div>'
+      + '<div id="q-tm-total" style="margin-top:8px;text-align:right;font-size:15px;font-weight:700;color:var(--accent);"></div>'
+      + '</div>'
+
+      // Compare button + panel
+      + '<button type="button" id="q-compare-btn" onclick="QuotesPage._showPriceComparison()" style="display:none;margin-top:12px;width:100%;padding:14px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">📊 Compare Pricing Methods</button>'
+      + '<div id="q-comparison" style="display:none;margin-top:12px;background:#f5f3ff;border:2px solid #c4b5fd;border-radius:10px;padding:16px;"></div>'
+
       + '</form>';
 
     UI.showModal(quoteId ? 'Edit Quote #' + q.quoteNumber : 'New Quote', html, {
@@ -1056,6 +1054,8 @@ var QuotesPage = {
     if (!aiKey) {
       // No AI key — just add the photo, user fills in manually
       UI.toast('Add AI key in Settings for auto tree ID');
+      // Auto-add next empty line item for next tree
+      QuotesPage.addItem();
       return;
     }
 
@@ -1110,15 +1110,19 @@ var QuotesPage = {
 
           QuotesPage.calcTotal();
           UI.toast('🌳 ' + tree.species + ' — ' + tree.dbh + '" DBH — $' + suggestedPrice + ' suggested');
+          // Auto-add next empty line item for next tree
+          QuotesPage.addItem();
         }
       } catch(e) {
         console.warn('Tree ID parse error:', e, text);
         UI.toast('Could not identify — fill in manually');
+        QuotesPage.addItem();
       }
     })
     .catch(function(e) {
       console.warn('Tree ID error:', e);
       UI.toast('AI unavailable — fill in manually');
+      QuotesPage.addItem();
     });
   },
 

@@ -141,48 +141,25 @@ var RequestsPage = {
 
     var html = '';
 
-    // Summary bar
-    if (newCount > 0) {
-      html += '<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">'
-        + '<div><strong style="font-size:15px;">' + newCount + ' new request' + (newCount !== 1 ? 's' : '') + '</strong>'
-        + '<div style="font-size:12px;color:#1565c0;margin-top:2px;">Tap to open → convert to quote</div></div>'
-        + '</div>';
-    }
-
-    html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
-      + '<table class="data-table"><thead><tr>'
-      + '<th>Client</th><th>Title</th><th>Property</th><th>Contact</th><th>Requested</th><th>Status</th>'
-      + '</tr></thead><tbody>';
-
     if (filtered.length === 0) {
-      html += '<tr><td colspan="6">'
-        + (self._search
-          ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No requests match "' + UI.esc(self._search) + '"</div>'
-          : UI.emptyState('📥', 'No requests yet', 'New requests from your website form will appear here.', '+ New Request', 'RequestsPage.showForm()'))
-        + '</td></tr>';
+      html += UI.emptyState('📥', 'No requests yet', 'New requests from your website form will appear here.');
     } else {
       filtered.forEach(function(r) {
-        var isOld = self._isOverdue(r);
-        var rowBg = isOld ? 'background:#fff8f8;' : '';
-        var title = r.service || (r.notes ? r.notes.split('\n')[0].substring(0, 50) + (r.notes.length > 50 ? '…' : '') : 'Request for ' + (r.clientName || ''));
+        var ageMs = Date.now() - new Date(r.createdAt || 0).getTime();
+        var ageHrs = Math.floor(ageMs / 3600000);
+        var ageStr = ageHrs < 1 ? 'Received just now' : ageHrs < 24 ? 'Received ' + ageHrs + ' hour' + (ageHrs !== 1 ? 's' : '') + ' ago' : 'Received ' + Math.floor(ageHrs / 24) + ' day' + (Math.floor(ageHrs / 24) !== 1 ? 's' : '') + ' ago';
 
-        html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="cursor:pointer;' + rowBg + '">'
-          + '<td><strong>' + UI.esc(r.clientName || '—') + '</strong></td>'
-          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(title) + '</td>'
-          + '<td style="font-size:12px;color:var(--text-light);max-width:180px;">' + (r.property ? UI.esc(r.property) : '—') + '</td>'
-          + '<td style="font-size:13px;">'
-          + (r.phone ? '<a href="tel:' + r.phone.replace(/\D/g,'') + '" onclick="event.stopPropagation()" style="color:var(--text);text-decoration:none;">' + UI.phone(r.phone) + '</a>' : '—')
-          + (r.email ? '<div style="font-size:11px;color:var(--text-light);">' + r.email + '</div>' : '')
-          + '</td>'
-          + '<td style="white-space:nowrap;font-size:13px;">'
-          + UI.dateRelative(r.createdAt)
-          + (isOld ? ' <span style="font-size:10px;font-weight:700;background:#fdecea;color:#c62828;padding:1px 5px;border-radius:3px;">OVERDUE</span>' : '')
-          + '</td>'
-          + '<td>' + UI.statusBadge(r.status) + '</td>'
-          + '</tr>';
+        html += '<div onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="'
+          + 'background:var(--white);border:2px solid var(--border);'
+          + 'border-radius:12px;padding:20px 22px;margin-bottom:10px;cursor:pointer;'
+          + 'transition:transform .1s;-webkit-tap-highlight-color:transparent;" '
+          + 'onmousedown="this.style.transform=\'scale(0.98)\'" onmouseup="this.style.transform=\'\'" onmouseleave="this.style.transform=\'\'">'
+          + '<div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">' + ageStr + '</div>'
+          + '<div style="font-size:18px;font-weight:800;">' + UI.esc(r.clientName || 'Unknown') + '</div>'
+          + (r.property ? '<div style="font-size:14px;color:var(--text-light);margin-top:4px;">' + UI.esc(r.property) + '</div>' : '')
+          + '</div>';
       });
     }
-    html += '</tbody></table></div>';
     return html;
   },
 

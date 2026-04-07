@@ -87,26 +87,6 @@ var PDFGen = {
       body += '</div>';
     }
 
-    // Quote Options (Good / Better / Best)
-    if (q.options && q.options.length > 0) {
-      body += '<div style="margin:20px 0;border:2px solid #e5e7eb;border-radius:10px;overflow:hidden;">'
-        + '<div style="background:#f0fdf4;padding:10px 16px;font-weight:700;font-size:14px;border-bottom:2px solid #e5e7eb;">Choose Your Option</div>';
-      var optColors = ['#22c55e', '#2563eb', '#7c3aed'];
-      var optLabels = ['Good', 'Better', 'Best'];
-      q.options.forEach(function(opt, i) {
-        var recommended = i === 1;
-        body += '<div style="padding:14px 16px;border-bottom:1px solid #f0f0f0;' + (recommended ? 'background:#eff6ff;border-left:4px solid #2563eb;' : '') + '">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-          + '<div>'
-          + '<span style="font-size:11px;font-weight:700;color:' + optColors[i] + ';text-transform:uppercase;">' + optLabels[i] + (recommended ? ' ⭐ Recommended' : '') + '</span>'
-          + '<div style="font-size:14px;font-weight:600;margin-top:2px;">' + PDFGen._escapeHtml(opt.name) + '</div>'
-          + '</div>'
-          + '<div style="font-size:18px;font-weight:800;color:#1b5e20;">' + PDFGen._money(opt.price) + '</div>'
-          + '</div></div>';
-      });
-      body += '</div>';
-    }
-
     // Deposit notice
     if (q.depositRequired && q.depositDue > 0) {
       body += '<div class="deposit-notice">'

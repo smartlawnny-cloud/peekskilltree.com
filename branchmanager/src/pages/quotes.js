@@ -379,39 +379,6 @@ var QuotesPage = {
 
       + '</div>';
 
-    // Quote Options (Good / Better / Best)
-    var hasOptions = q.options && q.options.length > 0;
-    html += '<div style="margin:16px 0;background:#f0f9f4;border:2px solid #c8e6c9;border-radius:10px;padding:16px;">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-      + '<h4 style="font-size:14px;">📦 Quote Options (Optional)</h4>'
-      + '<label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-enable-options" onchange="document.getElementById(\'q-options-fields\').style.display=this.checked?\'block\':\'none\'" style="width:16px;height:16px;"' + (hasOptions ? ' checked' : '') + '></label>'
-      + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Let the client choose from up to 3 options. Line items above become the default.</div>'
-      + '<div id="q-options-fields" style="' + (hasOptions ? '' : 'display:none;') + '">';
-
-    // Option 1 (Good)
-    var opt1 = (q.options && q.options[0]) || {};
-    var opt2 = (q.options && q.options[1]) || {};
-    var opt3 = (q.options && q.options[2]) || {};
-    html += '<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;">'
-      + '<div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:6px;">OPTION 1 — Good</div>'
-      + '<input type="text" id="q-opt1-name" placeholder="e.g. Basic trim only" value="' + UI.esc(opt1.name || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-bottom:4px;">'
-      + '<input type="number" id="q-opt1-price" placeholder="Price" value="' + (opt1.price || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
-      + '</div>';
-
-    html += '<div style="background:#fff;border:2px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:8px;">'
-      + '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px;">OPTION 2 — Better ⭐ Recommended</div>'
-      + '<input type="text" id="q-opt2-name" placeholder="e.g. Trim + remove dead wood" value="' + UI.esc(opt2.name || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-bottom:4px;">'
-      + '<input type="number" id="q-opt2-price" placeholder="Price" value="' + (opt2.price || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
-      + '</div>';
-
-    html += '<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;">'
-      + '<div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:6px;">OPTION 3 — Best</div>'
-      + '<input type="text" id="q-opt3-name" placeholder="e.g. Full removal + stump grind + cleanup" value="' + UI.esc(opt3.name || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-bottom:4px;">'
-      + '<input type="number" id="q-opt3-price" placeholder="Price" value="' + (opt3.price || '') + '" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
-      + '</div>';
-
-    html += '</div></div>';
 
     // Total display with tax breakdown (Jobber style)
     var _qSubtotal = 0;
@@ -637,17 +604,7 @@ var QuotesPage = {
       depositAmount: depositAmount,
       depositDue: depositDue,
       expiresAt: expiresAt,
-      options: (function() {
-        var optEnabled = document.getElementById('q-enable-options');
-        if (!optEnabled || !optEnabled.checked) return null;
-        var opts = [];
-        for (var oi = 1; oi <= 3; oi++) {
-          var oName = (document.getElementById('q-opt' + oi + '-name') || {}).value;
-          var oPrice = parseFloat((document.getElementById('q-opt' + oi + '-price') || {}).value) || 0;
-          if (oName && oPrice > 0) opts.push({ name: oName, price: oPrice });
-        }
-        return opts.length > 0 ? opts : null;
-      })(),
+      options: null,
       timeMaterial: (function() {
         var climberHrs = parseFloat((document.getElementById('q-tm-climber-hrs') || {}).value) || 0;
         var groundCount = parseFloat((document.getElementById('q-tm-ground-count') || {}).value) || 0;

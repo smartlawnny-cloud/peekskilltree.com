@@ -562,10 +562,21 @@ var JobsPage = {
       + UI.formField('Notes', 'textarea', 'j-notes', j.notes, { placeholder: 'Job notes, special instructions...' })
       + '</form>';
 
-    UI.showModal(jobId ? 'Edit Job #' + j.jobNumber : 'New Job', html, {
-      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
-        + ' <button class="btn btn-primary" onclick="document.getElementById(\'job-form\').requestSubmit()">Save Job</button>'
-    });
+    // Render as full page (not modal)
+    var pageHtml = '<div style="max-width:680px;margin:0 auto;padding-bottom:80px;">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'jobs\')" style="font-size:13px;">\u2190 Back to Jobs</button>'
+      + '<button class="btn btn-primary" onclick="document.getElementById(\'job-form\').requestSubmit()">Save Job</button>'
+      + '</div>'
+      + '<h2 style="font-size:20px;margin-bottom:16px;">' + (jobId ? 'Edit Job #' + j.jobNumber : 'New Job') + '</h2>'
+      + html
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'jobs\')">Cancel</button>'
+      + '<button class="btn btn-primary" onclick="document.getElementById(\'job-form\').requestSubmit()">Save Job</button>'
+      + '</div></div>';
+
+    var content = document.getElementById('pageContent');
+    if (content) content.innerHTML = pageHtml;
   },
 
   _setArrival: function(btn, arrival) {
@@ -615,7 +626,7 @@ var JobsPage = {
       DB.jobs.create(data);
       UI.toast('Job created');
     }
-    UI.closeModal();
+    if (document.querySelector('.modal-overlay')) UI.closeModal();
     loadPage('jobs');
   },
 

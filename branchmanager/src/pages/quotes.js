@@ -434,12 +434,24 @@ var QuotesPage = {
 
       + '</form>';
 
-    UI.showModal(quoteId ? 'Edit Quote #' + q.quoteNumber : 'New Quote', html, {
-      full: true,
-      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
-        + ' <button class="btn btn-outline" onclick="QuotesPage.saveAs(\'draft\')">Save Draft</button>'
-        + ' <button class="btn btn-primary" onclick="QuotesPage.saveAs(\'sent\')">Save & Send</button>'
-    });
+    // Render as full page (not modal)
+    var pageHtml = '<div style="max-width:680px;margin:0 auto;padding-bottom:80px;">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'quotes\')" style="font-size:13px;">← Back to Quotes</button>'
+      + '<div style="display:flex;gap:8px;">'
+      + '<button class="btn btn-outline" onclick="QuotesPage.saveAs(\'draft\')">Save Draft</button>'
+      + '<button class="btn btn-primary" onclick="QuotesPage.saveAs(\'sent\')">Save & Send</button>'
+      + '</div></div>'
+      + '<h2 style="font-size:20px;margin-bottom:16px;">' + (quoteId ? 'Edit Quote #' + q.quoteNumber : 'New Quote') + '</h2>'
+      + html
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'quotes\')">Cancel</button>'
+      + '<button class="btn btn-outline" onclick="QuotesPage.saveAs(\'draft\')">Save Draft</button>'
+      + '<button class="btn btn-primary" onclick="QuotesPage.saveAs(\'sent\')">Save & Send</button>'
+      + '</div></div>';
+
+    var content = document.getElementById('pageContent');
+    if (content) content.innerHTML = pageHtml;
   },
 
   // Default rates for common services (editable in settings)
@@ -636,7 +648,8 @@ var QuotesPage = {
     // Update client to active
     if (client && client.status === 'lead') DB.clients.update(clientId, { status: 'active' });
 
-    UI.closeModal();
+    // Close modal if one is open (legacy), otherwise just navigate
+    if (document.querySelector('.modal-overlay')) UI.closeModal();
 
     // "Save & Send" → immediately show the email composer
     if (data.status === 'sent' && savedId) {

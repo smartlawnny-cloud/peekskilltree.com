@@ -756,12 +756,24 @@ var InvoicesPage = {
     html += UI.formField('Internal Notes', 'textarea', 'inv-notes', inv.notes || '', { placeholder: 'Notes (not shown to client)' })
       + '</form>';
 
-    UI.showModal(invoiceId ? 'Edit Invoice #' + inv.invoiceNumber : 'New Invoice', html, {
-      wide: true,
-      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
-        + ' <button class="btn btn-outline" onclick="InvoicesPage.saveAs(\'draft\')">Save Draft</button>'
-        + ' <button class="btn btn-primary" onclick="InvoicesPage.saveAs(\'sent\')">Save & Send</button>'
-    });
+    // Render as full page (not modal)
+    var pageHtml = '<div style="max-width:680px;margin:0 auto;padding-bottom:80px;">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'invoices\')" style="font-size:13px;">\u2190 Back to Invoices</button>'
+      + '<div style="display:flex;gap:8px;">'
+      + '<button class="btn btn-outline" onclick="InvoicesPage.saveAs(\'draft\')">Save Draft</button>'
+      + '<button class="btn btn-primary" onclick="InvoicesPage.saveAs(\'sent\')">Save & Send</button>'
+      + '</div></div>'
+      + '<h2 style="font-size:20px;margin-bottom:16px;">' + (invoiceId ? 'Edit Invoice #' + inv.invoiceNumber : 'New Invoice') + '</h2>'
+      + html
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">'
+      + '<button class="btn btn-outline" onclick="loadPage(\'invoices\')">Cancel</button>'
+      + '<button class="btn btn-outline" onclick="InvoicesPage.saveAs(\'draft\')">Save Draft</button>'
+      + '<button class="btn btn-primary" onclick="InvoicesPage.saveAs(\'sent\')">Save & Send</button>'
+      + '</div></div>';
+
+    var content = document.getElementById('pageContent');
+    if (content) content.innerHTML = pageHtml;
   },
 
   _itemRow: function(index, item, services) {
@@ -895,7 +907,7 @@ var InvoicesPage = {
       UI.toast('Invoice created');
     }
 
-    UI.closeModal();
+    if (document.querySelector('.modal-overlay')) UI.closeModal();
     loadPage('invoices');
   }
 };

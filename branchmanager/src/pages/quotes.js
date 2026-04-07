@@ -306,34 +306,34 @@ var QuotesPage = {
       + (_qDesc ? '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">Auto-filled from request</div>' : '')
       + '</div>';
 
-    // ═══ DUAL PRICING SYSTEM ═══
-    // Mode 1: Per Tree/Task (default) — arborist prices each tree on the walk
-    // Mode 2: Time & Material — estimate crew hours + equipment to verify production
-
+    // ═══ STEP 1: Per Tree/Task (photo-first, AI-assisted) ═══
     var tmData = q.timeMaterial || {};
 
     html += '<div style="margin:16px 0;">'
-      // Pricing mode tabs
-      + '<div style="display:flex;border:2px solid var(--border);border-radius:10px 10px 0 0;overflow:hidden;">'
-      + '<button type="button" id="q-tab-pertree" onclick="QuotesPage._showPricingMode(\'pertree\')" style="flex:1;padding:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:var(--green-dark);color:#fff;">Per Tree / Task</button>'
-      + '<button type="button" id="q-tab-tm" onclick="QuotesPage._showPricingMode(\'tm\')" style="flex:1;padding:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:var(--bg);color:var(--text-light);">Time & Material</button>'
-      + '</div>';
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Step 1: Price per tree</div>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Take a photo of each tree → AI identifies species & DBH → you set the price.</p>';
 
-    // ── MODE 1: Per Tree/Task ──
-    html += '<div id="q-mode-pertree" style="border:2px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:16px;">'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Price each tree or task as you walk the property with the client.</p>'
-      + '<div id="q-items">';
+    // Photo-first add button
+    html += '<button type="button" onclick="QuotesPage._addTreePhoto()" style="width:100%;padding:14px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;">'
+      + '<span style="font-size:20px;">📷</span> Add Tree</button>';
+
+    // Line items (with photo thumbnails)
+    html += '<div id="q-items">';
     items.forEach(function(item, i) {
       html += QuotesPage._itemRow(i, item, services);
     });
     html += '</div>'
-      + '<button type="button" class="btn btn-outline" style="margin-top:8px;" onclick="QuotesPage.addItem()">+ Add Line Item</button>'
+      + '<button type="button" class="btn btn-outline" style="margin-top:8px;font-size:12px;" onclick="QuotesPage.addItem()">+ Add without photo</button>'
       + '<div id="q-pertree-total" style="margin-top:12px;text-align:right;font-size:15px;font-weight:700;color:var(--green-dark);"></div>'
       + '</div>';
 
-    // ── MODE 2: Time & Material ──
-    html += '<div id="q-mode-tm" style="display:none;border:2px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:16px;">'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Estimate crew time and equipment to verify the price covers production.</p>'
+    // ═══ STEP 2: Time & Material (verify production) ═══
+    // Hidden until user clicks "Done — verify with T&M"
+    html += '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;">Step 2: Verify with Time & Material →</button>'
+
+      + '<div id="q-mode-tm" style="display:' + (tmData.totalHrs ? 'block' : 'none') + ';border:2px solid var(--accent);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Step 2: Time & Material</div>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Estimate crew + equipment to make sure the quote covers production.</p>'
 
       // Crew
       + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Crew</div>'
@@ -1056,7 +1056,114 @@ var QuotesPage = {
     QuotesPage.showDetail(id);
   },
 
-  // ── Dual Pricing Mode Switching ──
+  // ── Photo-first tree add ──
+  _addTreePhoto: function() {
+    // Use camera or file input
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // rear camera on mobile
+    input.onchange = function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var dataUrl = ev.target.result;
+        // Add a new line item with photo
+        QuotesPage.addItem();
+        var rows = document.querySelectorAll('.quote-item-row');
+        var lastRow = rows[rows.length - 1];
+        if (lastRow) {
+          // Store photo on the row
+          lastRow.dataset.photo = dataUrl;
+          // Add photo thumbnail before the row content
+          var thumb = document.createElement('div');
+          thumb.style.cssText = 'margin-bottom:8px;';
+          thumb.innerHTML = '<img src="' + dataUrl + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">';
+          lastRow.insertBefore(thumb, lastRow.firstChild);
+        }
+
+        // Try AI identification
+        QuotesPage._identifyTree(dataUrl, rows.length - 1);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  },
+
+  _identifyTree: function(imageDataUrl, rowIndex) {
+    // Send to AI for tree identification
+    var aiKey = localStorage.getItem('bm-claude-key');
+    if (!aiKey) {
+      // No AI key — just add the photo, user fills in manually
+      UI.toast('Add AI key in Settings for auto tree ID');
+      return;
+    }
+
+    UI.toast('Identifying tree...');
+
+    // Extract base64 from data URL
+    var base64 = imageDataUrl.split(',')[1];
+    var mediaType = imageDataUrl.split(';')[0].split(':')[1];
+
+    fetch('https://ltpivkqahvplapyagljt.supabase.co/functions/v1/ai-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: aiKey,
+        model: 'claude-sonnet-4-5-20250514',
+        max_tokens: 200,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: 'You are a certified arborist. Identify this tree. Respond in ONLY this JSON format, nothing else: {"species":"Common Name","dbh":"estimated diameter in inches","condition":"good/fair/poor/dead","notes":"1 sentence about the tree","suggestedService":"Tree Removal or Tree Pruning or Stump Grinding"}' }
+          ]
+        }]
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var text = data.content && data.content[0] ? data.content[0].text : '';
+      try {
+        // Parse JSON from response
+        var match = text.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error('No JSON');
+        var tree = JSON.parse(match[0]);
+
+        // Fill in the line item
+        var rows = document.querySelectorAll('.quote-item-row');
+        var row = rows[rowIndex];
+        if (row) {
+          var serviceEl = row.querySelector('.q-item-service');
+          var descEl = row.querySelector('.q-item-desc');
+          var rateEl = row.querySelector('.q-item-rate');
+          var qtyEl = row.querySelector('.q-item-qty');
+
+          if (serviceEl) serviceEl.value = tree.suggestedService || 'Tree Removal';
+          if (descEl) descEl.value = tree.species + ' — ' + (tree.dbh || '?') + '" DBH — ' + (tree.condition || '') + (tree.notes ? ' — ' + tree.notes : '');
+          if (qtyEl) qtyEl.value = '1';
+
+          // Price suggestion: $100 per inch of DBH
+          var dbh = parseInt(tree.dbh) || 18;
+          var suggestedPrice = Math.round(dbh * 100 / 50) * 50; // round to nearest $50
+          if (rateEl) rateEl.value = suggestedPrice;
+
+          QuotesPage.calcTotal();
+          UI.toast('🌳 ' + tree.species + ' — ' + tree.dbh + '" DBH — $' + suggestedPrice + ' suggested');
+        }
+      } catch(e) {
+        console.warn('Tree ID parse error:', e, text);
+        UI.toast('Could not identify — fill in manually');
+      }
+    })
+    .catch(function(e) {
+      console.warn('Tree ID error:', e);
+      UI.toast('AI unavailable — fill in manually');
+    });
+  },
+
+  // ── Dual Pricing (removed tabs — now sequential) ──
   _showPricingMode: function(mode) {
     var pertree = document.getElementById('q-mode-pertree');
     var tm = document.getElementById('q-mode-tm');

@@ -175,6 +175,7 @@ var CrewView = {
   clockIn: function() {
     localStorage.setItem('bm-clock-in', new Date().toISOString());
     UI.toast('Clocked in! ⏱');
+    CrewView._startGPSTracker();
     loadPage('crewview');
   },
 
@@ -197,6 +198,7 @@ var CrewView = {
       });
 
       UI.toast('Clocked out! ' + hrs + ' hours logged');
+      CrewView._stopGPSTracker();
 
       // Prompt for expenses
       CrewView._showExpensePrompt(hrs);
@@ -304,5 +306,135 @@ var CrewView = {
     UI.closeModal();
     UI.toast('Job completed! ✅');
     loadPage('crewview');
+  },
+
+  // ═══ GPS LIVE TRACKING ═══
+  _gpsInterval: null,
+  _gpsWatchId: null,
+  _lastLat: null,
+  _lastLng: null,
+
+  _startGPSTracker: function() {
+    if (CrewView._gpsInterval) return; // already running
+    if (!navigator.geolocation) return;
+
+    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name : 'Crew';
+    var userId = (typeof Auth !== 'undefined' && Auth.user) ? (Auth.user.id || Auth.user.email || userName) : userName;
+
+    // Watch position for accuracy
+    CrewView._gpsWatchId = navigator.geolocation.watchPosition(
+      function(pos) {
+        CrewView._lastLat = pos.coords.latitude;
+        CrewView._lastLng = pos.coords.longitude;
+        CrewView._lastAccuracy = pos.coords.accuracy;
+        CrewView._lastHeading = pos.coords.heading;
+        CrewView._lastSpeed = pos.coords.speed;
+      },
+      function() {},
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
+    );
+
+    // Ping Supabase every 60 seconds
+    CrewView._gpsInterval = setInterval(function() {
+      CrewView._sendGPSPing(userId, userName);
+    }, 60000);
+
+    // Send first ping immediately
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      CrewView._lastLat = pos.coords.latitude;
+      CrewView._lastLng = pos.coords.longitude;
+      CrewView._lastAccuracy = pos.coords.accuracy;
+      CrewView._sendGPSPing(userId, userName);
+    }, function() {}, { enableHighAccuracy: true, timeout: 10000 });
+  },
+
+  _stopGPSTracker: function() {
+    if (CrewView._gpsInterval) {
+      clearInterval(CrewView._gpsInterval);
+      CrewView._gpsInterval = null;
+    }
+    if (CrewView._gpsWatchId !== null) {
+      navigator.geolocation.clearWatch(CrewView._gpsWatchId);
+      CrewView._gpsWatchId = null;
+    }
+    // Mark offline in Supabase
+    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name : 'Crew';
+    var userId = (typeof Auth !== 'undefined' && Auth.user) ? (Auth.user.id || Auth.user.email || userName) : userName;
+    CrewView._sendGPSPing(userId, userName, 'offline');
+  },
+
+  _sendGPSPing: function(userId, userName, overrideStatus) {
+    if (!CrewView._lastLat || !CrewView._lastLng) return;
+    if (!SupabaseDB.client) return;
+
+    // Determine status based on proximity to today's jobs
+    var status = overrideStatus || 'active';
+    if (!overrideStatus) {
+      var todayStr = new Date().toISOString().split('T')[0];
+      var jobs = DB.jobs.getAll().filter(function(j) {
+        return j.scheduledDate && j.scheduledDate.split('T')[0] === todayStr && j.status !== 'completed';
+      });
+      var currentJobId = null;
+      var currentJobName = null;
+      jobs.forEach(function(j) {
+        var jCoords = null;
+        if (j.lat && j.lng) jCoords = [j.lat, j.lng];
+        else if (typeof DispatchPage !== 'undefined') jCoords = DispatchPage._getJobCoords(j);
+        if (jCoords) {
+          var dist = CrewView._gpsDist(CrewView._lastLat, CrewView._lastLng, jCoords[0], jCoords[1]);
+          if (dist <= 200) {
+            status = 'on_site';
+            currentJobId = j.id;
+            currentJobName = j.clientName;
+            // Auto-mark job en route / in progress
+            if (j.status === 'scheduled') {
+              DB.jobs.update(j.id, { status: 'in_progress', startedAt: new Date().toISOString() });
+            }
+          } else if (dist <= 1500 && status !== 'on_site') {
+            status = 'en_route';
+            currentJobId = j.id;
+            currentJobName = j.clientName;
+          }
+        }
+      });
+    }
+
+    // Upsert to crew_locations
+    SupabaseDB.client.from('crew_locations').upsert({
+      user_id: userId,
+      user_name: userName,
+      role: (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.role : 'crew_member',
+      lat: CrewView._lastLat,
+      lng: CrewView._lastLng,
+      accuracy: CrewView._lastAccuracy || null,
+      heading: CrewView._lastHeading || null,
+      speed: CrewView._lastSpeed || null,
+      status: status,
+      current_job_id: currentJobId || null,
+      current_job_name: currentJobName || null,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' }).then(function() {
+      if (SupabaseDB._debug) console.log('GPS ping sent:', status);
+    }).catch(function(e) {
+      if (SupabaseDB._debug) console.warn('GPS ping failed:', e);
+    });
+  },
+
+  // Haversine distance in meters
+  _gpsDist: function(lat1, lng1, lat2, lng2) {
+    var R = 6371000;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLon = (lng2 - lng1) * Math.PI / 180;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+      + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
+      * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  },
+
+  // Resume tracker if page loads while clocked in
+  _resumeGPS: function() {
+    if (localStorage.getItem('bm-clock-in') && !CrewView._gpsInterval) {
+      CrewView._startGPSTracker();
+    }
   }
 };

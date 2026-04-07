@@ -220,6 +220,13 @@ var DispatchPage = {
         + '</div></div>';
     }
 
+    // ═══ LIVE MAP — Crew/Truck Locations + Job Pins ═══
+    html += '<div id="dispatch-map-wrap" style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;position:relative;">'
+      + '<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">'
+      + '<span style="font-weight:700;font-size:14px;">📍 Live Map</span>'
+      + '<span id="dispatch-map-status" style="font-size:11px;color:var(--text-light);">Loading...</span></div>'
+      + '<div id="dispatch-map" style="height:300px;width:100%;"></div></div>';
+
     // Weather at top
     if (typeof Weather !== 'undefined') {
       html += Weather.renderWidget();
@@ -346,5 +353,155 @@ var DispatchPage = {
     DB.jobs.update(jobId, { status: 'completed', completedAt: new Date().toISOString() });
     UI.toast('Job completed!');
     loadPage('dispatch');
+  },
+
+  // ═══ LIVE MAP ═══
+  _map: null,
+  _crewMarkers: {},
+  _jobMarkers: [],
+  _refreshTimer: null,
+
+  initMap: function() {
+    var mapEl = document.getElementById('dispatch-map');
+    if (!mapEl || typeof maplibregl === 'undefined') {
+      var status = document.getElementById('dispatch-map-status');
+      if (status) status.textContent = 'Map unavailable';
+      return;
+    }
+
+    DispatchPage._map = new maplibregl.Map({
+      container: 'dispatch-map',
+      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      center: [-73.9212, 41.2901], // Peekskill
+      zoom: 11
+    });
+
+    DispatchPage._map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+    DispatchPage._map.on('load', function() {
+      // Add HQ marker
+      new maplibregl.Marker({ color: '#1a3c12' })
+        .setLngLat([-73.9210, 41.2847])
+        .setPopup(new maplibregl.Popup().setHTML('<strong>🏠 HQ</strong><br>1 Highland Industrial Park'))
+        .addTo(DispatchPage._map);
+
+      // Add today's job pins
+      DispatchPage._addJobPins();
+
+      // Load crew locations
+      DispatchPage._loadCrewLocations();
+
+      // Refresh crew locations every 30 seconds
+      DispatchPage._refreshTimer = setInterval(function() {
+        DispatchPage._loadCrewLocations();
+      }, 30000);
+    });
+  },
+
+  _addJobPins: function() {
+    var today = new Date().toISOString().split('T')[0];
+    var jobs = DB.jobs.getAll().filter(function(j) {
+      return j.scheduledDate && j.scheduledDate.split('T')[0] === today;
+    });
+
+    var bounds = new maplibregl.LngLatBounds();
+    bounds.extend([-73.9210, 41.2847]); // HQ
+
+    jobs.forEach(function(j, i) {
+      var coords = DispatchPage._getJobCoords(j);
+      if (!coords) return;
+
+      var color = j.status === 'completed' ? '#2e7d32' : j.status === 'in_progress' ? '#e07c24' : '#1565c0';
+      var marker = new maplibregl.Marker({ color: color, scale: 0.8 })
+        .setLngLat([coords[1], coords[0]])
+        .setPopup(new maplibregl.Popup().setHTML(
+          '<strong>' + (i + 1) + '. ' + (j.clientName || 'Job') + '</strong>'
+          + '<br><span style="font-size:12px;">' + (j.property || '') + '</span>'
+          + '<br><span style="font-size:12px;color:' + color + ';">' + (j.status || 'scheduled') + '</span>'
+        ))
+        .addTo(DispatchPage._map);
+
+      DispatchPage._jobMarkers.push(marker);
+      bounds.extend([coords[1], coords[0]]);
+    });
+
+    if (jobs.length) {
+      DispatchPage._map.fitBounds(bounds, { padding: 50, maxZoom: 14 });
+    }
+  },
+
+  _loadCrewLocations: function() {
+    if (!SupabaseDB.client) {
+      var status = document.getElementById('dispatch-map-status');
+      if (status) status.textContent = 'Supabase not connected';
+      return;
+    }
+
+    SupabaseDB.client.from('crew_locations')
+      .select('*')
+      .gte('updated_at', new Date(Date.now() - 3600000).toISOString()) // last hour only
+      .then(function(res) {
+        if (res.error) return;
+        var locations = res.data || [];
+
+        var status = document.getElementById('dispatch-map-status');
+        if (status) {
+          var active = locations.filter(function(l) { return l.status !== 'offline'; });
+          status.textContent = active.length + ' crew active · Updated ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        }
+
+        // Update/create markers
+        locations.forEach(function(loc) {
+          if (!loc.lat || !loc.lng) return;
+          var existing = DispatchPage._crewMarkers[loc.user_id];
+
+          var statusEmoji = loc.status === 'on_site' ? '🌳' : loc.status === 'en_route' ? '🚛' : loc.status === 'offline' ? '⚫' : '🟢';
+          var popupHtml = '<strong>' + statusEmoji + ' ' + (loc.user_name || 'Crew') + '</strong>'
+            + '<br><span style="font-size:12px;">' + (loc.status || 'active') + '</span>'
+            + (loc.current_job_name ? '<br><span style="font-size:12px;">@ ' + loc.current_job_name + '</span>' : '')
+            + '<br><span style="font-size:11px;color:#888;">Updated ' + new Date(loc.updated_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + '</span>';
+
+          if (existing) {
+            existing.setLngLat([loc.lng, loc.lat]);
+            existing.getPopup().setHTML(popupHtml);
+          } else {
+            // Create crew marker — orange circle with truck icon
+            var el = document.createElement('div');
+            el.style.cssText = 'width:36px;height:36px;background:#e65100;border:3px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;';
+            el.textContent = '🚛';
+            if (loc.status === 'offline') { el.style.background = '#999'; el.style.opacity = '0.5'; }
+
+            var marker = new maplibregl.Marker({ element: el })
+              .setLngLat([loc.lng, loc.lat])
+              .setPopup(new maplibregl.Popup().setHTML(popupHtml))
+              .addTo(DispatchPage._map);
+
+            DispatchPage._crewMarkers[loc.user_id] = marker;
+          }
+        });
+
+        // Fit bounds to include crew
+        if (locations.length && DispatchPage._map) {
+          var bounds = DispatchPage._map.getBounds();
+          locations.forEach(function(loc) {
+            if (loc.lat && loc.lng && loc.status !== 'offline') {
+              bounds.extend([loc.lng, loc.lat]);
+            }
+          });
+        }
+      }).catch(function() {});
+  },
+
+  destroyMap: function() {
+    if (DispatchPage._refreshTimer) {
+      clearInterval(DispatchPage._refreshTimer);
+      DispatchPage._refreshTimer = null;
+    }
+    if (DispatchPage._map) {
+      DispatchPage._map.remove();
+      DispatchPage._map = null;
+    }
+    DispatchPage._crewMarkers = {};
+    DispatchPage._jobMarkers = [];
   }
 };

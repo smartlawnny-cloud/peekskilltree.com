@@ -13,6 +13,8 @@
 <link rel="preconnect" href="https://ltpivkqahvplapyagljt.supabase.co">
 <link rel="dns-prefetch" href="https://ltpivkqahvplapyagljt.supabase.co">
 <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js" defer></script>
+<script src="https://unpkg.com/maplibre-gl@4.1.1/dist/maplibre-gl.js" defer></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.1/dist/maplibre-gl.css">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
@@ -1074,6 +1076,18 @@ function loadPage(page) {
     content.innerHTML = renderer();
   } else {
     content.innerHTML = '<div class="empty-state"><div class="empty-icon" style="font-size:32px;color:var(--text-light);">—</div><h3>Page Not Available</h3><p>' + config.title + ' is not configured yet.</p></div>';
+  }
+
+  // Post-render hooks
+  if (page === 'dispatch' && typeof DispatchPage !== 'undefined' && DispatchPage.initMap) {
+    setTimeout(function() { DispatchPage.initMap(); }, 200);
+  }
+  if (page === 'crewview' && typeof CrewView !== 'undefined' && CrewView._resumeGPS) {
+    CrewView._resumeGPS();
+  }
+  // Clean up dispatch map when leaving
+  if (page !== 'dispatch' && typeof DispatchPage !== 'undefined' && DispatchPage._map) {
+    DispatchPage.destroyMap();
   }
 }
 

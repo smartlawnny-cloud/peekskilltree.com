@@ -332,8 +332,11 @@ var QuotesPage = {
     html += '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;">Step 2: Verify with Time & Material →</button>'
 
       + '<div id="q-mode-tm" style="display:' + (tmData.totalHrs ? 'block' : 'none') + ';border:2px solid var(--accent);border-radius:10px;padding:16px;margin-bottom:12px;">'
-      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Step 2: Time & Material</div>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Estimate crew + equipment to make sure the quote covers production.</p>'
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Step 2: Production Estimate</div>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Map the job site, estimate crew + equipment to verify pricing.</p>'
+
+      // Property Map (part of Step 2)
+      + '<div style="margin-bottom:16px;"><button type="button" class="btn btn-outline" style="width:100%;" onclick="PropertyMap.show(document.getElementById(\'q-property\').value)">🗺️ Open Property Map — Place Equipment</button></div>'
 
       // Crew
       + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Crew</div>'
@@ -434,8 +437,7 @@ var QuotesPage = {
       + '</div>'
       + '</div>';
 
-    // Property Map button
-    html += '<div style="margin-top:16px;"><button type="button" class="btn btn-outline" onclick="PropertyMap.show(document.getElementById(\'q-property\').value)">🗺️ Open Property Map — Place Equipment</button></div>';
+    // Property Map moved to Step 2
 
     html += UI.formField('Internal Notes', 'textarea', 'q-notes', q.notes, { placeholder: 'Notes (not shown to client)' });
 

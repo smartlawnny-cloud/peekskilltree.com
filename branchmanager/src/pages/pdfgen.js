@@ -130,18 +130,24 @@ var PDFGen = {
         + '</div>';
     }
 
-    // Terms & conditions
+    // Terms & conditions (comprehensive tree service terms)
     body += '<div class="terms-section">'
       + '<h4>Terms &amp; Conditions</h4>'
       + '<ul>'
-      + '<li>This quote is valid for 30 days from the date above.</li>'
-      + '<li>Payment is due upon completion unless otherwise arranged.</li>'
-      + '<li>All work performed by licensed and insured professionals.</li>'
-      + '<li>Client is responsible for ensuring site access and identifying underground utilities.</li>'
-      + '<li>Cleanup of debris is included. Stump grinding quoted separately if applicable.</li>'
-      + '<li>Additional work beyond this scope will be quoted separately.</li>'
-      + '<li>' + PDFGen.COMPANY.name + ' is not responsible for pre-existing conditions, including but not limited to dead limbs, disease, or structural defects not visible at time of estimate.</li>'
+      + '<li><strong>Validity:</strong> This quote is valid for 30 days from the date above. Pricing may change after expiration.</li>'
+      + '<li><strong>Payment:</strong> A 50% deposit is required to schedule work unless otherwise noted. Remaining balance is due upon completion. Invoices unpaid after 30 days are subject to a 1.5% monthly late fee.</li>'
+      + '<li><strong>Scheduling:</strong> Work will be scheduled within 2-4 weeks of deposit receipt, weather permitting. ' + PDFGen.COMPANY.name + ' will provide 24-48 hours advance notice.</li>'
+      + '<li><strong>Access:</strong> Client will provide clear access to the work area for trucks and equipment. Client will move vehicles, outdoor furniture, and fragile items from the work zone. If access is blocked on the scheduled date, a trip charge may apply.</li>'
+      + '<li><strong>Scope:</strong> This quote covers only the work described above. Additional work will be quoted separately and requires written approval before proceeding.</li>'
+      + '<li><strong>Cleanup:</strong> All debris from the contracted work will be removed. Wood may be left on-site if requested.</li>'
+      + '<li><strong>Stump Grinding:</strong> If included, stumps are ground 6-8 inches below grade. Grindings fill the hole unless removal is specified. Contractor is not responsible for underground utilities, irrigation, or septic unless disclosed in advance.</li>'
+      + '<li><strong>Insurance:</strong> ' + PDFGen.COMPANY.name + ' carries General Liability and Workers\' Compensation insurance. Certificates available upon request.</li>'
+      + '<li><strong>Liability:</strong> ' + PDFGen.COMPANY.name + ' is not responsible for pre-existing conditions (dead limbs, disease, structural defects not visible at time of estimate), underground utilities not disclosed by client, or damage caused by weather events. Total liability shall not exceed the contract amount.</li>'
+      + '<li><strong>Permits:</strong> Client is responsible for obtaining any required tree removal permits. Contractor can assist with permit applications if needed.</li>'
+      + '<li><strong>Cancellation:</strong> Cancel with 48 hours notice for full deposit refund. Cancellations within 48 hours: deposit is forfeited. If work has begun, client owes for work completed to date.</li>'
+      + '<li><strong>Warranty:</strong> Workmanship warranted for 30 days. Does not cover natural events (storms, disease, pest damage).</li>'
       + '</ul>'
+      + '<p style="font-size:10px;color:#666;margin-top:8px;">' + PDFGen.COMPANY.name + ' · ' + PDFGen.COMPANY.address + ' · ' + PDFGen.COMPANY.phone + ' · Licensed &amp; Fully Insured · ' + PDFGen.COMPANY.licenses + '</p>'
       + '</div>';
 
     // Signature block

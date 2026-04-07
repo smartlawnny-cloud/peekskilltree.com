@@ -464,8 +464,8 @@ var QuotesPage = {
 
       // Expiry
       + '<div style="margin-bottom:16px;">'
-      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Quote Valid Until</label>'
-      + '<input type="date" id="q-expires" value="' + (q.expiresAt ? q.expiresAt.substring(0,10) : new Date(Date.now() + 30*86400000).toISOString().substring(0,10)) + '" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '<input type="hidden" id="q-expires" value="' + (q.expiresAt ? q.expiresAt.substring(0,10) : new Date(Date.now() + 30*86400000).toISOString().substring(0,10)) + '">'
+      + '<div style="font-size:11px;color:var(--text-light);">Quote valid for 30 days.</div>'
       + '</div>'
       + '</form>';
 

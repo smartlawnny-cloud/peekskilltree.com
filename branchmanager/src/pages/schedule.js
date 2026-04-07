@@ -14,66 +14,19 @@ var SchedulePage = {
     var allJobs = DB.jobs.getAll();
     var todayJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === today; });
 
-    // Jobber-style Today's agenda card (always visible at top)
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;">'
-      + '<div style="background:var(--green-dark);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">'
-      + '<div><div style="font-size:12px;opacity:.8;">TODAY</div>'
-      + '<div style="font-size:18px;font-weight:700;">' + self._formatDate(new Date(), 'full') + '</div></div>'
-      + '<div style="text-align:right;"><div style="font-size:28px;font-weight:800;">' + todayJobs.length + '</div>'
-      + '<div style="font-size:11px;opacity:.8;">visit' + (todayJobs.length !== 1 ? 's' : '') + '</div></div>'
-      + '</div>';
+    // Today summary (compact — just count, no big card)
 
-    if (todayJobs.length > 0) {
-      var todayRevenue = todayJobs.reduce(function(s,j){ return s + (j.total||0); }, 0);
-      var completed = todayJobs.filter(function(j){ return j.status === 'completed'; }).length;
 
-      // Progress bar
-      var pct = todayJobs.length > 0 ? Math.round(completed / todayJobs.length * 100) : 0;
-      html += '<div style="padding:12px 20px;border-bottom:1px solid var(--border);">'
-        + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-bottom:6px;">'
-        + '<span>' + completed + ' of ' + todayJobs.length + ' complete</span>'
-        + '<span style="font-weight:700;color:var(--green-dark);">' + UI.moneyInt(todayRevenue) + '</span></div>'
-        + '<div style="background:#e8e8e8;border-radius:6px;height:6px;overflow:hidden;">'
-        + '<div style="background:var(--green-dark);height:100%;width:' + pct + '%;border-radius:6px;transition:width .3s;"></div>'
-        + '</div></div>';
-
-      // Job list
-      todayJobs.forEach(function(j, idx) {
-        var statusIcon = j.status === 'completed' ? '✅' : j.status === 'in_progress' ? '🔧' : j.status === 'late' ? '⚠️' : '📋';
-        var statusColor = j.status === 'completed' ? '#2e7d32' : j.status === 'in_progress' ? '#e07c24' : j.status === 'late' ? '#dc3545' : '#1565c0';
-        var borderStyle = idx < todayJobs.length - 1 ? 'border-bottom:1px solid var(--border);' : '';
-
-        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="padding:14px 20px;cursor:pointer;' + borderStyle + 'display:flex;align-items:center;gap:14px;transition:background .15s;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'transparent\'">'
-          + '<div style="font-size:20px;">' + statusIcon + '</div>'
-          + '<div style="flex:1;min-width:0;">'
-          + '<div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.clientName || '') + '</div>'
-          + '<div style="font-size:12px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '#' + j.jobNumber) + '</div>'
-          + (j.property ? '<div style="font-size:11px;margin-top:2px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" style="color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(j.property) + ' →</a></div>' : '')
-          + '</div>'
-          + '<div style="text-align:right;flex-shrink:0;margin-right:8px;">'
-          + '<div style="font-weight:700;color:var(--green-dark);font-size:14px;">' + UI.moneyInt(j.total) + '</div>'
-          + (j.startTime ? '<div style="font-size:11px;color:var(--text-light);">' + self._formatTime(j.startTime) + '</div>' : '')
-          + '</div>'
-          + (j.status !== 'completed'
-            ? '<div onclick="event.stopPropagation();DB.jobs.update(\'' + j.id + '\',{status:\'completed\',completedAt:new Date().toISOString()});UI.toast(\'Job marked complete\');loadPage(\'schedule\');" '
-              + 'title="Mark complete" '
-              + 'style="width:32px;height:32px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;color:#ccc;flex-shrink:0;cursor:pointer;" '
-              + 'onmouseover="this.style.borderColor=\'#2e7d32\';this.style.color=\'#2e7d32\'" onmouseout="this.style.borderColor=\'#ccc\';this.style.color=\'#ccc\'">✓</div>'
-            : '<div style="width:32px;height:32px;border-radius:50%;background:#2e7d32;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;font-size:14px;">✓</div>')
-          + '</div>';
-      });
-    } else {
-      html += '<div style="padding:24px 20px;text-align:center;color:var(--text-light);">'
-        + '<div style="font-size:32px;margin-bottom:8px;">🌳</div>'
-        + '<div style="font-size:14px;">No visits scheduled for today</div>'
-        + '<button class="btn btn-primary" style="margin-top:12px;" onclick="JobsPage.showForm()">+ Schedule a Job</button>'
-        + '</div>';
-    }
-    html += '</div>';
-
-    // Weather
+    // Weather toggle (compact — inline weather shows on calendar headers)
     if (typeof Weather !== 'undefined') {
-      html += Weather.renderWidget();
+      var wEnabled = Weather.isEnabled();
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
+        + '<span style="font-size:13px;color:var(--text-light);">🌤 Weather</span>'
+        + '<button onclick="Weather.toggle()" style="position:relative;width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;background:' + (wEnabled ? 'var(--accent)' : '#ccc') + ';transition:background .2s;">'
+        + '<span style="position:absolute;top:2px;' + (wEnabled ? 'left:18px' : 'left:2px') + ';width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span></button>'
+        + '</div>';
+      // Pre-fetch weather data for inline display
+      if (wEnabled) setTimeout(function() { Weather.fetch(); }, 100);
     }
 
     // Calendar controls
@@ -364,7 +317,9 @@ var SchedulePage = {
       var dateStr = dd.toISOString().split('T')[0];
       var isToday = dateStr === today;
       html += '<div style="background:' + (isToday ? 'var(--green-dark)' : 'var(--bg)') + ';color:' + (isToday ? '#fff' : 'var(--text)') + ';padding:8px;text-align:center;font-size:12px;font-weight:700;">'
-        + days[i] + '<br><span style="font-size:18px;font-weight:800;">' + dd.getDate() + '</span></div>';
+        + days[i] + '<br><span style="font-size:18px;font-weight:800;">' + dd.getDate() + '</span>'
+        + (typeof Weather !== 'undefined' ? Weather.getInline(dateStr) : '')
+        + '</div>';
     }
 
     // Cells

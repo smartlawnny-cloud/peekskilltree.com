@@ -127,6 +127,21 @@ var Weather = {
     el.innerHTML = html;
   },
 
+  // Get compact inline HTML for a specific date (for calendar headers)
+  // Returns "☀️ 55°" or "" if no data
+  getInline: function(dateStr) {
+    if (!Weather.isEnabled() || !Weather.cache || !Weather.cache.daily) return '';
+    var days = Weather.cache.daily;
+    for (var i = 0; i < days.time.length; i++) {
+      if (days.time[i] === dateStr) {
+        var hi = Math.round(days.temperature_2m_max[i]);
+        var icon = Weather._icon(days.weathercode[i]);
+        return '<span style="font-size:12px;" title="' + hi + '°F">' + icon + hi + '°</span>';
+      }
+    }
+    return '';
+  },
+
   _icon: function(code) {
     if (code === 0) return '☀️';
     if (code <= 3) return '⛅';

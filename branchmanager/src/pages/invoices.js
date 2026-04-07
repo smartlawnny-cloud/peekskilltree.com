@@ -515,7 +515,7 @@ var InvoicesPage = {
     var client = inv.clientId ? DB.clients.getById(inv.clientId) : null;
     var clientPhone = inv.clientPhone || (client ? client.phone : '');
     var clientEmail = inv.clientEmail || (client ? client.email : '');
-    var clientAddr = client ? client.address : '';
+    var clientAddr = inv.property || (client ? client.address : '');
 
     var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">'
       // Colored status bar
@@ -716,6 +716,7 @@ var InvoicesPage = {
       html += UI.formField('Client *', 'select', 'inv-clientId', '', { options: [{ value: '', label: 'Select a client...' }].concat(clientOptions) });
     }
 
+    html += UI.formField('Property Address', 'text', 'inv-property', inv.property || (inv.clientId && DB.clients.getById(inv.clientId) ? DB.clients.getById(inv.clientId).address : ''), { placeholder: 'Property address' });
     html += UI.formField('Subject', 'text', 'inv-subject', inv.subject || 'For Services Rendered', { placeholder: 'Invoice subject' });
 
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
@@ -863,11 +864,14 @@ var InvoicesPage = {
     var form = document.getElementById('inv-form');
     var status = (form && form.dataset.saveStatus) ? form.dataset.saveStatus : 'draft';
 
+    // Preserve jobId/quoteId/property from existing invoice (don't lose on edit)
+    var existingInv = invoiceId ? DB.invoices.getById(invoiceId) : {};
     var data = {
       clientId: clientId,
       clientName: client ? client.name : '',
       clientPhone: client ? client.phone : '',
       clientEmail: client ? client.email : '',
+      property: (document.getElementById('inv-property') || {}).value || existingInv.property || (client ? client.address : '') || '',
       subject: document.getElementById('inv-subject').value.trim(),
       issuedDate: document.getElementById('inv-issueDate').value,
       dueDate: document.getElementById('inv-dueDate').value,
@@ -878,6 +882,8 @@ var InvoicesPage = {
       total: total,
       balance: total,
       notes: document.getElementById('inv-notes').value.trim(),
+      jobId: existingInv.jobId || null,
+      quoteId: existingInv.quoteId || null,
       status: status
     };
 

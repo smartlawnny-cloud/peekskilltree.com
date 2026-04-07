@@ -998,7 +998,7 @@ var QuotesPage = {
     // Auto-convert approved quotes to jobs (Jobber-style pipeline)
     if (status === 'approved') {
       var q = DB.quotes.getById(id);
-      if (q && !q.jobId) {
+      if (q && !q.convertedJobId) {
         UI.confirm('Quote approved! Create a job from this quote?', function() {
           if (typeof Workflow !== 'undefined') {
             var job = Workflow.quoteToJob(id);

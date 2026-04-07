@@ -62,6 +62,74 @@ var SettingsPage = {
       + '</div>'
       + '</div></div>';
 
+    // ── Work Settings ──
+    var ws = {
+      defaultStart: localStorage.getItem('bm-work-start') || '07:00',
+      defaultEnd: localStorage.getItem('bm-work-end') || '15:30',
+      overtimeThreshold: localStorage.getItem('bm-ot-threshold') || '40',
+      payPeriod: localStorage.getItem('bm-pay-period') || 'biweekly',
+      arrivalWindows: localStorage.getItem('bm-arrival-windows') || 'morning,afternoon,all-day',
+      minJobDuration: localStorage.getItem('bm-min-job-hrs') || '2',
+      crewSeeClientInfo: localStorage.getItem('bm-crew-see-client') !== 'false'
+    };
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;">Work Settings</h3>'
+      + '<button onclick="SettingsPage._saveWorkSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Default Start Time</label>'
+      + '<input type="time" id="ws-start" value="' + ws.defaultStart + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Default End Time</label>'
+      + '<input type="time" id="ws-end" value="' + ws.defaultEnd + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Overtime After (hrs/week)</label>'
+      + '<input type="number" id="ws-ot" value="' + ws.overtimeThreshold + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Pay Period</label>'
+      + '<select id="ws-pay" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
+      + '<option value="weekly"' + (ws.payPeriod === 'weekly' ? ' selected' : '') + '>Weekly</option>'
+      + '<option value="biweekly"' + (ws.payPeriod === 'biweekly' ? ' selected' : '') + '>Bi-weekly</option>'
+      + '<option value="semimonthly"' + (ws.payPeriod === 'semimonthly' ? ' selected' : '') + '>Semi-monthly</option>'
+      + '<option value="monthly"' + (ws.payPeriod === 'monthly' ? ' selected' : '') + '>Monthly</option>'
+      + '</select></div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Min Job Duration (hrs)</label>'
+      + '<input type="number" id="ws-min-job" value="' + ws.minJobDuration + '" step="0.5" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;padding-top:20px;">'
+      + '<input type="checkbox" id="ws-crew-client" style="width:18px;height:18px;"' + (ws.crewSeeClientInfo ? ' checked' : '') + '>'
+      + '<label style="font-size:13px;">Crew can see client phone/email</label>'
+      + '</div>'
+      + '</div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Business Hours (shown to clients)</label>'
+      + '<div style="font-size:13px;color:var(--text);">Mon–Fri ' + ws.defaultStart + ' – ' + ws.defaultEnd + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Displayed on booking form and client communications</div>'
+      + '</div>'
+      + '</div>';
+
+    // ── Location Services ──
+    var locTrack = localStorage.getItem('bm-gps-tracking') !== 'false';
+    var locWorkOnly = localStorage.getItem('bm-gps-work-only') !== 'false';
+    var locGeofence = localStorage.getItem('bm-geofence') === 'true';
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;">Location Services</h3>'
+      + '<button onclick="SettingsPage._saveLocationSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:12px;">'
+      + '<label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">'
+      + '<input type="checkbox" id="loc-tracking" style="width:18px;height:18px;"' + (locTrack ? ' checked' : '') + '>'
+      + '<div><strong>GPS Tracking</strong><div style="font-size:12px;color:var(--text-light);">Track crew locations on the dispatch map</div></div></label>'
+      + '<label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">'
+      + '<input type="checkbox" id="loc-work-only" style="width:18px;height:18px;"' + (locWorkOnly ? ' checked' : '') + '>'
+      + '<div><strong>Work Hours Only</strong><div style="font-size:12px;color:var(--text-light);">Only track during scheduled work hours (privacy)</div></div></label>'
+      + '<label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">'
+      + '<input type="checkbox" id="loc-geofence" style="width:18px;height:18px;"' + (locGeofence ? ' checked' : '') + '>'
+      + '<div><strong>Geofence Auto Clock-In</strong><div style="font-size:12px;color:var(--text-light);">Automatically clock crew in when they arrive at a job site</div></div></label>'
+      + '</div>'
+      + '</div>';
+
     // Products & Services Catalog
     var allServices = DB.services.getAll();
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
@@ -743,5 +811,22 @@ var SettingsPage = {
     localStorage.setItem('bm-auth-hashes', JSON.stringify(hashes));
     UI.closeModal();
     UI.toast('Password updated!');
+  },
+
+  _saveWorkSettings: function() {
+    localStorage.setItem('bm-work-start', document.getElementById('ws-start').value);
+    localStorage.setItem('bm-work-end', document.getElementById('ws-end').value);
+    localStorage.setItem('bm-ot-threshold', document.getElementById('ws-ot').value);
+    localStorage.setItem('bm-pay-period', document.getElementById('ws-pay').value);
+    localStorage.setItem('bm-min-job-hrs', document.getElementById('ws-min-job').value);
+    localStorage.setItem('bm-crew-see-client', document.getElementById('ws-crew-client').checked ? 'true' : 'false');
+    UI.toast('Work settings saved');
+  },
+
+  _saveLocationSettings: function() {
+    localStorage.setItem('bm-gps-tracking', document.getElementById('loc-tracking').checked ? 'true' : 'false');
+    localStorage.setItem('bm-gps-work-only', document.getElementById('loc-work-only').checked ? 'true' : 'false');
+    localStorage.setItem('bm-geofence', document.getElementById('loc-geofence').checked ? 'true' : 'false');
+    UI.toast('Location settings saved');
   }
 };

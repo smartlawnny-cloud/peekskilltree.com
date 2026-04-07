@@ -431,6 +431,116 @@ var QuotesPage = {
 
     var content = document.getElementById('pageContent');
     if (content) content.innerHTML = pageHtml;
+
+    // ── AUTO-SAVE FAILSAFE ──
+    // Save form state every 15 seconds + on every input change
+    // Restores if app crashes, loses service, or accidentally navigates away
+    QuotesPage._autoSaveKey = 'bm-quote-autosave-' + (quoteId || 'new');
+    QuotesPage._autoSaveTimer = setInterval(function() { QuotesPage._autoSave(); }, 15000);
+
+    // Save on any input change
+    var form = document.getElementById('quote-form');
+    if (form) {
+      form.addEventListener('input', function() {
+        clearTimeout(QuotesPage._autoSaveDebounce);
+        QuotesPage._autoSaveDebounce = setTimeout(function() { QuotesPage._autoSave(); }, 2000);
+      });
+    }
+
+    // Warn before leaving page with unsaved changes
+    window._quoteFormDirty = false;
+    if (form) form.addEventListener('input', function() { window._quoteFormDirty = true; });
+    window.addEventListener('beforeunload', QuotesPage._beforeUnload);
+
+    // Check for recovered draft
+    var recovered = localStorage.getItem(QuotesPage._autoSaveKey);
+    if (recovered && !quoteId) {
+      try {
+        var rd = JSON.parse(recovered);
+        if (rd.clientName || (rd.lineItems && rd.lineItems.length > 0 && rd.lineItems[0].service)) {
+          var banner = document.createElement('div');
+          banner.style.cssText = 'background:#fff3e0;border:1px solid #ffe0b2;border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;';
+          banner.innerHTML = '<div><strong style="color:#e65100;">📋 Recovered draft</strong><span style="font-size:13px;color:var(--text-light);margin-left:8px;">' + (rd.clientName || 'Unsaved quote') + ' — ' + new Date(rd.savedAt).toLocaleTimeString() + '</span></div>'
+            + '<div style="display:flex;gap:6px;">'
+            + '<button onclick="QuotesPage._restoreAutoSave()" class="btn btn-primary" style="font-size:12px;padding:4px 12px;">Restore</button>'
+            + '<button onclick="this.parentElement.parentElement.remove();localStorage.removeItem(\'' + QuotesPage._autoSaveKey + '\')" class="btn btn-outline" style="font-size:12px;padding:4px 12px;">Discard</button>'
+            + '</div>';
+          var formEl = document.getElementById('quote-form');
+          if (formEl) formEl.parentElement.insertBefore(banner, formEl);
+        }
+      } catch(e) {}
+    }
+  },
+
+  _autoSave: function() {
+    var form = document.getElementById('quote-form');
+    if (!form) return;
+    var data = {
+      savedAt: new Date().toISOString(),
+      clientId: (document.getElementById('q-clientId') || {}).value || '',
+      clientName: (document.getElementById('q-client-search') || {}).value || '',
+      description: (document.getElementById('q-description') || {}).value || '',
+      notes: (document.getElementById('q-notes') || {}).value || '',
+      lineItems: []
+    };
+    document.querySelectorAll('.quote-item-row').forEach(function(row) {
+      data.lineItems.push({
+        service: (row.querySelector('.q-item-service') || {}).value || '',
+        description: (row.querySelector('.q-item-desc') || {}).value || '',
+        qty: (row.querySelector('.q-item-qty') || {}).value || '1',
+        rate: (row.querySelector('.q-item-rate') || {}).value || ''
+      });
+    });
+    try {
+      localStorage.setItem(QuotesPage._autoSaveKey, JSON.stringify(data));
+    } catch(e) {}
+  },
+
+  _restoreAutoSave: function() {
+    try {
+      var data = JSON.parse(localStorage.getItem(QuotesPage._autoSaveKey));
+      if (!data) return;
+      var clientSearch = document.getElementById('q-client-search');
+      if (clientSearch && data.clientName) clientSearch.value = data.clientName;
+      var clientId = document.getElementById('q-clientId');
+      if (clientId && data.clientId) clientId.value = data.clientId;
+      var desc = document.getElementById('q-description');
+      if (desc && data.description) desc.value = data.description;
+      var notes = document.getElementById('q-notes');
+      if (notes && data.notes) notes.value = data.notes;
+      // Restore line items
+      if (data.lineItems && data.lineItems.length > 0) {
+        var rows = document.querySelectorAll('.quote-item-row');
+        data.lineItems.forEach(function(li, i) {
+          if (i >= rows.length) QuotesPage.addItem();
+          var row = document.querySelectorAll('.quote-item-row')[i];
+          if (!row) return;
+          var svc = row.querySelector('.q-item-service'); if (svc) svc.value = li.service;
+          var dsc = row.querySelector('.q-item-desc'); if (dsc) dsc.value = li.description;
+          var qty = row.querySelector('.q-item-qty'); if (qty) qty.value = li.qty;
+          var rate = row.querySelector('.q-item-rate'); if (rate) rate.value = li.rate;
+        });
+        QuotesPage.calcTotal();
+      }
+      // Remove recovery banner
+      var banner = document.querySelector('[style*="fff3e0"]');
+      if (banner) banner.remove();
+      UI.toast('Draft restored ✅');
+    } catch(e) { UI.toast('Could not restore draft', 'error'); }
+  },
+
+  _beforeUnload: function(e) {
+    if (window._quoteFormDirty) {
+      e.preventDefault();
+      e.returnValue = 'You have unsaved changes on this quote. Are you sure you want to leave?';
+    }
+  },
+
+  _clearAutoSave: function() {
+    if (QuotesPage._autoSaveTimer) clearInterval(QuotesPage._autoSaveTimer);
+    if (QuotesPage._autoSaveKey) localStorage.removeItem(QuotesPage._autoSaveKey);
+    window._quoteFormDirty = false;
+    window.removeEventListener('beforeunload', QuotesPage._beforeUnload);
   },
 
   // Default rates for common services (editable in settings)
@@ -644,6 +754,9 @@ var QuotesPage = {
       UI.toast('Quote created');
       savedId = newQ.id;
     }
+
+    // Clear auto-save on successful save
+    QuotesPage._clearAutoSave();
 
     // Update client to active
     if (client && client.status === 'lead') DB.clients.update(clientId, { status: 'active' });

@@ -413,7 +413,7 @@ var SchedulePage = {
         + 'style="background:var(--white);min-height:80px;padding:4px;cursor:pointer;transition:background .15s;' + (isToday ? 'border:2px solid var(--green-dark);' : '') + '">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">'
         + '<span style="font-size:12px;font-weight:' + (isToday ? '800' : '600') + ';color:' + (isToday ? 'var(--green-dark)' : 'var(--text)') + ';">' + day + '</span>'
-        + '<span onclick="event.stopPropagation();JobsPage.showForm(null,{date:\'' + dateStr + '\'})" title="New job" style="font-size:14px;line-height:1;color:#aaa;padding:1px 4px;border-radius:4px;cursor:pointer;" onmouseover="this.style.background=\'#e8f5e9\';this.style.color=\'var(--green-dark)\'" onmouseout="this.style.background=\'transparent\';this.style.color=\'#aaa\'">+</span>'
+        + (typeof Weather !== 'undefined' ? Weather.getInline(dateStr) : '')
         + '</div>';
 
       dayJobs.forEach(function(j) {

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html><head><title>Import Jobber Line Items</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: -apple-system, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; }
+h1 { font-size: 22px; }
+.stat { display: inline-block; background: #e8f5e9; padding: 8px 16px; border-radius: 8px; margin: 4px; font-weight: 600; }
+.log { background: #f5f5f5; padding: 12px; border-radius: 8px; max-height: 400px; overflow-y: auto; font-size: 13px; font-family: monospace; white-space: pre-wrap; margin-top: 16px; }
+button { background: #2e7d32; color: #fff; border: none; padding: 14px 24px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+</style></head><body>
+<h1>Import Jobber Line Items into Branch Manager</h1>
+<p>This merges line items (service, description, qty, rate, photo URLs) from Jobber into your existing BM quotes, matched by quote number.</p>
+
+<input type="file" id="fileInput" accept=".json" style="margin: 16px 0; font-size: 15px;">
+<br>
+<button onclick="runImport()">Run Import</button>
+
+<div id="stats" style="margin-top: 16px;"></div>
+<div id="log" class="log" style="display:none;"></div>
+
+<script>
+function runImport() {
+  var file = document.getElementById('fileInput').files[0];
+  if (!file) { alert('Select the jobber-quotes-with-lineitems.json file first'); return; }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var jobberQuotes = JSON.parse(e.target.result);
+    var logEl = document.getElementById('log');
+    var statsEl = document.getElementById('stats');
+    logEl.style.display = 'block';
+    logEl.textContent = '';
+
+    function log(msg) { logEl.textContent += msg + '\n'; logEl.scrollTop = logEl.scrollHeight; }
+
+    // Load existing BM quotes from localStorage
+    var bmQuotes = [];
+    try { bmQuotes = JSON.parse(localStorage.getItem('bm-quotes') || '[]'); } catch(e) { log('ERROR: Could not read bm-quotes from localStorage'); return; }
+
+    log('Found ' + bmQuotes.length + ' BM quotes and ' + jobberQuotes.length + ' Jobber quotes');
+
+    var matched = 0, updated = 0, skipped = 0, photoCount = 0;
+
+    jobberQuotes.forEach(function(jq) {
+      var bmq = bmQuotes.find(function(b) { return String(b.quoteNumber) === String(jq.quoteNumber); });
+      if (!bmq) {
+        skipped++;
+        return;
+      }
+      matched++;
+
+      // Only update if BM quote has no line items or empty ones
+      var hasItems = bmq.lineItems && bmq.lineItems.length > 0 && bmq.lineItems[0].service;
+      if (hasItems && bmq.lineItems[0].description) {
+        // Already has real line items — check if they're just stubs
+        var isStub = bmq.lineItems.every(function(li) { return !li.description || li.description === ''; });
+        if (!isStub) {
+          log('  #' + jq.quoteNumber + ' — already has line items, skipping');
+          return;
+        }
+      }
+
+      // Map Jobber line items to BM format
+      var newItems = jq.lineItems.map(function(li) {
+        var item = {
+          service: li.service || '',
+          description: li.description || '',
+          qty: li.qty || 1,
+          rate: li.rate || 0,
+          amount: (li.qty || 1) * (li.rate || 0)
+        };
+        if (li.imageUrl) {
+          item.photoUrl = li.imageUrl;
+          photoCount++;
+        }
+        return item;
+      });
+
+      if (newItems.length > 0) {
+        bmq.lineItems = newItems;
+        updated++;
+        log('  #' + jq.quoteNumber + ' — ' + newItems.length + ' line items imported' + (newItems.some(function(i){return i.photoUrl;}) ? ' (with photos)' : ''));
+      }
+    });
+
+    // Save back to localStorage
+    localStorage.setItem('bm-quotes', JSON.stringify(bmQuotes));
+
+    log('\n=== DONE ===');
+    log('Matched: ' + matched + ' | Updated: ' + updated + ' | Skipped (no match): ' + skipped + ' | Photos: ' + photoCount);
+
+    statsEl.innerHTML = '<div class="stat">Matched: ' + matched + '</div>'
+      + '<div class="stat">Updated: ' + updated + '</div>'
+      + '<div class="stat">Photos: ' + photoCount + '</div>'
+      + '<div class="stat">Skipped: ' + skipped + '</div>';
+  };
+  reader.readAsText(file);
+}
+</script>
+</body></html>

@@ -100,29 +100,31 @@ var InvoicesPage = {
       + '</div></div>'
       + '<style>@keyframes invBatchSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>';
 
-    html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
-      + '<table class="data-table"><thead><tr>'
-      + '<th style="width:36px;"><input type="checkbox" onchange="InvoicesPage._toggleAll(this.checked)" title="Select all"></th>'
-      + self._sortTh('Client', 'clientName') + self._sortTh('#', 'invoiceNumber') + self._sortTh('Issued', 'createdAt') + '<th>Subject</th>' + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;') + self._sortTh('Balance', 'balance', 'text-align:right;')
-      + '</tr></thead><tbody>';
-
+    // Jobber card-style invoice list
     if (page.length === 0) {
-      html += '<tr><td colspan="9">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No invoices match "' + self._search + '"</div>' : UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.')) + '</td></tr>';
+      html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:40px;text-align:center;">'
+        + (self._search ? '<div style="color:var(--text-light);">No invoices match "' + self._search + '"</div>' : UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.'))
+        + '</div>';
     } else {
+      html += '<div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;">';
       page.forEach(function(inv) {
-        html += '<tr style="cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')">'
-          + '<td onclick="event.stopPropagation()"><input type="checkbox" class="inv-check" data-id="' + inv.id + '" onchange="InvoicesPage._updateBatch()"></td>'
-          + '<td><strong>' + UI.esc(inv.clientName || '—') + '</strong></td>'
-          + '<td>#' + (inv.invoiceNumber || '') + '</td>'
-          + '<td style="white-space:nowrap;">' + UI.dateShort(inv.createdAt || inv.date) + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(inv.subject || '—') + '</td>'
-          + '<td>' + UI.statusBadge(inv.status) + '</td>'
-          + '<td style="text-align:right;font-weight:600;">' + UI.money(inv.total) + '</td>'
-          + '<td style="text-align:right;font-weight:600;color:' + ((inv.balance||0) > 0 ? 'var(--red)' : 'var(--accent)') + ';">' + UI.money(inv.balance || 0) + '</td>'
-          + '</tr>';
+        var statusColor = inv.status === 'paid' ? '#2e7d32' : inv.status === 'overdue' ? '#dc3545' : inv.status === 'draft' ? '#6c757d' : '#1565c0';
+        html += '<div onclick="InvoicesPage.showDetail(\'' + inv.id + '\')" style="background:var(--white);padding:16px 20px;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'var(--white)\'">'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:16px;font-weight:700;">' + UI.esc(inv.clientName || '—') + '</div>'
+          + '<div style="font-size:14px;color:var(--text-light);margin-top:2px;">#' + (inv.invoiceNumber || '') + '</div>'
+          + '<div style="font-size:14px;color:var(--text-light);margin-top:2px;">' + UI.dateShort(inv.createdAt || inv.date) + (inv.subject ? ' · ' + UI.esc(inv.subject) : '') + '</div>'
+          + '<div style="margin-top:6px;font-size:14px;">'
+          + '<span style="font-weight:700;">Total ' + UI.money(inv.total) + '</span>'
+          + ((inv.balance||0) > 0 ? '<span style="margin-left:12px;">Balance <strong style="color:' + ((inv.status === 'overdue' || inv.status === 'past_due') ? '#dc3545' : 'var(--text)') + ';">' + UI.money(inv.balance) + '</strong></span>' : '')
+          + '</div></div>'
+          + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">'
+          + UI.statusBadge(inv.status)
+          + '<button onclick="event.stopPropagation();" style="background:none;border:none;font-size:18px;color:var(--text-light);cursor:pointer;padding:4px;">···</button>'
+          + '</div></div>';
       });
+      html += '</div>';
     }
-    html += '</tbody></table></div>';
 
     // Pagination
     var totalPages = Math.ceil(filtered.length / self._perPage);

@@ -692,54 +692,33 @@ var QuotesPage = {
       + '</div></div>'
       + '</div></div>'
 
-      // Header card
+      // Single header card — no duplication
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">'
       + '<div style="height:4px;background:' + statusColor + ';"></div>'
-      + '<div style="padding:20px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">'
+      + '<div style="padding:20px 24px;">'
+      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;">'
       + '<div>'
       + '<h2 style="font-size:22px;font-weight:700;margin:0 0 4px;">Quote #' + (q.quoteNumber||'') + ' — ' + UI.esc(q.clientName || '—') + '</h2>'
       + '<div style="font-size:13px;color:var(--text-light);">' + UI.dateShort(q.createdAt) + (q.sentAt ? ' · Sent ' + UI.dateShort(q.sentAt) : '') + '</div>'
       + (q.property ? '<div style="font-size:13px;color:var(--text-light);margin-top:2px;">📍 ' + UI.esc(q.property) + '</div>' : '')
       + '</div>'
       + '<div style="text-align:right;">' + UI.statusBadge(q.status) + '<div style="font-size:24px;font-weight:800;color:var(--accent);margin-top:6px;">' + UI.money(q.total) + '</div></div>'
-      + '</div></div>'
-
-      // Two-column: Client card (left) + metadata (right) — Jobber layout
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="detail-grid">'
-
-      // Client contact card
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:start;">'
-      + '<div>'
-      + '<div style="font-size:16px;font-weight:700;">' + UI.esc(q.clientName || '—') + ' <span style="color:#1565c0;font-size:10px;">●</span></div>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Property Address</div>'
-      + '<div style="font-size:14px;margin-top:2px;">' + UI.esc(q.property || '—') + '</div>'
-      + (q.clientPhone || (client && client.phone) ? '<div style="font-size:14px;margin-top:8px;">' + (q.clientPhone || client.phone) + '</div>' : '')
-      + (q.clientEmail || (client && client.email) ? '<div style="margin-top:2px;"><a href="mailto:' + (q.clientEmail || client.email) + '" style="font-size:14px;color:#1565c0;">' + (q.clientEmail || client.email) + '</a></div>' : '')
       + '</div>'
-      + '<button style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-light);">···</button>'
-      + '</div></div>'
-
-      // Quote metadata table
-      + '<div>'
-      + '<table style="width:100%;font-size:14px;border-collapse:collapse;">'
-      + '<tr><td style="padding:8px 0;color:var(--text-light);width:120px;">Quote #</td><td style="padding:8px 0;font-weight:500;">' + (q.quoteNumber || '') + '</td></tr>'
-      + '<tr><td style="padding:8px 0;color:var(--text-light);">Created</td><td style="padding:8px 0;">' + UI.dateShort(q.createdAt) + '</td></tr>'
-      + (q.sentAt ? '<tr><td style="padding:8px 0;color:var(--text-light);">Sent</td><td style="padding:8px 0;">' + UI.dateShort(q.sentAt) + '</td></tr>' : '')
-      + (q.subtotal ? '<tr><td style="padding:8px 0;color:var(--text-light);">Subtotal</td><td style="padding:8px 0;">' + UI.money(q.subtotal) + '</td></tr>' : '')
-      + (q.taxRate ? '<tr><td style="padding:8px 0;color:var(--text-light);">Tax (' + q.taxRate + '%)</td><td style="padding:8px 0;">' + UI.money(q.taxAmount || 0) + '</td></tr>' : '')
-      + '<tr><td style="padding:8px 0;color:var(--text-light);">Total</td><td style="padding:8px 0;font-weight:700;font-size:16px;">' + UI.money(q.total) + '</td></tr>'
-      + (q.source ? '<tr><td style="padding:8px 0;color:var(--text-light);">Lead Source</td><td style="padding:8px 0;">' + UI.esc(q.source) + '</td></tr>' : '')
+      // Contact + details in one row
+      + '<div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;color:var(--text-light);border-top:1px solid var(--border);padding-top:12px;">'
+      + (q.clientPhone || (client && client.phone) ? '<a href="tel:' + (q.clientPhone || client.phone).replace(/\D/g,'') + '" style="color:var(--accent);">📞 ' + (q.clientPhone || client.phone) + '</a>' : '')
+      + (q.clientEmail || (client && client.email) ? '<a href="mailto:' + (q.clientEmail || client.email) + '" style="color:var(--accent);">✉️ ' + (q.clientEmail || client.email) + '</a>' : '')
       + (q.expiresAt ? (function() {
           var exp = new Date(q.expiresAt); var now = new Date();
           var days = Math.ceil((exp - now) / 86400000);
-          var color = days < 0 ? '#dc3545' : days <= 5 ? '#e6a817' : 'var(--accent)';
-          var label = days < 0 ? 'Expired ' + Math.abs(days) + 'd ago' : days === 0 ? 'Expires today' : 'Expires in ' + days + 'd';
-          return '<tr><td style="padding:8px 0;color:var(--text-light);">Valid Until</td><td style="padding:8px 0;"><span style="color:' + color + ';font-weight:600;font-size:12px;">' + label + '</span> <span style="color:var(--text-light);font-size:12px;">(' + UI.dateShort(q.expiresAt) + ')</span></td></tr>';
+          var color = days < 0 ? '#dc3545' : days <= 5 ? '#e6a817' : 'var(--text-light)';
+          var label = days < 0 ? 'Expired ' + Math.abs(days) + 'd ago' : days === 0 ? 'Expires today' : 'Valid ' + days + 'd';
+          return '<span style="color:' + color + ';">⏱ ' + label + '</span>';
         })() : '')
-      + (q.depositRequired ? '<tr><td style="padding:8px 0;color:var(--text-light);">Deposit</td><td style="padding:8px 0;"><span style="background:' + (q.depositPaid ? '#e8f5e9' : '#fff3e0') + ';color:' + (q.depositPaid ? '#2e7d32' : '#e07c24') + ';padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">' + (q.depositPaid ? '✓ Paid' : 'Due: ' + UI.money(q.depositDue)) + '</span></td></tr>' : '')
-      + '</table></div>'
+      + (q.depositRequired ? '<span>' + (q.depositPaid ? '✅ Deposit paid' : '⚠️ Deposit due: ' + UI.money(q.depositDue)) + '</span>' : '')
+      + (q.source ? '<span>📣 ' + UI.esc(q.source) + '</span>' : '')
       + '</div>'
+      + '</div></div>'
 
       // Status with quick-change buttons
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">';

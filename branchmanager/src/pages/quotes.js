@@ -743,18 +743,6 @@ var QuotesPage = {
       + '</div>'
       + '</div></div>'
 
-      // Status with quick-change buttons
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">';
-    var statusBtns = [['draft','Draft'],['sent','Sent'],['awaiting','Awaiting Response'],['changes_requested','Changes Requested'],['approved','Approved'],['declined','Declined']];
-    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
-    statusBtns.forEach(function(sb) {
-      var isActive = q.status === sb[0];
-      html += '<button onclick="QuotesPage.setStatus(\'' + id + '\',\'' + sb[0] + '\')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid '
-        + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '700' : '500') + ';">'
-        + sb[1] + '</button>';
-    });
-    html += '</div></div>'
-
       // Description
       + (q.description ? '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
         + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Description</h4>'

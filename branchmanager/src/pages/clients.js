@@ -8,8 +8,8 @@ var ClientsPage = {
   _perPage: 50,
   _filter: 'all',
   _search: '',
-  _sort: 'name',
-  _sortDir: 1,
+  _sort: 'updatedAt',
+  _sortDir: -1,
   _tagFilter: '',
 
   _co: function() {
@@ -34,7 +34,7 @@ var ClientsPage = {
     var newClients30 = allClients.filter(function(c){ return c.status==='active' && new Date(c.createdAt)>=ago30; }).length;
     var ytdClients = allClients.filter(function(c){ return new Date(c.createdAt).getFullYear()===now.getFullYear(); }).length;
 
-    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
+    var html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
       // New leads
       + '<div onclick="ClientsPage.setFilter(\'lead\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
       + '<div style="font-size:14px;font-weight:700;">New leads</div>'
@@ -48,15 +48,10 @@ var ClientsPage = {
       + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + newClients30 + '</div>'
       + '</div>'
       // Total new clients YTD
-      + '<div onclick="ClientsPage.setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
+      + '<div onclick="ClientsPage.setFilter(\'all\')" style="padding:14px 16px;cursor:pointer;">'
       + '<div style="font-size:14px;font-weight:700;">Total new clients</div>'
       + '<div style="font-size:12px;color:var(--text-light);">Year to date</div>'
       + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + ytdClients + '</div>'
-      + '</div>'
-      // Total
-      + '<div style="padding:14px 16px;">'
-      + '<div style="font-size:14px;font-weight:700;">All clients</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:12px;">' + stats.totalClients + '</div>'
       + '</div>'
       + '</div>';
 
@@ -97,21 +92,30 @@ var ClientsPage = {
       + '<table class="data-table" id="clients-table"><thead><tr>'
       + self._sortHeader('Name', 'name')
       + self._sortHeader('Address', 'address')
-      + self._sortHeader('Phone', 'phone')
-      + self._sortHeader('Email', 'email')
+      + self._sortHeader('Tags', 'tags')
       + self._sortHeader('Status', 'status')
+      + self._sortHeader('Last Activity', 'updatedAt')
       + '</tr></thead><tbody>';
 
     if (pageClients.length === 0) {
       html += '<tr><td colspan="5">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No clients match "' + self._search + '"</div>' : UI.emptyState('👥', 'No clients yet', 'Add your first client or import.', '+ Add Client', 'ClientsPage.showForm()')) + '</td></tr>';
     } else {
       pageClients.forEach(function(c) {
+        var _lastAct = c.updatedAt || c.createdAt || '';
+        var _lastActLabel = _lastAct ? (function() {
+          var d = new Date(_lastAct); var now = new Date();
+          var days = Math.floor((now - d) / 86400000);
+          if (days === 0) return 'Today';
+          if (days === 1) return 'Yesterday';
+          if (days < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+          return UI.dateShort(_lastAct);
+        })() : '—';
         html += '<tr onclick="ClientsPage.showDetail(\'' + c.id + '\')" style="cursor:pointer;" data-status="' + c.status + '">'
-          + '<td><strong>' + UI.esc(c.name || '') + '</strong>' + (c.company ? '<br><span style="font-size:12px;color:var(--text-light);">' + UI.esc(c.company) + '</span>' : '') + (c.tags && c.tags.length ? '<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px;">' + c.tags.slice(0, 3).map(function(t) { return '<span style="padding:1px 7px;background:var(--green-bg);border-radius:8px;font-size:10px;font-weight:600;color:var(--green-dark);">' + UI.esc(t) + '</span>'; }).join('') + (c.tags.length > 3 ? '<span style="font-size:10px;color:var(--text-light);">+' + (c.tags.length - 3) + '</span>' : '') + '</div>' : '') + '</td>'
+          + '<td><strong>' + UI.esc(c.name || '') + '</strong>' + (c.company ? '<br><span style="font-size:12px;color:var(--text-light);">' + UI.esc(c.company) + '</span>' : '') + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(c.address || '—') + '</td>'
-          + '<td style="white-space:nowrap;">' + UI.phone(c.phone) + '</td>'
-          + '<td style="font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(c.email || '—') + '</td>'
+          + '<td>' + (c.tags && c.tags.length ? c.tags.slice(0, 3).map(function(t) { return '<span style="padding:1px 7px;background:var(--green-bg);border-radius:8px;font-size:10px;font-weight:600;color:var(--green-dark);">' + UI.esc(t) + '</span>'; }).join(' ') + (c.tags.length > 3 ? ' <span style="font-size:10px;color:var(--text-light);">+' + (c.tags.length - 3) + '</span>' : '') : '<span style="color:var(--text-light);font-size:12px;">—</span>') + '</td>'
           + '<td>' + UI.statusBadge(c.status) + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);white-space:nowrap;">' + _lastActLabel + '</td>'
           + '</tr>';
       });
     }

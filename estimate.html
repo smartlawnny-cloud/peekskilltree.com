@@ -154,15 +154,6 @@
       .est-chip {padding:.45rem .7rem;font-size:.9rem;}
       .mult-row {padding:.65rem .6rem !important;}
     }
-    /* Period switcher */
-    .period-switcher {display:flex;gap:0;background:var(--bg-light);border:2px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;}
-    .period-btn {padding:.3rem .65rem;font-size:.75rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text);transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent;user-select:none;}
-    .period-btn.active-period {background:var(--green-dark);color:var(--white);}
-    .period-btn:not(:last-child) {border-right:1px solid var(--border);}
-    .period-label {font-size:.72rem;color:var(--text-light);margin-top:.2rem;}
-    @media(max-width:600px){
-      .period-btn {padding:.35rem .55rem;font-size:.78rem;}
-    }
   </style>
   <section class="section">
     <div class="container" style="max-width:800px;">
@@ -337,33 +328,6 @@
           </div>
         </div>
 
-        <!-- Period Switcher -->
-        <div style="margin-top:.75rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
-          <span style="font-size:.8rem;font-weight:600;color:var(--text-light);">View as:</span>
-          <div class="period-switcher" id="period-switcher">
-            <button class="period-btn active-period" data-mult="1" onclick="setEstPeriod(this)">Day</button>
-            <button class="period-btn" data-mult="5" onclick="setEstPeriod(this)">Week</button>
-            <button class="period-btn" data-mult="22" onclick="setEstPeriod(this)">Month</button>
-            <button class="period-btn" data-mult="264" onclick="setEstPeriod(this)">Year</button>
-          </div>
-          <span class="period-label" id="period-label"></span>
-        </div>
-
-        <!-- Profit Margin -->
-        <div style="margin-top:.75rem;padding:.85rem 1rem;background:var(--white);border:2px solid var(--green-dark);border-radius:10px;">
-          <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
-            <label style="font-weight:700;font-size:.95rem;white-space:nowrap;" for="est-profit-pct">Profit Markup</label>
-            <div style="display:flex;align-items:center;gap:.3rem;">
-              <input type="number" id="est-profit-pct" min="0" max="200" value="50" step="5"
-                style="width:60px;padding:.35rem .5rem;border:2px solid var(--border);border-radius:8px;font-size:1rem;font-weight:700;text-align:center;"
-                oninput="calcEstimate()">
-              <span style="font-size:1rem;font-weight:700;">%</span>
-            </div>
-            <span id="est-profit-dollar" style="font-size:.95rem;font-weight:700;color:var(--green-dark);"></span>
-          </div>
-          <p style="font-size:.78rem;color:var(--text-light);margin-top:.3rem;margin-bottom:0;">Markup on top of your crew + equipment costs. Industry standard for tree work: 40–60%.</p>
-        </div>
-
         <!-- RESULT -->
         <div style="background:linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%);border-radius:12px;padding:1.25rem 1.5rem;color:var(--white);margin-top:.75rem;">
           <div id="est-breakdown" style="font-size:.88rem;opacity:.8;line-height:1.9;margin-bottom:.75rem;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:.75rem;"></div>
@@ -511,12 +475,6 @@
         lines.push('<em>Minimum job charge applied: $' + MIN_JOB + '</em>');
       }
 
-      /* Apply profit markup % */
-      var profitPct = parseFloat(document.getElementById('est-profit-pct').value) || 0;
-      if (cost > 0 && profitPct > 0) {
-        price = Math.max(price, Math.round(cost * (1 + profitPct / 100)));
-      }
-
       /* Round to nearest $50 */
       price = Math.round(price / 50) * 50;
 
@@ -525,10 +483,6 @@
       var high = Math.round((price * 1.15) / 50) * 50;
       var profit = price - cost;
       var margin = price > 0 ? Math.round((profit / price) * 100) : 0;
-
-      /* Update profit dollar display */
-      var profitDollarEl = document.getElementById('est-profit-dollar');
-      if (profitDollarEl) profitDollarEl.textContent = profit > 0 ? '= $' + profit.toLocaleString() : '';
 
       /* Update display */
       document.getElementById('est-breakdown').innerHTML = lines.join('<br>');
@@ -540,166 +494,7 @@
       document.getElementById('est-margin').textContent = margin + '%';
     }
 
-    /* ── localStorage persistence ─────────────────────────── */
-    var EST_KEY = 'snt-estimate-v1';
-    function estSave() {
-      var data = {};
-      document.querySelectorAll('input[id], select[id]').forEach(function(el) {
-        if (el.type === 'checkbox') data[el.id] = el.checked;
-        else data[el.id] = el.value;
-      });
-      /* Save chip selections */
-      var chips = [];
-      document.querySelectorAll('.est-chip.active').forEach(function(c) {
-        chips.push(c.textContent.trim());
-      });
-      data._chips = chips;
-      try { localStorage.setItem(EST_KEY, JSON.stringify(data)); } catch(e) {}
-    }
-    function estLoad() {
-      try {
-        var raw = localStorage.getItem(EST_KEY);
-        if (!raw) return false;
-        var data = JSON.parse(raw);
-        Object.keys(data).forEach(function(id) {
-          if (id.charAt(0) === '_') return;
-          var el = document.getElementById(id);
-          if (!el) return;
-          if (el.type === 'checkbox') el.checked = data[id];
-          else el.value = data[id];
-        });
-        if (data._chips) {
-          document.querySelectorAll('.est-chip').forEach(function(c) {
-            var txt = c.textContent.trim();
-            if (data._chips.indexOf(txt) >= 0) {
-              c.classList.add('active');
-              c.style.background = 'var(--green-dark)';
-              c.style.color = 'var(--white)';
-              c.style.borderColor = 'var(--green-dark)';
-            }
-          });
-        }
-        return true;
-      } catch(e) { return false; }
-    }
-    var _origEstCalc = estCalc;
-    estCalc = function() { _origEstCalc(); estSave(); };
-    estLoad();
     estCalc();
-
-    /* ── Period Switcher ────────────────────────────────── */
-    var estPeriodMult = 1;
-    var EST_PERIOD_LABELS = {1:'Per Day (base)', 5:'Per Week (5 days)', 22:'Per Month (22 days)', 264:'Per Year (264 days)'};
-
-    function setEstPeriod(btn) {
-      estPeriodMult = parseInt(btn.dataset.mult) || 1;
-      document.querySelectorAll('#period-switcher .period-btn').forEach(function(b) {
-        b.classList.toggle('active-period', b === btn);
-      });
-      document.getElementById('period-label').textContent = estPeriodMult > 1 ? EST_PERIOD_LABELS[estPeriodMult] : '';
-      applyEstPeriod();
-      estSave();
-    }
-
-    function applyEstPeriod() {
-      var m = estPeriodMult;
-      /* Total, range, cost, profit */
-      var totalEl = document.getElementById('est-total');
-      var baseTotal = parseEstDollar(totalEl.dataset.base || totalEl.textContent);
-      if (!totalEl.dataset.base) totalEl.dataset.base = totalEl.textContent;
-      totalEl.textContent = '$' + Math.round(baseTotal * m).toLocaleString();
-
-      var rangeEl = document.getElementById('est-range');
-      if (rangeEl) {
-        if (!rangeEl.dataset.base) rangeEl.dataset.base = rangeEl.textContent;
-        var parts = rangeEl.dataset.base.match(/\$([0-9,]+)\s*.\s*\$([0-9,]+)/);
-        if (parts) {
-          var low = parseInt(parts[1].replace(/,/g,'')) || 0;
-          var high = parseInt(parts[2].replace(/,/g,'')) || 0;
-          rangeEl.textContent = '$' + Math.round(low * m).toLocaleString() + ' \u2013 $' + Math.round(high * m).toLocaleString();
-        }
-      }
-
-      var costEl = document.getElementById('est-cost');
-      if (costEl) {
-        var baseCost = parseEstDollar(costEl.dataset.base || costEl.textContent);
-        if (!costEl.dataset.base) costEl.dataset.base = costEl.textContent;
-        costEl.textContent = '$' + Math.round(baseCost * m).toLocaleString();
-      }
-
-      var profitEl = document.getElementById('est-profit');
-      if (profitEl) {
-        var baseProfit = parseEstDollarSigned(profitEl.dataset.base || profitEl.textContent);
-        if (!profitEl.dataset.base) profitEl.dataset.base = profitEl.textContent;
-        var val = Math.round(baseProfit * m);
-        profitEl.textContent = (val >= 0 ? '$' : '-$') + Math.abs(val).toLocaleString();
-      }
-
-      /* Breakdown lines */
-      var breakdownEl = document.getElementById('est-breakdown');
-      if (breakdownEl && m > 1) {
-        if (!breakdownEl.dataset.baseHtml) breakdownEl.dataset.baseHtml = breakdownEl.innerHTML;
-        breakdownEl.innerHTML = breakdownEl.dataset.baseHtml.replace(/\$([0-9,]+)/g, function(match, num) {
-          var val = parseInt(num.replace(/,/g, '')) || 0;
-          return '$' + Math.round(val * m).toLocaleString();
-        });
-      } else if (breakdownEl && breakdownEl.dataset.baseHtml) {
-        breakdownEl.innerHTML = breakdownEl.dataset.baseHtml;
-      }
-    }
-
-    function parseEstDollar(str) {
-      if (!str) return 0;
-      return parseInt(str.replace(/[^0-9]/g, '')) || 0;
-    }
-
-    function parseEstDollarSigned(str) {
-      if (!str) return 0;
-      var neg = str.indexOf('-') >= 0;
-      var val = parseInt(str.replace(/[^0-9]/g, '')) || 0;
-      return neg ? -val : val;
-    }
-
-    /* Clear base caches when calc updates */
-    var _origEstCalcForPeriod = estCalc;
-    estCalc = function() {
-      ['est-total','est-range','est-cost','est-profit'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) delete el.dataset.base;
-      });
-      var bkd = document.getElementById('est-breakdown');
-      if (bkd) delete bkd.dataset.baseHtml;
-      _origEstCalcForPeriod();
-      applyEstPeriod();
-    };
-
-    /* Save period to localStorage */
-    var _origEstSave = estSave;
-    estSave = function() {
-      _origEstSave();
-      try {
-        var raw = localStorage.getItem(EST_KEY);
-        if (raw) {
-          var data = JSON.parse(raw);
-          data._periodMult = estPeriodMult;
-          localStorage.setItem(EST_KEY, JSON.stringify(data));
-        }
-      } catch(e) {}
-    };
-
-    /* Restore period from localStorage */
-    (function() {
-      try {
-        var raw = localStorage.getItem(EST_KEY);
-        if (raw) {
-          var data = JSON.parse(raw);
-          if (data._periodMult && data._periodMult > 1) {
-            var btn = document.querySelector('#period-switcher .period-btn[data-mult="' + data._periodMult + '"]');
-            if (btn) setEstPeriod(btn);
-          }
-        }
-      } catch(e) {}
-    })();
   </script>
 
       <!-- Calculator Nav -->
@@ -720,7 +515,7 @@
         <a href="contact.html" class="btn btn-primary btn-lg">Get Free Estimate</a>
         <a href="tel:914-391-5233" class="btn btn-outline btn-lg">&#9742; (914) 391-5233</a>
       </div>
-      <p style="margin-top:1rem;font-size:.92rem;opacity:.85;">&#10003; We respond to all inquiries within 2 hours during business hours</p>
+      <p style="margin-top:1rem;font-size:.92rem;opacity:1;">&#10003; We respond to all inquiries within 2 hours during business hours</p>
     </div>
   </section>
 

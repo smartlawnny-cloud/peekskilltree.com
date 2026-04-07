@@ -190,7 +190,7 @@ FOOTER = '''
         <a href="contact.html" class="btn btn-primary btn-lg">Get Free Estimate</a>
         <a href="tel:914-391-5233" class="btn btn-outline btn-lg">&#9742; (914) 391-5233</a>
       </div>
-      <p style="margin-top:1rem;font-size:.92rem;opacity:.85;">&#10003; We respond to all inquiries within 2 hours during business hours</p>
+      <p style="margin-top:1rem;font-size:.92rem;opacity:1;">&#10003; We respond to all inquiries within 2 hours during business hours</p>
     </div>
   </section>
 
@@ -817,14 +817,14 @@ service_pages = [
           <p>Whether it is a dead ash tree threatening your roof, a massive oak that has outgrown its space, or storm-damaged limbs hanging over your driveway, we have the expertise and the tools to take it down safely, clean up thoroughly, and leave your property looking better than we found it.</p>
 
           <div class="gallery-grid" style="margin:2rem 0;">
-            <div class="gallery-item"><img src="images/professional-tree-climber-rigging-westchester.jpg" alt="Professional tree climber with rigging in Westchester County NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/crane-lift.jpg" alt="Crane-assisted tree removal in Westchester County" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/tree-rigging-groundwork-new-castle-ny.jpg" alt="Tree rigging and ground crew working in New Castle NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/tall-tree-climbing-garrison-ny.jpg" alt="Tall tree climbing for removal in Garrison NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/dead-tree-removal-bucket-truck-lewisboro.jpg" alt="Dead tree removal with bucket truck in Lewisboro NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/tree-removal-near-house-briarcliff-manor.jpg" alt="Careful tree removal near house in Briarcliff Manor NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/large-tree-trunk-removal-north-salem.jpg" alt="Large tree trunk removal with equipment in North Salem NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/log-removal-grapple-equipment-bedford-ny.jpg" alt="Log removal with grapple equipment in Bedford NY" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/professional-tree-climber-rigging-westchester.jpg" alt="Professional tree climber with rigging in Westchester County NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/crane-lift.jpg" alt="Crane-assisted tree removal in Westchester County" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/tree-rigging-groundwork-new-castle-ny.jpg" alt="Tree rigging and ground crew working in New Castle NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/tall-tree-climbing-garrison-ny.jpg" alt="Tall tree climbing for removal in Garrison NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/dead-tree-removal-bucket-truck-lewisboro.jpg" alt="Dead tree removal with bucket truck in Lewisboro NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/tree-removal-near-house-briarcliff-manor.jpg" alt="Careful tree removal near house in Briarcliff Manor NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/large-tree-trunk-removal-north-salem.jpg" alt="Large tree trunk removal with equipment in North Salem NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/log-removal-grapple-equipment-bedford-ny.jpg" alt="Log removal with grapple equipment in Bedford NY" width="600" height="400" loading="lazy"></div>
           </div>
 
           <h2>When Does a Tree Need to Be Removed?</h2>
@@ -940,10 +940,10 @@ service_pages = [
           <p><strong>Any Time:</strong> Dead, damaged, or hazardous branches should be removed immediately regardless of season.</p>
 
           <div class="gallery-grid" style="margin:2rem 0;">
-            <div class="gallery-item"><img src="images/branch-pov.jpg" alt="Tree pruning from climber perspective in Northern Westchester" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/aerial-tree-climber-chainsaw-putnam-county.jpg" alt="Certified arborist climbing with chainsaw in Putnam County NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/tree-climber-aerial-view-pound-ridge.jpg" alt="Professional tree climber aerial view in Pound Ridge NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/hemlock-removal.jpg" alt="Careful pruning of hemlock tree in Westchester County" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/branch-pov.jpg" alt="Tree pruning from climber perspective in Northern Westchester" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/aerial-tree-climber-chainsaw-putnam-county.jpg" alt="Certified arborist climbing with chainsaw in Putnam County NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/tree-climber-aerial-view-pound-ridge.jpg" alt="Professional tree climber aerial view in Pound Ridge NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/hemlock-removal.jpg" alt="Careful pruning of hemlock tree in Westchester County" width="600" height="400" loading="lazy"></div>
           </div>
 
           <h2>Benefits of Professional Pruning</h2>
@@ -1002,9 +1002,9 @@ service_pages = [
           </ul>
 
           <div class="gallery-grid" style="margin:2rem 0;">
-            <div class="gallery-item"><img src="images/stump-grinding-service-peekskill-ny.jpg" alt="Professional stump grinding with Bandit grinder in Peekskill NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/stump-grinder-close-up-westchester-ny.jpg" alt="Close-up of Bandit stump grinder removing tree stump in Westchester NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/bandit-stump-grinder-equipment-peekskill.jpg" alt="Bandit stump grinder equipment at Second Nature Tree in Peekskill NY" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/stump-grinding-service-peekskill-ny.jpg" alt="Professional stump grinding with Bandit grinder in Peekskill NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/stump-grinder-close-up-westchester-ny.jpg" alt="Close-up of Bandit stump grinder removing tree stump in Westchester NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/bandit-stump-grinder-equipment-peekskill.jpg" alt="Bandit stump grinder equipment at Second Nature Tree in Peekskill NY" width="600" height="400" loading="lazy"></div>
           </div>
 
           <h2>Cost Factors for Stump Grinding</h2>
@@ -1055,10 +1055,10 @@ service_pages = [
           <p>A damaged tree is an unpredictable hazard. What looks stable after a storm can shift or fall further as conditions change. Waiting allows water intrusion where trees have damaged roofing, and secondary damage from subsequent storms becomes more likely. Our goal is to respond the same day whenever possible to stabilize the situation and begin safe removal.</p>
 
           <div class="gallery-grid" style="margin:2rem 0;">
-            <div class="gallery-item"><img src="images/storm-damage-tree-on-car-yorktown-ny.jpg" alt="Emergency storm damage tree removal from car in Yorktown NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/emergency-tree-service-night-peekskill.jpg" alt="Emergency tree service at night with bucket truck Peekskill NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/emergency-tree-removal-peekskill.jpg" alt="Emergency fallen tree removal in Peekskill NY" loading="lazy"></div>
-            <div class="gallery-item"><img src="images/big-fell.jpg" alt="Large tree felling for emergency removal" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/storm-damage-tree-on-car-yorktown-ny.jpg" alt="Emergency storm damage tree removal from car in Yorktown NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/emergency-tree-service-night-peekskill.jpg" alt="Emergency tree service at night with bucket truck Peekskill NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/emergency-tree-removal-peekskill.jpg" alt="Emergency fallen tree removal in Peekskill NY" width="600" height="400" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/big-fell.jpg" alt="Large tree felling for emergency removal" width="600" height="400" loading="lazy"></div>
           </div>
 
           <h2>Our Emergency Process</h2>
@@ -1787,8 +1787,8 @@ sub_page += '''
           <div style="font-weight:700;margin-bottom:.6rem;">Rate Tier</div>
           <div style="display:flex;flex-wrap:wrap;gap:.5rem;" id="tier-btns">
             <button class="tier-btn active-tier" data-tier="standard" onclick="setTier('standard')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--green-dark);background:var(--green-dark);color:var(--white);cursor:pointer;font-size:.85rem;font-weight:600;">Standard</button>
-            <button class="tier-btn" data-tier="preferred" onclick="setTier('preferred')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Preferred <span style="font-size:.75rem;opacity:.7;">(-15%)</span></button>
-            <button class="tier-btn" data-tier="coop" onclick="setTier('coop')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Co-op Member <span style="font-size:.75rem;opacity:.7;">(-25%)</span></button>
+            <button class="tier-btn" data-tier="preferred" onclick="setTier('preferred')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Preferred <span style="font-size:.75rem;opacity:.85;">(-15%)</span></button>
+            <button class="tier-btn" data-tier="coop" onclick="setTier('coop')" style="padding:.4rem .9rem;border-radius:8px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-size:.85rem;">Co-op Member <span style="font-size:.75rem;opacity:.85;">(-25%)</span></button>
           </div>
           <p id="tier-desc" style="font-size:.8rem;color:var(--text-light);margin-top:.4rem;">Full rates &mdash; any company, no existing relationship. <a href="#industry-rates" style="color:var(--green-dark);font-weight:600;">Industry rate sources &rarr;</a></p>
           <div style="margin-top:.5rem;">
@@ -3983,6 +3983,7 @@ be_page += '''
                   <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Labor</th>
                   <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Overhead</th>
                   <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Net</th>
+                  <th style="padding:.4rem .2rem;text-align:center;font-weight:700;font-size:.7rem;">Margin</th>
                   <th style="padding:.4rem .35rem;text-align:right;font-weight:700;font-size:.7rem;border-radius:0 6px 0 0;">P&amp;L</th>
                 </tr>
               </thead>
@@ -3993,6 +3994,7 @@ be_page += '''
                   <td style="padding:.4rem .2rem;text-align:center;color:#666;">$0</td>
                   <td style="padding:.4rem .2rem;text-align:center;color:#666;">$0</td>
                   <td style="padding:.4rem .2rem;text-align:center;color:#666;">$0</td>
+                  <td style="padding:.4rem .2rem;text-align:center;color:#666;">—</td>
                   <td style="padding:.4rem .35rem;text-align:right;font-weight:700;color:#c0392b;" id="job0-pl">-$4,912</td>
                 </tr>
               </tbody>
@@ -4024,6 +4026,10 @@ be_page += '''
             <div>
               <div style="font-size:.7rem;opacity:.7;text-transform:uppercase;">Total Costs</div>
               <div id="be-annual" style="font-size:1.2rem;font-weight:700;color:#ef4444;">$0</div>
+            </div>
+            <div>
+              <div style="font-size:.7rem;opacity:.7;text-transform:uppercase;">Avg Margin</div>
+              <div id="be-margin" style="font-size:1.2rem;font-weight:700;">—</div>
             </div>
           </div>
         </div>
@@ -4092,6 +4098,7 @@ be_page += '''
         + '<td style="padding:.35rem .2rem;text-align:center;"><input type="number" class="be-input job-labor" value="0" style="width:72px;font-size:16px;text-align:right;color:#333;" oninput="beCalc()" placeholder="Labor"></td>'
         + '<td style="padding:.35rem .2rem;text-align:center;font-size:.78rem;color:var(--text-light);" class="job-var">$0</td>'
         + '<td style="padding:.35rem .2rem;text-align:center;font-weight:700;font-size:.82rem;" class="job-net">$0</td>'
+        + '<td style="padding:.35rem .2rem;text-align:center;font-size:.78rem;" class="job-margin">—</td>'
         + '<td style="padding:.35rem .4rem;text-align:right;font-weight:700;font-size:.88rem;" class="job-pl">-</td>';
       tbody.appendChild(tr);
       beCalc();
@@ -4121,6 +4128,7 @@ be_page += '''
         var laborInput = tr.querySelector('.job-labor');
         var varCell    = tr.querySelector('.job-var');
         var netCell    = tr.querySelector('.job-net');
+        var marginCell = tr.querySelector('.job-margin');
         var plCell     = tr.querySelector('.job-pl');
         if (!revInput) return;
 
@@ -4139,6 +4147,18 @@ be_page += '''
         /* Net cell */
         netCell.textContent = (net >= 0 ? '+$' : '-$') + Math.abs(net).toLocaleString();
         netCell.style.color = net >= 0 ? '#2d5a27' : '#c0392b';
+
+        /* Margin cell */
+        if (rev > 0) {
+          var marginPct = Math.round((net / rev) * 100);
+          marginCell.textContent = marginPct + '%';
+          marginCell.style.color = marginPct >= 40 ? '#2d5a27' : marginPct >= 20 ? '#e67e22' : '#c0392b';
+          marginCell.style.fontWeight = '700';
+        } else {
+          marginCell.textContent = '—';
+          marginCell.style.color = '#666';
+          marginCell.style.fontWeight = '400';
+        }
 
         /* Running P&L */
         plCell.textContent = fmt(running);
@@ -4187,6 +4207,17 @@ be_page += '''
       document.getElementById('be-extra').style.color = '#4ade80';
       document.getElementById('be-annual').textContent = '$' + (totalCost + fixedTotal).toLocaleString();
       document.getElementById('be-annual').style.color = '#ef4444';
+
+      /* Overall margin */
+      var marginEl = document.getElementById('be-margin');
+      if (totalRev > 0) {
+        var overallMargin = Math.round(((totalRev - totalCost - fixedTotal) / totalRev) * 100);
+        marginEl.textContent = overallMargin + '%';
+        marginEl.style.color = overallMargin >= 40 ? '#4ade80' : overallMargin >= 20 ? '#fbbf24' : '#ef4444';
+      } else {
+        marginEl.textContent = '—';
+        marginEl.style.color = '#ffffff';
+      }
 
       var panel = document.getElementById('be-result');
       if (activeJobs === 0) {

@@ -150,6 +150,15 @@
       .ad-metric-val {font-size:1.3rem !important;}
       .ad-metric {min-width:90px;padding:.75rem .3rem;}
     }
+    /* Period switcher */
+    .period-switcher {display:flex;gap:0;background:var(--bg-light);border:2px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;}
+    .period-btn {padding:.3rem .65rem;font-size:.75rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text);transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent;user-select:none;}
+    .period-btn.active-period {background:var(--green-dark);color:var(--white);}
+    .period-btn:not(:last-child) {border-right:1px solid var(--border);}
+    .period-label {font-size:.72rem;color:var(--text-light);margin-top:.2rem;}
+    @media(max-width:600px){
+      .period-btn {padding:.35rem .55rem;font-size:.78rem;}
+    }
   </style>
   <section class="section">
     <div class="container" style="max-width:800px;">
@@ -263,9 +272,21 @@
           </div>
         </div>
 
+        <!-- Period Switcher -->
+        <div style="margin-top:.5rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+          <span style="font-size:.8rem;font-weight:600;color:var(--text-light);">View as:</span>
+          <div class="period-switcher" id="period-switcher">
+            <button class="period-btn" data-mult="1" onclick="setAdPeriod(this)">Day</button>
+            <button class="period-btn" data-mult="5" onclick="setAdPeriod(this)">Week</button>
+            <button class="period-btn active-period" data-mult="22" onclick="setAdPeriod(this)">Month</button>
+            <button class="period-btn" data-mult="264" onclick="setAdPeriod(this)">Year</button>
+          </div>
+          <span class="period-label" id="period-label"></span>
+        </div>
+
         <!-- RESULTS DASHBOARD -->
         <div style="background:linear-gradient(135deg,#1a3c12 0%,#2d5a27 100%);border-radius:12px;padding:1.25rem;color:var(--white);margin-top:.5rem;">
-          <div style="font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;opacity:.6;margin-bottom:.75rem;text-align:center;">Monthly Ad Performance</div>
+          <div style="font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;opacity:.6;margin-bottom:.75rem;text-align:center;" id="ad-perf-label">Monthly Ad Performance</div>
 
           <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:0;margin-bottom:.75rem;">
             <div class="ad-metric">
@@ -530,7 +551,119 @@
         whatif.textContent = 'Enter ad spend above to see which channel delivers the best return.';
       }
     }
+    /* ── localStorage persistence ─────────────────────────── */
+    var ADS_KEY = 'snt-ads-v1';
+    function adsSave() {
+      var data = {};
+      document.querySelectorAll('input[id]').forEach(function(el) {
+        if (el.type === 'checkbox') data[el.id] = el.checked;
+        else data[el.id] = el.value;
+      });
+      try { localStorage.setItem(ADS_KEY, JSON.stringify(data)); } catch(e) {}
+    }
+    function adsLoad() {
+      try {
+        var raw = localStorage.getItem(ADS_KEY);
+        if (!raw) return false;
+        var data = JSON.parse(raw);
+        Object.keys(data).forEach(function(id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          if (el.type === 'checkbox') el.checked = data[id];
+          else el.value = data[id];
+        });
+        return true;
+      } catch(e) { return false; }
+    }
+    var _origAdCalc = adCalc;
+    adCalc = function() { _origAdCalc(); adsSave(); };
+    adsLoad();
     adCalc();
+
+    /* ── Period Switcher ────────────────────────────────── */
+    /* ads.html inputs are MONTHLY. Multipliers relative to month: Day=1/22, Week=5/22, Month=1, Year=12 */
+    var adPeriodMult = 1;
+    var AD_PERIOD_FACTORS = {'1':1/22, '5':5/22, '22':1, '264':12};
+    var AD_PERIOD_NAMES = {'1':'Daily', '5':'Weekly', '22':'Monthly', '264':'Yearly'};
+    var AD_PERIOD_LABELS = {'1':'Per Day', '5':'Per Week (5 days)', '22':'Per Month (default)', '264':'Per Year'};
+
+    function setAdPeriod(btn) {
+      var key = btn.dataset.mult;
+      adPeriodMult = AD_PERIOD_FACTORS[key] || 1;
+      document.querySelectorAll('#period-switcher .period-btn').forEach(function(b) {
+        b.classList.toggle('active-period', b === btn);
+      });
+      document.getElementById('period-label').textContent = key !== '22' ? AD_PERIOD_LABELS[key] : '';
+      var perfLabel = document.getElementById('ad-perf-label');
+      if (perfLabel) perfLabel.textContent = AD_PERIOD_NAMES[key] + ' Ad Performance';
+      applyAdPeriod();
+      adsSave();
+    }
+
+    function applyAdPeriod() {
+      var m = adPeriodMult;
+      /* Revenue, profit, spend totals */
+      var dollarIds = ['r-rev','r-profit','r-total-profit','ad-total-spend'];
+      dollarIds.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var base = parseAdDollarSigned(el.dataset.base || el.textContent);
+        if (!el.dataset.base) el.dataset.base = el.textContent;
+        var val = Math.round(base * m);
+        if (id === 'ad-total-spend') {
+          el.textContent = '$' + Math.abs(val).toLocaleString();
+        } else {
+          el.textContent = (val >= 0 ? '+$' : '-$') + Math.abs(val).toLocaleString();
+        }
+      });
+    }
+
+    function parseAdDollarSigned(str) {
+      if (!str) return 0;
+      var neg = str.indexOf('-') >= 0;
+      var val = parseInt(str.replace(/[^0-9]/g, '')) || 0;
+      return neg ? -val : val;
+    }
+
+    /* Clear base caches when calc updates */
+    var _origAdCalcForPeriod = adCalc;
+    adCalc = function() {
+      ['r-rev','r-profit','r-total-profit','ad-total-spend'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) delete el.dataset.base;
+      });
+      _origAdCalcForPeriod();
+      applyAdPeriod();
+    };
+
+    /* Save period to localStorage */
+    var _origAdsSave = adsSave;
+    adsSave = function() {
+      _origAdsSave();
+      try {
+        var raw = localStorage.getItem(ADS_KEY);
+        if (raw) {
+          var data = JSON.parse(raw);
+          var activeBtn = document.querySelector('#period-switcher .period-btn.active-period');
+          data._periodMult = activeBtn ? activeBtn.dataset.mult : '22';
+          localStorage.setItem(ADS_KEY, JSON.stringify(data));
+        }
+      } catch(e) {}
+    };
+
+    /* Restore period from localStorage */
+    (function() {
+      try {
+        var raw = localStorage.getItem(ADS_KEY);
+        if (raw) {
+          var data = JSON.parse(raw);
+          if (data._periodMult) {
+            var btn = document.querySelector('#period-switcher .period-btn[data-mult="' + data._periodMult + '"]');
+            if (btn) setAdPeriod(btn);
+          }
+        }
+      } catch(e) {}
+    })();
   </script>
 
       <!-- Cross-links -->

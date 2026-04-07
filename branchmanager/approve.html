@@ -98,7 +98,7 @@
         if (result.error) throw result.error;
         // Validate approval token if one exists on the quote
         var q = result.data;
-        if (q.approval_token && urlToken !== q.approval_token) {
+        if (!q.approval_token || urlToken !== q.approval_token) {
           showError('This link has expired or is invalid. Please request a new quote link.');
           return;
         }

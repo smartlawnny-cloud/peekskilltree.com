@@ -18,6 +18,7 @@
 var SupabaseDB = {
   client: null,
   ready: false,
+  _debug: false, // Set true for sync logging
 
   // Default credentials — auto-connect
   DEFAULT_URL: 'https://ltpivkqahvplapyagljt.supabase.co',
@@ -48,7 +49,7 @@ var SupabaseDB = {
     try {
       SupabaseDB.client = window.supabase.createClient(url, key);
       SupabaseDB.ready = true;
-      console.log('Supabase connected:', url);
+      if (SupabaseDB._debug) console.log('Supabase connected:', url);
 
       // Check if RLS policies are properly configured
       SupabaseDB._checkRLS();
@@ -72,7 +73,7 @@ var SupabaseDB = {
         console.warn('Run migrate-rls.sql in your Supabase SQL Editor to fix this.');
         console.warn('See: https://supabase.com/dashboard/project/ltpivkqahvplapyagljt/sql');
       } else if (res.error && res.error.code === '42501') {
-        console.log('✅ Supabase RLS policies are active — anon key is restricted.');
+        if (SupabaseDB._debug) console.log('✅ Supabase RLS policies are active — anon key is restricted.');
       }
     }).catch(function() {});
   },
@@ -82,7 +83,7 @@ var SupabaseDB = {
     // CloudSync handles pulling data from Supabase into localStorage
     // CloudSync.wrapWrites() handles pushing writes to Supabase
     // This keeps the entire app working with synchronous DB calls
-    console.log('SupabaseDB: reads stay local (sync), writes push to cloud (async)');
+    if (SupabaseDB._debug) console.log('SupabaseDB: reads stay local (sync), writes push to cloud (async)');
   },
 
   _initialSync: async function() {
@@ -92,13 +93,13 @@ var SupabaseDB = {
     // Check if Supabase already has data
     var { count } = await sb.from('clients').select('*', { count: 'exact', head: true });
     if (count > 0) {
-      console.log('Supabase has ' + count + ' clients — pulling cloud data to local');
+      if (SupabaseDB._debug) console.log('Supabase has ' + count + ' clients — pulling cloud data to local');
       await SupabaseDB._pullFromCloud();
       return;
     }
 
     // No cloud data — push local data up
-    console.log('Syncing local data to Supabase...');
+    if (SupabaseDB._debug) console.log('Syncing local data to Supabase...');
     var tables = [
       { local: 'bm-clients', remote: 'clients' },
       { local: 'bm-requests', remote: 'requests' },
@@ -150,14 +151,14 @@ var SupabaseDB = {
           if (error) {
             console.warn('Sync error for ' + t.remote + ':', error.message);
           } else {
-            console.log('Synced ' + converted.length + ' rows to ' + t.remote);
+            if (SupabaseDB._debug) console.log('Synced ' + converted.length + ' rows to ' + t.remote);
           }
         }
       } catch (e) {
         console.warn('Sync failed for ' + t.remote + ':', e);
       }
     }
-    console.log('Initial sync complete');
+    if (SupabaseDB._debug) console.log('Initial sync complete');
     UI.toast('Data synced to cloud!');
     SupabaseDB.startPaymentPolling();
   },
@@ -197,7 +198,7 @@ var SupabaseDB = {
           });
           localStorage.setItem(t.local, JSON.stringify(converted));
           totalPulled += converted.length;
-          console.log('Pulled ' + converted.length + ' rows from ' + t.remote);
+          if (SupabaseDB._debug) console.log('Pulled ' + converted.length + ' rows from ' + t.remote);
         }
       } catch (e) {
         console.warn('Pull failed for ' + t.remote + ':', e);
@@ -206,7 +207,7 @@ var SupabaseDB = {
 
     SupabaseDB.startPaymentPolling();
     if (totalPulled > 0) {
-      console.log('Cloud sync complete: ' + totalPulled + ' total records');
+      if (SupabaseDB._debug) console.log('Cloud sync complete: ' + totalPulled + ' total records');
       UI.toast(totalPulled + ' records synced from cloud');
       // Refresh current page to show data
       if (typeof loadPage === 'function') {

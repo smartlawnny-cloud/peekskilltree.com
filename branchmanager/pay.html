@@ -168,7 +168,6 @@
     var isCustomActive = state.tipPct === -1;
     var stripeLink = inv.stripe_payment_url || inv.stripePaymentUrl || '';
     if (!stripeLink) { try { stripeLink = localStorage.getItem('bm-stripe-base-link') || ''; } catch(e) {} }
-    if (!stripeLink) { stripeLink = params.get('stripe') || ''; }
 
     el.innerHTML = '<div class="card">'
       + '<div class="card-header">'

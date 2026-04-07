@@ -134,59 +134,20 @@ var RequestsPage = {
       return new Date(r.createdAt) >= ago && r.status === 'new';
     });
 
-    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
-      // Overview
-      + '<div onclick="RequestsPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
-      + '<div style="font-size:12px;"><span style="color:#1565c0;">●</span> New (' + newCount + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#2e7d32;">●</span> Assessment complete (' + assessed + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#dc3545;">●</span> Overdue (' + overdue + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#6c757d;">●</span> Converted (' + converted + ')</div>'
-      + '</div>'
-      // New requests
-      + '<div onclick="RequestsPage._setFilter(\'new\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;">New requests</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + recentNew.length + '</div>'
-      + '</div>'
-      // Conversion rate
-      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
-      + '<div style="font-size:14px;font-weight:700;">Conversion rate</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Requests → quotes</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + convRate + '%</div>'
-      + '</div>'
-      // Total
-      + '<div style="padding:14px 16px;">'
-      + '<div style="font-size:14px;font-weight:700;">Total requests</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:12px;">' + all.length + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">All time</div>'
-      + '</div>'
-      + '</div>';
+    // Simple list — new requests at top, tap to open → convert to quote
+    var newRequests = all.filter(function(r) { return r.status === 'new'; });
+    var otherRequests = all.filter(function(r) { return r.status !== 'new'; });
+    var filtered = newRequests.concat(otherRequests);
 
-    var filtered = self._getFiltered();
+    var html = '';
 
-    // Header + chips + search
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-      + '<h3 style="font-size:16px;font-weight:700;margin:0;">All requests</h3>'
-      + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ')</span>';
-
-    var chips = [['all','All'],['new','New'],['assessment_complete','Assessment Complete'],['overdue','Overdue'],['unscheduled','Unscheduled'],['converted','Converted']];
-    chips.forEach(function(c) {
-      var isActive = self._filter === c[0];
-      html += '<button onclick="RequestsPage._setFilter(\'' + c[0] + '\')" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid '
-        + (isActive ? '#1565c0' : 'var(--border)') + ';background:' + (isActive ? '#1565c0' : 'var(--white)')
-        + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';">' + c[1] + '</button>';
-    });
-
-    html += '</div>'
-      + '<div style="display:flex;gap:8px;align-items:center;">'
-      + '<div class="search-box" style="min-width:180px;max-width:260px;">'
-      + '<span style="color:var(--text-light);">🔍</span>'
-      + '<input type="text" placeholder="Search requests..." value="' + UI.esc(self._search) + '" oninput="RequestsPage._search=this.value;loadPage(\'requests\')">'
-      + '</div>'
-      + '<button class="btn btn-primary" onclick="RequestsPage.showForm()" style="font-size:12px;white-space:nowrap;">+ New Request</button>'
-      + '</div></div>';
+    // Summary bar
+    if (newCount > 0) {
+      html += '<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">'
+        + '<div><strong style="font-size:15px;">' + newCount + ' new request' + (newCount !== 1 ? 's' : '') + '</strong>'
+        + '<div style="font-size:12px;color:#1565c0;margin-top:2px;">Tap to open → convert to quote</div></div>'
+        + '</div>';
+    }
 
     html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
@@ -374,7 +335,7 @@ var RequestsPage = {
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       + (r.phone ? '<a href="tel:' + r.phone.replace(/\D/g,'') + '" class="btn btn-outline" style="font-size:12px;">📞 Call</a>' : '')
       + (r.email ? '<button class="btn btn-outline" onclick="RequestsPage._sendConfirmation(\'' + r.id + '\')" style="font-size:12px;">📧 Email</button>' : '')
-      + '<button class="btn btn-outline" onclick="RequestsPage.showForm(\'' + r.id + '\')" style="font-size:12px;">✏️ Edit</button>'
+      + '<button class="btn btn-outline" onclick="RequestsPage.showForm(\'' + r.id + '\')" style="font-size:12px;">✏️ Edit Request</button>'
       + '<button class="btn btn-primary" onclick="RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId||'') + '\',\'' + UI.esc(r.clientName||'') + '\')" style="font-size:12px;">📝 Create Quote</button>'
       + '</div></div>'
 
@@ -384,7 +345,10 @@ var RequestsPage = {
       + '<div style="padding:20px 24px;">'
       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">'
       + '<div>'
-      + '<h2 style="font-size:22px;font-weight:700;margin:0 0 4px;">' + UI.esc(r.clientName || 'Unknown') + '</h2>'
+      + '<h2 style="font-size:22px;font-weight:700;margin:0 0 4px;">'
+      + UI.esc(r.clientName || 'Unknown')
+      + (r.clientId ? ' <a onclick="ClientsPage.showDetail(\'' + r.clientId + '\')" style="font-size:12px;color:var(--accent);cursor:pointer;font-weight:500;margin-left:6px;">Edit Client →</a>' : '')
+      + '</h2>'
       + '<div style="font-size:13px;color:var(--text-light);">'
       + UI.dateRelative(r.createdAt)
       + (r.source ? ' · via ' + r.source : '')

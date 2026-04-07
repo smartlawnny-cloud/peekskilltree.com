@@ -741,31 +741,8 @@ var QuotesPage = {
       + '</table></div>'
       + '</div>'
 
-      // Workflow progress bar
+      // Status with quick-change buttons
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">';
-    // Workflow stages — declined/changes_requested shown as a branch off "Sent"
-    var qStages = ['draft','sent','approved','converted'];
-    var qStageLabels = {draft:'Draft', sent:'Sent', approved:'Approved', converted:'Job Created'};
-    var statusForStage = (q.status === 'awaiting' || q.status === 'changes_requested') ? 'sent' : q.status;
-    var qIdx = qStages.indexOf(statusForStage);
-    if (qIdx < 0) qIdx = q.status === 'declined' ? 1 : 0;
-    html += '<div style="display:flex;align-items:center;margin-bottom:14px;">';
-    qStages.forEach(function(s, i) {
-      var done = i < qIdx || (q.status !== 'declined' && i === qIdx);
-      var active = i === qIdx && q.status !== 'declined';
-      var declined = q.status === 'declined' && i === qIdx;
-      html += '<div style="flex:1;text-align:center;position:relative;">'
-        + '<div style="width:28px;height:28px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;'
-        + (declined ? 'background:#dc3545;color:#fff;' : done ? 'background:var(--accent);color:#fff;' : 'background:var(--bg);color:var(--text-light);border:2px solid var(--border);') + '">'
-        + (declined ? '✗' : (done && !active ? '✓' : (i + 1))) + '</div>'
-        + '<div style="font-size:11px;font-weight:' + (active ? '700' : '500') + ';color:' + (declined ? '#dc3545' : done ? 'var(--accent)' : 'var(--text-light)') + ';margin-top:4px;">' + qStageLabels[s] + '</div>'
-        + '</div>';
-      if (i < qStages.length - 1) {
-        html += '<div style="flex:0 0 40px;height:2px;background:' + (i < qIdx ? 'var(--accent)' : 'var(--border)') + ';margin-top:-16px;"></div>';
-      }
-    });
-    html += '</div>';
-    // Status change buttons with proper labels
     var statusBtns = [['draft','Draft'],['sent','Sent'],['awaiting','Awaiting Response'],['changes_requested','Changes Requested'],['approved','Approved'],['declined','Declined']];
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
     statusBtns.forEach(function(sb) {

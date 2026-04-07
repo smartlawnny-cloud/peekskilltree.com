@@ -9,7 +9,7 @@ var UI = (function() {
     options = options || {};
     var overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
-    overlay.innerHTML = '<div class="modal' + (options.wide ? ' modal-wide' : '') + '">'
+    overlay.innerHTML = '<div class="modal' + (options.wide ? ' modal-wide' : '') + (options.full ? ' modal-full' : '') + '">'
       + '<div class="modal-header">'
       + '<h3>' + title + '</h3>'
       + '<button class="modal-close" onclick="UI.closeModal()">&times;</button>'

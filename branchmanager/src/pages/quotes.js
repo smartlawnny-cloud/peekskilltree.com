@@ -437,7 +437,7 @@ var QuotesPage = {
       + '</form>';
 
     UI.showModal(quoteId ? 'Edit Quote #' + q.quoteNumber : 'New Quote', html, {
-      wide: true,
+      full: true,
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
         + ' <button class="btn btn-outline" onclick="QuotesPage.saveAs(\'draft\')">Save Draft</button>'
         + ' <button class="btn btn-primary" onclick="QuotesPage.saveAs(\'sent\')">Save & Send</button>'

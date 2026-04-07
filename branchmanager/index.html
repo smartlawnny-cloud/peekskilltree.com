@@ -361,21 +361,7 @@
       border:none !important; padding-top:calc(64px + env(safe-area-inset-top, 0px));
       -webkit-overflow-scrolling:touch; overflow-y:auto !important;
     }
-    #search-mobile-header {
-      display:none; position:fixed; top:0; left:0; right:0; z-index:501;
-      background:var(--white); border-bottom:1px solid var(--border);
-      padding:calc(10px + env(safe-area-inset-top, 0px)) 12px 10px; align-items:center; gap:10px;
-    }
-    #search-mobile-header.visible { display:none !important; }
-    #search-mobile-input {
-      flex:1; border:1px solid var(--border); border-radius:10px; padding:10px 14px;
-      font-size:16px; outline:none; background:var(--bg); color:var(--text);
-    }
-    #search-mobile-input:focus { border-color:var(--accent); }
-    #search-mobile-close {
-      background:none; border:none; font-size:15px; color:var(--text-light);
-      cursor:pointer; font-weight:600; padding:6px 10px; white-space:nowrap;
-    }
+    /* search-mobile removed — using search page */
   }
   @media (max-width: 480px) {
     .stat-grid { grid-template-columns:1fr; }
@@ -670,11 +656,7 @@
     </div>
   </nav>
 
-  <!-- Mobile Search Overlay Header -->
-  <div id="search-mobile-header">
-    <button id="search-mobile-close" onclick="_closeMobileSearch()">✕ Cancel</button>
-    <input type="text" id="search-mobile-input" placeholder="Search clients, jobs, quotes..." autocomplete="off">
-  </div>
+  <!-- Mobile search overlay removed — using search page instead -->
 
   <!-- Main Content -->
   <div class="main" role="main">

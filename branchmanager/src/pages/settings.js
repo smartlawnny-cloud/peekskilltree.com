@@ -102,9 +102,18 @@ var SettingsPage = {
       + '<label style="font-size:13px;">Crew can see client phone/email</label>'
       + '</div>'
       + '</div>'
-      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Business Hours (shown to clients)</label>'
-      + '<div style="font-size:13px;color:var(--text);">Mon–Fri ' + ws.defaultStart + ' – ' + ws.defaultEnd + '</div>'
-      + '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Displayed on booking form and client communications</div>'
+      + '</div>'
+      + '<div style="margin-top:12px;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:8px;">Business Hours</label>';
+    var bhDays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var bhDefaults = {Sunday:'9:00 AM – 1:00 PM',Monday:'8:00 AM – 6:00 PM',Tuesday:'8:00 AM – 6:00 PM',Wednesday:'8:00 AM – 6:00 PM',Thursday:'8:00 AM – 6:00 PM',Friday:'8:00 AM – 6:00 PM',Saturday:'9:00 AM – 3:00 PM'};
+    bhDays.forEach(function(day) {
+      var stored = localStorage.getItem('bm-bh-' + day.toLowerCase()) || bhDefaults[day];
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f5f5f5;">'
+        + '<span style="font-size:13px;font-weight:600;width:90px;">' + day + '</span>'
+        + '<input type="text" id="bh-' + day.toLowerCase() + '" value="' + UI.esc(stored) + '" style="flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;text-align:center;" placeholder="Closed">'
+        + '</div>';
+    });
+    html += '<div style="font-size:11px;color:var(--text-light);margin-top:6px;">Displayed on booking form and client communications. Type "Closed" for days off.</div>'
       + '</div>'
       + '</div>';
 
@@ -252,6 +261,43 @@ var SettingsPage = {
       + '<input type="checkbox" id="rev-auto" style="width:18px;height:18px;"' + (rev.autoSend ? ' checked' : '') + '>'
       + '<div><strong style="font-size:13px;">Auto-Send Review Requests</strong><div style="font-size:11px;color:var(--text-light);">Automatically email clients after job/payment (requires SendGrid)</div></div></label>'
       + '</div>';
+
+    // ── Regional Settings ──
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<h3 style="margin:0 0 16px;">Regional Settings</h3>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Country</label>'
+      + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">United States</div></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Timezone</label>'
+      + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">(GMT-05:00) America/New_York</div></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Date Format</label>'
+      + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">Jan 31, 2026</div></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Time Format</label>'
+      + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">12 Hour (1:30 PM)</div></div>'
+      + '</div></div>';
+
+    // ── Connected Apps ──
+    var connectedApps = [
+      { name: 'SendGrid', status: !!(localStorage.getItem('bm-sendgrid-key')), desc: 'Email delivery' },
+      { name: 'Stripe', status: !!(localStorage.getItem('bm-stripe-key') || (typeof Stripe !== 'undefined')), desc: 'Payment processing' },
+      { name: 'Gusto', status: !!(localStorage.getItem('bm-gusto-api-key')), desc: 'Payroll' },
+      { name: 'AI Assistant', status: !!(localStorage.getItem('bm-claude-key')), desc: 'AI pricing & emails' },
+      { name: 'Dialpad', status: !!(localStorage.getItem('bm-dialpad-key')), desc: 'Phone system' },
+      { name: 'SendJim', status: !!(localStorage.getItem('bm-sendjim-key')), desc: 'Direct mail' }
+    ];
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<h3 style="margin:0 0 16px;">Connected Apps</h3>';
+    connectedApps.forEach(function(app) {
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;">'
+        + '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<div style="width:8px;height:8px;border-radius:50%;background:' + (app.status ? 'var(--green-dark)' : '#ccc') + ';"></div>'
+        + '<div><strong style="font-size:13px;">' + app.name + '</strong>'
+        + '<div style="font-size:11px;color:var(--text-light);">' + app.desc + '</div></div>'
+        + '</div>'
+        + '<span style="font-size:12px;font-weight:600;color:' + (app.status ? 'var(--green-dark)' : 'var(--text-light)') + ';">' + (app.status ? 'Connected' : 'Not connected') + '</span>'
+        + '</div>';
+    });
+    html += '</div>';
 
     // Products & Services Catalog
     var allServices = DB.services.getAll();
@@ -943,6 +989,11 @@ var SettingsPage = {
     localStorage.setItem('bm-pay-period', document.getElementById('ws-pay').value);
     localStorage.setItem('bm-min-job-hrs', document.getElementById('ws-min-job').value);
     localStorage.setItem('bm-crew-see-client', document.getElementById('ws-crew-client').checked ? 'true' : 'false');
+    // Save per-day business hours
+    ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'].forEach(function(day) {
+      var el = document.getElementById('bh-' + day);
+      if (el) localStorage.setItem('bm-bh-' + day, el.value.trim());
+    });
     UI.toast('Work settings saved');
   },
 

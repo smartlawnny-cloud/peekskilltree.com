@@ -190,6 +190,8 @@ var ReportsPage = {
       { key: 'revenue', icon: '📊', label: 'Revenue Summary', desc: 'Monthly revenue breakdown for tax prep', count: '' }
     ];
 
+    html += '<div style="margin-bottom:12px;"><button onclick="ReportsPage.downloadAll()" style="width:100%;padding:14px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">📦 Download All Data (Full Backup)</button></div>';
+
     html += '<div style="display:grid;gap:12px;">';
     reports.forEach(function(r) {
       html += '<div style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">'
@@ -441,5 +443,17 @@ var ReportsPage = {
     URL.revokeObjectURL(url);
 
     UI.toast('Downloaded ' + filename);
+  },
+
+  downloadAll: function() {
+    var tables = ['clients', 'invoices', 'quotes', 'jobs', 'requests', 'expenses', 'revenue'];
+    var count = 0;
+    tables.forEach(function(key, i) {
+      setTimeout(function() {
+        ReportsPage.download(key);
+        count++;
+        if (count === tables.length) UI.toast('All ' + count + ' files downloaded');
+      }, i * 500); // stagger downloads so browser doesn't block them
+    });
   }
 };

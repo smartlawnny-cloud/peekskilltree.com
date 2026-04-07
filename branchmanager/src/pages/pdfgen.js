@@ -87,6 +87,24 @@ var PDFGen = {
       body += '</div>';
     }
 
+    // Time & Material estimate (internal reference — not shown on client PDF by default)
+    if (q.timeMaterial && q.timeMaterial.totalHrs) {
+      var tm = q.timeMaterial;
+      body += '<div style="margin:20px 0;border:2px solid #e5e7eb;border-radius:10px;overflow:hidden;">'
+        + '<div style="background:#f0f4ff;padding:10px 16px;font-weight:700;font-size:14px;border-bottom:2px solid #e5e7eb;">Production Estimate</div>'
+        + '<div style="padding:14px 16px;font-size:13px;">'
+        + '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Climber: ' + (tm.climberHrs || 0) + ' hrs</span>'
+        + '<span>Ground crew (' + (tm.groundCount || 0) + '): ' + (tm.groundHrs || 0) + ' hrs</span></div>'
+        + '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Total job hours: ' + tm.totalHrs + '</span>'
+        + (tm.disposal ? '<span>Disposal: ' + PDFGen._money(tm.disposal) + '</span>' : '') + '</div>'
+        + '<div style="padding:3px 0;">Equipment: '
+        + (tm.bucket ? 'Bucket truck ' : '') + (tm.chipper ? 'Chipper ' : '') + (tm.crane ? 'Crane ' : '') + (tm.stumpGrinder ? 'Stump grinder ' : '')
+        + (!tm.bucket && !tm.chipper && !tm.crane && !tm.stumpGrinder ? 'None' : '')
+        + '</div>'
+        + (tm.tmTotal ? '<div style="padding:6px 0;border-top:1px solid #e5e7eb;font-weight:700;text-align:right;">T&M Price: ' + PDFGen._money(tm.tmTotal) + '</div>' : '')
+        + '</div></div>';
+    }
+
     // Deposit notice
     if (q.depositRequired && q.depositDue > 0) {
       body += '<div class="deposit-notice">'

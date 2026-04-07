@@ -841,29 +841,49 @@ var QuotesPage = {
       + 'Questions? Reply to this email or call ' + _co.phone + '.\n\n'
       + 'Thanks,\nDoug Brown\n' + _co.name + '\n' + _co.phone + '\n' + _co.website + '\nLicensed & Fully Insured — ' + _co.licenses;
 
+    // Build line items summary for review
+    var itemsSummary = '';
+    if (q.lineItems && q.lineItems.length) {
+      q.lineItems.forEach(function(item) {
+        var amt = item.amount || ((item.qty || 1) * (item.rate || 0));
+        itemsSummary += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'
+          + '<span>' + UI.esc(item.service || item.description || 'Service') + '</span>'
+          + '<span style="font-weight:600;">' + UI.money(amt) + '</span></div>';
+      });
+    }
+
     var html = '<div style="padding:16px;">'
-      // Approval link prominent display
+      // Review card — read only
+      + '<div style="background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px;">'
+      + '<div style="font-size:13px;color:var(--text-light);margin-bottom:4px;">Sending to</div>'
+      + '<div style="font-size:16px;font-weight:700;">' + UI.esc(email || 'No email on file') + '</div>'
+      + '<input type="hidden" id="send-to" value="' + UI.esc(email) + '">'
+      + '</div>'
+
+      // Quote summary
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+      + '<div style="font-size:15px;font-weight:700;">Quote #' + q.quoteNumber + '</div>'
+      + '<div style="font-size:20px;font-weight:800;color:var(--green-dark);">' + UI.money(q.total) + '</div>'
+      + '</div>'
+      + '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">' + UI.esc(q.clientName || '') + ' · ' + UI.esc(q.property || '') + '</div>'
+      + (q.description ? '<div style="font-size:13px;margin-bottom:10px;">' + UI.esc(q.description) + '</div>' : '')
+      + itemsSummary
+      + '</div>'
+
+      // Approval link
       + '<div style="background:#e8f5e9;border-radius:8px;padding:12px 14px;margin-bottom:16px;border-left:3px solid var(--green-dark);">'
-      + '<div style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">🔗 Client Approval Link</div>'
+      + '<div style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">Client Approval Link</div>'
       + '<div style="display:flex;gap:6px;align-items:center;">'
-      + '<input id="approval-link-input" type="text" readonly value="' + approvalLink + '" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;color:#333;cursor:text;">'
-      + '<button onclick="QuotesPage._copyApprovalLink(\'' + id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Copy</button>'
+      + '<input id="approval-link-input" type="text" readonly value="' + approvalLink + '" style="flex:1;font-size:11px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;color:#333;">'
+      + '<button onclick="QuotesPage._copyApprovalLink(\'' + id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Copy</button>'
       + '</div>'
-      + '<div style="font-size:11px;color:var(--text-light);margin-top:6px;">Client clicks this to view & approve — no login required</div>'
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">Or copy link and text it directly</div>'
       + '</div>'
-      + '<div style="margin-bottom:16px;">'
-      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">To</label>'
-      + '<input type="email" id="send-to" value="' + email + '" placeholder="client@email.com" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
-      + '</div>'
-      + '<div style="margin-bottom:16px;">'
-      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Subject</label>'
-      + '<input type="text" id="send-subject" value="' + subject + '" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;">'
-      + '</div>'
-      + '<div style="margin-bottom:16px;">'
-      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Message</label>'
-      + '<textarea id="send-body" rows="10" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;font-family:inherit;resize:vertical;">' + body + '</textarea>'
-      + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">📎 Quote PDF will be attached automatically when SendGrid is configured</div>'
+
+      // Hidden fields for the send function
+      + '<input type="hidden" id="send-subject" value="' + UI.esc(subject) + '">'
+      + '<input type="hidden" id="send-body" value="' + UI.esc(body) + '">'
       + '</div>';
 
     UI.showModal('Send Quote #' + q.quoteNumber, html, {

@@ -306,24 +306,75 @@ var QuotesPage = {
       + (_qDesc ? '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">Auto-filled from request</div>' : '')
       + '</div>';
 
-    // Inline Job Estimator (replaces popup)
-    html += '<div style="margin:16px 0;background:#f9fafb;border:2px solid var(--border);border-radius:10px;padding:16px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;" onclick="var el=document.getElementById(\'inline-estimator\');el.style.display=el.style.display===\'none\'?\'block\':\'none\';">'
-      + '<h4 style="font-size:15px;">🧮 Job Cost Calculator</h4><span style="color:var(--text-light);">▶</span></div>'
-      + '<div id="inline-estimator" style="' + (items.length <= 1 ? '' : 'display:none;') + '">'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Select crew and equipment → costs auto-calculate → fills line items below.</p>'
-      + (typeof Estimator !== 'undefined' ? Estimator.renderInline() : '<p style="font-size:13px;color:var(--text-light);">Estimator not available.</p>')
-      + '<button type="button" class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="QuotesPage._applyEstimator()">✅ Apply to Quote</button>'
-      + '</div></div>';
+    // ═══ DUAL PRICING SYSTEM ═══
+    // Mode 1: Per Tree/Task (default) — arborist prices each tree on the walk
+    // Mode 2: Time & Material — estimate crew hours + equipment to verify production
 
-    // Line items
-    html += '<div style="margin:16px 0 8px;font-weight:700;">Line Items</div>'
+    var tmData = q.timeMaterial || {};
+
+    html += '<div style="margin:16px 0;">'
+      // Pricing mode tabs
+      + '<div style="display:flex;border:2px solid var(--border);border-radius:10px 10px 0 0;overflow:hidden;">'
+      + '<button type="button" id="q-tab-pertree" onclick="QuotesPage._showPricingMode(\'pertree\')" style="flex:1;padding:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:var(--green-dark);color:#fff;">Per Tree / Task</button>'
+      + '<button type="button" id="q-tab-tm" onclick="QuotesPage._showPricingMode(\'tm\')" style="flex:1;padding:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:var(--bg);color:var(--text-light);">Time & Material</button>'
+      + '</div>';
+
+    // ── MODE 1: Per Tree/Task ──
+    html += '<div id="q-mode-pertree" style="border:2px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:16px;">'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Price each tree or task as you walk the property with the client.</p>'
       + '<div id="q-items">';
     items.forEach(function(item, i) {
       html += QuotesPage._itemRow(i, item, services);
     });
     html += '</div>'
-      + '<button type="button" class="btn btn-outline" style="margin-top:8px;" onclick="QuotesPage.addItem()">+ Add Line Item</button>';
+      + '<button type="button" class="btn btn-outline" style="margin-top:8px;" onclick="QuotesPage.addItem()">+ Add Line Item</button>'
+      + '<div id="q-pertree-total" style="margin-top:12px;text-align:right;font-size:15px;font-weight:700;color:var(--green-dark);"></div>'
+      + '</div>';
+
+    // ── MODE 2: Time & Material ──
+    html += '<div id="q-mode-tm" style="display:none;border:2px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:16px;">'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Estimate crew time and equipment to verify the price covers production.</p>'
+
+      // Crew
+      + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Crew</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Climber</label>'
+      + '<input type="number" id="q-tm-climber-hrs" value="' + (tmData.climberHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground crew</label>'
+      + '<input type="number" id="q-tm-ground-count" value="' + (tmData.groundCount || '2') + '" placeholder="#" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground hrs</label>'
+      + '<input type="number" id="q-tm-ground-hrs" value="' + (tmData.groundHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '</div>'
+
+      // Equipment
+      + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Equipment</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
+      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-bucket" onchange="QuotesPage._calcTM()"' + (tmData.bucket ? ' checked' : '') + '> Bucket truck</label>'
+      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-chipper" onchange="QuotesPage._calcTM()"' + (tmData.chipper ? ' checked' : '') + '> Chipper</label>'
+      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-crane" onchange="QuotesPage._calcTM()"' + (tmData.crane ? ' checked' : '') + '> Crane</label>'
+      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-stumpgrinder" onchange="QuotesPage._calcTM()"' + (tmData.stumpGrinder ? ' checked' : '') + '> Stump grinder</label>'
+      + '</div>'
+
+      // Duration
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Total job hours</label>'
+      + '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Dump / disposal</label>'
+      + '<input type="number" id="q-tm-disposal" value="' + (tmData.disposal || '') + '" placeholder="$" min="0" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '</div>'
+
+      // T&M Total
+      + '<div id="q-tm-breakdown" style="background:var(--bg);border-radius:8px;padding:12px;font-size:13px;"></div>'
+      + '<div id="q-tm-total" style="margin-top:8px;text-align:right;font-size:15px;font-weight:700;color:var(--accent);"></div>'
+      + '</div>';
+
+    // ── COMPARE BUTTON (shows after both modes have data) ──
+    html += '<button type="button" id="q-compare-btn" onclick="QuotesPage._showPriceComparison()" style="display:none;margin-top:12px;width:100%;padding:14px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">📊 Compare Pricing Methods</button>'
+
+    // Price comparison panel (hidden until clicked)
+      + '<div id="q-comparison" style="display:none;margin-top:12px;background:#f5f3ff;border:2px solid #c4b5fd;border-radius:10px;padding:16px;"></div>'
+
+      + '</div>';
 
     // Quote Options (Good / Better / Best)
     var hasOptions = q.options && q.options.length > 0;
@@ -594,6 +645,23 @@ var QuotesPage = {
           if (oName && oPrice > 0) opts.push({ name: oName, price: oPrice });
         }
         return opts.length > 0 ? opts : null;
+      })(),
+      timeMaterial: (function() {
+        var climberHrs = parseFloat((document.getElementById('q-tm-climber-hrs') || {}).value) || 0;
+        var groundCount = parseFloat((document.getElementById('q-tm-ground-count') || {}).value) || 0;
+        var groundHrs = parseFloat((document.getElementById('q-tm-ground-hrs') || {}).value) || 0;
+        var totalHrs = parseFloat((document.getElementById('q-tm-total-hrs') || {}).value) || 0;
+        var disposal = parseFloat((document.getElementById('q-tm-disposal') || {}).value) || 0;
+        if (!climberHrs && !groundHrs && !totalHrs) return null;
+        return {
+          climberHrs: climberHrs, groundCount: groundCount, groundHrs: groundHrs,
+          totalHrs: totalHrs, disposal: disposal,
+          bucket: !!(document.getElementById('q-tm-bucket') || {}).checked,
+          chipper: !!(document.getElementById('q-tm-chipper') || {}).checked,
+          crane: !!(document.getElementById('q-tm-crane') || {}).checked,
+          stumpGrinder: !!(document.getElementById('q-tm-stumpgrinder') || {}).checked,
+          tmTotal: QuotesPage._calcTM()
+        };
       })()
     };
 
@@ -986,6 +1054,158 @@ var QuotesPage = {
     }
     UI.toast('Quote status: ' + status);
     QuotesPage.showDetail(id);
+  },
+
+  // ── Dual Pricing Mode Switching ──
+  _showPricingMode: function(mode) {
+    var pertree = document.getElementById('q-mode-pertree');
+    var tm = document.getElementById('q-mode-tm');
+    var tabPT = document.getElementById('q-tab-pertree');
+    var tabTM = document.getElementById('q-tab-tm');
+    if (mode === 'pertree') {
+      pertree.style.display = 'block'; tm.style.display = 'none';
+      tabPT.style.background = 'var(--green-dark)'; tabPT.style.color = '#fff';
+      tabTM.style.background = 'var(--bg)'; tabTM.style.color = 'var(--text-light)';
+    } else {
+      pertree.style.display = 'none'; tm.style.display = 'block';
+      tabTM.style.background = 'var(--accent)'; tabTM.style.color = '#fff';
+      tabPT.style.background = 'var(--bg)'; tabPT.style.color = 'var(--text-light)';
+    }
+  },
+
+  // ── Time & Material Calculator ──
+  _TM_RATES: {
+    climber: 50, ground: 30, bucket: 75, chipper: 44, crane: 200, stumpGrinder: 50,
+    insurance: 0.31, // WC 9% + GL 9% + disability 2% + payroll 8% + auto 3%
+    markup: 1.5 // 50% markup on cost
+  },
+
+  _calcTM: function() {
+    var r = QuotesPage._TM_RATES;
+    var climberHrs = parseFloat(document.getElementById('q-tm-climber-hrs').value) || 0;
+    var groundCount = parseFloat(document.getElementById('q-tm-ground-count').value) || 0;
+    var groundHrs = parseFloat(document.getElementById('q-tm-ground-hrs').value) || 0;
+    var totalHrs = parseFloat(document.getElementById('q-tm-total-hrs').value) || 0;
+    var disposal = parseFloat(document.getElementById('q-tm-disposal').value) || 0;
+    var bucket = document.getElementById('q-tm-bucket').checked;
+    var chipper = document.getElementById('q-tm-chipper').checked;
+    var crane = document.getElementById('q-tm-crane').checked;
+    var stumpGrinder = document.getElementById('q-tm-stumpgrinder').checked;
+
+    var laborCost = (climberHrs * r.climber) + (groundCount * groundHrs * r.ground);
+    var equipCost = (bucket ? totalHrs * r.bucket : 0) + (chipper ? totalHrs * r.chipper : 0)
+      + (crane ? totalHrs * r.crane : 0) + (stumpGrinder ? totalHrs * r.stumpGrinder : 0);
+    var insuranceCost = laborCost * r.insurance;
+    var subtotalCost = laborCost + equipCost + insuranceCost + disposal;
+    var tmTotal = Math.round(subtotalCost * r.markup);
+
+    // Show breakdown
+    var breakdown = document.getElementById('q-tm-breakdown');
+    if (breakdown) {
+      breakdown.innerHTML = '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Labor</span><span>' + UI.money(laborCost) + '</span></div>'
+        + '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Equipment</span><span>' + UI.money(equipCost) + '</span></div>'
+        + '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Insurance (31%)</span><span>' + UI.money(insuranceCost) + '</span></div>'
+        + (disposal > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Disposal</span><span>' + UI.money(disposal) + '</span></div>' : '')
+        + '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);font-weight:600;"><span>Cost</span><span>' + UI.money(subtotalCost) + '</span></div>'
+        + '<div style="display:flex;justify-content:space-between;padding:3px 0;font-weight:700;color:var(--accent);"><span>T&M Price (1.5x)</span><span>' + UI.money(tmTotal) + '</span></div>';
+    }
+    var tmTotalEl = document.getElementById('q-tm-total');
+    if (tmTotalEl) tmTotalEl.textContent = 'T&M Total: ' + UI.money(tmTotal);
+
+    // Show compare button if both modes have data
+    var compareBtn = document.getElementById('q-compare-btn');
+    if (compareBtn && tmTotal > 0) compareBtn.style.display = 'block';
+
+    return tmTotal;
+  },
+
+  // ── Price Comparison Page ──
+  _showPriceComparison: function() {
+    // Get per-tree total
+    var perTreeTotal = 0;
+    document.querySelectorAll('.quote-item-row').forEach(function(row) {
+      var qty = parseFloat(row.querySelector('.q-item-qty').value) || 0;
+      var rate = parseFloat(row.querySelector('.q-item-rate').value) || 0;
+      perTreeTotal += qty * rate;
+    });
+
+    // Get T&M total
+    var tmTotal = QuotesPage._calcTM();
+    var average = Math.round((perTreeTotal + tmTotal) / 2);
+    var diff = Math.abs(perTreeTotal - tmTotal);
+    var diffPct = perTreeTotal > 0 ? Math.round((diff / perTreeTotal) * 100) : 0;
+
+    // Determine which is higher
+    var higher = perTreeTotal >= tmTotal ? 'Per Tree' : 'T&M';
+    var barMax = Math.max(perTreeTotal, tmTotal, 1);
+
+    var panel = document.getElementById('q-comparison');
+    if (!panel) return;
+
+    panel.style.display = 'block';
+    panel.innerHTML = '<div style="font-size:16px;font-weight:800;margin-bottom:16px;color:#5b21b6;">📊 Price Comparison</div>'
+
+      // Per Tree bar
+      + '<div style="margin-bottom:12px;">'
+      + '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;"><span>Per Tree/Task</span><span>' + UI.money(perTreeTotal) + '</span></div>'
+      + '<div style="background:#e2e8f0;border-radius:6px;height:8px;"><div style="background:var(--green-dark);border-radius:6px;height:100%;width:' + Math.round((perTreeTotal / barMax) * 100) + '%;"></div></div>'
+      + '</div>'
+
+      // T&M bar
+      + '<div style="margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;"><span>Time & Material</span><span>' + UI.money(tmTotal) + '</span></div>'
+      + '<div style="background:#e2e8f0;border-radius:6px;height:8px;"><div style="background:var(--accent);border-radius:6px;height:100%;width:' + Math.round((tmTotal / barMax) * 100) + '%;"></div></div>'
+      + '</div>'
+
+      // Average
+      + '<div style="background:#fff;border-radius:8px;padding:14px;text-align:center;border:2px solid #7c3aed;">'
+      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">RECOMMENDED PRICE (Average)</div>'
+      + '<div style="font-size:28px;font-weight:800;color:#5b21b6;">' + UI.money(average) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Difference: ' + UI.money(diff) + ' (' + diffPct + '%) — ' + higher + ' is higher</div>'
+      + '</div>'
+
+      // Use buttons
+      + '<div style="display:flex;gap:8px;margin-top:12px;">'
+      + '<button type="button" onclick="QuotesPage._usePrice(' + perTreeTotal + ')" class="btn btn-outline" style="flex:1;font-size:12px;">Use Per Tree (' + UI.money(perTreeTotal) + ')</button>'
+      + '<button type="button" onclick="QuotesPage._usePrice(' + average + ')" class="btn btn-primary" style="flex:1;font-size:12px;background:#7c3aed;">Use Average (' + UI.money(average) + ')</button>'
+      + '<button type="button" onclick="QuotesPage._usePrice(' + tmTotal + ')" class="btn btn-outline" style="flex:1;font-size:12px;">Use T&M (' + UI.money(tmTotal) + ')</button>'
+      + '</div>';
+
+    // Scroll to comparison
+    panel.scrollIntoView({ behavior: 'smooth' });
+  },
+
+  _usePrice: function(price) {
+    // Update the first line item or add a total adjustment to match the selected price
+    var currentTotal = 0;
+    document.querySelectorAll('.quote-item-row').forEach(function(row) {
+      currentTotal += (parseFloat(row.querySelector('.q-item-qty').value) || 0) * (parseFloat(row.querySelector('.q-item-rate').value) || 0);
+    });
+
+    if (Math.abs(currentTotal - price) < 1) {
+      UI.toast('Price already matches');
+      return;
+    }
+
+    var diff = price - currentTotal;
+    if (diff > 0) {
+      // Add a line item for the adjustment
+      QuotesPage.addItem();
+      setTimeout(function() {
+        var rows = document.querySelectorAll('.quote-item-row');
+        var last = rows[rows.length - 1];
+        if (last) {
+          last.querySelector('.q-item-service').value = 'Price adjustment';
+          last.querySelector('.q-item-desc').value = 'Adjusted to match production estimate';
+          last.querySelector('.q-item-qty').value = '1';
+          last.querySelector('.q-item-rate').value = diff.toFixed(2);
+        }
+        QuotesPage.calcTotal();
+        UI.toast('Price adjusted to ' + UI.money(price));
+      }, 100);
+    } else {
+      UI.toast('To lower the price, edit individual line items');
+    }
   },
 
   _updateMargin: function() {

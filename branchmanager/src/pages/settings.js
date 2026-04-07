@@ -130,6 +130,129 @@ var SettingsPage = {
       + '</div>'
       + '</div>';
 
+    // ── Notification Preferences ──
+    var notif = {
+      quoteApproved: localStorage.getItem('bm-notif-quote-approved') !== 'false',
+      paymentReceived: localStorage.getItem('bm-notif-payment') !== 'false',
+      newRequest: localStorage.getItem('bm-notif-new-request') !== 'false',
+      overdueInvoice: localStorage.getItem('bm-notif-overdue') !== 'false',
+      dailySummary: localStorage.getItem('bm-notif-daily-summary') === 'true',
+      jobCompleted: localStorage.getItem('bm-notif-job-completed') !== 'false'
+    };
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;">Notifications</h3>'
+      + '<button onclick="SettingsPage._saveNotifSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:10px;">';
+    [
+      ['notif-quote-approved', notif.quoteApproved, 'Quote Approved', 'Email when a client approves a quote'],
+      ['notif-payment', notif.paymentReceived, 'Payment Received', 'Email when a client pays an invoice'],
+      ['notif-new-request', notif.newRequest, 'New Request', 'Email when a new booking request comes in'],
+      ['notif-overdue', notif.overdueInvoice, 'Overdue Invoice', 'Email when an invoice becomes overdue'],
+      ['notif-job-completed', notif.jobCompleted, 'Job Completed', 'Email when crew marks a job complete'],
+      ['notif-daily-summary', notif.dailySummary, 'Daily Summary', 'Morning email with today\'s schedule + action items']
+    ].forEach(function(n) {
+      html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
+        + '<input type="checkbox" id="' + n[0] + '" style="width:18px;height:18px;"' + (n[1] ? ' checked' : '') + '>'
+        + '<div><strong style="font-size:13px;">' + n[2] + '</strong><div style="font-size:11px;color:var(--text-light);">' + n[3] + '</div></div></label>';
+    });
+    html += '</div></div>';
+
+    // ── Default Quote & Invoice Settings ──
+    var qd = {
+      paymentTerms: localStorage.getItem('bm-payment-terms') || 'net30',
+      defaultDeposit: localStorage.getItem('bm-default-deposit') || '50',
+      quoteValidity: localStorage.getItem('bm-quote-validity') || '30',
+      showLineItemPrices: localStorage.getItem('bm-show-line-prices') !== 'false',
+      companyLogo: localStorage.getItem('bm-company-logo') || ''
+    };
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;">Quote & Invoice Defaults</h3>'
+      + '<button onclick="SettingsPage._saveQuoteDefaults()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Payment Terms</label>'
+      + '<select id="qd-terms" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
+      + '<option value="due-on-completion"' + (qd.paymentTerms === 'due-on-completion' ? ' selected' : '') + '>Due on completion</option>'
+      + '<option value="net15"' + (qd.paymentTerms === 'net15' ? ' selected' : '') + '>Net 15</option>'
+      + '<option value="net30"' + (qd.paymentTerms === 'net30' ? ' selected' : '') + '>Net 30</option>'
+      + '<option value="net60"' + (qd.paymentTerms === 'net60' ? ' selected' : '') + '>Net 60</option>'
+      + '</select></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Default Deposit %</label>'
+      + '<input type="number" id="qd-deposit" value="' + qd.defaultDeposit + '" min="0" max="100" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Quote Valid (days)</label>'
+      + '<input type="number" id="qd-validity" value="' + qd.quoteValidity + '" min="1" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;padding-top:20px;">'
+      + '<input type="checkbox" id="qd-show-prices" style="width:18px;height:18px;"' + (qd.showLineItemPrices ? ' checked' : '') + '>'
+      + '<label style="font-size:13px;">Show line item prices to client</label>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+
+    // ── Booking Form Settings ──
+    var bf = {
+      enabled: localStorage.getItem('bm-booking-enabled') !== 'false',
+      autoResponse: localStorage.getItem('bm-booking-auto-response') !== 'false',
+      requirePhone: localStorage.getItem('bm-booking-require-phone') !== 'false',
+      requireAddress: localStorage.getItem('bm-booking-require-address') !== 'false',
+      showServices: localStorage.getItem('bm-booking-show-services') !== 'false'
+    };
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;">Online Booking</h3>'
+      + '<button onclick="SettingsPage._saveBookingSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:10px;">'
+      + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
+      + '<input type="checkbox" id="bf-enabled" style="width:18px;height:18px;"' + (bf.enabled ? ' checked' : '') + '>'
+      + '<div><strong style="font-size:13px;">Online Booking Enabled</strong><div style="font-size:11px;color:var(--text-light);">Show booking form at peekskilltree.com/branchmanager/book.html</div></div></label>'
+      + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
+      + '<input type="checkbox" id="bf-auto-response" style="width:18px;height:18px;"' + (bf.autoResponse ? ' checked' : '') + '>'
+      + '<div><strong style="font-size:13px;">Auto-Response Email</strong><div style="font-size:11px;color:var(--text-light);">Send confirmation email when request is received</div></div></label>'
+      + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
+      + '<input type="checkbox" id="bf-require-phone" style="width:18px;height:18px;"' + (bf.requirePhone ? ' checked' : '') + '>'
+      + '<div><strong style="font-size:13px;">Require Phone Number</strong></div></label>'
+      + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
+      + '<input type="checkbox" id="bf-require-address" style="width:18px;height:18px;"' + (bf.requireAddress ? ' checked' : '') + '>'
+      + '<div><strong style="font-size:13px;">Require Property Address</strong></div></label>'
+      + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
+      + '<input type="checkbox" id="bf-show-services" style="width:18px;height:18px;"' + (bf.showServices ? ' checked' : '') + '>'
+      + '<div><strong style="font-size:13px;">Show Service Picker</strong><div style="font-size:11px;color:var(--text-light);">Let clients select the type of service they need</div></div></label>'
+      + '</div></div>';
+
+    // ── Review Settings ──
+    var rev = {
+      googleUrl: localStorage.getItem('bm-review-google-url') || 'https://g.page/r/CfY_something/review',
+      sendAfter: localStorage.getItem('bm-review-send-after') || 'completion',
+      delayDays: localStorage.getItem('bm-review-delay') || '1',
+      autoSend: localStorage.getItem('bm-review-auto') === 'true'
+    };
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;">Review Requests</h3>'
+      + '<button onclick="SettingsPage._saveReviewSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Google Review Link</label>'
+      + '<input type="url" id="rev-google-url" value="' + UI.esc(rev.googleUrl) + '" placeholder="https://g.page/r/your-business/review" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;">'
+      + '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Get this from Google Business Profile → Share review link</div></div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Send After</label>'
+      + '<select id="rev-send-after" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
+      + '<option value="completion"' + (rev.sendAfter === 'completion' ? ' selected' : '') + '>Job Completed</option>'
+      + '<option value="payment"' + (rev.sendAfter === 'payment' ? ' selected' : '') + '>Payment Received</option>'
+      + '</select></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Delay (days)</label>'
+      + '<input type="number" id="rev-delay" value="' + rev.delayDays + '" min="0" max="14" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '</div>'
+      + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
+      + '<input type="checkbox" id="rev-auto" style="width:18px;height:18px;"' + (rev.autoSend ? ' checked' : '') + '>'
+      + '<div><strong style="font-size:13px;">Auto-Send Review Requests</strong><div style="font-size:11px;color:var(--text-light);">Automatically email clients after job/payment (requires SendGrid)</div></div></label>'
+      + '</div>';
+
     // Products & Services Catalog
     var allServices = DB.services.getAll();
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
@@ -821,6 +944,36 @@ var SettingsPage = {
     localStorage.setItem('bm-min-job-hrs', document.getElementById('ws-min-job').value);
     localStorage.setItem('bm-crew-see-client', document.getElementById('ws-crew-client').checked ? 'true' : 'false');
     UI.toast('Work settings saved');
+  },
+
+  _saveNotifSettings: function() {
+    ['notif-quote-approved','notif-payment','notif-new-request','notif-overdue','notif-job-completed','notif-daily-summary'].forEach(function(id) {
+      localStorage.setItem('bm-' + id, document.getElementById(id).checked ? 'true' : 'false');
+    });
+    UI.toast('Notification preferences saved');
+  },
+
+  _saveQuoteDefaults: function() {
+    localStorage.setItem('bm-payment-terms', document.getElementById('qd-terms').value);
+    localStorage.setItem('bm-default-deposit', document.getElementById('qd-deposit').value);
+    localStorage.setItem('bm-quote-validity', document.getElementById('qd-validity').value);
+    localStorage.setItem('bm-show-line-prices', document.getElementById('qd-show-prices').checked ? 'true' : 'false');
+    UI.toast('Quote & invoice defaults saved');
+  },
+
+  _saveBookingSettings: function() {
+    ['bf-enabled','bf-auto-response','bf-require-phone','bf-require-address','bf-show-services'].forEach(function(id) {
+      localStorage.setItem('bm-booking-' + id.replace('bf-',''), document.getElementById(id).checked ? 'true' : 'false');
+    });
+    UI.toast('Booking settings saved');
+  },
+
+  _saveReviewSettings: function() {
+    localStorage.setItem('bm-review-google-url', document.getElementById('rev-google-url').value.trim());
+    localStorage.setItem('bm-review-send-after', document.getElementById('rev-send-after').value);
+    localStorage.setItem('bm-review-delay', document.getElementById('rev-delay').value);
+    localStorage.setItem('bm-review-auto', document.getElementById('rev-auto').checked ? 'true' : 'false');
+    UI.toast('Review settings saved');
   },
 
   _saveLocationSettings: function() {

@@ -386,7 +386,7 @@ var QuotesPage = {
       + '</div>'
 
       // ═══ TIME & EQUIPMENT (at the bottom, after all line items) ═══
-      + '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin:16px 0 12px;">✅ Finished Line Items — Time & Equipment</button>'
+      + '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin:16px 0 12px;' + (tmData.totalHrs ? 'display:none;' : '') + '">✅ Finished Line Items — Time & Equipment</button>'
 
       + '<div id="q-mode-tm" style="display:' + (tmData.totalHrs ? 'block' : 'none') + ';border:2px solid var(--accent);border-radius:10px;padding:16px;margin-bottom:12px;">'
       + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Production Estimate</div>'

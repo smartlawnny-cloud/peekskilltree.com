@@ -712,6 +712,8 @@ var QuotesPage = {
       + '<button onclick="QuotesPage._quickFollowUp(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📬 Send Follow-up</button>'
       + '<div style="height:1px;background:var(--border);margin:4px 0;"></div>'
       + '<button onclick="QuotesPage.setStatus(\'' + id + '\',\'declined\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:#dc3545;">✗ Mark Declined</button>'
+      + '<button onclick="QuotesPage._archiveQuote(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-light);">📦 Archive</button>'
+      + '<button onclick="QuotesPage._deleteQuote(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:#dc3545;">🗑 Delete Quote</button>'
       + '</div></div>'
       + '</div></div>'
 
@@ -751,20 +753,8 @@ var QuotesPage = {
       // Line items (Product / Service) — inline editor
       + QuotesPage.renderLineItems(q, id)
 
-      // Photos + Notes + Actions in bottom section
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="detail-grid">'
-
-      // Photos
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Photos</h4>';
-    if (typeof Photos !== 'undefined') { html += Photos.renderGallery('quote', id); }
-    else { html += '<div style="color:var(--text-light);font-size:13px;">No photos</div>'; }
-    html += '</div>'
-
-      // Notes + Actions
-      + '<div>'
-      // Video walkthrough
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      // Video walkthrough (full width, above photos)
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Video Walkthrough</h4>'
       + (q.videoUrl
         ? '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-bottom:8px;">'
@@ -780,6 +770,18 @@ var QuotesPage = {
           + '</div>')
       + '</div>'
 
+      // Photos + Notes + Actions in bottom section
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="detail-grid">'
+
+      // Photos
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Photos</h4>';
+    if (typeof Photos !== 'undefined') { html += Photos.renderGallery('quote', id); }
+    else { html += '<div style="color:var(--text-light);font-size:13px;">No photos</div>'; }
+    html += '</div>'
+
+      // Notes + Actions
+      + '<div>'
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Internal Notes</h4>'
       + (q.notes ? '<div style="font-size:13px;line-height:1.6;">' + UI.esc(q.notes) + '</div>' : '<div style="color:var(--text-light);font-size:13px;">No notes</div>')
@@ -1755,5 +1757,19 @@ var QuotesPage = {
     DB.quotes.update(quoteId, { videoUrl: null });
     UI.toast('Video removed');
     QuotesPage.showDetail(quoteId);
+  },
+
+  _archiveQuote: function(quoteId) {
+    if (!confirm('Archive this quote? It will be hidden from the main list.')) return;
+    DB.quotes.update(quoteId, { status: 'archived' });
+    UI.toast('Quote archived');
+    loadPage('quotes');
+  },
+
+  _deleteQuote: function(quoteId) {
+    if (!confirm('Delete this quote permanently? This cannot be undone.')) return;
+    DB.quotes.delete(quoteId);
+    UI.toast('Quote deleted');
+    loadPage('quotes');
   }
 };

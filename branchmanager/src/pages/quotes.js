@@ -262,23 +262,49 @@ var QuotesPage = {
 
     var html = '<form id="quote-form" onsubmit="QuotesPage.save(event, \'' + (quoteId || '') + '\')">';
 
-    // Client selector
+    // Client + property + description (minimal, auto-filled)
+    var _qProperty = q.property || (client ? client.address : '') || '';
+    var _qDesc = q.description || '';
+
+    // Auto-fill description from request notes if creating from a request
+    if (!_qDesc && !quoteId) {
+      // Check if there's a recently converted request with notes
+      var recentReqs = DB.requests.getAll().filter(function(r) {
+        return r.status === 'converted' && r.clientName === (client ? client.name : '');
+      });
+      if (recentReqs.length > 0 && recentReqs[0].notes) _qDesc = recentReqs[0].notes;
+      if (!_qDesc && recentReqs.length > 0 && recentReqs[0].service) _qDesc = recentReqs[0].service;
+    }
+
     if (client) {
       html += '<input type="hidden" id="q-clientId" value="' + client.id + '">'
-        + '<div class="form-group"><label>Client</label><div style="padding:8px 12px;background:var(--bg);border-radius:8px;font-weight:600;">' + client.name + '<br><span style="font-weight:400;font-size:13px;color:var(--text-light);">' + (client.address || '') + '</span></div></div>';
+        + '<div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:16px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+        + '<div>'
+        + '<a onclick="UI.closeModal();ClientsPage.showDetail(\'' + client.id + '\')" style="font-size:16px;font-weight:700;color:var(--text);cursor:pointer;text-decoration:none;border-bottom:1px dashed var(--text-light);">' + UI.esc(client.name) + '</a>'
+        + (_qProperty ? '<div style="margin-top:4px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(_qProperty) + '" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(_qProperty) + ' →</a></div>' : '')
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '<input type="hidden" id="q-property" value="' + UI.esc(_qProperty) + '">';
     } else {
-      // Search-as-you-type client selector (fast, handles 500+ clients)
+      // Search-as-you-type client selector
       html += '<div class="form-group"><label>Client *</label>'
         + '<input type="hidden" id="q-clientId" value="">'
         + '<input type="text" id="q-client-search" placeholder="Type client name..." autocomplete="off" '
         + 'oninput="QuotesPage._searchClient(this.value)" '
         + 'style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;">'
         + '<div id="q-client-results" style="display:none;position:relative;z-index:10;"></div>'
-        + '</div>';
+        + '</div>'
+        + '<input type="hidden" id="q-property" value="">';
     }
 
-    html += UI.formField('Property Address', 'text', 'q-property', q.property || (client ? client.address : ''), { placeholder: 'Job site address' })
-      + UI.formField('Description', 'text', 'q-description', q.description, { placeholder: 'e.g., Tree removal - 2 oaks' });
+    // Description — show as editable text, auto-filled from request notes
+    html += '<div class="form-group" style="margin-bottom:12px;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Description</label>'
+      + '<input type="text" id="q-description" value="' + UI.esc(_qDesc) + '" placeholder="e.g., Tree removal - 2 oaks" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;">'
+      + (_qDesc ? '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">Auto-filled from request</div>' : '')
+      + '</div>';
 
     // Inline Job Estimator (replaces popup)
     html += '<div style="margin:16px 0;background:#f9fafb;border:2px solid var(--border);border-radius:10px;padding:16px;">'

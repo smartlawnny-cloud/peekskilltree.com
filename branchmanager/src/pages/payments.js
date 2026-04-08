@@ -208,7 +208,7 @@ var Payments = {
     html += '</div>';
 
     // === Column headers ===
-    html += '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 110px;gap:8px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;">'
+    html += '<div class="detail-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 110px;gap:8px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;">'
       + '<div>Client</div>'
       + '<div>Payment date</div>'
       + '<div>Payout date</div>'
@@ -267,7 +267,7 @@ var Payments = {
         ? '<a href="#" onclick="loadPage(\'invoices\');setTimeout(function(){if(typeof InvoicesPage!==\'undefined\')InvoicesPage.showDetail(\'' + p.invoiceId + '\');},100);return false;" style="color:var(--green-dark);font-size:13px;text-decoration:none;">Invoice #' + UI.esc(invNum) + '</a>'
         : '<span style="font-size:13px;color:var(--text-light);">No invoice</span>';
 
-      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:6px;display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 110px;gap:8px;align-items:center;">'
+      html += '<div class="detail-grid" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:6px;display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 110px;gap:8px;align-items:center;">'
 
         // Client name + invoice link
         + '<div>'

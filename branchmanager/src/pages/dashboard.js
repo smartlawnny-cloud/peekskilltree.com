@@ -45,9 +45,9 @@ var DashboardPage = {
       + '<div style="font-size:13px;color:var(--text-light);">' + dayNames[now.getDay()] + ', ' + monthFull[now.getMonth()] + ' ' + now.getDate() + '</div>'
       + '<h2 style="font-size:28px;font-weight:700;margin-top:2px;">' + greeting + ', ' + userName.split(' ')[0] + '</h2>'
       + '</div>'
-      + '<div style="text-align:right;min-width:180px;">'
+      + '<div style="text-align:right;min-width:0;flex:1;max-width:200px;">'
       + '<div style="font-size:12px;color:var(--text-light);margin-bottom:3px;">' + monthFull[now.getMonth()] + ': ' + UI.moneyInt(_monthRevenue) + ' / ' + UI.moneyInt(_goalData.monthly) + '</div>'
-      + '<div style="background:#e8e8e8;border-radius:4px;height:6px;width:180px;overflow:hidden;">'
+      + '<div style="background:#e8e8e8;border-radius:4px;height:6px;width:100%;max-width:180px;overflow:hidden;margin-left:auto;">'
       + '<div style="background:var(--green-dark);height:100%;width:' + _monthPct + '%;border-radius:4px;"></div></div>'
       + '<div style="font-size:11px;color:' + (_monthPct >= 100 ? 'var(--green-dark)' : 'var(--text-light)') + ';margin-top:2px;">' + _monthPct + '% of monthly goal</div>'
       + '</div></div>';
@@ -83,7 +83,7 @@ var DashboardPage = {
 
       var mottCards = [];
       if (mottStaleQuotes.length > 0) {
-        mottCards.push('<div style="flex:1;min-width:200px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px 16px;position:relative;">'
+        mottCards.push('<div style="flex:1;min-width:0;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px 16px;position:relative;">'
           + '<div style="font-size:11px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Stale Quotes</div>'
           + '<div style="font-size:26px;font-weight:800;color:#e65100;">' + mottStaleQuotes.length + ' <span style="font-size:15px;font-weight:600;">' + UI.moneyInt(mottStaleValue) + '</span></div>'
           + '<div style="font-size:12px;color:#bf360c;margin-bottom:10px;">Sent 20+ days ago, no response</div>'
@@ -91,7 +91,7 @@ var DashboardPage = {
           + '</div>');
       }
       if (mottOverdueInv.length > 0) {
-        mottCards.push('<div style="flex:1;min-width:200px;background:#fce4ec;border:1px solid #f48fb1;border-radius:10px;padding:14px 16px;position:relative;">'
+        mottCards.push('<div style="flex:1;min-width:0;background:#fce4ec;border:1px solid #f48fb1;border-radius:10px;padding:14px 16px;position:relative;">'
           + '<div style="font-size:11px;font-weight:700;color:#c62828;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Overdue Invoices</div>'
           + '<div style="font-size:26px;font-weight:800;color:#c62828;">' + mottOverdueInv.length + ' <span style="font-size:15px;font-weight:600;">' + UI.moneyInt(mottOverdueTotal) + '</span></div>'
           + '<div style="font-size:12px;color:#b71c1c;margin-bottom:10px;">Past due, unpaid balance</div>'
@@ -99,7 +99,7 @@ var DashboardPage = {
           + '</div>');
       }
       if (mottUninvoiced.length > 0) {
-        mottCards.push('<div style="flex:1;min-width:200px;background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:14px 16px;position:relative;">'
+        mottCards.push('<div style="flex:1;min-width:0;background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:14px 16px;position:relative;">'
           + '<div style="font-size:11px;font-weight:700;color:#0d47a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Completed, Not Invoiced</div>'
           + '<div style="font-size:26px;font-weight:800;color:#0d47a1;">' + mottUninvoiced.length + ' <span style="font-size:15px;font-weight:600;color:#1565c0;">job' + (mottUninvoiced.length!==1?'s':'') + '</span></div>'
           + '<div style="font-size:12px;color:#0d47a1;margin-bottom:10px;">Completed with no invoice yet</div>'

@@ -312,8 +312,8 @@
     /* Detail grids — stack on mobile */
     .detail-grid { grid-template-columns:1fr !important; }
 
-    /* Quote/Invoice line items — stack vertically on mobile */
-    .quote-item-row { grid-template-columns:1fr 1fr !important; gap:6px !important; }
+    /* Quote/Invoice line items — single column on mobile */
+    .quote-item-row { grid-template-columns:1fr !important; gap:6px !important; }
 
     /* Make tables horizontally scrollable on mobile */
     div:has(> .data-table) { overflow-x:auto !important; -webkit-overflow-scrolling:touch; }
@@ -331,10 +331,18 @@
 
     /* Safe areas for iPhone notch/home indicator */
     .content { padding-bottom:max(24px, env(safe-area-inset-bottom)) !important; }
-    .toast { bottom:max(24px, env(safe-area-inset-bottom)) !important; }
+    .toast { bottom:max(24px, env(safe-area-inset-bottom)) !important; left:16px !important; right:16px !important; border-radius:12px !important; }
+    .modal { padding-bottom:env(safe-area-inset-bottom) !important; }
 
-    /* Toast */
-    .toast { bottom:24px !important; left:16px !important; right:16px !important; border-radius:12px !important; }
+    /* z-index hierarchy: sidebar-overlay(150) < sidebar(200) < modal(300) < toast(400) < search(500) */
+    .sidebar-overlay { z-index:150 !important; }
+    .sidebar { z-index:200 !important; }
+    .modal-overlay { z-index:300 !important; }
+    .avatar-menu { z-index:350 !important; }
+    .toast { z-index:400 !important; }
+
+    /* Hide "Menu" text on very small screens */
+    @media (max-width:400px) { .hamburger::after { content:'' !important; } }
 
     /* Modal full-screen on mobile */
     .modal-overlay { padding:0 !important; align-items:flex-end !important; }

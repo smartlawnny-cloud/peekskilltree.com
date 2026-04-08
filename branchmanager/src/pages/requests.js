@@ -510,6 +510,13 @@ var RequestsPage = {
       + '<button onclick="RequestsPage._saveAssessmentDate(\'' + r.id + '\')" class="btn btn-primary" style="width:100%;font-size:13px;">Save Date</button>'
       + '</div>'
 
+    // Assessment photos
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Assessment Photos</h4>';
+    if (typeof Photos !== 'undefined') { html += Photos.renderGallery('request', r.id); }
+    else { html += '<div style="color:var(--text-light);font-size:13px;">No photos yet</div>'; }
+    html += '</div>'
+
     // Quick info
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Details</h4>'

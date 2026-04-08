@@ -208,9 +208,7 @@
       // Other methods
       + '<div class="other-methods">'
       + '<h4>Other ways to pay</h4>'
-      + '<div class="method-row"><div class="method-icon" style="background:#e8f4fd;">💙</div><div><div class="method-label">Venmo</div><div class="method-detail">@SecondNatureTree &nbsp;·&nbsp; (914) 391-5233</div></div></div>'
-      + '<div class="method-row"><div class="method-icon" style="background:#fff8e1;">💛</div><div><div class="method-label">Zelle</div><div class="method-detail">info@peekskilltree.com</div></div></div>'
-      + '<div class="method-row"><div class="method-icon" style="background:#f0f9f4;">📬</div><div><div class="method-label">Check / Cash</div><div class="method-detail">1 Highland Industrial Park, Peekskill NY 10566</div></div></div>'
+      + '<div class="method-row"><div class="method-icon" style="background:#f0f4ff;">📞</div><div><div class="method-label">Questions?</div><div class="method-detail">Call or text (914) 391-5233</div></div></div>'
       + '<div class="method-row"><div class="method-icon" style="background:#fce4ec;">📞</div><div><div class="method-label">Call or Text</div><div class="method-detail"><a href="tel:+19143915233" style="color:#00836c;font-weight:600;">(914) 391-5233</a> &nbsp;·&nbsp; Doug Brown</div></div></div>'
       + '</div>'
       + (stripeLink ? '<div class="secure-badge">🔒 Card payments secured by Stripe &nbsp;·&nbsp; We never store your card info</div>' : '')
@@ -264,7 +262,7 @@
       }
 
       if (!stripeLink) {
-        alert('Online card payment is not available for this invoice yet.\n\nAlternate ways to pay:\n• Venmo: @SecondNatureTree\n• Zelle: info@peekskilltree.com\n• Check: 1 Highland Industrial Park, Peekskill NY 10566\n• Call: (914) 391-5233');
+        alert('Online card payment is not available for this invoice yet.\n\nPlease call (914) 391-5233 to arrange payment.');
         return;
       }
 

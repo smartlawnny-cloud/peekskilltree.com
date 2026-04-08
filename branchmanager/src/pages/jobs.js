@@ -654,7 +654,7 @@ var JobsPage = {
       })()
       + (j.crew && j.crew.length > 0 ? '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage._textCrew(\'' + id + '\')">📲 Text Crew</button>' : '')
       + (j.status === 'completed' ? '<button class="btn btn-outline" style="font-size:12px;color:#f9a825;border-color:#f9a825;" onclick="JobsPage._requestReview(\'' + id + '\')">⭐ Request Review</button>' : '')
-      + (j.status === 'scheduled' || j.status === 'in_progress' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage._getSignature(\'' + id + '\')">✓ Mark Complete</button>' : '')
+      + (j.status === 'scheduled' || j.status === 'in_progress' ? '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage._markComplete(\'' + id + '\')">✓ Mark Complete</button>' : '')
       + (j.status === 'completed' && !j.invoiceId ? '<button class="btn btn-primary" style="font-size:12px;" onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()">💰 Create Invoice</button>' : '')
       + (j.status !== 'completed' || j.invoiceId ? '<button class="btn btn-outline" style="font-size:12px;" onclick="PDF.generateJobSheet(\'' + id + '\')">📄 Job Sheet</button>' : '')
       + '<button class="btn btn-outline" style="font-size:12px;" onclick="JobsPage.showForm(\'' + id + '\')">✏️ Edit</button>'
@@ -664,7 +664,7 @@ var JobsPage = {
       + '<button onclick="JobsPage.showForm(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit Job</button>'
       + '<button onclick="PDF.generateJobSheet(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📄 Job Sheet PDF</button>'
       + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);text-decoration:none;">🗺 Navigate to Property</a>' : '')
-      + (j.status !== 'completed' ? '<button onclick="JobsPage._getSignature(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✓ Mark Complete</button>' : '')
+      + (j.status !== 'completed' ? '<button onclick="JobsPage._markComplete(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✓ Mark Complete</button>' : '')
       + (j.status === 'completed' && !j.invoiceId ? '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">💰 Create Invoice</button>' : '')
       + '<button onclick="JobsPage._requestReview(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">⭐ Request Review</button>'
       + '<div style="height:1px;background:var(--border);margin:4px 0;"></div>'

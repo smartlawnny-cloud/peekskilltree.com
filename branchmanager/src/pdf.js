@@ -181,12 +181,9 @@ var PDF = {
 
     // Payment methods
     html += '<div style="background:#f0f8e8;border-radius:8px;padding:16px;margin-bottom:24px;border:1px solid #c8e6c9;">'
-      + '<h4 style="font-size:14px;color:#1a3c12;margin-bottom:10px;">Payment Options</h4>'
-      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center;font-size:13px;">'
-      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>💳 Card</strong><br><span style="font-size:11px;color:#666;">Pay online via link</span></div>'
-      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>📝 Check</strong><br><span style="font-size:11px;color:#666;">' + PDF._co().name + '</span></div>'
-      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>Venmo</strong><br><span style="font-size:11px;color:#666;">@SecondNatureTree</span></div>'
-      + '<div style="padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>Zelle</strong><br><span style="font-size:11px;color:#666;">info@peekskilltree.com</span></div>'
+      + '<h4 style="font-size:14px;color:#1a3c12;margin-bottom:10px;">Payment</h4>'
+      + '<div style="text-align:center;font-size:14px;">'
+      + '<div style="padding:12px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;"><strong>💳 Pay online via the link in your email</strong><br><span style="font-size:12px;color:#666;">Secure card payment powered by Stripe</span></div>'
       + '</div></div>';
 
     // Payment terms

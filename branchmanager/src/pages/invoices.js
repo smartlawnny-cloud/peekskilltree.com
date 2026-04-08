@@ -443,7 +443,7 @@ var InvoicesPage = {
       + '  Amount Due: ' + amtDue + '\n'
       + (inv.dueDate ? '  Due: ' + UI.dateShort(inv.dueDate) + '\n' : '') + '\n'
       + 'Pay online (card, or tip optional):\n' + payLink + '\n\n'
-      + 'Also accepted: Venmo (@SecondNatureTree), Zelle (info@peekskilltree.com), check, or cash.\n\n'
+      + ''
       + 'Questions? Reply to this email or call/text ' + InvoicesPage._co().phone + '.\n\n'
       + 'Thanks,\nDoug Brown\n' + InvoicesPage._co().name + '\n' + InvoicesPage._co().phone + '\n' + InvoicesPage._co().website;
 
@@ -479,12 +479,7 @@ var InvoicesPage = {
       + '<a href="' + payLink + '" style="display:inline-block;background:linear-gradient(135deg,#00836c,#1a3c12);color:#fff;padding:16px 36px;border-radius:10px;font-size:17px;font-weight:800;text-decoration:none;letter-spacing:-0.3px;box-shadow:0 4px 14px rgba(0,131,108,.35);">💳 Pay ' + amtDue + ' Online</a>'
       + '</div>'
       + '<p style="font-size:12px;color:#a0aec0;text-align:center;margin-bottom:20px;">You can also add an optional gratuity for the crew on the payment page.</p>'
-      + '<div style="background:#f7fafc;border-radius:8px;padding:14px 16px;font-size:13px;color:#4a5568;">'
-      + '<strong>Other ways to pay:</strong><br>'
-      + '• <strong>Venmo:</strong> @SecondNatureTree<br>'
-      + '• <strong>Zelle:</strong> info@peekskilltree.com<br>'
-      + '• <strong>Check/Cash:</strong> 1 Highland Industrial Park, Peekskill NY 10566'
-      + '</div>'
+      + ''
       + '<p style="font-size:13px;color:#718096;margin-top:16px;">Questions? Reply to this email or call/text <strong>' + InvoicesPage._co().phone + '</strong>.</p>'
       + '<p style="font-size:13px;color:#2d3748;margin-top:12px;">Thanks,<br><strong>Doug Brown</strong><br>' + InvoicesPage._co().name + '</p>'
       + '</div></div></div>';

@@ -841,11 +841,11 @@ function toggleSidebar() {
 var pageConfigs = {
   dashboard: { title: 'Dashboard', action: null },
   pipeline: { title: 'Pipeline', action: '+ Add Deal', actionFn: 'PipelinePage.addDeal("new_lead")' },
-  schedule: { title: 'Schedule', action: '+ New Job', actionFn: 'JobsPage.showForm()' },
+  schedule: { title: 'Schedule', action: null },
   clients: { title: 'Clients', action: '+ New Client', actionFn: 'ClientsPage.showForm()' },
   requests: { title: 'Requests', action: '+ New Request', actionFn: 'RequestsPage.showForm()' },
-  quotes: { title: 'Quotes', action: '+ New Quote', actionFn: 'QuotesPage.showForm()' },
-  jobs: { title: 'Jobs', action: '+ New Job', actionFn: 'JobsPage.showForm()' },
+  quotes: { title: 'Quotes', action: null },
+  jobs: { title: 'Jobs', action: null },
   invoices: { title: 'Invoices', action: '+ New Invoice', actionFn: 'InvoicesPage.showForm()' },
   insights: { title: 'Insights', action: null },
   reviews: { title: 'Reviews', action: null },
@@ -1376,8 +1376,6 @@ var QuickCreate = {
     var html = '<div style="display:grid;gap:8px;">'
       + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();ClientsPage.showForm()"><span style="font-size:20px;">👥</span> New Client</button>'
       + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();RequestsPage.showForm()"><span style="font-size:20px;">📥</span> New Request</button>'
-      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();QuotesPage.showForm()"><span style="font-size:20px;">📋</span> New Quote</button>'
-      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();JobsPage.showForm()"><span style="font-size:20px;">🔧</span> New Job</button>'
       + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();Estimator.show()"><span style="font-size:20px;">🧮</span> Quick Estimate</button>'
       + '</div>';
     UI.showModal('Create New', html);

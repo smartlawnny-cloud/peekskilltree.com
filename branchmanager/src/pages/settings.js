@@ -355,7 +355,7 @@ var SettingsPage = {
       + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
       + '<div style="width:40px;height:40px;background:linear-gradient(135deg,#D4A574,#C4956A);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🤖</div>'
       + '<div><h3 style="margin:0;">AI Assistant</h3>'
-      + '<div style="font-size:12px;color:' + (aiOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (aiOk ? '✅ Connected — AI estimates & emails active' : '⚠️ Not connected — paste your Anthropic API key') + '</div>'
+      + '<div style="font-size:12px;color:' + (aiOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (aiOk ? '✅ Connected — AI estimates & emails active' : '⚠️ Not connected — paste your AI API key') + '</div>'
       + '</div></div>'
       + '<div style="margin-bottom:8px;"><input type="password" id="claude-ai-key" value="' + aiKey + '" placeholder="sk-ant-api03-..." style="width:100%;padding:10px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'

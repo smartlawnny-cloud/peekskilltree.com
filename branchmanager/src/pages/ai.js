@@ -275,7 +275,7 @@ var AI = {
       + (isUser ? 'background:var(--accent);color:#fff;' : 'background:linear-gradient(135deg,#D4A574,#C4956A);color:#fff;') + '">'
       + (isUser ? '👤' : '✦') + '</div>'
       + '<div style="flex:1;max-width:calc(100% - 44px);">'
-      + '<div style="font-size:11px;color:var(--text-light);margin-bottom:4px;' + (isUser ? 'text-align:right;' : '') + '">' + (isUser ? 'You' : 'Claude') + '</div>'
+      + '<div style="font-size:11px;color:var(--text-light);margin-bottom:4px;' + (isUser ? 'text-align:right;' : '') + '">' + (isUser ? 'You' : 'AI Assistant') + '</div>'
       + '<div id="' + msgId + '" style="background:' + (isUser ? 'var(--accent)' : 'var(--bg)') + ';color:' + (isUser ? '#fff' : 'var(--text)') + ';padding:10px 14px;border-radius:' + (isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px') + ';font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;">'
       + AI._formatResponse(msg.content) + '</div>'
       + copyBtn

@@ -30,10 +30,11 @@ var DashboardPage = {
     var monthFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var hour = now.getHours();
     var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name || 'Doug' : 'Doug';
+    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name || 'there' : 'there';
     // Greeting + monthly goal progress inline
+    var allInvoicesEarly = DB.invoices.getAll();
     var _goalData = JSON.parse(localStorage.getItem('bm-revenue-goals') || '{"annual":300000,"monthly":25000}');
-    var _monthRevenue = allInvoices.filter(function(i) {
+    var _monthRevenue = allInvoicesEarly.filter(function(i) {
       var d = new Date(i.createdAt || i.issuedDate);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && (i.status === 'paid' || i.status === 'collected');
     }).reduce(function(s, i) { return s + (i.total || 0); }, 0);

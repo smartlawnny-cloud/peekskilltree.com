@@ -139,7 +139,7 @@ function render(client, quotes, jobs, invoices) {
     var unpaidTotal = unpaidInvoices.reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0);
     html += '<div style="background:#ffebee;border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid #ffcdd2;">'
       + '<strong style="color:#c62828;">💰 ' + money(unpaidTotal) + ' balance due</strong>'
-      + '<div style="font-size:13px;color:#666;margin-top:4px;">Pay securely online — we accept card, Venmo & Zelle.</div>'
+      + '<div style="font-size:13px;color:#666;margin-top:4px;">Pay securely online via card.</div>'
       + '</div>';
   }
 

@@ -58,7 +58,7 @@ var CloudSync = {
 
           localStorage.setItem(localKey, JSON.stringify(converted));
           totalRows += converted.length;
-          console.log('CloudSync: loaded ' + converted.length + ' ' + table);
+          if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: loaded ' + converted.length + ' ' + table);
         }
       } catch (e) {
         console.warn('CloudSync: failed ' + table + ':', e);
@@ -67,7 +67,7 @@ var CloudSync = {
 
     CloudSync.syncing = false;
     CloudSync.lastSync = Date.now();
-    console.log('CloudSync: done — ' + totalRows + ' total rows cached');
+    if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: done — ' + totalRows + ' total rows cached');
 
     // Refresh page if we loaded new data
     if (totalRows > 0 && typeof loadPage === 'function') {
@@ -136,7 +136,7 @@ var CloudSync = {
       }
     });
 
-    console.log('CloudSync: write methods wrapped');
+    if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: write methods wrapped');
   },
 
   // Show unsynced indicator in topbar
@@ -196,7 +196,7 @@ var CloudSync = {
       CloudSync.init().then(function() { CloudSync.wrapWrites(); });
     } else {
       CloudSync.wrapWrites();
-      console.log('CloudSync: using cached data (' + JSON.parse(localClients).length + ' clients)');
+      if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: using cached data (' + JSON.parse(localClients).length + ' clients)');
     }
   } else if (attempts > 0) {
     setTimeout(function() { waitForSupabase(attempts - 1); }, 1000);

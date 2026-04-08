@@ -1,6 +1,6 @@
 // Branch Manager — Service Worker v9
 // Full offline support + push notifications
-var CACHE_NAME = 'branch-manager-v118';
+var CACHE_NAME = 'branch-manager-v119';
 var ASSETS = [
   './',
   './index.html',

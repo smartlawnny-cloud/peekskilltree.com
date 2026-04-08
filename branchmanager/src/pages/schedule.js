@@ -23,14 +23,14 @@ var SchedulePage = {
     html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">';
     if (typeof Weather !== 'undefined') {
       html += '<div style="display:flex;align-items:center;gap:6px;">'
-        + '<span style="font-size:13px;color:var(--text-light);">🌤 Weather</span>'
+        + '<span style="font-size:13px;color:var(--text-light);">Weather</span>'
         + '<button onclick="Weather.toggle()" style="position:relative;width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;background:' + (wEnabled ? 'var(--accent)' : '#ccc') + ';transition:background .2s;">'
         + '<span style="position:absolute;top:2px;' + (wEnabled ? 'left:18px' : 'left:2px') + ';width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span></button>'
         + '</div>';
       if (wEnabled) setTimeout(function() { Weather.fetch(); }, 100);
     }
     html += '<div style="display:flex;align-items:center;gap:6px;">'
-      + '<span style="font-size:13px;color:var(--text-light);">📷 Photos</span>'
+      + '<span style="font-size:13px;color:var(--text-light);">Photos</span>'
       + '<button onclick="SchedulePage._togglePhotos()" style="position:relative;width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;background:' + (pEnabled ? 'var(--accent)' : '#ccc') + ';transition:background .2s;">'
       + '<span style="position:absolute;top:2px;' + (pEnabled ? 'left:18px' : 'left:2px') + ';width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span></button>'
       + '</div>'

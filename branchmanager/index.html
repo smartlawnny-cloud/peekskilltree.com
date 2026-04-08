@@ -1098,6 +1098,9 @@ function loadPage(page) {
     content.innerHTML = '<div class="empty-state"><div class="empty-icon" style="font-size:32px;color:var(--text-light);">—</div><h3>Page Not Available</h3><p>' + config.title + ' is not configured yet.</p></div>';
   }
 
+  // Render Lucide icons added by page renderers
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+
   // Post-render hooks
   if (page === 'dispatch' && typeof DispatchPage !== 'undefined' && DispatchPage.initMap) {
     setTimeout(function() { DispatchPage.initMap(); }, 200);
@@ -1390,11 +1393,12 @@ document.addEventListener('click', function(e) {
 var QuickCreate = {
   show: function() {
     var html = '<div style="display:grid;gap:8px;">'
-      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();RequestsPage.showForm()"><span style="font-size:20px;">📥</span> New Request</button>'
-      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();InvoicesPage.showForm()"><span style="font-size:20px;">💰</span> New Invoice</button>'
-      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();Estimator.show()"><span style="font-size:20px;">🧮</span> Quick Estimate</button>'
+      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();RequestsPage.showForm()"><i data-lucide="inbox" style="width:20px;height:20px;"></i> New Request</button>'
+      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();InvoicesPage.showForm()"><i data-lucide="dollar-sign" style="width:20px;height:20px;"></i> New Invoice</button>'
+      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();Estimator.show()"><i data-lucide="calculator" style="width:20px;height:20px;"></i> Quick Estimate</button>'
       + '</div>';
     UI.showModal('Create New', html);
+    if (typeof lucide !== 'undefined') lucide.createIcons();
     if (window.innerWidth <= 768) toggleSidebar();
   }
 };

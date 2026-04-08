@@ -314,7 +314,7 @@ var DashboardPage = {
     });
     html += '<div onclick="loadPage(\'requests\')" style="padding:16px 20px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;position:relative;">'
       + '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#e07c24;"></div>'
-      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;">📋 Requests</div>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;"><i data-lucide="inbox" style="width:14px;height:14px;vertical-align:middle;"></i> Requests</div>'
       + '<div style="font-size:32px;font-weight:700;">' + newRequests.length + '</div>'
       + '<div style="font-size:14px;font-weight:600;">New</div>'
       + '<div style="font-size:12px;color:var(--text-light);margin-top:6px;">Assessments complete (' + assessedRequests.length + ')</div>'
@@ -325,7 +325,7 @@ var DashboardPage = {
     var awaitingQuotes = allQuotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
     html += '<div onclick="loadPage(\'quotes\')" style="padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;position:relative;">'
       + '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#8b2252;"></div>'
-      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;">💰 Quotes</div>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:middle;"></i> Quotes</div>'
       + '<div style="font-size:32px;font-weight:700;display:inline;">' + approvedQuotes.length + '</div>'
       + '<span style="font-size:14px;color:var(--text-light);margin-left:6px;">' + UI.moneyInt(reqTotal) + '</span>'
       + '<div style="font-size:14px;font-weight:600;">Approved</div>'
@@ -336,7 +336,7 @@ var DashboardPage = {
     // Jobs card
     html += '<div onclick="loadPage(\'jobs\')" style="padding:16px 20px;border-right:1px solid var(--border);cursor:pointer;position:relative;">'
       + '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#2e7d32;"></div>'
-      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;">🔧 Jobs</div>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;"><i data-lucide="wrench" style="width:14px;height:14px;vertical-align:middle;"></i> Jobs</div>'
       + '<div style="font-size:32px;font-weight:700;">' + needsInvoicing.length + '</div>'
       + '<div style="font-size:14px;font-weight:600;">Requires invoicing</div>'
       + '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-top:6px;"><span>Active (' + activeJobs.length + ')</span><span>' + UI.moneyInt(activeJobTotal) + '</span></div>'
@@ -346,7 +346,7 @@ var DashboardPage = {
     // Invoices card
     html += '<div onclick="loadPage(\'invoices\')" style="padding:16px 20px;cursor:pointer;position:relative;">'
       + '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#1565c0;"></div>'
-      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;">📄 Invoices</div>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text-light);font-size:12px;font-weight:600;"><i data-lucide="receipt" style="width:14px;height:14px;vertical-align:middle;"></i> Invoices</div>'
       + '<div style="font-size:32px;font-weight:700;display:inline;">' + unpaidInvoices.length + '</div>'
       + '<span style="font-size:14px;color:var(--text-light);margin-left:6px;">' + UI.moneyInt(unpaidInvoices.reduce(function(s,i){return s+(i.balance||0);},0)) + '</span>'
       + '<div style="font-size:14px;font-weight:600;">Awaiting payment</div>'

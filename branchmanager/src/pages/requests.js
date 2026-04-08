@@ -270,7 +270,10 @@ var RequestsPage = {
   _getFiltered: function() {
     var self = RequestsPage;
     var all = DB.requests.getAll();
-    if (self._filter === 'converted') {
+    // Default: hide converted and archived (they're done — show in Clients page)
+    if (self._filter === 'all') {
+      all = all.filter(function(r) { return r.status !== 'converted' && r.status !== 'quoted' && r.status !== 'archived'; });
+    } else if (self._filter === 'converted') {
       all = all.filter(function(r) { return r.status === 'converted' || r.status === 'quoted'; });
     } else if (self._filter === 'overdue') {
       all = all.filter(function(r) { return self._isOverdue(r); });
@@ -492,15 +495,56 @@ var RequestsPage = {
     // ── Right sidebar ──
       + '<div>'
 
-    // Contact card
+    // Auto-match client by phone/email/name
+    var matchedClient = null;
+    if (r.clientId) {
+      matchedClient = DB.clients.getById(r.clientId);
+    }
+    if (!matchedClient && r.phone) {
+      var ph = r.phone.replace(/\D/g,'');
+      matchedClient = DB.clients.getAll().find(function(c) { return c.phone && c.phone.replace(/\D/g,'') === ph; });
+    }
+    if (!matchedClient && r.email) {
+      var em = r.email.toLowerCase();
+      matchedClient = DB.clients.getAll().find(function(c) { return c.email && c.email.toLowerCase() === em; });
+    }
+    if (!matchedClient && r.clientName) {
+      matchedClient = DB.clients.getAll().find(function(c) { return c.name && c.name.toLowerCase() === r.clientName.toLowerCase(); });
+    }
+    // Auto-link if found but not linked
+    if (matchedClient && !r.clientId) {
+      DB.requests.update(r.id, { clientId: matchedClient.id });
+      r.clientId = matchedClient.id;
+    }
+
+    // Client history
+    var clientQuotes = matchedClient ? DB.quotes.getAll().filter(function(q) { return q.clientId === matchedClient.id; }) : [];
+    var clientJobs = matchedClient ? DB.jobs.getAll().filter(function(j) { return j.clientId === matchedClient.id; }) : [];
+    var clientInvoices = matchedClient ? DB.invoices.getAll().filter(function(i) { return i.clientId === matchedClient.id; }) : [];
+    var clientRevenue = clientInvoices.filter(function(i) { return i.status === 'paid'; }).reduce(function(s,i) { return s + (i.total||0); }, 0);
+
+    html
+    // Contact card with client history
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">'
-      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Contact</h4>'
-      + '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">' + UI.esc(r.clientName || '—') + '</div>'
-      + (r.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(r.property) + '" target="_blank" style="display:block;font-size:13px;color:var(--accent);margin-bottom:12px;text-decoration:none;">📍 ' + UI.esc(r.property) + ' →</a>' : '')
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Client</h4>'
+      + '<div style="font-size:16px;font-weight:700;margin-bottom:4px;">' + UI.esc(r.clientName || '—')
+      + (matchedClient ? ' <span style="font-size:11px;color:var(--green-dark);font-weight:600;">● Existing</span>' : ' <span style="font-size:11px;color:#e07c24;font-weight:600;">● New Lead</span>')
+      + '</div>'
+      + (r.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(r.property) + '" target="_blank" style="display:block;font-size:13px;color:var(--accent);margin-bottom:8px;text-decoration:none;">📍 ' + UI.esc(r.property) + ' →</a>' : '')
       + (r.phone ? '<a href="tel:' + r.phone.replace(/\D/g,'') + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;">📞 ' + UI.phone(r.phone) + '</a>' : '')
       + (r.phone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;" onclick="if(typeof Dialpad!==\'undefined\'){Dialpad.showTextModal(\'' + r.phone.replace(/\D/g,'') + '\',\'Hi ' + UI.esc((r.clientName||'').split(' ')[0]||'there') + ', thanks for reaching out to \' + RequestsPage._co().name + \'! We received your request and will follow up shortly. Questions? Call \' + RequestsPage._co().phone + \'.\');}else{window.location=\'sms:' + r.phone.replace(/\D/g,'') + '\';}">💬 Text</button>' : '')
       + (r.email ? '<a href="mailto:' + r.email + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;">✉️ ' + UI.esc(r.email) + '</a>' : '')
       + (r.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(r.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:13px;">🗺 Directions</a>' : '')
+      + (matchedClient ? '<div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px;">'
+        + '<div style="font-size:12px;color:var(--text-light);margin-bottom:6px;">CLIENT HISTORY</div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;">'
+        + '<div style="background:var(--bg);padding:6px 8px;border-radius:6px;text-align:center;"><div style="font-weight:700;">' + clientQuotes.length + '</div><div style="font-size:11px;color:var(--text-light);">quotes</div></div>'
+        + '<div style="background:var(--bg);padding:6px 8px;border-radius:6px;text-align:center;"><div style="font-weight:700;">' + clientJobs.length + '</div><div style="font-size:11px;color:var(--text-light);">jobs</div></div>'
+        + '<div style="background:var(--bg);padding:6px 8px;border-radius:6px;text-align:center;"><div style="font-weight:700;">' + clientInvoices.length + '</div><div style="font-size:11px;color:var(--text-light);">invoices</div></div>'
+        + '<div style="background:var(--bg);padding:6px 8px;border-radius:6px;text-align:center;"><div style="font-weight:700;color:var(--green-dark);">' + UI.moneyInt(clientRevenue) + '</div><div style="font-size:11px;color:var(--text-light);">revenue</div></div>'
+        + '</div>'
+        + '<a onclick="ClientsPage.showDetail(\'' + matchedClient.id + '\')" style="display:block;text-align:center;font-size:12px;color:var(--accent);margin-top:8px;cursor:pointer;">View Full Client Profile →</a>'
+        + '</div>' : '')
       + '</div>'
 
     // Assessment date card

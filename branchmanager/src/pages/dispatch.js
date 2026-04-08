@@ -319,7 +319,9 @@ var DispatchPage = {
 
   callClient: function(jobId) {
     var j = DB.jobs.getById(jobId);
-    var phone = j && (j.clientPhone || (j.clientId && DB.clients.getById(j.clientId) && DB.clients.getById(j.clientId).phone));
+    if (!j) { UI.toast('Job not found'); return; }
+    var client = j.clientId ? DB.clients.getById(j.clientId) : null;
+    var phone = j.clientPhone || (client && client.phone);
     if (!phone) { UI.toast('No phone number on file'); return; }
     window.location.href = 'tel:' + phone.replace(/\D/g,'');
   },

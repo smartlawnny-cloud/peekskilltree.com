@@ -302,7 +302,7 @@ var QuotesPage = {
     // Description — show as editable text, auto-filled from request notes
     html += '<div class="form-group" style="margin-bottom:12px;">'
       + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Description</label>'
-      + '<input type="text" id="q-description" value="' + UI.esc(_qDesc) + '" placeholder="e.g., Tree removal - 2 oaks" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;">'
+      + '<textarea id="q-description" rows="2" placeholder="e.g., Tree removal - 2 oaks" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;resize:vertical;">' + UI.esc(_qDesc) + '</textarea>'
       + (_qDesc ? '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">Auto-filled from request</div>' : '')
       + '</div>';
 

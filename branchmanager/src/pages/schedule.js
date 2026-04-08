@@ -17,17 +17,24 @@ var SchedulePage = {
     // Today summary (compact — just count, no big card)
 
 
-    // Weather toggle (compact — inline weather shows on calendar headers)
+    // Toggle row: Weather + Photos
+    var wEnabled = typeof Weather !== 'undefined' && Weather.isEnabled();
+    var pEnabled = localStorage.getItem('bm-cal-photos') !== 'false'; // default ON
+    html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">';
     if (typeof Weather !== 'undefined') {
-      var wEnabled = Weather.isEnabled();
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
+      html += '<div style="display:flex;align-items:center;gap:6px;">'
         + '<span style="font-size:13px;color:var(--text-light);">🌤 Weather</span>'
         + '<button onclick="Weather.toggle()" style="position:relative;width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;background:' + (wEnabled ? 'var(--accent)' : '#ccc') + ';transition:background .2s;">'
         + '<span style="position:absolute;top:2px;' + (wEnabled ? 'left:18px' : 'left:2px') + ';width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span></button>'
         + '</div>';
-      // Pre-fetch weather data for inline display
       if (wEnabled) setTimeout(function() { Weather.fetch(); }, 100);
     }
+    html += '<div style="display:flex;align-items:center;gap:6px;">'
+      + '<span style="font-size:13px;color:var(--text-light);">📷 Photos</span>'
+      + '<button onclick="SchedulePage._togglePhotos()" style="position:relative;width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;background:' + (pEnabled ? 'var(--accent)' : '#ccc') + ';transition:background .2s;">'
+      + '<span style="position:absolute;top:2px;' + (pEnabled ? 'left:18px' : 'left:2px') + ';width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span></button>'
+      + '</div>'
+      + '</div>';
 
     // Calendar controls
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
@@ -257,6 +264,16 @@ var SchedulePage = {
     }, 400);
   },
 
+  _togglePhotos: function() {
+    var current = localStorage.getItem('bm-cal-photos') !== 'false';
+    localStorage.setItem('bm-cal-photos', current ? 'false' : 'true');
+    loadPage('schedule');
+  },
+
+  _photosEnabled: function() {
+    return localStorage.getItem('bm-cal-photos') !== 'false';
+  },
+
   _dropOnDay: function(e, dateStr) {
     e.preventDefault();
     var el = e.currentTarget;
@@ -341,7 +358,7 @@ var SchedulePage = {
         var borderColor = j.status === 'completed' ? '#4caf50' : j.status === 'late' ? '#f44336' : j.status === 'in_progress' ? '#ff9800' : '#2196f3';
         // Photos from job + linked quote (past = content for SocialPilot, future = assessment photos)
         var jobPhotos = [];
-        if (typeof Photos !== 'undefined') {
+        if (typeof Photos !== 'undefined' && SchedulePage._photosEnabled()) {
           jobPhotos = Photos.getAll('job', j.id);
           if (j.quoteId) jobPhotos = jobPhotos.concat(Photos.getAll('quote', j.quoteId));
           if (j.requestId) jobPhotos = jobPhotos.concat(Photos.getAll('request', j.requestId));
@@ -427,7 +444,7 @@ var SchedulePage = {
       dayJobs.forEach(function(j) {
         var bgColor = j.status === 'completed' ? '#e8f5e9' : j.status === 'late' ? '#ffebee' : '#e3f2fd';
         var mPhotos = [];
-        if (typeof Photos !== 'undefined') {
+        if (typeof Photos !== 'undefined' && SchedulePage._photosEnabled()) {
           mPhotos = Photos.getAll('job', j.id);
           if (j.quoteId) mPhotos = mPhotos.concat(Photos.getAll('quote', j.quoteId));
           if (j.requestId) mPhotos = mPhotos.concat(Photos.getAll('request', j.requestId));

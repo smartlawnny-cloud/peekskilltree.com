@@ -21,6 +21,14 @@ var AITreeID = {
     html += '<button onclick="AITreeID.uploadPhoto()" style="width:100%;padding:14px;background:var(--white);color:var(--text);border:2px solid var(--border);border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:24px;">'
       + '📁 Upload from Gallery</button>';
 
+    // Zip code setting
+    var zip = localStorage.getItem('bm-zip') || '10566';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:13px;color:var(--text-light);">'
+      + '<span>📍 ZIP:</span>'
+      + '<input type="text" id="ai-zip" value="' + zip + '" maxlength="5" style="width:60px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;" onchange="localStorage.setItem(\'bm-zip\',this.value)">'
+      + '<span style="font-size:11px;">(for species/disease info)</span>'
+      + '</div>';
+
     // Results area
     html += '<div id="ai-tree-results"></div>';
 
@@ -114,7 +122,7 @@ var AITreeID = {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: 'You are a certified arborist with 20 years experience in Westchester County, NY. Analyze this tree photo and provide:\n\n1. Species (common name and scientific name)\n2. Estimated DBH (diameter at breast height in inches)\n3. Condition (excellent/good/fair/poor/dead/hazardous)\n4. Height estimate (feet)\n5. Hazards (power lines, structures, lean, decay, dead limbs)\n6. Recommended service (Tree Removal, Tree Pruning, Cabling, Stump Removal, Dead Wood Removal, Crown Reduction, or Hazard Assessment)\n7. Suggested price range based on size and complexity (Westchester NY market rates)\n8. Notes for the crew (access concerns, equipment needed)\n\nRespond in ONLY this JSON format:\n{"species":"Common Name","scientific":"Scientific Name","dbh":"estimated inches","height":"estimated feet","condition":"good/fair/poor/dead/hazardous","hazards":"description or none","suggestedService":"service name","priceMin":0,"priceMax":0,"suggestedPrice":0,"equipmentNeeded":"bucket truck, chipper, etc","crewNotes":"access notes, special concerns"}' }
+            { type: 'text', text: 'You are a certified arborist (ISA) with 20 years experience. Location: ZIP ' + (localStorage.getItem('bm-zip') || '10566') + '. Analyze this tree photo and provide:\n\n1. Species (common name and scientific name)\n2. Estimated DBH (diameter at breast height in inches)\n3. Condition (excellent/good/fair/poor/dead/hazardous)\n4. Height estimate (feet)\n5. Hazards (power lines, structures, lean, decay, dead limbs)\n6. Recommended service (Tree Removal, Tree Pruning, Cabling, Stump Removal, Dead Wood Removal, Crown Reduction, or Hazard Assessment)\n7. Suggested price range based on size and complexity (Westchester NY market rates)\n8. Notes for the crew (access concerns, equipment needed)\n9. Is this species native or invasive to this ZIP code region?\n10. Top 3 common diseases/pests for this species in the Northeast US\n11. USDA hardiness zone for this ZIP\n\nRespond in ONLY this JSON format:\n{"species":"Common Name","scientific":"Scientific Name","dbh":"estimated inches","height":"estimated feet","condition":"good/fair/poor/dead/hazardous","hazards":"description or none","suggestedService":"service name","priceMin":0,"priceMax":0,"suggestedPrice":0,"equipmentNeeded":"bucket truck, chipper, etc","crewNotes":"access notes, special concerns","native":true,"invasive":false,"diseases":["Disease 1","Disease 2","Disease 3"],"hardinessZone":"6b"}' }
           ]
         }]
       })
@@ -183,7 +191,11 @@ var AITreeID = {
       + '<span style="background:#e8f5e9;color:#2e7d32;padding:4px 12px;border-radius:8px;font-size:13px;font-weight:600;">' + (tree.suggestedService || 'Tree Service') + '</span>'
       + (tree.equipmentNeeded ? '<span style="background:#e3f2fd;color:#1565c0;padding:4px 12px;border-radius:8px;font-size:13px;">' + tree.equipmentNeeded + '</span>' : '')
       + '</div>'
+      + (tree.native === false || tree.invasive ? '<span style="background:#ffebee;color:#c62828;padding:4px 12px;border-radius:8px;font-size:13px;font-weight:600;">⚠️ Invasive</span>' : tree.native ? '<span style="background:#e8f5e9;color:#2e7d32;padding:4px 12px;border-radius:8px;font-size:13px;">🌿 Native</span>' : '')
+      + (tree.hardinessZone ? '<span style="background:var(--bg);padding:4px 12px;border-radius:8px;font-size:12px;color:var(--text-light);">Zone ' + tree.hardinessZone + '</span>' : '')
+      + '</div>'
       + (tree.hazards && tree.hazards !== 'none' ? '<div style="background:#fff3e0;padding:8px 12px;border-radius:8px;font-size:13px;color:#e65100;margin-bottom:8px;">⚠️ ' + tree.hazards + '</div>' : '')
+      + (tree.diseases && tree.diseases.length ? '<div style="background:#fce4ec;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px;"><strong style="color:#c62828;">🦠 Common diseases:</strong><ul style="margin:4px 0 0 16px;padding:0;">' + tree.diseases.map(function(d) { return '<li style="margin-bottom:2px;">' + d + '</li>'; }).join('') + '</ul></div>' : '')
       + (tree.crewNotes ? '<div style="font-size:13px;color:var(--text-light);">📋 ' + tree.crewNotes + '</div>' : '')
       + '</div>'
       // Actions

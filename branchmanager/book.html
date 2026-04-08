@@ -91,9 +91,10 @@
           <textarea id="b-details" placeholder="Tell us about the trees, the situation, any concerns..."></textarea>
         </div>
       </div>
-      <p style="font-size:11px;color:#888;line-height:1.6;margin-top:12px;">
-        By submitting this form or contacting us, you consent to receive text messages from Second Nature Tree Service at the phone number provided. Message frequency varies. Message &amp; data rates may apply. Reply STOP to opt out at any time. Reply HELP for help. See our <a href="https://peekskilltree.com/privacy-policy.html" target="_blank" style="color:#1a3c12;">Privacy Policy</a> and <a href="https://peekskilltree.com/terms-of-service.html" target="_blank" style="color:#1a3c12;">Terms of Service</a>.
-      </p>
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;cursor:pointer;">
+        <input type="checkbox" id="b-sms-consent" required style="width:18px;height:18px;flex-shrink:0;margin-top:2px;">
+        <span style="font-size:11px;color:#888;line-height:1.6;">By checking this box, I agree to receive account notifications, appointment reminders, and customer care messages via text message from Second Nature Tree Service. You may opt out by replying STOP or request more information by replying HELP. Message frequency varies. Message and data rates may apply. You can review our <a href="https://peekskilltree.com/privacy-policy.html" target="_blank" style="color:#1a3c12;">Privacy Policy</a> to see how your data is used.</span>
+      </label>
       <!-- Honeypot — hidden from real users, bots fill it in -->
       <div style="position:absolute;left:-9999px;"><input type="text" id="website_url" name="website_url" tabindex="-1" autocomplete="off"></div>
       <button type="submit" class="submit-btn" id="submit-btn">Request Free Estimate</button>

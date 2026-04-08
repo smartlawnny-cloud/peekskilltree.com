@@ -195,6 +195,7 @@
   .content { flex:1; overflow-y:auto; padding:24px; scroll-behavior:smooth; }
   .content > * { animation:fadeInUp .25s ease-out; }
   @keyframes fadeInUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 
   /* ── Mobile hamburger ── */
   .hamburger {
@@ -665,6 +666,7 @@
         <button class="nav-item" data-page="emailtemplates"><span class="icon"><i data-lucide="mail" class="li"></i></span> Email Templates</button>
 
         <div class="nav-section">Media</div>
+        <button class="nav-item" data-page="taskreminders"><span class="icon"><i data-lucide="bell" class="li"></i></span> Tasks & Reminders</button>
         <button class="nav-item" data-page="teamchat"><span class="icon"><i data-lucide="message-circle" class="li"></i></span> Team Chat</button>
         <button class="nav-item" data-page="mediacenter"><span class="icon"><i data-lucide="camera" class="li"></i></span> Media Center <span class="badge" id="badge-mediacenter"></span></button>
         <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
@@ -675,6 +677,7 @@
         <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> AI Assistant</button>
         <button class="nav-item" data-page="calculators"><span class="icon"><i data-lucide="calculator" class="li"></i></span> Calculators</button>
         <button class="nav-item" data-page="aitreeid"><span class="icon"><i data-lucide="scan-eye" class="li"></i></span> AI Tree ID <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
+        <button class="nav-item" data-page="videoquote"><span class="icon"><i data-lucide="video" class="li"></i></span> Video Quote <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
         <button class="nav-item" data-page="treemeasure"><span class="icon"><i data-lucide="ruler" class="li"></i></span> Tree Measure</button>
         <button class="nav-item" data-page="customfields"><span class="icon"><i data-lucide="sliders" class="li"></i></span> Custom Fields</button>
         <button class="nav-item" data-page="backup"><span class="icon"><i data-lucide="database" class="li"></i></span> Backup</button>
@@ -799,6 +802,7 @@
 <script defer src="src/pages/propertymap.js?v=2"></script>
 <script defer src="src/pages/estimator.js"></script>
 <script defer src="src/pages/aitreeid.js?v=1"></script>
+<script defer src="src/pages/videoquote.js?v=1"></script>
 <script defer src="src/pages/treemeasure.js"></script>
 <script defer src="src/pages/search.js?v=2"></script>
 <script defer src="src/pages/clienthub.js?v=4"></script>
@@ -833,6 +837,7 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script defer src="src/pages/materials.js"></script>
 <script defer src="src/pages/beforeafter.js?v=3"></script>
 <script defer src="src/pages/modeselector.js?v=1"></script>
+<script defer src="src/pages/taskreminders.js?v=1"></script>
 <script defer src="src/pages/teamchat.js?v=1"></script>
 <script defer src="src/pages/mediacenter.js?v=2"></script>
 <script defer src="src/pages/reminders.js?v=3"></script>
@@ -884,6 +889,7 @@ var pageConfigs = {
   automations: { title: 'Automations', action: null },
   calculators: { title: 'Calculators', action: null },
   aitreeid: { title: 'AI Tree ID', action: null },
+  videoquote: { title: 'Video Quote', action: null },
   treemeasure: { title: 'Tree Measure', action: null },
   crewview: { title: 'Crew View', action: null },
   employeecenter: { title: 'My Pay & Hours', action: null },
@@ -913,6 +919,7 @@ var pageConfigs = {
   materials: { title: 'Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
   beforeafter: { title: 'Before & After', action: null },
   modeselector: { title: 'Branch Manager', action: null },
+  taskreminders: { title: 'Tasks & Reminders', action: '+ New Task', actionFn: 'TaskReminders._showForm()' },
   teamchat: { title: 'Team Chat', action: null },
   mediacenter: { title: 'Media Center', action: '+ Upload Photos', actionFn: 'MediaCenter.showUploadForm()' },
   reminders: { title: 'Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' },
@@ -972,11 +979,13 @@ var pageRenderers = {
   backup: function() { return BackupPage.render(); },
   settings: function() { return SettingsPage.render(); },
   aitreeid: function() { return AITreeID.render(); },
+  videoquote: function() { return VideoQuote.render(); },
   treemeasure: function() { return TreeMeasure.render(); },
   crewperformance: function() { return CrewPerformance.render(); },
   materials: function() { return Materials.render(); },
   beforeafter: function() { return BeforeAfter.render(); },
   modeselector: function() { return ModeSelector.render(); },
+  taskreminders: function() { return TaskReminders.render(); },
   teamchat: function() { return TeamChat.render(); },
   mediacenter: function() { return MediaCenter.render(); },
   reminders: function() { return Reminders.render(); },

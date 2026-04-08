@@ -128,6 +128,7 @@ var Workflow = {
       status: 'scheduled',
       quoteId: quoteId,
       lineItems: quote.lineItems || [],
+      taxRate: quote.taxRate || parseFloat(localStorage.getItem('bm-tax-rate')) || 8.375,
       source: 'quote'
     });
 
@@ -156,7 +157,7 @@ var Workflow = {
       status: 'draft',
       jobId: jobId,
       lineItems: job.lineItems || [],
-      dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+      dueDate: (function() { var payTerms = localStorage.getItem('bm-payment-terms') || 'net30'; var daysDue = payTerms === 'due-on-completion' ? 0 : payTerms === 'net15' ? 15 : payTerms === 'net60' ? 60 : 30; return new Date(Date.now() + daysDue * 86400000).toISOString().split('T')[0]; })()
     });
 
     // Update job status
@@ -498,6 +499,9 @@ var Workflow = {
     if (typeof Email !== 'undefined' && Email.isConfigured()) {
       Email.send(to, subject, body, options).then(function(result) {
         if (callback) callback(result && result.success);
+      }).catch(function(err) {
+        console.error('[Workflow] Email.send failed:', err);
+        if (callback) callback(false);
       });
     } else {
       if (callback) callback(false);

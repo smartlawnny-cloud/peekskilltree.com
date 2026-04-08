@@ -323,33 +323,15 @@ var AutomationsPage = {
     UI.toast(msg);
   },
 
-  // Daily auto-trigger — runs once per day in the background
+  // App startup — delegates daily run to _autoRun, sets up hourly re-check
   init: function() {
-    var today = new Date().toISOString().split('T')[0];
-    var lastRun = localStorage.getItem('bm-automations-last-run');
-    if (lastRun !== today) {
-      // Run after a short delay to let the app fully initialize
-      setTimeout(function() {
-        var config = AutomationsPage.getConfig();
-        // Silence toasts during background run
-        var origToast = (typeof UI !== 'undefined') ? UI.toast : null;
-        if (origToast) UI.toast = function(){};
-        try {
-          if (config.quoteFollowup1 && config.quoteFollowup1.enabled) AutomationsPage.runQuoteFollowups();
-          if (config.invoiceFollowup1 && config.invoiceFollowup1.enabled) AutomationsPage.runInvoiceFollowups();
-          if (config.visitReminderEmail && config.visitReminderEmail.enabled) AutomationsPage.runVisitReminders();
-          if (config.reviewRequest && config.reviewRequest.enabled) AutomationsPage.runReviewRequests();
-          localStorage.setItem('bm-automations-last-run', today);
-        } finally {
-          if (origToast) setTimeout(function() { UI.toast = origToast; }, 200);
-        }
-      }, 5000);
-    }
+    // Run daily automations after a short delay to let the app fully initialize
+    setTimeout(function() { AutomationsPage._autoRun(); }, 5000);
     // Re-check every hour (catches the midnight rollover)
     setInterval(function() {
       var nowDay = new Date().toISOString().split('T')[0];
       if (localStorage.getItem('bm-automations-last-run') !== nowDay) {
-        AutomationsPage.init();
+        AutomationsPage._autoRun();
       }
     }, 3600000);
   },
@@ -393,6 +375,7 @@ var AutomationsPage = {
   },
 
   runAll: function() {
+    if (!localStorage.getItem('bm-sendgrid-key')) { UI.toast('Connect SendGrid in Settings first', 'error'); return; }
     // Run all 4 automations and show a summary modal
     var results = [];
     // Temporarily intercept UI.toast to collect results
@@ -509,7 +492,7 @@ var AutomationsPage = {
   },
 
   // Called on app startup — run automations once per day (silently)
-  init: function() {
+  _autoRun: function() {
     var today = new Date().toISOString().split('T')[0];
     var lastRun = localStorage.getItem('bm-automations-last-run');
     if (lastRun === today) return; // Already ran today

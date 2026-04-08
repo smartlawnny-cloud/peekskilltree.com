@@ -163,7 +163,7 @@ var RecurringJobs = {
     if (!rec) return;
 
     var nextDate = RecurringJobs._getNextDate(rec);
-    DB.jobs.create({
+    var job = DB.jobs.create({
       clientName: rec.clientName,
       description: rec.service.replace(/_/g, ' ') + (rec.notes ? ' — ' + rec.notes : ''),
       scheduledDate: nextDate,
@@ -172,6 +172,7 @@ var RecurringJobs = {
       source: 'recurring',
       recurringId: rec.id
     });
+    return job;
 
     rec.lastGenerated = new Date().toISOString();
     localStorage.setItem('bm-recurring', JSON.stringify(all));

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pay Invoice — Second Nature Tree Service</title>
+<title>Pay Invoice</title>
 <meta name="robots" content="noindex,nofollow">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -95,14 +95,20 @@
 <div class="pay-wrap">
   <div class="brand">
     <div class="brand-logo">🌳</div>
-    <div class="brand-name">Second Nature Tree Service</div>
-    <div class="brand-sub">Peekskill, NY &nbsp;·&nbsp; (914) 391-5233</div>
+    <div class="brand-name" id="brand-name"></div>
+    <div class="brand-sub" id="brand-sub"></div>
   </div>
   <div id="pay-content">
     <div class="card"><div class="loading">Loading invoice…</div></div>
   </div>
 </div>
 
+<script src="config.js"></script>
+<script>
+document.title = 'Pay Invoice — ' + BM_CONFIG.companyName;
+document.getElementById('brand-name').textContent = BM_CONFIG.companyName;
+document.getElementById('brand-sub').innerHTML = BM_CONFIG.city + ' &nbsp;&middot;&nbsp; ' + BM_CONFIG.phone;
+</script>
 <script>
 (function() {
   var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
@@ -127,11 +133,11 @@
     var inv = state.invoice;
     var el = document.getElementById('pay-content');
     if (!inv) {
-      el.innerHTML = '<div class="card"><div class="error-msg"><div class="err-icon">🔍</div><h2>Invoice Not Found</h2><p>This link may have expired or the invoice number is incorrect.<br>Please check your email or contact us.</p><p style="margin-top:20px;"><a href="tel:+19143915233" style="color:#00836c;font-weight:700;font-size:16px;">📞 (914) 391-5233</a></p></div></div>';
+      el.innerHTML = '<div class="card"><div class="error-msg"><div class="err-icon">🔍</div><h2>Invoice Not Found</h2><p>This link may have expired or the invoice number is incorrect.<br>Please check your email or contact us.</p><p style="margin-top:20px;"><a href="tel:' + BM_CONFIG.phoneTel + '" style="color:#00836c;font-weight:700;font-size:16px;">📞 ' + esc(BM_CONFIG.phone) + '</a></p></div></div>';
       return;
     }
     if (inv.status === 'paid') {
-      el.innerHTML = '<div class="card"><div class="status-paid"><div class="check">✅</div><h2>All Paid — Thank You!</h2><p>Invoice #' + esc(inv.invoice_number || inv.invoiceNumber || '') + ' for <strong>' + esc(inv.client_name || inv.clientName || '') + '</strong> has been paid in full.<br><br>We appreciate your business!</p><p style="margin-top:20px;"><a href="https://peekskilltree.com" style="color:#00836c;">Back to peekskilltree.com</a></p></div></div>';
+      el.innerHTML = '<div class="card"><div class="status-paid"><div class="check">✅</div><h2>All Paid — Thank You!</h2><p>Invoice #' + esc(inv.invoice_number || inv.invoiceNumber || '') + ' for <strong>' + esc(inv.client_name || inv.clientName || '') + '</strong> has been paid in full.<br><br>We appreciate your business!</p><p style="margin-top:20px;"><a href="' + esc(BM_CONFIG.websiteUrl) + '" style="color:#00836c;">Back to ' + esc(BM_CONFIG.website) + '</a></p></div></div>';
       return;
     }
 
@@ -208,8 +214,8 @@
       // Other methods
       + '<div class="other-methods">'
       + '<h4>Other ways to pay</h4>'
-      + '<div class="method-row"><div class="method-icon" style="background:#f0f4ff;">📞</div><div><div class="method-label">Questions?</div><div class="method-detail">Call or text (914) 391-5233</div></div></div>'
-      + '<div class="method-row"><div class="method-icon" style="background:#fce4ec;">📞</div><div><div class="method-label">Call or Text</div><div class="method-detail"><a href="tel:+19143915233" style="color:#00836c;font-weight:600;">(914) 391-5233</a> &nbsp;·&nbsp; Doug Brown</div></div></div>'
+      + '<div class="method-row"><div class="method-icon" style="background:#f0f4ff;">📞</div><div><div class="method-label">Questions?</div><div class="method-detail">Call or text ' + esc(BM_CONFIG.phone) + '</div></div></div>'
+      + '<div class="method-row"><div class="method-icon" style="background:#fce4ec;">📞</div><div><div class="method-label">Call or Text</div><div class="method-detail"><a href="tel:' + BM_CONFIG.phoneTel + '" style="color:#00836c;font-weight:600;">' + esc(BM_CONFIG.phone) + '</a> &nbsp;·&nbsp; ' + esc(BM_CONFIG.ownerName) + '</div></div></div>'
       + '</div>'
       + (stripeLink ? '<div class="secure-badge">🔒 Card payments secured by Stripe &nbsp;·&nbsp; We never store your card info</div>' : '')
       + '</div></div>';
@@ -262,7 +268,7 @@
       }
 
       if (!stripeLink) {
-        alert('Online card payment is not available for this invoice yet.\n\nPlease call (914) 391-5233 to arrange payment.');
+        alert('Online card payment is not available for this invoice yet.\n\nPlease call ' + BM_CONFIG.phone + ' to arrange payment.');
         return;
       }
 
@@ -277,7 +283,7 @@
 
   // Load invoice from Supabase — with fallback by invoice_number for legacy IDs
   if (!invId) {
-    document.getElementById('pay-content').innerHTML = '<div class="card"><div class="error-msg"><div class="err-icon">❓</div><h2>No Invoice Specified</h2><p>Please use the link from your invoice email.</p><p style="margin-top:20px;"><a href="tel:+19143915233" style="color:#00836c;font-weight:700;font-size:16px;">📞 (914) 391-5233</a></p></div></div>';
+    document.getElementById('pay-content').innerHTML = '<div class="card"><div class="error-msg"><div class="err-icon">❓</div><h2>No Invoice Specified</h2><p>Please use the link from your invoice email.</p><p style="margin-top:20px;"><a href="tel:' + BM_CONFIG.phoneTel + '" style="color:#00836c;font-weight:700;font-size:16px;">📞 ' + BM_CONFIG.phone + '</a></p></div></div>';
   } else {
     var hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
 

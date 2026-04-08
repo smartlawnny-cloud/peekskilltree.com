@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Request a Free Estimate — Second Nature Tree Service</title>
+<title>Request a Free Estimate</title>
 <meta name="robots" content="noindex, nofollow">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -44,8 +44,8 @@
   <div id="form-view">
     <div class="logo">
       <div class="tree">🌳</div>
-      <h1 id="cfg-title">Second Nature Tree Service</h1>
-      <p id="cfg-subtitle">Peekskill, NY — Licensed &amp; Insured</p>
+      <h1 id="cfg-title"></h1>
+      <p id="cfg-subtitle"></p>
       <div class="stars">★★★★★ 5.0 — 100+ Reviews</div>
     </div>
 
@@ -93,7 +93,7 @@
       </div>
       <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;cursor:pointer;">
         <input type="checkbox" id="b-sms-consent" required style="width:18px;height:18px;flex-shrink:0;margin-top:2px;">
-        <span style="font-size:11px;color:#888;line-height:1.6;">By checking this box, I agree to receive account notifications, appointment reminders, and customer care messages via text message from Second Nature Tree Service. You may opt out by replying STOP or request more information by replying HELP. Message frequency varies. Message and data rates may apply. You can review our <a href="https://peekskilltree.com/privacy-policy.html" target="_blank" style="color:#1a3c12;">Privacy Policy</a> to see how your data is used.</span>
+        <span id="sms-consent-text" style="font-size:11px;color:#888;line-height:1.6;"></span>
       </label>
       <!-- Honeypot — hidden from real users, bots fill it in -->
       <div style="position:absolute;left:-9999px;"><input type="text" id="website_url" name="website_url" tabindex="-1" autocomplete="off"></div>
@@ -101,21 +101,31 @@
     </form>
     <script>window._bookFormLoadTime = Date.now();</script>
 
-    <div class="info">
-      We typically respond within 2 hours during business hours.<br>
-      <a href="tel:9143915233">(914) 391-5233</a> · <a href="https://peekskilltree.com">peekskilltree.com</a>
-    </div>
+    <div class="info" id="cfg-info"></div>
   </div>
 
   <div id="success-view" class="success">
     <div class="check">✅</div>
     <h2 id="cfg-success-title">Request Received!</h2>
     <p id="cfg-success-msg">Thanks! We'll review your request and get back to you within 2 hours during business hours.</p>
-    <p style="margin-top:16px;font-weight:600;">— Doug, Second Nature Tree Service</p>
-    <p style="margin-top:16px;"><a href="tel:9143915233" style="color:#1a3c12;font-weight:600;">📞 Call (914) 391-5233</a></p>
+    <p style="margin-top:16px;font-weight:600;" id="cfg-sign-off"></p>
+    <p style="margin-top:16px;" id="cfg-call-link"></p>
   </div>
 </div>
 
+<script src="config.js"></script>
+<script>
+(function() {
+  var C = BM_CONFIG;
+  document.title = 'Request a Free Estimate — ' + C.companyName;
+  document.getElementById('cfg-title').textContent = C.companyName;
+  document.getElementById('cfg-subtitle').textContent = C.city + ' — ' + C.tagline;
+  document.getElementById('cfg-sign-off').textContent = '— ' + C.ownerName.split(' ')[0] + ', ' + C.companyName;
+  document.getElementById('cfg-call-link').innerHTML = '<a href="tel:' + C.phoneDigits + '" style="color:#1a3c12;font-weight:600;">📞 Call ' + C.phone + '</a>';
+  document.getElementById('cfg-info').innerHTML = 'We typically respond within 2 hours during business hours.<br><a href="tel:' + C.phoneDigits + '">' + C.phone + '</a> · <a href="' + C.websiteUrl + '">' + C.website + '</a>';
+  document.getElementById('sms-consent-text').innerHTML = 'By checking this box, I agree to receive account notifications, appointment reminders, and customer care messages via text message from ' + C.companyName + '. You may opt out by replying STOP or request more information by replying HELP. Message frequency varies. Message and data rates may apply. You can review our <a href="' + C.websiteUrl + '/privacy-policy.html" target="_blank" style="color:#1a3c12;">Privacy Policy</a> to see how your data is used.';
+})();
+</script>
 <script>
 var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';

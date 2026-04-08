@@ -1224,9 +1224,8 @@ contact += '''
       <div class="contact-form-centered">
         <p class="contact-form-note">Prefer to talk? Call <a href="tel:914-391-5233"><strong>(914) 391-5233</strong></a> &mdash; we answer every call.</p>
         <div class="jobber-form-wrapper">
-          <iframe src="https://clienthub.getjobber.com/hubs/cae8fd74-1192-437e-a3f9-0e503f909d2e/public/requests/766492/new" width="100%" height="820" frameborder="0" title="Request a Free Estimate from Second Nature Tree Service"></iframe>
+          <iframe src="https://peekskilltree.com/branchmanager/book.html" width="100%" height="720" frameborder="0" title="Request a Free Estimate from Second Nature Tree Service" style="border-radius:12px;border:1px solid var(--border);"></iframe>
         </div>
-        <p style="font-size:.78rem;color:var(--text-light);line-height:1.5;margin-top:.75rem;max-width:600px;margin-left:auto;margin-right:auto;">By submitting this form or contacting us, you consent to receive text messages from Second Nature Tree Service at the phone number provided. Message frequency varies. Message &amp; data rates may apply. Reply STOP to opt out at any time. Reply HELP for help. See our <a href="privacy-policy.html">Privacy Policy</a> and <a href="terms-of-service.html">Terms of Service</a>.</p>
       </div>
 
     </div>
@@ -3361,7 +3360,7 @@ costs_page += '''
           <div id="sec-office">
           <div class="cost-row"><label>Accounting / Bookkeeping</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="400" oninput="costCalc()"></div></div>
           <div class="cost-row"><label>Phone Plans</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="200" oninput="costCalc()"></div></div>
-          <div class="cost-row"><label>Software / Internet <span style="font-size:.78rem;color:var(--text-light);">(Jobber, QB, GPS)</span></label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="300" oninput="costCalc()"></div></div>
+          <div class="cost-row"><label>Software / Internet <span style="font-size:.78rem;color:var(--text-light);">(CRM, QB, GPS)</span></label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="300" oninput="costCalc()"></div></div>
           <div class="cost-row"><label>Licenses / Legal / Memberships</label><div style="display:flex;align-items:center;gap:.3rem;"><span>$</span><input type="number" class="cost-input cost-fixed" value="100" oninput="costCalc()"></div></div>
           </div>
         </div>

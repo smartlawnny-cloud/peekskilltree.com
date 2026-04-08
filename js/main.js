@@ -107,9 +107,9 @@ document.addEventListener('DOMContentLoaded', function() {
       gtag('event', 'contact_page_view', { event_category: 'lead' });
     }
 
-    // Estimate form view (Jobber iframe loaded)
-    var jobberFrame = document.querySelector('iframe[src*="getjobber"]');
-    if (jobberFrame) {
+    // Estimate form view (booking form loaded)
+    var bookingFrame = document.querySelector('iframe[src*="book"]');
+    if (bookingFrame) {
       gtag('event', 'estimate_form_view', { event_category: 'lead' });
     }
 

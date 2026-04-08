@@ -682,9 +682,12 @@
       </div>
     </div>
 
-    <div class="sidebar-footer" style="display:flex;gap:6px;padding:10px 14px;">
-      <button id="sidebar-toggle-btn" onclick="toggleSidebar()" style="background:rgba(0,0,0,.04);border:1px solid #e8eaed;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;color:#9ca3af;flex:1;" title="Collapse sidebar">◀</button>
-      <button class="log-out-btn" onclick="Auth.logout()" style="background:rgba(0,0,0,.04);border:1px solid #e8eaed;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;color:#dc3545;white-space:nowrap;" title="Log out">Log Out</button>
+    <div class="sidebar-footer" style="padding:10px 14px;">
+      <button onclick="loadPage('modeselector')" style="width:100%;background:rgba(0,0,0,.04);border:1px solid #e8eaed;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;color:var(--text-light);margin-bottom:6px;">Switch Mode</button>
+      <div style="display:flex;gap:6px;">
+        <button id="sidebar-toggle-btn" onclick="toggleSidebar()" style="background:rgba(0,0,0,.04);border:1px solid #e8eaed;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;color:#9ca3af;flex:1;" title="Collapse sidebar">◀</button>
+        <button class="log-out-btn" onclick="Auth.logout()" style="background:rgba(0,0,0,.04);border:1px solid #e8eaed;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;color:#dc3545;white-space:nowrap;" title="Log out">Log Out</button>
+      </div>
     </div>
   </nav>
 
@@ -829,6 +832,7 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script defer src="src/pages/crewperformance.js?v=2"></script>
 <script defer src="src/pages/materials.js"></script>
 <script defer src="src/pages/beforeafter.js?v=3"></script>
+<script defer src="src/pages/modeselector.js?v=1"></script>
 <script defer src="src/pages/teamchat.js?v=1"></script>
 <script defer src="src/pages/mediacenter.js?v=2"></script>
 <script defer src="src/pages/reminders.js?v=3"></script>
@@ -908,6 +912,7 @@ var pageConfigs = {
   crewperformance: { title: 'Crew Performance', action: null },
   materials: { title: 'Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
   beforeafter: { title: 'Before & After', action: null },
+  modeselector: { title: 'Branch Manager', action: null },
   teamchat: { title: 'Team Chat', action: null },
   mediacenter: { title: 'Media Center', action: '+ Upload Photos', actionFn: 'MediaCenter.showUploadForm()' },
   reminders: { title: 'Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' },
@@ -971,6 +976,7 @@ var pageRenderers = {
   crewperformance: function() { return CrewPerformance.render(); },
   materials: function() { return Materials.render(); },
   beforeafter: function() { return BeforeAfter.render(); },
+  modeselector: function() { return ModeSelector.render(); },
   teamchat: function() { return TeamChat.render(); },
   mediacenter: function() { return MediaCenter.render(); },
   reminders: function() { return Reminders.render(); },
@@ -1419,9 +1425,19 @@ var QuickCreate = {
 if (checkAuth()) {
   // Role-based default page
   var hashPage = window.location.hash ? window.location.hash.slice(1) : '';
+  // Mode selector — show on first use or if no mode set
+  var appMode = ModeSelector.getMode();
   var defaultPage = 'dashboard';
-  if (Auth.role === 'crew_member') defaultPage = 'crewview';
-  else if (Auth.role === 'crew_lead') defaultPage = 'dispatch';
+  if (!appMode && Auth.role === 'owner') {
+    defaultPage = 'modeselector';
+  } else if (appMode === 'crew' || Auth.role === 'crew_member') {
+    defaultPage = 'crewview';
+  } else if (appMode === 'sales') {
+    defaultPage = 'requests';
+  } else if (Auth.role === 'crew_lead') {
+    defaultPage = 'dispatch';
+  }
+  if (appMode) ModeSelector._applySidebar(appMode);
   loadPage((hashPage && pageRenderers[hashPage]) ? hashPage : defaultPage);
   // Show compliance popup after a short delay so the page settles first
   setTimeout(function() {

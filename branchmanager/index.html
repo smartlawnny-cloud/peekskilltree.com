@@ -1374,8 +1374,8 @@ document.addEventListener('click', function(e) {
 var QuickCreate = {
   show: function() {
     var html = '<div style="display:grid;gap:8px;">'
-      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();ClientsPage.showForm()"><span style="font-size:20px;">👥</span> New Client</button>'
       + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();RequestsPage.showForm()"><span style="font-size:20px;">📥</span> New Request</button>'
+      + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();InvoicesPage.showForm()"><span style="font-size:20px;">💰</span> New Invoice</button>'
       + '<button class="btn btn-outline" style="width:100%;padding:14px;font-size:15px;justify-content:flex-start;gap:12px;" onclick="UI.closeModal();Estimator.show()"><span style="font-size:20px;">🧮</span> Quick Estimate</button>'
       + '</div>';
     UI.showModal('Create New', html);

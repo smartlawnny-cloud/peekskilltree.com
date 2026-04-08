@@ -339,8 +339,13 @@ var SchedulePage = {
       dayJobs.forEach(function(j) {
         var bgColor = j.status === 'completed' ? '#e8f5e9' : j.status === 'late' ? '#ffebee' : j.status === 'in_progress' ? '#fff3e0' : '#e3f2fd';
         var borderColor = j.status === 'completed' ? '#4caf50' : j.status === 'late' ? '#f44336' : j.status === 'in_progress' ? '#ff9800' : '#2196f3';
-        // Job photos for past completed jobs (content for SocialPilot)
-        var jobPhotos = (typeof Photos !== 'undefined' && j.status === 'completed' && dd < new Date()) ? Photos.getAll('job', j.id) : [];
+        // Photos from job + linked quote (past = content for SocialPilot, future = assessment photos)
+        var jobPhotos = [];
+        if (typeof Photos !== 'undefined') {
+          jobPhotos = Photos.getAll('job', j.id);
+          if (j.quoteId) jobPhotos = jobPhotos.concat(Photos.getAll('quote', j.quoteId));
+          if (j.requestId) jobPhotos = jobPhotos.concat(Photos.getAll('request', j.requestId));
+        }
         html += '<div draggable="true" ondragstart="event.stopPropagation();SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" onclick="event.stopPropagation();JobsPage.showDetail(\'' + j.id + '\')" style="background:' + bgColor + ';border-left:3px solid ' + borderColor + ';border-radius:6px;padding:6px 8px;margin-bottom:4px;cursor:grab;font-size:12px;">'
           + '<div style="font-weight:700;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.clientName || '') + '</div>'
           + '<div style="color:var(--text-light);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '#' + j.jobNumber) + '</div>'
@@ -419,10 +424,14 @@ var SchedulePage = {
         + (typeof Weather !== 'undefined' ? Weather.getInline(dateStr) : '')
         + '</div>';
 
-      var monthDate = new Date(dateStr + 'T12:00:00');
       dayJobs.forEach(function(j) {
         var bgColor = j.status === 'completed' ? '#e8f5e9' : j.status === 'late' ? '#ffebee' : '#e3f2fd';
-        var mPhotos = (typeof Photos !== 'undefined' && j.status === 'completed' && monthDate < new Date()) ? Photos.getAll('job', j.id) : [];
+        var mPhotos = [];
+        if (typeof Photos !== 'undefined') {
+          mPhotos = Photos.getAll('job', j.id);
+          if (j.quoteId) mPhotos = mPhotos.concat(Photos.getAll('quote', j.quoteId));
+          if (j.requestId) mPhotos = mPhotos.concat(Photos.getAll('request', j.requestId));
+        }
         html += '<div draggable="true" ondragstart="event.stopPropagation();SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" '
           + 'onclick="event.stopPropagation();JobsPage.showDetail(\'' + j.id + '\')" '
           + 'style="background:' + bgColor + ';border-radius:4px;padding:2px 4px;margin-bottom:2px;cursor:grab;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'

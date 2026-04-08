@@ -182,7 +182,10 @@
           + '<div class="section-label">Full Name</div>'
           + '<input type="text" id="sig-name" placeholder="Type your full name" style="width:100%;padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;font-family:inherit;margin-top:4px;">'
           + '</div>'
-          + '<div class="sig-legal">By signing and clicking Confirm, you agree to the quote terms and authorize Second Nature Tree Service to perform the described work at the stated price.</div>'
+          + '<label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;cursor:pointer;">'
+          + '<input type="checkbox" id="sig-consent" style="width:18px;height:18px;flex-shrink:0;margin-top:2px;">'
+          + '<span style="font-size:12px;color:#666;line-height:1.5;">I consent to signing this document electronically. I acknowledge that my electronic signature has the same legal effect as a handwritten signature under the federal ESIGN Act and New York ESRA. I have reviewed and agree to the scope of work, pricing, and terms described in this quote.</span>'
+          + '</label>'
           + '<button class="btn btn-approve" style="margin-top:12px;" onclick="confirmApprove()">✅ Confirm &amp; Approve</button>'
           + '</div>'
           + '<button class="btn btn-changes" onclick="toggleChanges()">💬 Request Changes</button>'
@@ -307,16 +310,33 @@
       var name = (el('sig-name') ? el('sig-name').value.trim() : '');
       if (!name) { alert('Please type your full name to confirm.'); return; }
       if (_sigIsEmpty()) { alert('Please draw your signature above.'); return; }
+      var consentBox = document.getElementById('sig-consent');
+      if (consentBox && !consentBox.checked) { alert('Please check the consent box to proceed.'); return; }
 
       var canvas = el('sig-canvas');
       var sigData = canvas ? canvas.toDataURL('image/png') : '';
       var btn = document.querySelector('#sig-section .btn-approve');
       if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; btn.className = 'btn btn-disabled'; }
 
+      // Audit trail: IP, user agent, document hash, quote snapshot
+      var signedIP = '';
+      try { var ipRes = await fetch('https://api.ipify.org?format=json'); var ipData = await ipRes.json(); signedIP = ipData.ip || ''; } catch(e) {}
+      var signedUA = navigator.userAgent || '';
+      var q = window._quoteData || {};
+      var quoteSnapshot = JSON.stringify({ description: q.description, line_items: q.line_items, total: q.total, tax_rate: q.tax_rate, terms: 'standard', property: q.property });
+      var hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(quoteSnapshot));
+      var hashArray = Array.from(new Uint8Array(hashBuffer));
+      var quoteHash = hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+
       try {
         var now = new Date().toISOString();
         var result = await sb.from('quotes')
-          .update({ status: 'approved', updated_at: now, client_signature: sigData, signed_name: name, signed_at: now })
+          .update({
+            status: 'approved', updated_at: now,
+            client_signature: sigData, signed_name: name, signed_at: now,
+            signed_ip: signedIP, signed_user_agent: signedUA,
+            signed_quote_hash: quoteHash, signed_quote_snapshot: quoteSnapshot
+          })
           .eq('id', window._quoteId);
         if (result.error) throw result.error;
 

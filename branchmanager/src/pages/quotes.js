@@ -306,16 +306,27 @@ var QuotesPage = {
       + (_qDesc ? '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">Auto-filled from request</div>' : '')
       + '</div>';
 
-    // ═══ STEP 1: Per Tree/Task (photo-first, AI-assisted) ═══
+    // ═══ STEP 1: Per Tree/Task ═══
     var tmData = q.timeMaterial || {};
 
     html += '<div style="margin:16px 0;">'
-      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Step 1: Price per tree</div>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Take a photo of each tree → AI identifies species & DBH → you set the price.</p>';
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Line Items</div>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Select service → take photo → AI identifies & prices.</p>';
 
-    // Photo-first add button
-    html += '<button type="button" onclick="QuotesPage._addTreePhoto()" style="width:100%;padding:14px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;">'
-      + '<span style="font-size:20px;">📷</span> Add Tree</button>';
+    // Service selector + photo button
+    html += '<div style="display:flex;gap:8px;margin-bottom:12px;">'
+      + '<select id="q-add-service" style="flex:1;padding:12px;border:2px solid var(--border);border-radius:10px;font-size:15px;font-weight:600;">'
+      + '<option value="">— Select Service —</option>'
+      + '<option value="Tree Removal">🪓 Tree Removal</option>'
+      + '<option value="Tree Pruning">✂️ Tree Pruning</option>'
+      + '<option value="Stump Removal">🪵 Stump Grinding</option>'
+      + '<option value="Cabling">🔗 Cabling</option>'
+      + '<option value="Clean Up">🧹 Clean Up</option>'
+      + '<option value="Other">📝 Other</option>'
+      + '</select>'
+      + '<button type="button" onclick="QuotesPage._addWithServiceAndPhoto()" style="padding:12px 20px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;">'
+      + '📷 Add</button>'
+      + '</div>';
 
     // Line items (with photo thumbnails)
     html += '<div id="q-items">';
@@ -1085,7 +1096,46 @@ var QuotesPage = {
     QuotesPage.showDetail(id);
   },
 
-  // ── Photo-first tree add ──
+  // ── Service-first then photo ──
+  _addWithServiceAndPhoto: function() {
+    var sel = document.getElementById('q-add-service');
+    var svc = sel ? sel.value : '';
+    if (!svc) { UI.toast('Select a service first'); return; }
+
+    // Prompt for measurement based on service
+    var pricing = QuotesPage._servicePricing[svc];
+    var measurement = null;
+    var rate = 0;
+    var desc = '';
+    if (pricing) {
+      measurement = prompt(pricing.prompt);
+      if (!measurement || isNaN(parseFloat(measurement))) { measurement = null; }
+      else {
+        var m = parseFloat(measurement);
+        rate = Math.round(m * pricing.rate);
+        desc = pricing.desc(m);
+      }
+    }
+
+    // Add line item with service pre-filled
+    QuotesPage.addItem();
+    var rows = document.querySelectorAll('.quote-item-row');
+    var lastRow = rows[rows.length - 1];
+    if (lastRow) {
+      var svcEl = lastRow.querySelector('.q-item-service');
+      if (svcEl) svcEl.value = svc;
+      if (desc) { var descEl = lastRow.querySelector('.q-item-desc'); if (descEl) descEl.value = desc; }
+      if (rate) { var rateEl = lastRow.querySelector('.q-item-rate'); if (rateEl) rateEl.value = rate; }
+      QuotesPage.calcTotal();
+    }
+
+    // Store selected service for AI context
+    QuotesPage._pendingService = svc;
+
+    // Now open camera
+    QuotesPage._addTreePhoto();
+  },
+
   _addTreePhoto: function() {
     // Use camera or file input
     var input = document.createElement('input');
@@ -1148,7 +1198,7 @@ var QuotesPage = {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: 'You are a certified arborist. Identify this tree. Respond in ONLY this JSON format, nothing else: {"species":"Common Name","dbh":"estimated diameter in inches","condition":"good/fair/poor/dead","notes":"1 sentence about the tree","suggestedService":"Tree Removal or Tree Pruning or Stump Grinding"}' }
+            { type: 'text', text: 'You are a certified arborist in ZIP ' + (localStorage.getItem('bm-zip') || '10566') + '. The selected service is: ' + (QuotesPage._pendingService || 'Tree Service') + '. Identify this tree and assess for that service. Respond in ONLY this JSON format: {"species":"Common Name","dbh":"estimated diameter in inches","condition":"good/fair/poor/dead","notes":"1 sentence assessment for the selected service","suggestedService":"' + (QuotesPage._pendingService || 'Tree Removal or Tree Pruning or Stump Grinding') + '","diseases":"top disease risk for this species"}' }
           ]
         }]
       })

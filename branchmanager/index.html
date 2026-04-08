@@ -305,17 +305,33 @@
     .card, .stat-card { border-radius:14px !important; }
     .stat-card { padding:14px !important; }
 
-    /* App stat card rows — stack 2x2 on mobile */
+    /* App stat card rows — stack 2x2 on mobile, 1 col on tiny */
     .stat-row { grid-template-columns:1fr 1fr !important; }
+    @media (max-width:400px) { .stat-row { grid-template-columns:1fr !important; } }
+
+    /* Detail grids — stack on mobile */
+    .detail-grid { grid-template-columns:1fr !important; }
+
+    /* Quote/Invoice line items — stack vertically on mobile */
+    .quote-item-row { grid-template-columns:1fr 1fr !important; gap:6px !important; }
 
     /* Make tables horizontally scrollable on mobile */
     div:has(> .data-table) { overflow-x:auto !important; -webkit-overflow-scrolling:touch; }
     .data-table { min-width:620px; }
     .data-table th, .data-table td { white-space:nowrap; font-size:12px !important; padding:10px 8px !important; }
 
-    /* Larger inputs */
+    /* Larger inputs + touch targets */
     input, select, textarea { font-size:16px !important; padding:12px !important; border-radius:10px !important; }
     .btn { min-height:44px; border-radius:12px !important; }
+
+    /* Touch targets for topbar */
+    .hamburger { padding:8px !important; min-width:44px; min-height:44px; display:flex !important; align-items:center; justify-content:center; }
+    .topbar-icon { min-width:38px; min-height:38px; }
+    .topbar-icon-create { width:38px !important; height:38px !important; }
+
+    /* Safe areas for iPhone notch/home indicator */
+    .content { padding-bottom:max(24px, env(safe-area-inset-bottom)) !important; }
+    .toast { bottom:max(24px, env(safe-area-inset-bottom)) !important; }
 
     /* Toast */
     .toast { bottom:24px !important; left:16px !important; right:16px !important; border-radius:12px !important; }
@@ -346,10 +362,10 @@
     /* Show mobile search icon */
     .mobile-search-icon { display:flex !important; }
 
-    /* Hide avatar, dark mode, AI sparkle on mobile — match App */
-    div.topbar-avatar { display:none !important; }
-    button#dark-mode-btn { display:none !important; }
-    button[onclick*="AI.toggle"] { display:none !important; }
+    /* Show all nav icons on mobile */
+    div.topbar-avatar { display:flex !important; }
+    button#dark-mode-btn { display:flex !important; }
+    button[onclick*="AI.toggle"] { display:flex !important; }
 
     /* Compact + button */
     .topbar-icon-create { width:28px !important; height:28px !important; }

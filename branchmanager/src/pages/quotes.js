@@ -1148,9 +1148,14 @@ var QuotesPage = {
       var reader = new FileReader();
       reader.onload = function(ev) {
         var dataUrl = ev.target.result;
-        // Add a new line item with photo
-        QuotesPage.addItem();
+        // Use existing last row (already added by _addWithServiceAndPhoto) or add new
         var rows = document.querySelectorAll('.quote-item-row');
+        if (!rows.length || QuotesPage._pendingService) {
+          // Row already added by _addWithServiceAndPhoto, use last one
+        } else {
+          QuotesPage.addItem();
+          rows = document.querySelectorAll('.quote-item-row');
+        }
         var lastRow = rows[rows.length - 1];
         if (lastRow) {
           // Store photo on the row

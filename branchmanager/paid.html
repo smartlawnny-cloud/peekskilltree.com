@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Payment Received — Second Nature Tree Service</title>
+<title>Payment Received</title>
 <meta name="robots" content="noindex,nofollow">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,7 +40,7 @@
     <div class="receipt-box" id="receipt-box">
       <div class="detail-row">
         <span class="label">Company</span>
-        <span class="val">Second Nature Tree Service</span>
+        <span class="val" id="val-company"></span>
       </div>
       <div class="detail-row" id="row-invoice" style="display:none;">
         <span class="label">Invoice</span>
@@ -76,15 +76,25 @@
       </div>
     </div>
 
-    <div class="footer-links">
-      <a href="https://g.page/r/CcVkZHV_EKlEEBM/review" target="_blank">⭐ Leave a Google Review</a>
-      <a href="https://peekskilltree.com">🌳 peekskilltree.com</a>
-      <a href="tel:+19143915233">📞 (914) 391-5233</a>
-    </div>
+    <div class="footer-links" id="paid-footer-links"></div>
   </div>
-  <div class="brand-footer">Second Nature Tree Service · Peekskill, NY · Licensed & Insured · WC-32079 / PC-50644</div>
+  <div class="brand-footer" id="paid-brand-footer"></div>
 </div>
 
+<script src="config.js"></script>
+<script>
+(function() {
+  var C = BM_CONFIG;
+  document.title = 'Payment Received — ' + C.companyName;
+  document.getElementById('val-company').textContent = C.companyName;
+  document.getElementById('paid-footer-links').innerHTML =
+    '<a href="' + C.googleReviewUrl + '" target="_blank">⭐ Leave a Google Review</a>'
+    + '<a href="' + C.websiteUrl + '">🌳 ' + C.website + '</a>'
+    + '<a href="tel:' + C.phoneTel + '">📞 ' + C.phone + '</a>';
+  document.getElementById('paid-brand-footer').textContent =
+    C.companyName + ' \u00b7 ' + C.city + ' \u00b7 ' + C.tagline + ' \u00b7 ' + C.licenses;
+})();
+</script>
 <script>
 (function(){
   var params = new URLSearchParams(window.location.search);
@@ -111,9 +121,7 @@
     }
   }
 
-  // Fix Google Review link — use the actual link
-  var reviewLink = 'https://g.page/r/CcVkZHV_EKlEEBM/review';
-  // Review link already set in HTML above
+  // Google Review link is now set dynamically from BM_CONFIG
 })();
 </script>
 </body>

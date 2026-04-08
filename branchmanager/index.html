@@ -665,6 +665,7 @@
         <button class="nav-item" data-page="emailtemplates"><span class="icon"><i data-lucide="mail" class="li"></i></span> Email Templates</button>
 
         <div class="nav-section">Media</div>
+        <button class="nav-item" data-page="teamchat"><span class="icon"><i data-lucide="message-circle" class="li"></i></span> Team Chat</button>
         <button class="nav-item" data-page="mediacenter"><span class="icon"><i data-lucide="camera" class="li"></i></span> Media Center <span class="badge" id="badge-mediacenter"></span></button>
         <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
         <button class="nav-item" data-page="propertymap"><span class="icon"><i data-lucide="map" class="li"></i></span> Property Map</button>
@@ -828,6 +829,7 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script defer src="src/pages/crewperformance.js?v=2"></script>
 <script defer src="src/pages/materials.js"></script>
 <script defer src="src/pages/beforeafter.js?v=3"></script>
+<script defer src="src/pages/teamchat.js?v=1"></script>
 <script defer src="src/pages/mediacenter.js?v=2"></script>
 <script defer src="src/pages/reminders.js?v=3"></script>
 <script defer src="src/pages/payroll.js?v=80"></script>
@@ -906,6 +908,7 @@ var pageConfigs = {
   crewperformance: { title: 'Crew Performance', action: null },
   materials: { title: 'Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
   beforeafter: { title: 'Before & After', action: null },
+  teamchat: { title: 'Team Chat', action: null },
   mediacenter: { title: 'Media Center', action: '+ Upload Photos', actionFn: 'MediaCenter.showUploadForm()' },
   reminders: { title: 'Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' },
   comms: { title: 'Communication Log', action: null },
@@ -968,6 +971,7 @@ var pageRenderers = {
   crewperformance: function() { return CrewPerformance.render(); },
   materials: function() { return Materials.render(); },
   beforeafter: function() { return BeforeAfter.render(); },
+  teamchat: function() { return TeamChat.render(); },
   mediacenter: function() { return MediaCenter.render(); },
   reminders: function() { return Reminders.render(); },
   comms: function() { return CommsLog.render(); },

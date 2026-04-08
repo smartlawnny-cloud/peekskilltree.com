@@ -681,7 +681,7 @@ var JobsPage = {
       + '<div style="font-size:13px;color:var(--text-light);">'
       + (j.scheduledDate ? UI.dateShort(j.scheduledDate) + (j.startTime ? ' at ' + j.startTime : '') : 'Not scheduled')
       + '</div>'
-      + (j.property ? '<div style="font-size:13px;color:var(--text-light);margin-top:2px;">📍 ' + UI.esc(j.property) + '</div>' : '')
+      + (j.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.property) + '" target="_blank" style="display:block;font-size:13px;color:var(--accent);margin-top:2px;text-decoration:none;">📍 ' + UI.esc(j.property) + ' →</a>' : '')
       + '</div>'
       + '<div style="text-align:right;">' + UI.statusBadge(j.status) + '<div style="font-size:24px;font-weight:800;color:var(--accent);margin-top:6px;">' + UI.money(j.total) + '</div></div>'
       + '</div></div>'
@@ -693,7 +693,7 @@ var JobsPage = {
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
       + '<div style="font-size:12px;color:var(--text-light);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">Client</div>'
       + '<div style="font-size:16px;font-weight:700;margin-bottom:4px;">' + UI.esc(j.clientName || '—') + '</div>'
-      + (j.property ? '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">📍 ' + UI.esc(j.property) + '</div>' : '')
+      + (j.property ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(j.property) + '" target="_blank" style="display:block;font-size:13px;color:var(--accent);margin-bottom:8px;text-decoration:none;">📍 ' + UI.esc(j.property) + ' →</a>' : '')
       + (j.clientPhone || (client && client.phone) ? '<a href="tel:' + (j.clientPhone || (client && client.phone)||'').replace(/\D/g,'') + '" style="display:block;font-size:13px;color:var(--accent);margin-bottom:4px;text-decoration:none;">📞 ' + (j.clientPhone || (client && client.phone)) + '</a>' : '')
       + (j.clientEmail || (client && client.email) ? '<a href="mailto:' + (j.clientEmail || (client && client.email) || '') + '" style="font-size:13px;color:#1565c0;text-decoration:none;">✉️ ' + (j.clientEmail || (client && client.email) || '') + '</a>' : '')
       + '</div>'

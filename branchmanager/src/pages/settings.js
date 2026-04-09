@@ -617,6 +617,16 @@ var SettingsPage = {
       + '<a href="https://supabase.com/dashboard" target="_blank" class="btn btn-outline" style="font-size:12px;">Enable</a></div>'
       + '</div></div>';
 
+    // Admin Tools
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<h3 style="margin-bottom:14px;">Admin Tools</h3>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+      + '<button onclick="loadPage(\'permissions\')" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;font-size:13px;font-weight:600;color:var(--text);"><span style="font-size:18px;">🛡</span><div>Permissions & Roles<div style="font-size:11px;font-weight:400;color:var(--text-light);margin-top:2px;">RBAC roles, 25 permissions</div></div></button>'
+      + '<button onclick="loadPage(\'customfields\')" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;font-size:13px;font-weight:600;color:var(--text);"><span style="font-size:18px;">🔧</span><div>Custom Fields<div style="font-size:11px;font-weight:400;color:var(--text-light);margin-top:2px;">Add fields to clients, jobs, quotes</div></div></button>'
+      + '<button onclick="loadPage(\'backup\')" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;font-size:13px;font-weight:600;color:var(--text);"><span style="font-size:18px;">💾</span><div>Backup & Restore<div style="font-size:11px;font-weight:400;color:var(--text-light);margin-top:2px;">Export/import all data</div></div></button>'
+      + '<button onclick="loadPage(\'import\')" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;font-size:13px;font-weight:600;color:var(--text);"><span style="font-size:18px;">📥</span><div>Import Data<div style="font-size:11px;font-weight:400;color:var(--text-light);margin-top:2px;">CSV, Jobber, bulk import</div></div></button>'
+      + '</div></div>';
+
     // About
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
       + '<h3 style="margin-bottom:12px;">About Branch Manager</h3>'

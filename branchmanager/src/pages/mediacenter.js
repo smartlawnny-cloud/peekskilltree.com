@@ -72,6 +72,7 @@ var MediaCenter = {
       + '</button>'
       + (MediaCenter._selectedIds.length > 0 ? '<button onclick="MediaCenter.bulkMarkReviewed()" style="background:#e8f5e9;color:var(--green-dark);border:1px solid #c8e6c9;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10003; Mark Reviewed (' + MediaCenter._selectedIds.length + ')</button>' : '')
       + (MediaCenter._selectedIds.length > 0 ? '<button onclick="MediaCenter.bulkDelete()" style="background:#fff5f5;color:#dc3545;border:1px solid #fca5a5;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128465; Delete (' + MediaCenter._selectedIds.length + ')</button>' : '')
+      + '<button onclick="loadPage(\'photomap\')" style="background:none;border:1px solid var(--border);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--accent);">📍 Photo Map</button>'
       + '<button class="btn btn-primary" onclick="MediaCenter.showUploadForm()">+ Upload Photos</button>'
       + '</div>'
       + '</div>';

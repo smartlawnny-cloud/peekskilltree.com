@@ -3,6 +3,12 @@
  */
 var JobsPage = {
   _page: 0, _perPage: 50, _search: '', _filter: 'all', _sortCol: 'jobNumber', _sortDir: 'desc',
+  _activeTab: 'jobs',
+
+  switchTab: function(tab) {
+    JobsPage._activeTab = tab;
+    loadPage('jobs');
+  },
 
   _co: function() {
     return {
@@ -15,6 +21,18 @@ var JobsPage = {
 
   render: function() {
     var self = JobsPage;
+    var activeTab = self._activeTab || 'jobs';
+
+    // Tab bar
+    var html = '<div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;">'
+      + '<button onclick="JobsPage.switchTab(\'jobs\')" style="padding:10px 20px;font-size:14px;font-weight:' + (activeTab==='jobs'?'700':'500') + ';border:none;background:none;cursor:pointer;color:' + (activeTab==='jobs'?'var(--accent)':'var(--text-light)') + ';border-bottom:2px solid ' + (activeTab==='jobs'?'var(--accent)':'transparent') + ';margin-bottom:-2px;">Jobs</button>'
+      + '<button onclick="JobsPage.switchTab(\'visits\')" style="padding:10px 20px;font-size:14px;font-weight:' + (activeTab==='visits'?'700':'500') + ';border:none;background:none;cursor:pointer;color:' + (activeTab==='visits'?'var(--accent)':'var(--text-light)') + ';border-bottom:2px solid ' + (activeTab==='visits'?'var(--accent)':'transparent') + ';margin-bottom:-2px;">Visits</button>'
+      + '</div>';
+
+    if (activeTab === 'visits') {
+      return html + Visits.render();
+    }
+
     var all = DB.jobs.getAll();
     var late = all.filter(function(j) { return j.status === 'late'; }).length;
     var scheduled = all.filter(function(j) { return j.status === 'scheduled'; }).length;
@@ -44,7 +62,7 @@ var JobsPage = {
     var activeTotal = activeJobs.reduce(function(s,j){return s+(j.total||0);},0);
     var upcomingTotal = upcomingVisits.reduce(function(s,j){return s+(j.total||0);},0);
 
-    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
       // Overview
       + '<div onclick="JobsPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
       + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'

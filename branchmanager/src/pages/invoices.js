@@ -12,9 +12,27 @@ var InvoicesPage = {
   },
 
   _page: 0, _perPage: 50, _search: '', _filter: 'all', _sortCol: 'invoiceNumber', _sortDir: 'desc',
+  _activeTab: 'invoices',
+
+  switchTab: function(tab) {
+    InvoicesPage._activeTab = tab;
+    loadPage('invoices');
+  },
 
   render: function() {
     var self = InvoicesPage;
+    var activeTab = self._activeTab || 'invoices';
+
+    // Tab bar
+    var html = '<div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;">'
+      + '<button onclick="InvoicesPage.switchTab(\'invoices\')" style="padding:10px 20px;font-size:14px;font-weight:' + (activeTab==='invoices'?'700':'500') + ';border:none;background:none;cursor:pointer;color:' + (activeTab==='invoices'?'var(--accent)':'var(--text-light)') + ';border-bottom:2px solid ' + (activeTab==='invoices'?'var(--accent)':'transparent') + ';margin-bottom:-2px;">Invoices</button>'
+      + '<button onclick="InvoicesPage.switchTab(\'payments\')" style="padding:10px 20px;font-size:14px;font-weight:' + (activeTab==='payments'?'700':'500') + ';border:none;background:none;cursor:pointer;color:' + (activeTab==='payments'?'var(--accent)':'var(--text-light)') + ';border-bottom:2px solid ' + (activeTab==='payments'?'var(--accent)':'transparent') + ';margin-bottom:-2px;">Payments</button>'
+      + '</div>';
+
+    if (activeTab === 'payments') {
+      return html + Payments._renderContent();
+    }
+
     var all = DB.invoices.getAll();
     var receivable = DB.invoices.totalReceivable();
     var unpaid = all.filter(function(i) { return i.status !== 'paid'; });
@@ -32,7 +50,7 @@ var InvoicesPage = {
     var recentIssuedTotal = recentIssued.reduce(function(s,i){return s+(i.total||0);},0);
     var avgInvoice = recentIssued.length > 0 ? Math.round(recentIssuedTotal / recentIssued.length) : 0;
 
-    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
       // Overview
       + '<div onclick="InvoicesPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
       + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'

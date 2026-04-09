@@ -79,6 +79,7 @@ var QuotesPage = {
         return out;
       })()
       + '</div>'
+      + '<button onclick="loadPage(\'propertymap\')" style="background:none;border:1px solid var(--border);padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--accent);white-space:nowrap;" title="Property map for site assessments">📍 Property Map</button>'
       + '<div class="search-box" style="min-width:200px;max-width:280px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
       + '<input type="text" placeholder="Search quotes..." value="' + UI.esc(self._search) + '" oninput="QuotesPage._search=this.value;QuotesPage._page=0;loadPage(\'quotes\')">'

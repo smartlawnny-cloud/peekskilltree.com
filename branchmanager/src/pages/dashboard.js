@@ -356,6 +356,46 @@ var DashboardPage = {
 
     html += '</div>';
 
+    // Quick conversions — approved quotes → jobs, completed jobs → invoices
+    var dashApproved = allQuotes.filter(function(q) { return q.status === 'approved' && !q.convertedJobId; });
+    var cutoff60dash = new Date(now.getTime() - 60 * 86400000).toISOString().split('T')[0];
+    var cutoff7dash = new Date(now.getTime() - 7 * 86400000).toISOString();
+    var dashNeedsInv = allJobs.filter(function(j) {
+      if (j.status !== 'completed' || j.invoiceId) return false;
+      return (j.scheduledDate && j.scheduledDate >= cutoff60dash)
+          || (!j.scheduledDate && (j.createdAt || '') > cutoff7dash);
+    });
+    if (dashApproved.length > 0 || dashNeedsInv.length > 0) {
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
+      if (dashApproved.length > 0) {
+        html += '<div style="background:var(--white);border-radius:10px;padding:16px;border:1px solid #c8e6c9;">'
+          + '<div style="font-size:12px;font-weight:700;color:var(--green-dark);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Ready to Convert (' + dashApproved.length + ')</div>';
+        dashApproved.slice(0, 3).forEach(function(q) {
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">'
+            + '<div style="min-width:0;flex:1;"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(q.clientName || '') + '</div>'
+            + '<div style="font-size:11px;color:var(--text-light);">' + UI.money(q.total) + '</div></div>'
+            + '<button onclick="var j=Workflow.quoteToJob(\'' + q.id + '\');if(j){loadPage(\'dashboard\');}" style="background:var(--green-dark);color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:8px;">→ Job</button>'
+            + '</div>';
+        });
+        if (dashApproved.length > 3) html += '<div style="font-size:11px;color:var(--text-light);margin-top:6px;text-align:center;">+ ' + (dashApproved.length - 3) + ' more</div>';
+        html += '</div>';
+      }
+      if (dashNeedsInv.length > 0) {
+        html += '<div style="background:var(--white);border-radius:10px;padding:16px;border:1px solid #ffe0b2;">'
+          + '<div style="font-size:12px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Ready to Invoice (' + dashNeedsInv.length + ')</div>';
+        dashNeedsInv.slice(0, 3).forEach(function(j) {
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">'
+            + '<div style="min-width:0;flex:1;"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.clientName || '') + '</div>'
+            + '<div style="font-size:11px;color:var(--text-light);">' + UI.money(j.total) + '</div></div>'
+            + '<button onclick="var inv=Workflow.jobToInvoice(\'' + j.id + '\');if(inv){loadPage(\'dashboard\');}" style="background:#e65100;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:8px;">→ Invoice</button>'
+            + '</div>';
+        });
+        if (dashNeedsInv.length > 3) html += '<div style="font-size:11px;color:var(--text-light);margin-top:6px;text-align:center;">+ ' + (dashNeedsInv.length - 3) + ' more</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
     // Today's Jobs — Jobber shows this on dashboard
     var todayDateStr2 = now.getFullYear() + '-' + (now.getMonth()+1<10?'0':'') + (now.getMonth()+1) + '-' + (now.getDate()<10?'0':'') + now.getDate();
     var todayJobList = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === todayDateStr2; });

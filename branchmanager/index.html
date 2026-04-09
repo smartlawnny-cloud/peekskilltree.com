@@ -601,7 +601,7 @@
       <h1>Branch Manager <span>Second Nature Tree Service</span></h1>
     </div>
     <div class="sidebar-nav">
-      <!-- Core nav — matches Jobber exactly -->
+      <!-- Core nav — matches Jobber -->
       <button class="nav-item active" data-page="dashboard"><span class="icon"><i data-lucide="layout-dashboard" class="li"></i></span> Home</button>
       <button class="nav-item" data-page="schedule"><span class="icon"><i data-lucide="calendar" class="li"></i></span> Schedule</button>
       <button class="nav-item" data-page="clients"><span class="icon"><i data-lucide="users" class="li"></i></span> Clients <span class="badge" id="badge-clients"></span></button>
@@ -609,9 +609,24 @@
       <button class="nav-item" data-page="quotes"><span class="icon"><i data-lucide="file-text" class="li"></i></span> Quotes <span class="badge" id="badge-quotes"></span></button>
       <button class="nav-item" data-page="jobs"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Jobs <span class="badge" id="badge-jobs"></span></button>
       <button class="nav-item" data-page="invoices"><span class="icon"><i data-lucide="receipt" class="li"></i></span> Invoices <span class="badge" id="badge-invoices"></span></button>
-      <button class="nav-item" data-page="payments"><span class="icon"><i data-lucide="credit-card" class="li"></i></span> Payments</button>
 
-      <!-- Marketing (collapsible — matches Jobber) -->
+      <!-- Reports (collapsible) -->
+      <button class="nav-item" id="reports-toggle" onclick="(function(){var el=document.getElementById('reports-sub');var open=el.style.display!=='none';el.style.display=open?'none':'block';document.getElementById('reports-chevron').style.transform=open?'':'rotate(90deg)';})()">
+        <span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span>
+        Reports
+        <i data-lucide="chevron-right" id="reports-chevron" style="width:14px;height:14px;stroke:currentColor;margin-left:auto;transition:transform .2s;"></i>
+      </button>
+      <div id="reports-sub" style="display:none;padding-left:14px;">
+        <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="pie-chart" class="li"></i></span> Overview</button>
+        <button class="nav-item" data-page="profitloss"><span class="icon"><i data-lucide="line-chart" class="li"></i></span> Profit & Loss</button>
+        <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
+        <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Job Costing</button>
+        <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget</button>
+        <button class="nav-item" data-page="weeklysummary"><span class="icon"><i data-lucide="clipboard-list" class="li"></i></span> Weekly Summary</button>
+        <button class="nav-item" data-page="reports"><span class="icon"><i data-lucide="download" class="li"></i></span> Export</button>
+      </div>
+
+      <!-- Marketing (collapsible) -->
       <button class="nav-item" id="marketing-toggle" onclick="(function(){var el=document.getElementById('marketing-sub');var open=el.style.display!=='none';el.style.display=open?'none':'block';document.getElementById('marketing-chevron').style.transform=open?'':'rotate(90deg)';})()">
         <span class="icon"><i data-lucide="megaphone" class="li"></i></span>
         Marketing
@@ -619,35 +634,30 @@
       </button>
       <div id="marketing-sub" style="display:none;padding-left:14px;">
         <button class="nav-item" data-page="reviews"><span class="icon"><i data-lucide="star" class="li"></i></span> Reviews</button>
+        <button class="nav-item" data-page="reviewtools"><span class="icon"><i data-lucide="thumbs-up" class="li"></i></span> Review Tools</button>
         <button class="nav-item" data-page="campaigns"><span class="icon"><i data-lucide="mail" class="li"></i></span> Campaigns</button>
         <button class="nav-item" data-page="referrals"><span class="icon"><i data-lucide="share-2" class="li"></i></span> Referrals</button>
-        <button class="nav-item" onclick="window.open('https://peekskilltree.com','_blank')" style="opacity:.85;"><span class="icon"><i data-lucide="globe" class="li"></i></span> Website</button>
+        <button class="nav-item" data-page="onlinebooking"><span class="icon"><i data-lucide="globe" class="li"></i></span> Online Booking</button>
+        <button class="nav-item" onclick="window.open('https://peekskilltree.com','_blank')" style="opacity:.85;"><span class="icon"><i data-lucide="external-link" class="li"></i></span> Website</button>
       </div>
 
-      <div style="border-top:1px solid rgba(255,255,255,.06);margin:8px 10px 4px;"></div>
+      <div style="border-top:1px solid var(--sidebar-border);margin:8px 10px 4px;"></div>
       <button class="nav-item" data-page="settings"><span class="icon"><i data-lucide="settings" class="li"></i></span> Settings</button>
 
-      <!-- More — everything beyond App's core -->
+      <!-- More -->
       <div class="nav-section" style="cursor:pointer;margin-top:4px;" onclick="var el=document.getElementById('more-nav');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.more-arrow').textContent=el.style.display==='none'?'&#9656;':'&#9662;';">More <span class="more-arrow" style="float:right;">&#9656;</span></div>
       <div id="more-nav" style="display:none;">
-        <div class="nav-section">Team</div>
+        <div class="nav-section">People</div>
         <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team</button>
         <button class="nav-item" data-page="timesheet"><span class="icon"><i data-lucide="clock" class="li"></i></span> Timesheets</button>
         <button class="nav-item" data-page="payroll"><span class="icon"><i data-lucide="wallet" class="li"></i></span> Payroll</button>
-        <button class="nav-item" data-page="crewview"><span class="icon"><i data-lucide="shield" class="li"></i></span> Crew View</button>
         <button class="nav-item" data-page="crewperformance"><span class="icon"><i data-lucide="trophy" class="li"></i></span> Performance</button>
-        <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="wallet" class="li"></i></span> My Pay</button>
-        <button class="nav-item" data-page="permissions"><span class="icon"><i data-lucide="shield" class="li"></i></span> Permissions</button>
+        <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="banknote" class="li"></i></span> My Pay</button>
         <button class="nav-item" onclick="window.open('onboarding/','_blank')" style="opacity:.85;"><span class="icon"><i data-lucide="graduation-cap" class="li"></i></span> Onboarding</button>
 
-        <div class="nav-section">Reporting</div>
-        <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Dashboard</button>
-        <button class="nav-item" data-page="profitloss"><span class="icon"><i data-lucide="line-chart" class="li"></i></span> Profit & Loss</button>
-        <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
-        <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Job Costing</button>
-        <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget</button>
-        <button class="nav-item" data-page="weeklysummary"><span class="icon"><i data-lucide="clipboard-list" class="li"></i></span> Weekly Summary</button>
-        <button class="nav-item" data-page="reports"><span class="icon"><i data-lucide="download" class="li"></i></span> Export</button>
+        <div class="nav-section">Team Chat</div>
+        <button class="nav-item" data-page="teamchat"><span class="icon"><i data-lucide="message-circle" class="li"></i></span> Team Chat</button>
+        <button class="nav-item" data-page="taskreminders"><span class="icon"><i data-lucide="check-circle" class="li"></i></span> Tasks & Reminders</button>
 
         <div class="nav-section">Operations</div>
         <button class="nav-item" data-page="dispatch"><span class="icon"><i data-lucide="truck" class="li"></i></span> Dispatch</button>
@@ -656,22 +666,18 @@
         <button class="nav-item" data-page="automations"><span class="icon"><i data-lucide="zap" class="li"></i></span> Automations</button>
         <button class="nav-item" data-page="checklists"><span class="icon"><i data-lucide="check-square" class="li"></i></span> Checklists</button>
         <button class="nav-item" data-page="equipment"><span class="icon"><i data-lucide="cog" class="li"></i></span> Equipment</button>
-        <button class="nav-item" data-page="materials"><span class="icon"><i data-lucide="package" class="li"></i></span> Materials</button>
 
-        <div class="nav-section">Client</div>
+        <div class="nav-section">Client Hub</div>
         <button class="nav-item" data-page="clienthub"><span class="icon"><i data-lucide="user-check" class="li"></i></span> Client Portal</button>
         <button class="nav-item" data-page="messaging"><span class="icon"><i data-lucide="message-square" class="li"></i></span> Messages</button>
         <button class="nav-item" data-page="satisfaction"><span class="icon"><i data-lucide="smile" class="li"></i></span> Satisfaction</button>
         <button class="nav-item" data-page="formbuilder"><span class="icon"><i data-lucide="layout" class="li"></i></span> Forms</button>
-        <button class="nav-item" data-page="emailtemplates"><span class="icon"><i data-lucide="mail" class="li"></i></span> Email Templates</button>
+        <button class="nav-item" data-page="emailtemplates"><span class="icon"><i data-lucide="file-edit" class="li"></i></span> Email Templates</button>
+        <button class="nav-item" data-page="receptionist"><span class="icon"><i data-lucide="phone" class="li"></i></span> Receptionist</button>
 
         <div class="nav-section">Media</div>
-        <button class="nav-item" data-page="taskreminders"><span class="icon"><i data-lucide="bell" class="li"></i></span> Tasks & Reminders</button>
-        <button class="nav-item" data-page="teamchat"><span class="icon"><i data-lucide="message-circle" class="li"></i></span> Team Chat</button>
         <button class="nav-item" data-page="mediacenter"><span class="icon"><i data-lucide="camera" class="li"></i></span> Media Center <span class="badge" id="badge-mediacenter"></span></button>
         <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
-        <button class="nav-item" data-page="propertymap"><span class="icon"><i data-lucide="map" class="li"></i></span> Property Map</button>
-        <button class="nav-item" data-page="clientmap"><span class="icon"><i data-lucide="map-pin" class="li"></i></span> Client Map</button>
 
         <div class="nav-section">Tools</div>
         <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> AI Assistant</button>
@@ -679,9 +685,6 @@
         <button class="nav-item" data-page="aitreeid"><span class="icon"><i data-lucide="scan-eye" class="li"></i></span> AI Tree ID <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
         <button class="nav-item" data-page="videoquote"><span class="icon"><i data-lucide="video" class="li"></i></span> Video Quote <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
         <button class="nav-item" data-page="treemeasure"><span class="icon"><i data-lucide="ruler" class="li"></i></span> Tree Measure</button>
-        <button class="nav-item" data-page="customfields"><span class="icon"><i data-lucide="sliders" class="li"></i></span> Custom Fields</button>
-        <button class="nav-item" data-page="backup"><span class="icon"><i data-lucide="database" class="li"></i></span> Backup</button>
-        <button class="nav-item" data-page="import"><span class="icon"><i data-lucide="upload" class="li"></i></span> Import Data</button>
       </div>
     </div>
 
@@ -849,6 +852,7 @@ var currentPage = 'dashboard';
 document.querySelectorAll('.nav-item').forEach(function(btn) {
   btn.addEventListener('click', function() {
     var page = this.dataset.page;
+    if (!page) return;
     if (page === currentPage) return;
     currentPage = page;
     document.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
@@ -994,11 +998,11 @@ var pageRenderers = {
   emailtemplates: function() { return EmailTemplates.render(); },
   customfields: function() { return CustomFields.render(); },
   checklists: function() { return Checklists.render(); },
-  payments: function() { return Payments.render(); },
+  payments: function() { InvoicesPage._activeTab = 'payments'; return InvoicesPage.render(); },
   ai: function() { return AI.render(); },
   clienthub: function() { return ClientHub.render(); },
-  visits: function() { return Visits.render(); },
-  workflow: function() { return Workflow.render(); },
+  visits: function() { JobsPage._activeTab = 'visits'; return JobsPage.render(); },
+  workflow: function() { loadPage('dashboard'); return ''; },
   propertymap: function() { return PropertyMap.render(); },
   search: function() { return SearchPage.render(); },
   payroll: function() { return PayrollPage.render(); },

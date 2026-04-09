@@ -72,6 +72,7 @@ var ClientsPage = {
       + '<span style="color:var(--text-light);">🔍</span>'
       + '<input type="text" id="client-search" placeholder="Search clients..." value="' + UI.esc(self._search) + '" oninput="ClientsPage.setSearch(this.value)">'
       + '</div>'
+      + '<button onclick="loadPage(\'clientmap\')" style="background:none;border:1px solid var(--border);padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--accent);white-space:nowrap;" title="View client map">📍 Map</button>'
       + '<button class="btn btn-primary" onclick="ClientsPage.showForm()" style="font-size:13px;white-space:nowrap;">+ New Client</button>'
       + '</div></div>';
 

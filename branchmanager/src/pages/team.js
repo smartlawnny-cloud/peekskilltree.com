@@ -107,7 +107,7 @@ var TeamPage = {
     var stored = JSON.parse(localStorage.getItem('bm-team') || '[]');
     if (stored.length === 0) {
       stored = [
-        { id: 'owner', name: 'Doug Brown', role: 'owner', phone: '(914) 391-5233', email: 'info@peekskilltree.com', active: true },
+        { id: 'owner', name: BM_CONFIG.ownerName, role: 'owner', phone: BM_CONFIG.phone, email: BM_CONFIG.email, active: true },
         { id: 'ryan', name: 'Ryan Knapp', role: 'crew_lead', phone: '', email: '', active: true },
         { id: 'anthony', name: 'Anthony Turner', role: 'crew_member', phone: '', email: '', active: true },
         { id: 'catherine', name: 'Catherine Conway', role: 'crew_member', phone: '', email: '', active: true }

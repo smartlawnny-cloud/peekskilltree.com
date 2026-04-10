@@ -14,10 +14,10 @@ var ClientsPage = {
 
   _co: function() {
     return {
-      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
-      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
-      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
-      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
+      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
+      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
+      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website
     };
   },
 
@@ -476,7 +476,7 @@ var ClientsPage = {
     var html = ''
       // Breadcrumb
       + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;">'
-      + '<a onclick="loadPage(\'clients\')" style="color:var(--text-light);cursor:pointer;text-decoration:none;">Second Nature Tree Service</a>'
+      + '<a onclick="loadPage(\'clients\')" style="color:var(--text-light);cursor:pointer;text-decoration:none;">' + BM_CONFIG.companyName + '</a>'
       + ' | <span style="color:var(--text);">' + UI.esc(c.name) + '</span></div>'
 
       // Action buttons (right-aligned)

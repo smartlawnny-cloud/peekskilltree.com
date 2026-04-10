@@ -71,7 +71,7 @@ var Email = {
     if (!t) { UI.toast('Template not found', 'error'); return; }
     if (!clientData.email) { UI.toast('No email on file for ' + (clientData.name || 'this client'), 'error'); return; }
 
-    var subject = t.subject ? Templates.fill(t.subject, clientData) : 'Second Nature Tree Service';
+    var subject = t.subject ? Templates.fill(t.subject, clientData) : BM_CONFIG.companyName;
     var body = Templates.fill(t.body, clientData);
 
     Email.send(clientData.email, subject, body);
@@ -115,8 +115,8 @@ var Email = {
       // Header
       + '<tr><td style="background:#1a3c12;padding:24px 32px;">'
       + '<table width="100%" cellpadding="0" cellspacing="0"><tr>'
-      + '<td><div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-.3px;">🌳 Second Nature Tree Service</div>'
-      + '<div style="font-size:12px;color:#a8d5a2;margin-top:3px;">Licensed &amp; Insured · Westchester &amp; Putnam Counties</div></td>'
+      + '<td><div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-.3px;">🌳 ' + BM_CONFIG.companyName + '</div>'
+      + '<div style="font-size:12px;color:#a8d5a2;margin-top:3px;">' + BM_CONFIG.tagline + '</div></td>'
       + '</tr></table></td></tr>'
       // Body
       + '<tr><td style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">'
@@ -125,12 +125,12 @@ var Email = {
       // Footer
       + '<tr><td style="background:#f8f8f8;padding:20px 32px;border-top:1px solid #e8e8e8;text-align:center;">'
       + '<div style="font-size:13px;color:#888;line-height:1.6;">'
-      + '<strong style="color:#555;">Second Nature Tree Service</strong><br>'
-      + '<a href="tel:9143915233" style="color:#00836c;text-decoration:none;">(914) 391-5233</a> &nbsp;·&nbsp; '
-      + '<a href="mailto:info@peekskilltree.com" style="color:#00836c;text-decoration:none;">info@peekskilltree.com</a> &nbsp;·&nbsp; '
-      + '<a href="https://peekskilltree.com" style="color:#00836c;text-decoration:none;">peekskilltree.com</a>'
+      + '<strong style="color:#555;">' + BM_CONFIG.companyName + '</strong><br>'
+      + '<a href="tel:' + BM_CONFIG.phoneDigits + '" style="color:#00836c;text-decoration:none;">' + BM_CONFIG.phone + '</a> &nbsp;·&nbsp; '
+      + '<a href="mailto:' + BM_CONFIG.email + '" style="color:#00836c;text-decoration:none;">' + BM_CONFIG.email + '</a> &nbsp;·&nbsp; '
+      + '<a href="' + BM_CONFIG.websiteUrl + '" style="color:#00836c;text-decoration:none;">' + BM_CONFIG.website + '</a>'
       + '</div>'
-      + '<div style="font-size:11px;color:#aaa;margin-top:8px;">You received this because you contacted Second Nature Tree Service.</div>'
+      + '<div style="font-size:11px;color:#aaa;margin-top:8px;">You received this because you contacted ' + BM_CONFIG.companyName + '.</div>'
       + '</td></tr>'
       + '</table>'
       + '</td></tr></table>'
@@ -166,7 +166,7 @@ var Email = {
   },
 
   testSend: function() {
-    Email.send('info@peekskilltree.com', 'Branch Manager Test Email',
+    Email.send(BM_CONFIG.email, 'Branch Manager Test Email',
       'This is a test email from Branch Manager.\n\nIf you received this, email sending is working!\n\n— Branch Manager');
   }
 };

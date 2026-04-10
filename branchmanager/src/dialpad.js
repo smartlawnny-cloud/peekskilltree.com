@@ -8,8 +8,8 @@
  */
 var Dialpad = {
   apiKey: null,
-  companyPhone: '(914) 391-5233',
-  companyPhoneClean: '19143915233',
+  companyPhone: BM_CONFIG.phone,
+  companyPhoneClean: '1' + BM_CONFIG.phoneDigits,
 
   init: function() {
     Dialpad.apiKey = localStorage.getItem('bm-dialpad-key') || null;

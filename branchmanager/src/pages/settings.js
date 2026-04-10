@@ -36,12 +36,12 @@ var SettingsPage = {
 
     // Company Info — editable, saved to localStorage
     var co = {
-      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
-      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
-      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
+      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
+      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
       address: localStorage.getItem('bm-co-address') || '1 Highland Industrial Park, Peekskill, NY 10566',
       licenses: localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644',
-      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
       taxRate: localStorage.getItem('bm-tax-rate') || '8.375'
     };
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
@@ -636,7 +636,7 @@ var SettingsPage = {
       + '<div><strong>Stack:</strong> Vanilla JS + Supabase + Stripe + MapLibre</div>'
       + '<div><strong>Storage:</strong> localStorage + Supabase cloud sync</div>'
       + '<div><strong>PWA:</strong> Installable, offline capable</div>'
-      + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;">Built for Second Nature Tree Service. Replaces previous system ($50-130/mo) with a $0/mo custom solution.</div>'
+      + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;">Built for ' + BM_CONFIG.companyName + '. Replaces previous system ($50-130/mo) with a $0/mo custom solution.</div>'
       + '</div></div>';
 
     html += '</div>';

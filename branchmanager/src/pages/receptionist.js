@@ -187,7 +187,7 @@ var Receptionist = {
       + '<input type="checkbox" ' + (settings.autoReply ? 'checked' : '') + ' onchange="Receptionist.toggleSetting(\'autoReply\',this.checked)"> '
       + '<span style="font-size:13px;">Enable auto-reply for missed calls</span></label>'
       + '<textarea style="width:100%;min-height:80px;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:13px;" '
-      + 'placeholder="Thanks for calling Second Nature Tree Service! We missed your call but will get back to you within 1 hour."'
+      + 'placeholder="Thanks for calling ' + BM_CONFIG.companyName + '! We missed your call but will get back to you within 1 hour."'
       + ' onblur="Receptionist.saveSetting(\'autoReplyMsg\',this.value)">' + UI.esc(settings.autoReplyMsg || '') + '</textarea>'
       + '</div>';
 

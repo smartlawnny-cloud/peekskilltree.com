@@ -29,9 +29,9 @@ var EmailTemplates = {
     invoiceTotal:    { label: 'Invoice Total',      sample: '$2,400.00' },
     invoiceDueDate:  { label: 'Invoice Due Date',   sample: 'April 1, 2026' },
     invoiceBalance:  { label: 'Invoice Balance',    sample: '$2,400.00' },
-    companyName:     { label: 'Company Name',       sample: 'Second Nature Tree Service' },
-    companyPhone:    { label: 'Company Phone',      sample: '(914) 391-5233' },
-    reviewLink:      { label: 'Google Review Link', sample: 'https://g.page/r/CcVkZHV_EKlEEBM/review' }
+    companyName:     { label: 'Company Name',       sample: BM_CONFIG.companyName },
+    companyPhone:    { label: 'Company Phone',      sample: BM_CONFIG.phone },
+    reviewLink:      { label: 'Google Review Link', sample: BM_CONFIG.googleReviewUrl }
   },
 
   // ─── Default Templates ───────────────────────────────────────
@@ -311,10 +311,10 @@ var EmailTemplates = {
 
     var mergeData = {};
     // Always fill company fields
-    mergeData.companyName = localStorage.getItem('bm-co-name') || 'Second Nature Tree Service';
-    mergeData.companyPhone = localStorage.getItem('bm-co-phone') || '(914) 391-5233';
-    mergeData.companyEmail = localStorage.getItem('bm-co-email') || 'info@peekskilltree.com';
-    mergeData.companyWebsite = localStorage.getItem('bm-co-website') || 'peekskilltree.com';
+    mergeData.companyName = localStorage.getItem('bm-co-name') || BM_CONFIG.companyName;
+    mergeData.companyPhone = localStorage.getItem('bm-co-phone') || BM_CONFIG.phone;
+    mergeData.companyEmail = localStorage.getItem('bm-co-email') || BM_CONFIG.email;
+    mergeData.companyWebsite = localStorage.getItem('bm-co-website') || BM_CONFIG.website;
     mergeData.reviewLink = 'https://g.page/r/CcVkZHV_EKlEEBM/review';
 
     // Overlay provided data

@@ -32,10 +32,10 @@ var PDF = {
 
   _co: function() {
     return {
-      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
-      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
-      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
-      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com',
+      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
+      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
+      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
+      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
       address: localStorage.getItem('bm-co-address') || '1 Highland Industrial Park, Peekskill, NY 10566',
       licenses: localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644'
     };
@@ -190,7 +190,7 @@ var PDF = {
     html += '<div class="notes"><h4>Payment Terms</h4>'
       + '<p>Payment is due by ' + UI.dateShort(inv.dueDate) + '. '
       + 'Late payments may be subject to a 1.5% monthly finance charge. '
-      + 'For questions about this invoice, call (914) 391-5233 or email info@peekskilltree.com.</p></div>';
+      + 'For questions about this invoice, call ' + co.phone + ' or email ' + co.email + '.</p></div>';
 
     html += PDF._footer() + '</body></html>';
     PDF._openPrint(html);

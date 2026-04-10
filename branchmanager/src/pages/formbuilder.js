@@ -11,12 +11,12 @@ var FormBuilderPage = {
 
   _defaultConfig: function() {
     return {
-      title: 'Second Nature Tree Service',
-      subtitle: 'Peekskill, NY — Licensed & Insured',
+      title: BM_CONFIG.companyName,
+      subtitle: BM_CONFIG.city + ' — ' + BM_CONFIG.tagline,
       buttonText: 'Request Free Estimate',
       successTitle: 'Request Received!',
       successMessage: "Thanks! We'll review your request and get back to you within 2 hours during business hours.",
-      notifyEmail: 'info@peekskilltree.com',
+      notifyEmail: BM_CONFIG.email,
       fields: [
         { id: 'f1', label: 'Your Name', type: 'text', placeholder: 'First and last name', required: true },
         { id: 'f2', label: 'Phone Number', type: 'tel', placeholder: '(914) 555-1234', required: true },

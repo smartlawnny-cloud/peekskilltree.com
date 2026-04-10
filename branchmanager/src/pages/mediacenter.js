@@ -700,7 +700,7 @@ var MediaCenter = {
     var tagLine = Object.keys(tagSet).map(function(t) {
       return t.charAt(0).toUpperCase() + t.slice(1);
     }).join(' · ');
-    var defaultCaption = '&#127795; Second Nature Tree Service'
+    var defaultCaption = '&#127795; ' + BM_CONFIG.companyName
       + (clientNames.length > 0 ? '\n' + clientNames.slice(0, 3).join(', ') + (clientNames.length > 3 ? ' +' + (clientNames.length - 3) + ' more' : '') : '')
       + (tagLine ? '\n' + tagLine : '')
       + '\n\n#treework #treeservice #peekskill #arborist #treecrew #secondnaturetreeservice';

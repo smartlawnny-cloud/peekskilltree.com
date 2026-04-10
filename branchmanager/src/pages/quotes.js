@@ -850,7 +850,7 @@ var QuotesPage = {
       // Description
       + (q.description ? '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
         + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Description</h4>'
-        + '<p style="font-size:14px;line-height:1.6;margin:0;">' + UI.esc(q.description) + '</p></div>' : '')
+        + '<p style="font-size:14px;line-height:1.6;margin:0;word-wrap:break-word;overflow-wrap:break-word;white-space:pre-wrap;">' + UI.esc(q.description) + '</p></div>' : '')
 
       // Line items (Product / Service) — inline editor
       + QuotesPage.renderLineItems(q, id)
@@ -976,7 +976,7 @@ var QuotesPage = {
       + '<div style="font-size:20px;font-weight:800;color:var(--green-dark);">' + UI.money(q.total) + '</div>'
       + '</div>'
       + '<div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">' + UI.esc(q.clientName || '') + ' · ' + UI.esc(q.property || '') + '</div>'
-      + (q.description ? '<div style="font-size:13px;margin-bottom:10px;">' + UI.esc(q.description) + '</div>' : '')
+      + (q.description ? '<div style="font-size:13px;margin-bottom:10px;word-wrap:break-word;overflow-wrap:break-word;white-space:pre-wrap;">' + UI.esc(q.description) + '</div>' : '')
       + itemsSummary
       + '</div>'
 

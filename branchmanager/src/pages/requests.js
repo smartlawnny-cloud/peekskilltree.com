@@ -123,6 +123,29 @@ var RequestsPage = {
     var self = RequestsPage;
     var allRequests = DB.requests.getAll();
 
+    // ── Auto-link unlinked requests to existing clients ──
+    var allClients = DB.clients.getAll();
+    allRequests.forEach(function(r) {
+      if (r.clientId) return;
+      var match = null;
+      if (r.phone) {
+        var ph = r.phone.replace(/\D/g,'');
+        if (ph.length >= 7) match = allClients.find(function(c) { return c.phone && c.phone.replace(/\D/g,'') === ph; });
+      }
+      if (!match && r.email) {
+        var em = r.email.toLowerCase();
+        match = allClients.find(function(c) { return c.email && c.email.toLowerCase() === em; });
+      }
+      if (!match && r.clientName) {
+        var nm = r.clientName.toLowerCase().trim();
+        match = allClients.find(function(c) { return c.name && c.name.toLowerCase().trim() === nm; });
+      }
+      if (match) {
+        DB.requests.update(r.id, { clientId: match.id });
+        r.clientId = match.id;
+      }
+    });
+
     // ── Counts ──
     var newCount   = allRequests.filter(function(r){ return r.status === 'new'; }).length;
     var quotedCount = allRequests.filter(function(r){ return r.status === 'quoted'; }).length;
@@ -157,7 +180,9 @@ var RequestsPage = {
           + '" onmouseenter="this.style.boxShadow=\'0 2px 8px rgba(249,168,37,.25)\'" onmouseleave="this.style.boxShadow=\'none\'">'
           + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">'
           + '<div style="flex:1;min-width:200px;">'
-          + '<div style="font-size:11px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">New Request</div>'
+          + '<div style="font-size:11px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">New Request'
+          + (r.clientId ? ' <span style="color:var(--green-dark);font-size:10px;background:#e8f5e9;padding:1px 6px;border-radius:4px;margin-left:6px;text-transform:none;letter-spacing:0;">Returning Client</span>' : '')
+          + '</div>'
           + '<div style="font-size:15px;font-weight:700;color:var(--text);">' + UI.esc(r.clientName || 'Unknown')
           + '<span style="font-weight:400;color:var(--text-light);font-size:13px;margin-left:8px;">'
           + (r.property ? ' — ' + UI.esc(r.property) : '')

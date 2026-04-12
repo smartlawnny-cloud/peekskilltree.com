@@ -396,6 +396,42 @@ var DashboardPage = {
       html += '</div>';
     }
 
+    // Daily Vehicle Inspection — shows once per day until completed
+    var inspDateKey = 'bm-inspection-' + now.toISOString().split('T')[0];
+    if (!localStorage.getItem(inspDateKey)) {
+      html += '<div id="daily-inspection" style="background:var(--white);border-radius:12px;border:2px solid #e65100;margin-bottom:16px;overflow:hidden;">'
+        + '<div style="background:#fff3e0;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">'
+        + '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<span style="font-size:22px;">🚛</span>'
+        + '<div><div style="font-size:15px;font-weight:700;color:#e65100;">Daily Pre-Trip Inspection</div>'
+        + '<div style="font-size:12px;color:#bf360c;">FMCSA/DOT — required before first trip</div></div>'
+        + '</div>'
+        + '<button onclick="DashboardPage._toggleInspection()" style="background:#e65100;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;" id="insp-toggle-btn">Start ▾</button>'
+        + '</div>'
+        + '<div id="insp-body" style="display:none;padding:16px 20px;">'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
+        + '<input type="text" id="insp-driver" placeholder="Driver name" style="padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+        + '<input type="text" id="insp-vehicle" placeholder="Vehicle / plate #" style="padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+        + '</div>';
+      var inspItems = [
+        ['🚛','Truck',['Engine oil level','Coolant level','Tires (pressure, tread)','Lights (head, brake, turn, hazard)','Brakes (pedal firm, no pull)','Mirrors adjusted','Horn working','Windshield + wipers','Seatbelts','Fire extinguisher','First aid kit','Registration + insurance']],
+        ['⚙️','Equipment',['Chipper (blades, safety bar, oil)','Chainsaws (chain, bar oil, fuel, brake)','Ropes & rigging (no damage)','PPE on truck (hats, chaps, glasses, ears)','Cones & signs']],
+        ['🪵','Trailer',['Hitch + safety chains','Trailer lights','Tires OK','Load secured']],
+      ];
+      inspItems.forEach(function(sec) {
+        html += '<div style="font-size:12px;font-weight:700;color:#e65100;margin:10px 0 4px;">' + sec[0] + ' ' + sec[1] + '</div>';
+        sec[2].forEach(function(item, i) {
+          html += '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;border-bottom:1px solid #f5f5f5;">'
+            + '<input type="checkbox" class="insp-check" style="width:16px;height:16px;accent-color:#1b5e20;" onchange="DashboardPage._inspCount()">'
+            + ' ' + item + '</label>';
+        });
+      });
+      html += '<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">'
+        + '<span id="insp-count" style="font-size:12px;color:var(--text-light);">0 / 21 checked</span>'
+        + '<button onclick="DashboardPage._completeInspection()" style="background:#1b5e20;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">✓ Complete Inspection</button>'
+        + '</div></div></div>';
+    }
+
     // Today's Jobs — Jobber shows this on dashboard
     var todayDateStr2 = now.getFullYear() + '-' + (now.getMonth()+1<10?'0':'') + (now.getMonth()+1) + '-' + (now.getDate()<10?'0':'') + now.getDate();
     var todayJobList = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === todayDateStr2; });
@@ -582,6 +618,66 @@ var DashboardPage = {
     var dateStr = now.getFullYear() + '-' + (now.getMonth() + 1 < 10 ? '0' : '') + (now.getMonth() + 1) + '-' + (now.getDate() < 10 ? '0' : '') + now.getDate();
     localStorage.setItem('bm-briefing-dismissed', dateStr);
     var el = document.getElementById('daily-briefing');
+    if (el) el.remove();
+  },
+
+  // Vehicle Inspection
+  _toggleInspection: function() {
+    var body = document.getElementById('insp-body');
+    var btn = document.getElementById('insp-toggle-btn');
+    if (body.style.display === 'none') {
+      body.style.display = 'block';
+      btn.textContent = 'Hide ▴';
+      // Pre-fill driver name
+      var user = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name : '';
+      var driverEl = document.getElementById('insp-driver');
+      if (driverEl && !driverEl.value && user) driverEl.value = user;
+    } else {
+      body.style.display = 'none';
+      btn.textContent = 'Start ▾';
+    }
+  },
+
+  _inspCount: function() {
+    var checks = document.querySelectorAll('.insp-check');
+    var done = Array.from(checks).filter(function(c) { return c.checked; }).length;
+    var el = document.getElementById('insp-count');
+    if (el) el.textContent = done + ' / ' + checks.length + ' checked';
+  },
+
+  _completeInspection: function() {
+    var checks = document.querySelectorAll('.insp-check');
+    var done = Array.from(checks).filter(function(c) { return c.checked; }).length;
+    if (done < checks.length) {
+      if (!confirm(done + ' of ' + checks.length + ' items checked. Complete anyway with defects noted?')) return;
+    }
+    var driver = (document.getElementById('insp-driver') || {}).value || '';
+    var vehicle = (document.getElementById('insp-vehicle') || {}).value || '';
+    if (!driver) { alert('Enter driver name'); return; }
+
+    var today = new Date().toISOString().split('T')[0];
+    var record = {
+      date: today,
+      driver: driver,
+      vehicle: vehicle,
+      checked: done,
+      total: checks.length,
+      pass: done === checks.length,
+      completedAt: new Date().toISOString()
+    };
+
+    // Save to daily key
+    localStorage.setItem('bm-inspection-' + today, JSON.stringify(record));
+
+    // Save to history
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem('bm-inspection-history') || '[]'); } catch(e) {}
+    history.unshift(record);
+    if (history.length > 90) history = history.slice(0, 90);
+    localStorage.setItem('bm-inspection-history', JSON.stringify(history));
+
+    UI.toast('Vehicle inspection complete — ' + (record.pass ? 'all clear' : done + '/' + checks.length + ' passed'));
+    var el = document.getElementById('daily-inspection');
     if (el) el.remove();
   }
 };

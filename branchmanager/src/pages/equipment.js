@@ -37,6 +37,30 @@ var EquipmentPage = {
       html += '</div>';
     }
 
+    // Equipment checkout log
+    var checkouts = [];
+    try { checkouts = JSON.parse(localStorage.getItem('bm-equipment-checkouts') || '[]'); } catch(e) {}
+    var activeCheckouts = checkouts.filter(function(c) { return !c.returnedAt; });
+
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+      + '<h3 style="font-size:16px;">Checked Out</h3>'
+      + '<button onclick="EquipmentPage.showCheckout()" style="background:var(--green-dark);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;">+ Check Out</button></div>';
+
+    if (activeCheckouts.length === 0) {
+      html += '<div style="text-align:center;padding:16px;color:var(--text-light);font-size:13px;">No equipment currently checked out.</div>';
+    } else {
+      activeCheckouts.forEach(function(c) {
+        var dur = Math.round((Date.now() - new Date(c.checkedOutAt).getTime()) / 3600000);
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f5;">'
+          + '<div><div style="font-size:14px;font-weight:600;">' + UI.esc(c.equipmentName) + '</div>'
+          + '<div style="font-size:12px;color:var(--text-light);">' + UI.esc(c.crewMember) + ' · ' + dur + 'h ago' + (c.jobName ? ' · ' + UI.esc(c.jobName) : '') + '</div></div>'
+          + '<button onclick="EquipmentPage.returnEquipment(\'' + c.id + '\')" style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Return</button>'
+          + '</div>';
+      });
+    }
+    html += '</div>';
+
     // Equipment list
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
@@ -294,6 +318,77 @@ var EquipmentPage = {
       localStorage.setItem('bm-equipment', JSON.stringify(all));
       UI.closeModal();
       UI.toast(add + ' hrs logged for ' + eq.name + ' (' + eq.hours + ' total)');
+      loadPage('equipment');
+    }
+  },
+
+  // Checkout / Return
+  showCheckout: function() {
+    var equipment = EquipmentPage.getAll().filter(function(e) { return e.status === 'active'; });
+    var team = JSON.parse(localStorage.getItem('bm-team') || '[]');
+    if (team.length === 0) team = [{ name: 'Doug Brown' }];
+    var todayJobs = DB.jobs.getAll().filter(function(j) {
+      var today = new Date().toISOString().split('T')[0];
+      return j.scheduledDate && j.scheduledDate.substring(0, 10) === today;
+    });
+
+    var html = '<form id="checkout-form">'
+      + '<div class="form-group"><label>Equipment *</label><select id="co-equip" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;">';
+    equipment.forEach(function(e) { html += '<option value="' + e.id + '">' + e.name + ' (' + (e.category || '') + ')</option>'; });
+    html += '</select></div>'
+      + '<div class="form-group"><label>Crew Member *</label><select id="co-crew" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;">';
+    team.forEach(function(t) { html += '<option>' + (t.name || '') + '</option>'; });
+    html += '</select></div>'
+      + '<div class="form-group"><label>Job (optional)</label><select id="co-job" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;"><option value="">— None —</option>';
+    todayJobs.forEach(function(j) { html += '<option value="' + j.id + '">' + (j.clientName || '') + ' (#' + (j.jobNumber || '') + ')</option>'; });
+    html += '</select></div>'
+      + '<div class="form-group"><label>Notes</label><input type="text" id="co-notes" placeholder="e.g., Took 2 saws, extra chain" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;"></div>'
+      + '</form>';
+
+    UI.showModal('Check Out Equipment', html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
+        + ' <button class="btn btn-primary" onclick="EquipmentPage.saveCheckout()">Check Out</button>'
+    });
+  },
+
+  saveCheckout: function() {
+    var equipId = document.getElementById('co-equip').value;
+    var crew = document.getElementById('co-crew').value;
+    if (!equipId || !crew) { alert('Select equipment and crew member'); return; }
+
+    var equip = EquipmentPage.getAll().find(function(e) { return e.id === equipId; });
+    var jobEl = document.getElementById('co-job');
+    var jobId = jobEl ? jobEl.value : '';
+    var jobName = jobId ? jobEl.options[jobEl.selectedIndex].text : '';
+    var notes = (document.getElementById('co-notes') || {}).value || '';
+
+    var checkouts = [];
+    try { checkouts = JSON.parse(localStorage.getItem('bm-equipment-checkouts') || '[]'); } catch(e) {}
+    checkouts.unshift({
+      id: Date.now().toString(36),
+      equipmentId: equipId,
+      equipmentName: equip ? equip.name : equipId,
+      crewMember: crew,
+      jobId: jobId,
+      jobName: jobName,
+      notes: notes,
+      checkedOutAt: new Date().toISOString(),
+      returnedAt: null
+    });
+    localStorage.setItem('bm-equipment-checkouts', JSON.stringify(checkouts));
+    UI.closeModal();
+    UI.toast(equip.name + ' checked out to ' + crew);
+    loadPage('equipment');
+  },
+
+  returnEquipment: function(checkoutId) {
+    var checkouts = [];
+    try { checkouts = JSON.parse(localStorage.getItem('bm-equipment-checkouts') || '[]'); } catch(e) {}
+    var co = checkouts.find(function(c) { return c.id === checkoutId; });
+    if (co) {
+      co.returnedAt = new Date().toISOString();
+      localStorage.setItem('bm-equipment-checkouts', JSON.stringify(checkouts));
+      UI.toast(co.equipmentName + ' returned by ' + co.crewMember);
       loadPage('equipment');
     }
   }

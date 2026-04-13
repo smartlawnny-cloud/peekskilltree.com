@@ -47,9 +47,9 @@
     <strong>⚠️ Prerequisite:</strong> You must complete all 6 Groundsperson modules before starting Climber training. Climbing and aerial work require a solid foundation in ground operations, safety communication, and equipment handling.
   </div>
 
-  <div class="module" onclick="this.classList.toggle('open')">
+  <div class="module" id="mod1" onclick="this.classList.toggle('open')">
     <div class="module-header">
-      <div class="mod-num">1</div>
+      <div class="mod-num" id="mod1-num">1</div>
       <div class="mod-title">Climbing Gear Inspection & Setup</div>
       <div class="mod-time">10 min</div>
       <div class="mod-arrow">›</div>
@@ -64,13 +64,13 @@
         <li><strong>Spurs (if used):</strong> Gaffs sharp, pads intact, straps no dry rot. NEVER use spurs on trees being preserved.</li>
       </ol>
       <div class="key-point">🔍 <strong>Inspect EVERY time.</strong> Gear failure at 60 feet is fatal. If anything looks questionable, don't use it — tell Doug and we replace it.</div>
-      <div class="signoff"><strong>Field Demo:</strong> Inspect a full climbing kit and identify 3 retire/replace items from the test kit.<br><input type="text" placeholder="Crew Lead name"><button>✓ Sign Off</button></div>
+      <div class="signoff"><strong>Field Demo:</strong> Inspect a full climbing kit and identify 3 retire/replace items from the test kit.<br><input type="text" id="mod1-signoff" placeholder="Crew Lead name"><button onclick="event.stopPropagation();completeModule('mod1')">✓ Sign Off</button></div>
     </div>
   </div>
 
-  <div class="module" onclick="this.classList.toggle('open')">
+  <div class="module" id="mod2" onclick="this.classList.toggle('open')">
     <div class="module-header">
-      <div class="mod-num">2</div>
+      <div class="mod-num" id="mod2-num">2</div>
       <div class="mod-title">Tie-In Points & Work Positioning</div>
       <div class="mod-time">12 min</div>
       <div class="mod-arrow">›</div>
@@ -85,13 +85,13 @@
         <li><strong>Never:</strong> Never tie into a branch smaller than 4 inches. Never wrap around a limb you're cutting.</li>
       </ol>
       <div class="key-point">⚠️ <strong>If you fall, the tie-in is the only thing between you and the ground.</strong> Take the extra 30 seconds to find a solid anchor.</div>
-      <div class="signoff"><strong>Field Demo:</strong> Climb to 30 feet, set 3 different tie-in points, demonstrate redirect.<br><input type="text" placeholder="Crew Lead name"><button>✓ Sign Off</button></div>
+      <div class="signoff"><strong>Field Demo:</strong> Climb to 30 feet, set 3 different tie-in points, demonstrate redirect.<br><input type="text" id="mod2-signoff" placeholder="Crew Lead name"><button onclick="event.stopPropagation();completeModule('mod2')">✓ Sign Off</button></div>
     </div>
   </div>
 
-  <div class="module" onclick="this.classList.toggle('open')">
+  <div class="module" id="mod3" onclick="this.classList.toggle('open')">
     <div class="module-header">
-      <div class="mod-num">3</div>
+      <div class="mod-num" id="mod3-num">3</div>
       <div class="mod-title">Pruning Cuts (ANSI A300 Standards)</div>
       <div class="mod-time">10 min</div>
       <div class="mod-arrow">›</div>
@@ -106,13 +106,13 @@
         <li><strong>Dead wood:</strong> Remove dead, dying, diseased, and crossing branches first.</li>
       </ol>
       <div class="key-point">🌳 <strong>Bad cuts kill trees slowly.</strong> A proper pruning cut heals. A flush cut or stub rots. Our reputation depends on doing it right.</div>
-      <div class="signoff"><strong>Field Demo:</strong> Make 10 pruning cuts on a live tree. Crew lead inspects each cut for collar preservation.<br><input type="text" placeholder="Crew Lead name"><button>✓ Sign Off</button></div>
+      <div class="signoff"><strong>Field Demo:</strong> Make 10 pruning cuts on a live tree. Crew lead inspects each cut for collar preservation.<br><input type="text" id="mod3-signoff" placeholder="Crew Lead name"><button onclick="event.stopPropagation();completeModule('mod3')">✓ Sign Off</button></div>
     </div>
   </div>
 
-  <div class="module" onclick="this.classList.toggle('open')">
+  <div class="module" id="mod4" onclick="this.classList.toggle('open')">
     <div class="module-header">
-      <div class="mod-num">4</div>
+      <div class="mod-num" id="mod4-num">4</div>
       <div class="mod-title">Rigging from the Tree</div>
       <div class="mod-time">15 min</div>
       <div class="mod-arrow">›</div>
@@ -127,13 +127,13 @@
         <li><strong>Notch + back cut:</strong> Even on rigged pieces, use a proper notch to control the hinge.</li>
       </ol>
       <div class="key-point">⚡ <strong>Shock loading kills equipment and people.</strong> Never let a rigged piece free-fall to the end of the rope. Controlled lowering ALWAYS.</div>
-      <div class="signoff"><strong>Field Demo:</strong> Rig and lower 5 pieces from height. Demonstrate communication protocol.<br><input type="text" placeholder="Crew Lead name"><button>✓ Sign Off</button></div>
+      <div class="signoff"><strong>Field Demo:</strong> Rig and lower 5 pieces from height. Demonstrate communication protocol.<br><input type="text" id="mod4-signoff" placeholder="Crew Lead name"><button onclick="event.stopPropagation();completeModule('mod4')">✓ Sign Off</button></div>
     </div>
   </div>
 
-  <div class="module" onclick="this.classList.toggle('open')">
+  <div class="module" id="mod5" onclick="this.classList.toggle('open')">
     <div class="module-header">
-      <div class="mod-num">5</div>
+      <div class="mod-num" id="mod5-num">5</div>
       <div class="mod-title">Bucket Truck Operation</div>
       <div class="mod-time">12 min</div>
       <div class="mod-arrow">›</div>
@@ -149,13 +149,13 @@
         <li><strong>Emergency:</strong> Ground operator must know how to bring the bucket down from ground controls.</li>
       </ol>
       <div class="key-point">🚛 <strong>Our bucket truck is a $150,000 asset and a potential death trap if misused.</strong> Only trained and authorized operators. Period.</div>
-      <div class="signoff"><strong>Field Demo:</strong> Set up outriggers, perform pre-flight, operate bucket to work position, demonstrate ground emergency lowering.<br><input type="text" placeholder="Crew Lead name"><button>✓ Sign Off</button></div>
+      <div class="signoff"><strong>Field Demo:</strong> Set up outriggers, perform pre-flight, operate bucket to work position, demonstrate ground emergency lowering.<br><input type="text" id="mod5-signoff" placeholder="Crew Lead name"><button onclick="event.stopPropagation();completeModule('mod5')">✓ Sign Off</button></div>
     </div>
   </div>
 
-  <div class="module" onclick="this.classList.toggle('open')">
+  <div class="module" id="mod6" onclick="this.classList.toggle('open')">
     <div class="module-header">
-      <div class="mod-num">6</div>
+      <div class="mod-num" id="mod6-num">6</div>
       <div class="mod-title">Felling Technique & Notch Cuts</div>
       <div class="mod-time">12 min</div>
       <div class="mod-arrow">›</div>
@@ -170,13 +170,13 @@
         <li><strong>Call "TIMBER"</strong> loud and clear before the final cut. Everyone moves to escape routes.</li>
       </ol>
       <div class="key-point">🌲 <strong>A bad fell can't be undone.</strong> If you're not 100% sure of the direction, stop. Rig it instead. There's no shame in rigging — only in dropping a tree on a house.</div>
-      <div class="signoff"><strong>Field Demo:</strong> Fell 3 trees with proper notch, hinge, and escape route. Crew lead verifies each.<br><input type="text" placeholder="Crew Lead name"><button>✓ Sign Off</button></div>
+      <div class="signoff"><strong>Field Demo:</strong> Fell 3 trees with proper notch, hinge, and escape route. Crew lead verifies each.<br><input type="text" id="mod6-signoff" placeholder="Crew Lead name"><button onclick="event.stopPropagation();completeModule('mod6')">✓ Sign Off</button></div>
     </div>
   </div>
 
-  <div class="module" onclick="this.classList.toggle('open')">
+  <div class="module" id="mod7" onclick="this.classList.toggle('open')">
     <div class="module-header">
-      <div class="mod-num">7</div>
+      <div class="mod-num" id="mod7-num">7</div>
       <div class="mod-title">Hazard Tree Assessment</div>
       <div class="mod-time">8 min</div>
       <div class="mod-arrow">›</div>
@@ -190,13 +190,13 @@
         <li><strong>Target assessment:</strong> What's the tree going to hit if it fails? Houses, cars, people, power lines.</li>
         <li><strong>When in doubt:</strong> Call Doug for an arborist assessment. We carry ISA certification for a reason.</li>
       </ol>
-      <div class="signoff"><strong>Field Demo:</strong> Assess 3 trees on a job site. Identify hazards, recommend approach.<br><input type="text" placeholder="Crew Lead name"><button>✓ Sign Off</button></div>
+      <div class="signoff"><strong>Field Demo:</strong> Assess 3 trees on a job site. Identify hazards, recommend approach.<br><input type="text" id="mod7-signoff" placeholder="Crew Lead name"><button onclick="event.stopPropagation();completeModule('mod7')">✓ Sign Off</button></div>
     </div>
   </div>
 
-  <div class="module" onclick="this.classList.toggle('open')">
+  <div class="module" id="mod8" onclick="this.classList.toggle('open')">
     <div class="module-header">
-      <div class="mod-num">8</div>
+      <div class="mod-num" id="mod8-num">8</div>
       <div class="mod-title">Emergency Rescue (Aerial)</div>
       <div class="mod-time">10 min</div>
       <div class="mod-arrow">›</div>
@@ -211,7 +211,7 @@
         <li><strong>First aid:</strong> Administer first aid on the ground while waiting for EMS.</li>
       </ol>
       <div class="key-point">🏥 <strong>Nearest hospital:</strong> Hudson Valley Hospital, 1980 Crompond Rd, Cortlandt Manor — 8 min from most job sites. Know the route.</div>
-      <div class="signoff"><strong>Field Demo:</strong> Perform a simulated aerial rescue with mannequin. Must complete in under 15 minutes.<br><input type="text" placeholder="Crew Lead name"><button>✓ Sign Off</button></div>
+      <div class="signoff"><strong>Field Demo:</strong> Perform a simulated aerial rescue with mannequin. Must complete in under 15 minutes.<br><input type="text" id="mod8-signoff" placeholder="Crew Lead name"><button onclick="event.stopPropagation();completeModule('mod8')">✓ Sign Off</button></div>
     </div>
   </div>
 
@@ -220,5 +220,27 @@
     <p style="font-size:13px;color:#999;margin-top:16px;">Second Nature Tree Service LLC · Peekskill, NY</p>
   </div>
 </div>
+
+<script>
+var completed = JSON.parse(localStorage.getItem('training-climber-done') || '{}');
+
+function completeModule(id) {
+  var signoff = document.getElementById(id + '-signoff');
+  if (!signoff || !signoff.value.trim()) { alert('Crew Lead must enter their name to sign off.'); return; }
+  completed[id] = { signoff: signoff.value.trim(), date: new Date().toISOString() };
+  localStorage.setItem('training-climber-done', JSON.stringify(completed));
+  var num = document.getElementById(id + '-num');
+  if (num) { num.classList.add('done'); num.textContent = '✓'; }
+  var mod = document.getElementById(id);
+  if (mod) mod.classList.remove('open');
+  try { window.parent.postMessage('step-complete', '*'); } catch(e) {}
+}
+
+// Restore completed modules
+Object.keys(completed).forEach(function(id) {
+  var num = document.getElementById(id + '-num');
+  if (num) { num.classList.add('done'); num.textContent = '✓'; }
+});
+</script>
 </body>
 </html>

@@ -106,16 +106,23 @@
 <h2>Workers' Compensation</h2>
 <p>All employees are covered by Workers' Compensation insurance through NYSIF. If you are injured on the job, report it to Doug immediately and seek medical attention. All medical bills and lost wages are covered. Do not delay reporting — late reports can delay your benefits.</p>
 
-<div class="sig">
-  <strong>Acknowledgment:</strong><br>
-  I have received and read the Second Nature Tree Service Employee Handbook. I understand this is not a contract of employment and that my employment is at-will.<br><br>
-  Employee Signature: <span class="sig-line"></span> Date: <span class="sig-line" style="width:100px;"></span><br>
-  Print Name: <span class="sig-line"></span>
+<div style="margin-top:30px;">
+  <p style="font-size:13px;line-height:1.6;"><strong>Acknowledgment:</strong> I have received and read the Second Nature Tree Service Employee Handbook. I understand this is not a contract of employment and that my employment is at-will.</p>
+  <div id="sig-handbook-employee"></div>
 </div>
 
 <div style="text-align:center;margin-top:30px;font-size:11px;color:#999;">
   Second Nature Tree Service LLC · 1 Highland Industrial Park, Peekskill, NY 10566 · (914) 391-5233
 </div>
 
+<script src="onboarding-sig.js"></script>
+<script>
+var emp = OnboardingSig.getEmployee();
+if (emp && emp.fullName) OnboardingSig.showBanner(emp.fullName);
+OnboardingSig.createPad('sig-handbook-employee', {
+  docKey: 'handbook', id: 'employee', label: 'Employee Signature',
+  prefillName: emp ? emp.fullName : ''
+});
+</script>
 </body>
 </html>

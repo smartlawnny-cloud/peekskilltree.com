@@ -363,6 +363,17 @@ Object.keys(done).forEach(function(id) {
   if (num) { num.classList.add('done'); num.textContent = '✓'; }
 });
 updateProgress();
+
+// Auto-fill employee name in all module sign-off fields
+try {
+  var _emp = JSON.parse(localStorage.getItem('new-hire-data') || '{}');
+  if (_emp.fullName) {
+    for (var i = 1; i <= 6; i++) {
+      var sigEl = document.getElementById('mod' + i + '-sig');
+      if (sigEl && !sigEl.value) sigEl.value = _emp.fullName;
+    }
+  }
+} catch(e) {}
 </script>
 </body>
 </html>

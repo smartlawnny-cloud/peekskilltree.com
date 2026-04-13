@@ -65,21 +65,22 @@
 <h2>9. Governing Law</h2>
 <p>This agreement is governed by the laws of the State of New York.</p>
 
-<div class="sig">
-  <strong>Company:</strong><br>
-  Signature: <span class="sig-line"></span> Date: <span class="sig-line" style="width:100px;"></span><br>
-  Doug Brown, Owner — Second Nature Tree Service LLC<br><br>
-
-  <strong>Subcontractor:</strong><br>
-  Signature: <span class="sig-line"></span> Date: <span class="sig-line" style="width:100px;"></span><br>
-  Print Name: <span class="sig-line"></span><br>
-  Business Name: <span class="sig-line"></span><br>
-  Phone: <span class="sig-line" style="width:140px;"></span> Email: <span class="sig-line"></span>
-</div>
+<div id="sig-sub-company"></div>
+<div id="sig-sub-contractor" style="margin-top:8px;"></div>
 
 <div style="text-align:center;margin-top:24px;font-size:10px;color:#999;">
   Second Nature Tree Service LLC · Peekskill, NY 10566 · (914) 391-5233
 </div>
 
+<script src="onboarding-sig.js"></script>
+<script>
+OnboardingSig.createPad('sig-sub-company', {
+  docKey: 'subcontractor', id: 'company', label: 'Company Signature',
+  prefillName: 'Doug Brown'
+});
+OnboardingSig.createPad('sig-sub-contractor', {
+  docKey: 'subcontractor', id: 'contractor', label: 'Subcontractor Signature'
+});
+</script>
 </body>
 </html>

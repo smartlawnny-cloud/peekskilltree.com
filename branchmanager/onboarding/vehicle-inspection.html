@@ -91,9 +91,7 @@
   <textarea placeholder="List any issues found..."></textarea>
 </div>
 
-<div class="sig">
-  Driver Signature: <span class="sig-line"></span> Date: <span class="sig-line" style="width:100px;"></span>
-</div>
+<div id="sig-vi-driver"></div>
 
 <div class="pass" id="pass">✅ Vehicle passed inspection — cleared for service</div>
 <button class="btn" onclick="window.print()">🖨 Print Inspection</button>
@@ -103,12 +101,25 @@
   Retain vehicle inspection records for 1 year per FMCSA 396.13
 </div>
 
+<script src="onboarding-sig.js"></script>
 <script>
 function count() {
   var checks = document.querySelectorAll('.check input');
   var done = Array.from(checks).filter(function(c){return c.checked;}).length;
   document.getElementById('pass').style.display = done === checks.length ? 'block' : 'none';
 }
+// Auto-fill driver + date
+var _emp = OnboardingSig.getEmployee();
+if (_emp && _emp.fullName) {
+  var driverEl = document.querySelector('.top-row input[type="text"]');
+  if (driverEl && !driverEl.value) driverEl.value = _emp.fullName;
+  var dateEl = document.querySelector('.top-row input[type="date"]');
+  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+}
+OnboardingSig.createPad('sig-vi-driver', {
+  docKey: 'vehicle-inspection', id: 'driver', label: 'Driver Signature',
+  prefillName: _emp ? _emp.fullName : ''
+});
 </script>
 </body>
 </html>

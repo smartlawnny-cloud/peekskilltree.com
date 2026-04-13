@@ -111,13 +111,8 @@
   <input type="file" multiple accept="image/*">
 </fieldset>
 
-<div class="sig-section">
-  <strong>Report Filed By:</strong><br>
-  Name: <span class="sig"></span> Title: <span class="sig" style="width:120px;"></span><br>
-  Signature: <span class="sig"></span> Date: <span class="sig" style="width:120px;"></span><br><br>
-  <strong>Owner Review:</strong><br>
-  Doug Brown: <span class="sig"></span> Date: <span class="sig" style="width:120px;"></span>
-</div>
+<div id="sig-ir-reporter"></div>
+<div id="sig-ir-owner" style="margin-top:8px;"></div>
 
 <button class="btn" onclick="window.print()">🖨 Print Report</button>
 
@@ -127,6 +122,19 @@
   Workers' Comp carrier: NYSIF · WC-32079 (Westchester) · PC-50644 (Putnam)<br>
   Retain for 5 years per 29 CFR 1904.33
 </div>
+
+<script src="onboarding-sig.js"></script>
+<script>
+var _emp = OnboardingSig.getEmployee();
+OnboardingSig.createPad('sig-ir-reporter', {
+  docKey: 'incident-report', id: 'reporter', label: 'Report Filed By — Signature',
+  prefillName: _emp ? _emp.fullName : ''
+});
+OnboardingSig.createPad('sig-ir-owner', {
+  docKey: 'incident-report', id: 'owner', label: 'Owner Review — Signature',
+  prefillName: 'Doug Brown'
+});
+</script>
 
 </body>
 </html>

@@ -87,18 +87,15 @@
 <h2>10. Entire Agreement</h2>
 <p>This agreement, together with the Employee Handbook and any applicable Company policies, constitutes the entire employment agreement. This agreement supersedes any prior verbal or written promises. Changes must be in writing and signed by both parties.</p>
 
-<div class="sig">
-  <strong>Employee Signature:</strong> <span class="sig-line"></span> Date: <span class="sig-line" style="width:100px;"></span><br>
-  Print Name: <span class="sig-line" id="sig-print-name"></span><br><br>
-  <strong>Employer:</strong> <span class="sig-line"></span> Date: <span class="sig-line" style="width:100px;"></span><br>
-  Doug Brown, Owner — Second Nature Tree Service LLC
-</div>
+<div id="sig-ea-employee"></div>
+<div id="sig-ea-employer" style="margin-top:8px;"></div>
 
 <div style="text-align:center;margin-top:24px;font-size:10px;color:#999;">
   Second Nature Tree Service LLC · 1 Highland Industrial Park, Peekskill, NY 10566<br>
   (914) 391-5233 · info@peekskilltree.com · Licensed & Fully Insured
 </div>
 
+<script src="onboarding-sig.js"></script>
 <script>
 // Auto-fill from intake form
 (function() {
@@ -112,14 +109,20 @@
     document.getElementById('emp-start').textContent = emp.startDate;
     document.getElementById('emp-rate').textContent = emp.payRate;
     document.getElementById('emp-ot').textContent = emp.overtimeRate;
-    document.getElementById('sig-print-name').textContent = emp.fullName;
-    // Banner
-    var banner = document.createElement('div');
-    banner.style.cssText = 'background:#e8f5e9;border:1px solid #22c55e;border-radius:8px;padding:10px;text-align:center;margin-bottom:16px;font-size:13px;color:#166534;font-weight:600;';
-    banner.textContent = '✅ Pre-filled for ' + emp.fullName + ' from intake form. Review and sign below.';
-    document.body.insertBefore(banner, document.body.firstChild.nextSibling);
+    OnboardingSig.showBanner(emp.fullName);
   } catch(e) {}
 })();
+
+// Signature pads
+var _emp = OnboardingSig.getEmployee();
+OnboardingSig.createPad('sig-ea-employee', {
+  docKey: 'employment-agreement', id: 'employee', label: 'Employee Signature',
+  prefillName: _emp ? _emp.fullName : ''
+});
+OnboardingSig.createPad('sig-ea-employer', {
+  docKey: 'employment-agreement', id: 'employer', label: 'Employer Signature',
+  prefillName: 'Doug Brown'
+});
 </script>
 </body>
 </html>

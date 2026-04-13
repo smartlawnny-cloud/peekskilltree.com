@@ -49,15 +49,10 @@
   <tr><th>Workers' Comp Carrier</th><td>NYSIF (New York State Insurance Fund)<br>WC-32079 (Westchester) · PC-50644 (Putnam)</td></tr>
 </table>
 
-<div class="sig-section">
-  <strong>Employee Acknowledgment:</strong><br>
-  I acknowledge that I received this notice on or before my first day of work. I have been informed of my rate of pay, overtime rate, payday, and employer information as required under NY Labor Law §195(1).<br><br>
-
-  Employee Signature: <span class="sig-line"></span> Date: <span class="sig-line" style="width:120px;"></span><br>
-  Print Name: <span class="sig-line"></span><br><br>
-
-  Employer Signature: <span class="sig-line"></span> Date: <span class="sig-line" style="width:120px;"></span><br>
-  Print Name: Doug Brown, Owner
+<div style="margin-top:30px;">
+  <p style="font-size:13px;line-height:1.6;margin-bottom:4px;"><strong>Employee Acknowledgment:</strong> I acknowledge that I received this notice on or before my first day of work. I have been informed of my rate of pay, overtime rate, payday, and employer information as required under NY Labor Law §195(1).</p>
+  <div id="sig-wt-employee"></div>
+  <div id="sig-wt-employer" style="margin-top:8px;"></div>
 </div>
 
 <div class="legal">
@@ -74,6 +69,7 @@
   Second Nature Tree Service LLC · 1 Highland Industrial Park, Peekskill, NY 10566 · (914) 391-5233
 </div>
 
+<script src="onboarding-sig.js"></script>
 <script>
 // Auto-fill from intake form if data exists
 (function() {
@@ -114,6 +110,17 @@
     document.body.insertBefore(banner, document.body.firstChild.nextSibling);
   } catch(e) {}
 })();
+
+// Signature pads
+var _emp = OnboardingSig.getEmployee();
+OnboardingSig.createPad('sig-wt-employee', {
+  docKey: 'wage-theft', id: 'employee', label: 'Employee Signature',
+  prefillName: _emp ? _emp.fullName : ''
+});
+OnboardingSig.createPad('sig-wt-employer', {
+  docKey: 'wage-theft', id: 'employer', label: 'Employer Signature',
+  prefillName: 'Doug Brown'
+});
 </script>
 </body>
 </html>

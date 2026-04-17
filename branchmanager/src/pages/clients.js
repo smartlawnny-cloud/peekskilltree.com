@@ -458,7 +458,11 @@ var ClientsPage = {
 
   showDetail: function(id) {
     var c = DB.clients.getById(id);
-    if (!c) return;
+    if (!c) {
+      console.warn('[ClientsPage] Client not found:', id);
+      UI.toast('Client not found — try refreshing', 'error');
+      return;
+    }
 
     // Get related records (match by clientId OR clientName since imports may not have IDs linked)
     var cName = (c.name || '').trim().toLowerCase();

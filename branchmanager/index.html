@@ -1225,27 +1225,27 @@ function _renderSearchResults(q) {
   var addGroup = function(key, icon, items) { if (items.length) groups.push({ key:key, icon:icon, items:items }); };
 
   var requests = DB.requests.search(q).slice(0,6).map(function(r) {
-    return { name: r.clientName || 'Unknown', line2: r.property || r.description || '', line3: r.phone || '', status: r.status, onclick: "RequestsPage.showDetail('" + r.id + "')" };
+    return { name: r.clientName || 'Unknown', line2: r.property || r.description || '', line3: r.phone || '', status: r.status, onclick: "loadPage('requests');setTimeout(function(){RequestsPage.showDetail('" + r.id + "')},300)" };
   });
   addGroup('Requests', '📥', requests);
 
   var quotes = DB.quotes.search(q).slice(0,6).map(function(qr) {
-    return { name: (qr.clientName || ''), num: qr.quoteNumber ? '#' + qr.quoteNumber : '', line2: qr.description || (qr.lineItems && qr.lineItems[0] && qr.lineItems[0].name) || '', status: qr.status, onclick: "QuotesPage.showDetail('" + qr.id + "')", amount: qr.total };
+    return { name: (qr.clientName || ''), num: qr.quoteNumber ? '#' + qr.quoteNumber : '', line2: qr.description || (qr.lineItems && qr.lineItems[0] && qr.lineItems[0].name) || '', status: qr.status, onclick: "loadPage('quotes');setTimeout(function(){QuotesPage.showDetail('" + qr.id + "')},300)", amount: qr.total };
   });
   addGroup('Quotes', '📋', quotes);
 
   var jobs = DB.jobs.search(q).slice(0,6).map(function(j) {
-    return { name: j.clientName || '', num: j.jobNumber ? '#' + j.jobNumber : '', line2: j.description || j.title || '', line3: j.property || '', status: j.status, onclick: "JobsPage.showDetail('" + j.id + "')", amount: j.total };
+    return { name: j.clientName || '', num: j.jobNumber ? '#' + j.jobNumber : '', line2: j.description || j.title || '', line3: j.property || '', status: j.status, onclick: "loadPage('jobs');setTimeout(function(){JobsPage.showDetail('" + j.id + "')},300)", amount: j.total };
   });
   addGroup('Jobs', '🔧', jobs);
 
   var invoices = DB.invoices.search(q).slice(0,4).map(function(i) {
-    return { name: i.clientName || '', num: i.invoiceNumber ? '#' + i.invoiceNumber : '', line2: i.subject || '', status: i.status, onclick: "InvoicesPage.showDetail('" + i.id + "')", amount: i.total };
+    return { name: i.clientName || '', num: i.invoiceNumber ? '#' + i.invoiceNumber : '', line2: i.subject || '', status: i.status, onclick: "loadPage('invoices');setTimeout(function(){InvoicesPage.showDetail('" + i.id + "')},300)", amount: i.total };
   });
   addGroup('Invoices', '💰', invoices);
 
   var clients = DB.clients.search(q).slice(0,5).map(function(c) {
-    return { name: c.name, line2: [c.address, c.city].filter(Boolean).join(', '), line3: c.phone || c.email || '', status: c.status, onclick: "ClientsPage.showDetail('" + c.id + "')" };
+    return { name: c.name, line2: [c.address, c.city].filter(Boolean).join(', '), line3: c.phone || c.email || '', status: c.status, onclick: "loadPage('clients');setTimeout(function(){ClientsPage.showDetail('" + c.id + "')},300)" };
   });
   addGroup('Clients', '👥', clients);
 

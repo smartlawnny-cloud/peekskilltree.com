@@ -214,7 +214,7 @@ var SearchPage = {
         + UI.statusBadge(c.status)
         + (balDue > 0 ? '<div style="font-size:12px;color:var(--red);font-weight:600;margin-top:4px;">' + UI.money(balDue) + ' due</div>' : '')
         + '</div>';
-      return row("loadPage('clients');setTimeout(function(){ClientsPage.showDetail('" + c.id + "')},100)", left, right, last);
+      return row("loadPage('clients');setTimeout(function(){ClientsPage.showDetail('" + c.id + "')},300)", left, right, last);
     });
 
     // Jobs
@@ -228,7 +228,7 @@ var SearchPage = {
         + UI.statusBadge(j.status)
         + (j.total ? '<div style="font-size:12px;font-weight:600;margin-top:4px;">' + UI.money(j.total) + '</div>' : '')
         + '</div>';
-      return row("loadPage('jobs');setTimeout(function(){JobsPage.showDetail('" + j.id + "')},100)", left, right, last);
+      return row("loadPage('jobs');setTimeout(function(){JobsPage.showDetail('" + j.id + "')},300)", left, right, last);
     });
 
     // Invoices
@@ -243,7 +243,7 @@ var SearchPage = {
         + (i.balance > 0 ? '<div style="font-size:12px;color:var(--red);font-weight:600;margin-top:4px;">' + UI.money(i.balance) + ' due</div>'
           : (i.total ? '<div style="font-size:12px;font-weight:600;color:var(--green-dark);margin-top:4px;">' + UI.money(i.total) + ' paid</div>' : ''))
         + '</div>';
-      return row("loadPage('invoices');setTimeout(function(){InvoicesPage.showDetail('" + i.id + "')},100)", left, right, last);
+      return row("loadPage('invoices');setTimeout(function(){InvoicesPage.showDetail('" + i.id + "')},300)", left, right, last);
     });
 
     // Quotes
@@ -256,7 +256,7 @@ var SearchPage = {
         + UI.statusBadge(qr.status)
         + (qr.total ? '<div style="font-size:12px;font-weight:600;margin-top:4px;">' + UI.money(qr.total) + '</div>' : '')
         + '</div>';
-      return row("loadPage('quotes');setTimeout(function(){QuotesPage.showDetail('" + qr.id + "')},100)", left, right, last);
+      return row("loadPage('quotes');setTimeout(function(){QuotesPage.showDetail('" + qr.id + "')},300)", left, right, last);
     });
 
     // Requests
@@ -267,7 +267,7 @@ var SearchPage = {
         + (r.source ? ' &bull; ' + UI.esc(r.source) : '')
         + '</div>';
       var right = UI.statusBadge(r.status);
-      return row("loadPage('requests');setTimeout(function(){RequestsPage.showDetail('" + r.id + "')},100)", left, right, last);
+      return row("loadPage('requests');setTimeout(function(){RequestsPage.showDetail('" + r.id + "')},300)", left, right, last);
     });
 
     return html;

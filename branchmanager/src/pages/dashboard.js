@@ -136,40 +136,6 @@ var DashboardPage = {
     var now = new Date();
     var sixMonthsAgo = new Date(now.getTime() - 180 * 86400000);
 
-    // Setup Required card
-    var sgOk = (localStorage.getItem('bm-sendgrid-key') || '').length > 10;
-    var aiOk = (localStorage.getItem('bm-claude-key') || '').length > 10;
-    var setupDismissed = localStorage.getItem('bm-setup-dismissed');
-    if (!setupDismissed && (!sgOk || !aiOk)) {
-      html += '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:12px;padding:16px;margin-bottom:16px;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
-        + '<strong style="font-size:14px;">⚙️ Finish setting up Branch Manager</strong>'
-        + '<span style="cursor:pointer;font-size:18px;color:#888;line-height:1;" onclick="localStorage.setItem(\'bm-setup-dismissed\',\'1\');loadPage(\'dashboard\');">×</span>'
-        + '</div>'
-        + '<div style="font-size:12px;color:#777;margin-bottom:12px;">Connect these to enable automated emails and AI assistance</div>';
-      if (!sgOk) {
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-          + '<div style="display:flex;align-items:center;gap:8px;">'
-          + '<span style="font-size:18px;">📧</span>'
-          + '<div><div style="font-size:13px;font-weight:600;">SendGrid Email</div>'
-          + '<div style="font-size:12px;color:#666;">Send automated quotes, reminders &amp; reviews</div></div>'
-          + '</div>'
-          + '<button class="btn btn-sm" style="font-size:12px;white-space:nowrap;" onclick="loadPage(\'settings\')">Connect →</button>'
-          + '</div>';
-      }
-      if (!aiOk) {
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;">'
-          + '<div style="display:flex;align-items:center;gap:8px;">'
-          + '<span style="font-size:18px;">🤖</span>'
-          + '<div><div style="font-size:13px;font-weight:600;">AI Assistant</div>'
-          + '<div style="font-size:12px;color:#666;">AI pricing, email drafts &amp; business insights</div></div>'
-          + '</div>'
-          + '<button class="btn btn-sm" style="font-size:12px;white-space:nowrap;" onclick="loadPage(\'ai\')">Connect →</button>'
-          + '</div>';
-      }
-      html += '</div>';
-    }
-
     // Greeting moved to top of page (above MOTT)
 
     // Smart Daily Briefing

@@ -19,8 +19,15 @@ var InvoicesPage = {
     loadPage('invoices');
   },
 
+  _pendingDetail: null,
+
   render: function() {
     var self = InvoicesPage;
+    if (self._pendingDetail) {
+      var _pid = self._pendingDetail;
+      self._pendingDetail = null;
+      setTimeout(function() { InvoicesPage.showDetail(_pid); }, 50);
+    }
     var activeTab = self._activeTab || 'invoices';
 
     // Tab bar

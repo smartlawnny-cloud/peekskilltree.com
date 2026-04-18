@@ -15,8 +15,15 @@ var QuotesPage = {
     };
   },
 
+  _pendingDetail: null,
+
   render: function() {
     var self = QuotesPage;
+    if (self._pendingDetail) {
+      var _pid = self._pendingDetail;
+      self._pendingDetail = null;
+      setTimeout(function() { QuotesPage.showDetail(_pid); }, 50);
+    }
     var all = DB.quotes.getAll();
     var draft = all.filter(function(q) { return q.status === 'draft'; }).length;
     var sent = all.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).length;
@@ -1547,9 +1554,9 @@ var QuotesPage = {
           + '<strong class="li-name" onclick="QuotesPage.editLineItem(\'' + id + '\',' + idx + ')" style="cursor:pointer;" title="Click to edit">' + UI.esc(item.service || item.name || 'Custom') + '</strong>'
           + (item.description ? '<br><span style="color:var(--text-light);font-size:12px;">' + UI.esc(item.description) + '</span>' : '')
           + '</td>'
-          + '<td class="li-qty" onclick="QuotesPage.editLineItem(\'' + id + '\',' + idx + ')" style="cursor:pointer;" title="Click to edit">' + (item.qty || 1) + '</td>'
-          + '<td class="li-rate" style="text-align:right;cursor:pointer;" onclick="QuotesPage.editLineItem(\'' + id + '\',' + idx + ')" title="Click to edit">' + UI.money(item.rate || 0) + '</td>'
-          + '<td style="text-align:right;font-weight:600;">' + UI.money(lineTotal) + '</td>'
+          + '<td><input type="number" class="li-qty-input" value="' + (item.qty || 1) + '" min="0" step="1" style="width:60px;text-align:center;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:13px;" onblur="QuotesPage.updateLineItemField(\'' + id + '\',' + idx + ',\'qty\',this.value)" onkeydown="if(event.key===\'Enter\'){this.blur();}"></td>'
+          + '<td style="text-align:right;"><input type="number" class="li-rate-input" value="' + (item.rate || 0) + '" min="0" step="0.01" style="width:90px;text-align:right;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:13px;" onblur="QuotesPage.updateLineItemField(\'' + id + '\',' + idx + ',\'rate\',this.value)" onkeydown="if(event.key===\'Enter\'){this.blur();}"></td>'
+          + '<td style="text-align:right;font-weight:600;" id="li-total-' + idx + '">' + UI.money(lineTotal) + '</td>'
           + '<td style="text-align:center;"><button onclick="QuotesPage.removeLineItem(\'' + id + '\',' + idx + ')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--red);opacity:.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" title="Delete line item">🗑️</button></td>'
           + '</tr>';
       });
@@ -1807,6 +1814,28 @@ var QuotesPage = {
 
     DB.quotes.update(quoteId, { lineItems: items, total: total });
     UI.toast('Line item updated');
+    QuotesPage.showDetail(quoteId);
+  },
+
+  // On-the-fly single-field update (qty or rate) — no modal
+  updateLineItemField: function(quoteId, itemIdx, field, value) {
+    var q = DB.quotes.getById(quoteId);
+    if (!q || !q.lineItems || !q.lineItems[itemIdx]) return;
+    var items = q.lineItems.slice();
+    var newVal = parseFloat(value) || 0;
+    if (items[itemIdx][field] === newVal) return; // no change
+    items[itemIdx][field] = newVal;
+    items[itemIdx].amount = (items[itemIdx].qty || 0) * (items[itemIdx].rate || 0);
+
+    var subtotal = 0;
+    items.forEach(function(it) { subtotal += (it.qty || 0) * (it.rate || 0); });
+    var discount = q.discount || 0;
+    var afterDiscount = subtotal - discount;
+    var taxRate = q.taxRate !== undefined ? q.taxRate : (parseFloat(localStorage.getItem('bm-tax-rate')) || 8.375);
+    var tax = Math.round(afterDiscount * taxRate / 100 * 100) / 100;
+    var total = afterDiscount + tax;
+
+    DB.quotes.update(quoteId, { lineItems: items, total: total });
     QuotesPage.showDetail(quoteId);
   },
 

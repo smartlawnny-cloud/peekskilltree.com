@@ -21,8 +21,16 @@ var ClientsPage = {
     };
   },
 
+  _pendingDetail: null,
+
   render: function() {
     var self = ClientsPage;
+    // Check if we need to show a detail immediately
+    if (self._pendingDetail) {
+      var _pid = self._pendingDetail;
+      self._pendingDetail = null;
+      setTimeout(function() { ClientsPage.showDetail(_pid); }, 50);
+    }
     var stats = DB.dashboard.getStats();
     var clients = self._getFiltered();
 
@@ -402,8 +410,20 @@ var ClientsPage = {
     var c = id ? DB.clients.getById(id) : {};
     var title = id ? 'Edit Client' : 'New Client';
 
+    // Split existing name into first/last if present (for edits)
+    var _fn = c.firstName || '';
+    var _ln = c.lastName || '';
+    if (!_fn && !_ln && c.name) {
+      var _parts = (c.name || '').trim().split(/\s+/);
+      _fn = _parts[0] || '';
+      _ln = _parts.slice(1).join(' ') || '';
+    }
+
     var html = '<form id="client-form" onsubmit="ClientsPage.save(event, \'' + (id || '') + '\')">'
-      + UI.formField('Name *', 'text', 'c-name', c.name, { required: true, placeholder: 'Full name' })
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      + UI.formField('First Name *', 'text', 'c-first', _fn, { required: true, placeholder: 'First' })
+      + UI.formField('Last Name', 'text', 'c-last', _ln, { placeholder: 'Last' })
+      + '</div>'
       + UI.formField('Company', 'text', 'c-company', c.company, { placeholder: 'Company name (optional)' })
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
       + UI.formField('Phone *', 'tel', 'c-phone', c.phone, { required: true, placeholder: '(914) 555-0000' })
@@ -424,8 +444,13 @@ var ClientsPage = {
 
   save: function(e, id) {
     e.preventDefault();
+    var _fn = (document.getElementById('c-first') || {}).value || '';
+    var _ln = (document.getElementById('c-last') || {}).value || '';
+    _fn = _fn.trim(); _ln = _ln.trim();
     var data = {
-      name: document.getElementById('c-name').value.trim(),
+      firstName: _fn,
+      lastName: _ln,
+      name: (_fn + ' ' + _ln).trim(),
       company: document.getElementById('c-company').value.trim(),
       phone: document.getElementById('c-phone').value.trim(),
       email: document.getElementById('c-email').value.trim(),

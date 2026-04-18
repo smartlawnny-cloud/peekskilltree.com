@@ -853,12 +853,18 @@ document.querySelectorAll('.nav-item').forEach(function(btn) {
   btn.addEventListener('click', function() {
     var page = this.dataset.page;
     if (!page) return;
-    if (page === currentPage) return;
+    // Always close sidebar on mobile, even if same page
+    if (window.innerWidth <= 768) toggleSidebar();
+    // Same page? Refresh it (scroll to top + reload content)
+    if (page === currentPage) {
+      window.scrollTo(0, 0);
+      loadPage(page);
+      return;
+    }
     currentPage = page;
     document.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
     this.classList.add('active');
     loadPage(page);
-    if (window.innerWidth <= 768) toggleSidebar();
   });
 });
 
@@ -883,7 +889,7 @@ var pageConfigs = {
   schedule: { title: 'Schedule', action: null },
   clients: { title: 'Clients', action: '+ New Client', actionFn: 'ClientsPage.showForm()' },
   requests: { title: 'Requests', action: '+ New Request', actionFn: 'RequestsPage.showForm()' },
-  quotes: { title: 'Quotes', action: null },
+  quotes: { title: 'Quotes', action: '+ New Quote', actionFn: 'QuotesPage.showForm()' },
   jobs: { title: 'Jobs', action: null },
   invoices: { title: 'Invoices', action: '+ New Invoice', actionFn: 'InvoicesPage.showForm()' },
   insights: { title: 'Insights', action: null },
@@ -1245,7 +1251,7 @@ function _renderSearchResults(q) {
   addGroup('Invoices', '💰', invoices);
 
   var clients = DB.clients.search(q).slice(0,5).map(function(c) {
-    return { name: c.name, line2: [c.address, c.city].filter(Boolean).join(', '), line3: c.phone || c.email || '', status: c.status, onclick: "loadPage('clients');setTimeout(function(){ClientsPage.showDetail('" + c.id + "')},300)" };
+    return { name: c.name, line2: [c.address, c.city].filter(Boolean).join(', '), line3: c.phone || c.email || '', status: c.status, onclick: "ClientsPage._pendingDetail='" + c.id + "';loadPage('clients')" };
   });
   addGroup('Clients', '👥', clients);
 

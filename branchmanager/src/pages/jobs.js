@@ -19,8 +19,15 @@ var JobsPage = {
     };
   },
 
+  _pendingDetail: null,
+
   render: function() {
     var self = JobsPage;
+    if (self._pendingDetail) {
+      var _pid = self._pendingDetail;
+      self._pendingDetail = null;
+      setTimeout(function() { JobsPage.showDetail(_pid); }, 50);
+    }
     var activeTab = self._activeTab || 'jobs';
 
     // Tab bar

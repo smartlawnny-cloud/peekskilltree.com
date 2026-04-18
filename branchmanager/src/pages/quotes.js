@@ -92,8 +92,8 @@ var QuotesPage = {
       + '<input type="text" placeholder="Search quotes..." value="' + UI.esc(self._search) + '" oninput="QuotesPage._search=this.value;QuotesPage._page=0;loadPage(\'quotes\')">'
       + '</div></div>';
 
-    // Batch action bar
-    html += '<div id="q-batch-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,240px);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);">'
+    // Batch action bar (mobile-safe: no left offset on narrow screens)
+    html += '<div id="q-batch-bar" class="bm-batch-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);">'
       + '<span id="q-batch-count" style="font-weight:700;font-size:14px;">0 selected</span>'
       + '<div style="display:flex;gap:8px;align-items:center;">'
       + '<button onclick="QuotesPage._batchFollowUp()" style="background:#e6a817;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📬 Send Follow-up</button>'
@@ -696,15 +696,25 @@ var QuotesPage = {
 
   save: function(e, quoteId) {
     e.preventDefault();
-    // Guard against double-submit
+    try { return QuotesPage._saveImpl(e, quoteId); }
+    catch(err) {
+      console.error('[QuotesPage.save] ERROR:', err);
+      QuotesPage._saving = false;
+      var f = e.target;
+      if (f) f.querySelectorAll('button').forEach(function(b) { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+      UI.toast('Save failed: ' + (err && err.message ? err.message : err), 'error');
+    }
+  },
+
+  _saveImpl: function(e, quoteId) {
     if (QuotesPage._saving) return;
-    QuotesPage._saving = true;
     var form = e.target;
-    if (form) {
-      form.querySelectorAll('button[type=submit], button[onclick*="requestSubmit"], button[onclick*="saveAs"]').forEach(function(b) {
+    var _disableButtons = function() {
+      QuotesPage._saving = true;
+      if (form) form.querySelectorAll('button[type=submit], button[onclick*="requestSubmit"], button[onclick*="saveAs"]').forEach(function(b) {
         b.disabled = true; b.style.opacity = '0.5'; b.style.cursor = 'wait';
       });
-    }
+    };
     var _unsave = function() {
       QuotesPage._saving = false;
       if (form) form.querySelectorAll('button').forEach(function(b) {
@@ -724,15 +734,16 @@ var QuotesPage = {
         clientArea.style.transition = 'box-shadow .3s';
         setTimeout(function() { clientArea.style.boxShadow = orig || ''; }, 2500);
       }
-      _unsave();
-      return;
+      return; // Don't disable — let user retry after picking client
     }
     var client = DB.clients.getById(clientId);
     if (!client) {
       UI.toast('Selected client no longer exists — pick another', 'error');
-      _unsave();
       return;
     }
+
+    // Passed validation — NOW disable buttons to prevent double-submit
+    _disableButtons();
 
     var items = [];
     var subtotal = 0;

@@ -115,7 +115,7 @@ var InvoicesPage = {
       + '</div></div>';
 
     // Floating batch action bar (fixed to bottom)
-    html += '<div id="inv-batch-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,240px);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);animation:invBatchSlideUp .25s ease-out;">'
+    html += '<div id="inv-batch-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);animation:invBatchSlideUp .25s ease-out;">'
       + '<span id="inv-batch-count" style="font-weight:700;font-size:14px;">0 selected</span>'
       + '<div style="display:flex;gap:8px;align-items:center;">'
       + '<button onclick="InvoicesPage._batchPaid()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Mark Paid</button>'
@@ -874,16 +874,26 @@ var InvoicesPage = {
 
   save: function(e, invoiceId) {
     e.preventDefault();
-    // Guard against double-submit
+    try { return InvoicesPage._saveImpl(e, invoiceId); }
+    catch(err) {
+      console.error('[InvoicesPage.save] ERROR:', err);
+      InvoicesPage._saving = false;
+      var f = e.target || document.getElementById('inv-form');
+      if (f) f.querySelectorAll('button').forEach(function(b) { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+      UI.toast('Save failed: ' + (err && err.message ? err.message : err), 'error');
+    }
+  },
+
+  _saveImpl: function(e, invoiceId) {
+    // Guard against double-submit (don't disable on validation-only failures)
     if (InvoicesPage._saving) return;
-    InvoicesPage._saving = true;
-    // Disable all submit buttons in the form visually
     var form = e.target || document.getElementById('inv-form');
-    if (form) {
-      form.querySelectorAll('button[type=submit], button[onclick*="requestSubmit"]').forEach(function(b) {
+    var _disableButtons = function() {
+      InvoicesPage._saving = true;
+      if (form) form.querySelectorAll('button[type=submit], button[onclick*="requestSubmit"]').forEach(function(b) {
         b.disabled = true; b.style.opacity = '0.5'; b.style.cursor = 'wait';
       });
-    }
+    };
     var _unsave = function() {
       InvoicesPage._saving = false;
       if (form) form.querySelectorAll('button').forEach(function(b) {
@@ -902,15 +912,17 @@ var InvoicesPage = {
         clientArea.style.transition = 'box-shadow .3s';
         setTimeout(function() { clientArea.style.boxShadow = orig || ''; }, 2500);
       }
-      _unsave();
+      // Don't disable buttons — user needs to retry after picking client
       return;
     }
     var client = DB.clients.getById(clientId);
     if (!client) {
       UI.toast('Selected client no longer exists — pick another', 'error');
-      _unsave();
       return;
     }
+
+    // Passed validation — NOW disable the buttons to prevent double-submit
+    _disableButtons();
 
     var items = [];
     var subtotal = 0;

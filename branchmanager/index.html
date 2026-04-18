@@ -767,9 +767,9 @@
 <script defer src="src/pages/dashboard.js?v=140"></script>
 <script defer src="src/pages/clients.js?v=143"></script>
 <script defer src="src/pages/requests.js?v=147"></script>
-<script defer src="src/pages/quotes.js?v=147"></script>
-<script defer src="src/pages/jobs.js?v=140"></script>
-<script defer src="src/pages/invoices.js?v=147"></script>
+<script defer src="src/pages/quotes.js?v=148"></script>
+<script defer src="src/pages/jobs.js?v=148"></script>
+<script defer src="src/pages/invoices.js?v=148"></script>
 <script defer src="src/pages/schedule.js?v=140"></script>
 <script defer src="src/pages/insights.js?v=140"></script>
 <script src="src/geofence.js"></script>
@@ -1798,7 +1798,11 @@ var NotifCenter = (function() {
       for (var i = 0; i < items.length; i++) {
         var item = items[i];
         var isRead = readIds.indexOf(item.id) >= 0;
-        html += '<div class="notif-dropdown-item' + (isRead ? '' : ' unread') + '" onclick="NotifCenter.clickItem(\'' + item.page + '\',\'' + item.recordId + '\',\'' + item.id + '\')">'
+        // Safely encode IDs so quotes/backslashes in data don't break the onclick
+        var safePage = String(item.page || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        var safeRecordId = String(item.recordId || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        var safeId = String(item.id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        html += '<div class="notif-dropdown-item' + (isRead ? '' : ' unread') + '" onclick="NotifCenter.clickItem(\'' + safePage + '\',\'' + safeRecordId + '\',\'' + safeId + '\')">'
           + '<div class="notif-dropdown-icon" style="background:' + item.iconBg + ';">' + item.icon + '</div>'
           + '<div class="notif-dropdown-body">'
           + '<p class="notif-dropdown-msg">' + item.msg + '</p>'

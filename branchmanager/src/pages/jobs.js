@@ -146,7 +146,7 @@ var JobsPage = {
       + '</div></div>';
 
     // Floating batch action bar (fixed to bottom)
-    html += '<div id="job-bulk-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,240px);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);animation:batchSlideUp .25s ease-out;">'
+    html += '<div id="job-bulk-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);animation:batchSlideUp .25s ease-out;">'
       + '<span id="job-bulk-count" style="font-weight:700;font-size:14px;">0 selected</span>'
       + '<div style="display:flex;gap:8px;align-items:center;">'
       + '<button onclick="JobsPage._batchComplete()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Mark Complete</button>'
@@ -319,13 +319,50 @@ var JobsPage = {
       + '</div></div>'
       + '<div style="font-size:12px;color:var(--text-light);">Review link: <a href="' + reviewLink + '" target="_blank" style="color:var(--accent);">' + reviewLink + '</a></div>';
 
+    // Stash review context — onclick only passes the job id
+    JobsPage._reviewCtx = { jobId: id, phone: phone, email: email, emailSubject: emailSubject };
+
     UI.showModal('⭐ Request Google Review', html, {
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
-        + (phone ? ' <button class="btn btn-outline" onclick="(function(){var msg=document.getElementById(\'rv-sms\').value;if(typeof Dialpad!==\'undefined\'){Dialpad.showTextModal(\'' + phone.replace(/\D/g,'') + '\',msg);}else{window.open(\'sms:' + phone.replace(/\D/g,'') + '?body=\'+encodeURIComponent(msg));}DB.jobs.update(\'' + id + '\',{reviewRequestedAt:new Date().toISOString()});UI.closeModal();UI.toast(\'Review request sent via SMS ✅\');})()">📱 Send SMS</button>' : '')
-        + (email ? ' <button class="btn btn-primary" onclick="(function(){var body=document.getElementById(\'rv-email\').value;if(typeof Email!==\'undefined\'&&Email.isConfigured()){Email.send(\'' + email + '\',\'' + emailSubject + '\',body);}else{window.open(\'mailto:' + email + '?subject=\'+encodeURIComponent(\'' + emailSubject + '\')+ \'&body=\'+encodeURIComponent(body));}DB.jobs.update(\'' + id + '\',{reviewRequestedAt:new Date().toISOString()});UI.closeModal();UI.toast(\'Review request sent via email ✅\');})()">📧 Send Email</button>' : '')
+        + (phone ? ' <button class="btn btn-outline" onclick="JobsPage._sendReviewSMS()">📱 Send SMS</button>' : '')
+        + (email ? ' <button class="btn btn-primary" onclick="JobsPage._sendReviewEmail()">📧 Send Email</button>' : '')
     });
-    // Mark as review requested
-    DB.jobs.update(id, { reviewRequestedAt: new Date().toISOString() });
+  },
+
+  _showPropertyMap: function(jobId) {
+    var j = DB.jobs.getById(jobId);
+    if (!j) return;
+    if (typeof PropertyMap !== 'undefined' && PropertyMap.show) PropertyMap.show(j.property || '');
+    else UI.toast('Property map not available', 'error');
+  },
+
+  _sendReviewSMS: function() {
+    var ctx = JobsPage._reviewCtx;
+    if (!ctx) return;
+    var msg = (document.getElementById('rv-sms') || {}).value || '';
+    var phoneClean = (ctx.phone || '').replace(/\D/g, '');
+    if (typeof Dialpad !== 'undefined' && Dialpad.showTextModal) {
+      Dialpad.showTextModal(phoneClean, msg);
+    } else {
+      window.open('sms:' + phoneClean + '?body=' + encodeURIComponent(msg));
+    }
+    DB.jobs.update(ctx.jobId, { reviewRequestedAt: new Date().toISOString() });
+    UI.closeModal();
+    UI.toast('Review request sent via SMS ✅');
+  },
+
+  _sendReviewEmail: function() {
+    var ctx = JobsPage._reviewCtx;
+    if (!ctx) return;
+    var body = (document.getElementById('rv-email') || {}).value || '';
+    if (typeof Email !== 'undefined' && Email.isConfigured && Email.isConfigured()) {
+      Email.send(ctx.email, ctx.emailSubject, body);
+    } else {
+      window.open('mailto:' + encodeURIComponent(ctx.email) + '?subject=' + encodeURIComponent(ctx.emailSubject) + '&body=' + encodeURIComponent(body));
+    }
+    DB.jobs.update(ctx.jobId, { reviewRequestedAt: new Date().toISOString() });
+    UI.closeModal();
+    UI.toast('Review request sent via email ✅');
   },
 
   _quickComplete: function(id) {
@@ -879,7 +916,7 @@ var JobsPage = {
       + (j.clientPhone ? '<a href="tel:' + j.clientPhone + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 Call Client</a>' : '')
       + (j.clientPhone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){var fn=\'' + UI.esc((j.clientName||'').split(' ')[0]||'there') + '\';var msg=\'Hi \'+fn+\', this is Doug from \'+JobsPage._co().name+\'.' + (j.scheduledDate ? ' Your job is scheduled for ' + UI.dateShort(j.scheduledDate) + '.' : '') + ' Let us know if you have any questions! \'+JobsPage._co().phone;Dialpad.showTextModal(\'' + (j.clientPhone||'').replace(/\D/g,'') + '\',msg);}">📱 Text Client</button>' : '')
       + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">🗺 Navigate</a>' : '')
-      + '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="PropertyMap.show(\'' + (j.property || '').replace(/'/g, "\\'") + '\')">📐 Equipment Layout</button>'
+      + '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="JobsPage._showPropertyMap(\'' + id + '\')">📐 Equipment Layout</button>'
       + '</div>'
 
       // Activity timeline

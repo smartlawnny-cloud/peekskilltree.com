@@ -2,10 +2,10 @@
 -- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/ltpivkqahvplapyagljt/sql/new
 
 CREATE TABLE IF NOT EXISTS payments (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
   client_name TEXT,
-  invoice_id TEXT REFERENCES invoices(id) ON DELETE SET NULL,
+  invoice_id UUID REFERENCES invoices(id) ON DELETE SET NULL,
   amount NUMERIC(12,2) NOT NULL,
   date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   payout_date DATE,
@@ -23,7 +23,6 @@ CREATE INDEX IF NOT EXISTS idx_payments_invoice_id ON payments(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(date DESC);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
 
--- Allow anon key to SELECT / INSERT / UPDATE payments (matches other BM tables)
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "payments_anon_read" ON payments;
@@ -35,7 +34,6 @@ CREATE POLICY "payments_anon_insert" ON payments FOR INSERT TO anon WITH CHECK (
 DROP POLICY IF EXISTS "payments_anon_update" ON payments;
 CREATE POLICY "payments_anon_update" ON payments FOR UPDATE TO anon USING (true);
 
--- Auto-update updated_at on row changes
 CREATE OR REPLACE FUNCTION update_payments_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -48,5 +46,4 @@ DROP TRIGGER IF EXISTS payments_updated_at ON payments;
 CREATE TRIGGER payments_updated_at BEFORE UPDATE ON payments
   FOR EACH ROW EXECUTE FUNCTION update_payments_updated_at();
 
--- Verify
 SELECT 'payments table created' AS status, COUNT(*) AS row_count FROM payments;

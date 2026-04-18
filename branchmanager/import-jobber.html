@@ -299,8 +299,10 @@ async function importPayments() {
     log('Fetching existing payments for dedup…');
     var existing = await fetchAll('payments', 'id,client_name,date,amount');
     var existingKeys = {};
+    // Normalize dates to Unix ms for reliable comparison (handles Z vs +00:00)
     existing.forEach(function(p) {
-      existingKeys[(p.client_name || '') + '|' + p.date + '|' + p.amount] = true;
+      var ts = p.date ? new Date(p.date).getTime() : 0;
+      existingKeys[(p.client_name || '') + '|' + ts + '|' + parseFloat(p.amount)] = true;
     });
     log('Supabase has ' + existing.length + ' existing payments.');
 
@@ -308,7 +310,8 @@ async function importPayments() {
     var toInsert = [];
 
     jobberPayments.forEach(function(p) {
-      var key = (p.clientName || '') + '|' + p.date + '|' + p.amount;
+      var ts = p.date ? new Date(p.date).getTime() : 0;
+      var key = (p.clientName || '') + '|' + ts + '|' + parseFloat(p.amount);
       if (existingKeys[key]) { duplicates++; return; }
 
       var nameKey = (p.clientName || '').toLowerCase().trim();
@@ -371,16 +374,18 @@ async function migrateLocalToSupa() {
   }
   log('Found ' + allLocal.length + ' payments in localStorage across all clients.');
 
-  // Dedup against Supabase
+  // Dedup against Supabase (normalize dates to Unix ms)
   var supaPayments = await fetchAll('payments', 'client_name,date,amount');
   var existingKeys = {};
   supaPayments.forEach(function(p) {
-    existingKeys[(p.client_name || '') + '|' + p.date + '|' + p.amount] = true;
+    var ts = p.date ? new Date(p.date).getTime() : 0;
+    existingKeys[(p.client_name || '') + '|' + ts + '|' + parseFloat(p.amount)] = true;
   });
   log('Supabase has ' + supaPayments.length + ' existing. Deduping…');
 
   var toInsert = allLocal.filter(function(p) {
-    return !existingKeys[(p.clientName || '') + '|' + p.date + '|' + p.amount];
+    var ts = p.date ? new Date(p.date).getTime() : 0;
+    return !existingKeys[(p.clientName || '') + '|' + ts + '|' + parseFloat(p.amount)];
   }).map(function(p) {
     return {
       amount: p.amount || 0,

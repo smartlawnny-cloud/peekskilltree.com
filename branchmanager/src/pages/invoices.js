@@ -874,6 +874,22 @@ var InvoicesPage = {
 
   save: function(e, invoiceId) {
     e.preventDefault();
+    // Guard against double-submit
+    if (InvoicesPage._saving) return;
+    InvoicesPage._saving = true;
+    // Disable all submit buttons in the form visually
+    var form = e.target || document.getElementById('inv-form');
+    if (form) {
+      form.querySelectorAll('button[type=submit], button[onclick*="requestSubmit"]').forEach(function(b) {
+        b.disabled = true; b.style.opacity = '0.5'; b.style.cursor = 'wait';
+      });
+    }
+    var _unsave = function() {
+      InvoicesPage._saving = false;
+      if (form) form.querySelectorAll('button').forEach(function(b) {
+        b.disabled = false; b.style.opacity = ''; b.style.cursor = '';
+      });
+    };
     var clientIdEl = document.getElementById('inv-clientId');
     var clientId = clientIdEl ? clientIdEl.value : '';
     if (!clientId) {
@@ -886,11 +902,13 @@ var InvoicesPage = {
         clientArea.style.transition = 'box-shadow .3s';
         setTimeout(function() { clientArea.style.boxShadow = orig || ''; }, 2500);
       }
+      _unsave();
       return;
     }
     var client = DB.clients.getById(clientId);
     if (!client) {
       UI.toast('Selected client no longer exists — pick another', 'error');
+      _unsave();
       return;
     }
 
@@ -911,7 +929,7 @@ var InvoicesPage = {
     var taxAmount = Math.round(subtotal * taxRate / 100 * 100) / 100;
     var total = subtotal + taxAmount;
 
-    var form = document.getElementById('inv-form');
+    // form already declared at top
     var status = (form && form.dataset.saveStatus) ? form.dataset.saveStatus : 'draft';
 
     // Preserve jobId/quoteId/property from existing invoice (don't lose on edit)
@@ -945,6 +963,7 @@ var InvoicesPage = {
       UI.toast('Invoice created');
     }
 
+    _unsave();
     if (document.querySelector('.modal-overlay')) UI.closeModal();
     loadPage('invoices');
   }

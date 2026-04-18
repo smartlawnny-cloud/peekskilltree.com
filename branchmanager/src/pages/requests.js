@@ -640,7 +640,8 @@ var RequestsPage = {
       var match = allClients.find(function(c) { return c.name === clientName; });
       if (match) resolvedId = match.id;
     }
-    QuotesPage.showForm(null, resolvedId);
+    // Pass requestId so the new quote is back-linked to its originating request
+    QuotesPage.showForm(null, resolvedId, requestId);
   },
 
   _sendConfirmation: function(id) {

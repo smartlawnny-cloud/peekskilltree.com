@@ -245,10 +245,12 @@ var QuotesPage = {
     });
   },
 
-  showForm: function(quoteId, clientId) {
+  showForm: function(quoteId, clientId, requestId) {
     var q = quoteId ? DB.quotes.getById(quoteId) : {};
     var client = clientId ? DB.clients.getById(clientId) : (q.clientId ? DB.clients.getById(q.clientId) : null);
     var items = q.lineItems || [{ service: '', description: '', qty: 1, rate: 0 }];
+    // Stash requestId so save() captures it as origin
+    QuotesPage._originRequestId = requestId || q.requestId || null;
 
     // Check for tree measurement data
     var treeMeasure = null;
@@ -694,12 +696,26 @@ var QuotesPage = {
 
   save: function(e, quoteId) {
     e.preventDefault();
+    // Guard against double-submit
+    if (QuotesPage._saving) return;
+    QuotesPage._saving = true;
     var form = e.target;
+    if (form) {
+      form.querySelectorAll('button[type=submit], button[onclick*="requestSubmit"], button[onclick*="saveAs"]').forEach(function(b) {
+        b.disabled = true; b.style.opacity = '0.5'; b.style.cursor = 'wait';
+      });
+    }
+    var _unsave = function() {
+      QuotesPage._saving = false;
+      if (form) form.querySelectorAll('button').forEach(function(b) {
+        b.disabled = false; b.style.opacity = ''; b.style.cursor = '';
+      });
+    };
+
     var clientIdEl = document.getElementById('q-clientId');
     var clientId = clientIdEl ? clientIdEl.value : '';
     if (!clientId) {
       UI.toast('Client required — pick or create one before saving', 'error');
-      // Scroll to + flash the client selector so it's obvious
       var clientArea = document.getElementById('q-client-search') || document.getElementById('q-client-block') || clientIdEl;
       if (clientArea && clientArea.scrollIntoView) clientArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
       if (clientArea) {
@@ -708,11 +724,13 @@ var QuotesPage = {
         clientArea.style.transition = 'box-shadow .3s';
         setTimeout(function() { clientArea.style.boxShadow = orig || ''; }, 2500);
       }
+      _unsave();
       return;
     }
     var client = DB.clients.getById(clientId);
     if (!client) {
       UI.toast('Selected client no longer exists — pick another', 'error');
+      _unsave();
       return;
     }
 
@@ -741,6 +759,7 @@ var QuotesPage = {
     var expiresEl = document.getElementById('q-expires');
     var expiresAt = expiresEl ? expiresEl.value : new Date(Date.now() + 30*86400000).toISOString().split('T')[0];
 
+    var existingQ = quoteId ? DB.quotes.getById(quoteId) : {};
     var data = {
       clientId: clientId,
       clientName: client ? client.name : '',
@@ -755,6 +774,8 @@ var QuotesPage = {
       total: total,
       notes: document.getElementById('q-notes').value.trim(),
       status: form.dataset.saveStatus || 'draft',
+      // Preserve origin request link (don't lose on edit)
+      requestId: QuotesPage._originRequestId || existingQ.requestId || null,
       depositRequired: depositRequired,
       depositType: depositType,
       depositAmount: depositAmount,
@@ -791,16 +812,11 @@ var QuotesPage = {
       savedId = newQ.id;
     }
 
-    // Clear auto-save on successful save
     QuotesPage._clearAutoSave();
-
-    // Update client to active
     if (client && client.status === 'lead') DB.clients.update(clientId, { status: 'active' });
-
-    // Close modal if one is open (legacy), otherwise just navigate
+    _unsave();
     if (document.querySelector('.modal-overlay')) UI.closeModal();
 
-    // "Save & Send" → immediately show the email composer
     if (data.status === 'sent' && savedId) {
       QuotesPage._sendQuote(savedId);
     } else {
@@ -868,6 +884,7 @@ var QuotesPage = {
         })() : '')
       + (q.depositRequired ? '<span>' + (q.depositPaid ? '✅ Deposit paid' : '⚠️ Deposit due: ' + UI.money(q.depositDue)) + '</span>' : '')
       + (q.source ? '<span>📣 ' + UI.esc(q.source) + '</span>' : '')
+      + (q.requestId ? '<a onclick="RequestsPage._pendingDetail=\'' + q.requestId + '\';loadPage(\'requests\');" style="color:var(--accent);cursor:pointer;">📥 From Request</a>' : '')
       + '</div>'
       + '</div></div>'
 

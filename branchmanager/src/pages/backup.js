@@ -154,34 +154,100 @@ var BackupPage = {
 
     var reader = new FileReader();
     reader.onload = function(e) {
+      var backup;
+      // STEP 1: Parse + validate the backup FIRST — no data touched yet
       try {
-        var backup = JSON.parse(e.target.result);
-        if (!backup.data || !backup.version) {
-          UI.toast('Invalid backup file', 'error');
-          return;
-        }
+        backup = JSON.parse(e.target.result);
+      } catch(err) {
+        UI.toast('Failed to parse backup file: ' + err.message, 'error');
+        return;
+      }
 
-        // Clear existing bm- keys
-        var keysToRemove = [];
+      if (!backup || typeof backup !== 'object') {
+        UI.toast('Invalid backup file (not an object)', 'error');
+        return;
+      }
+      if (!backup.data || !backup.version) {
+        UI.toast('Invalid backup file (missing data or version)', 'error');
+        return;
+      }
+      if (typeof backup.data !== 'object' || Array.isArray(backup.data)) {
+        UI.toast('Invalid backup file (data field malformed)', 'error');
+        return;
+      }
+      var keyCount = Object.keys(backup.data).length;
+      if (keyCount === 0) {
+        UI.toast('Backup file is empty — nothing to restore', 'error');
+        return;
+      }
+
+      // STEP 2: Confirm before wiping
+      var dateStr = backup.date ? backup.date.split('T')[0] : 'unknown date';
+      if (!confirm('Restore backup from ' + dateStr + ' (' + keyCount + ' keys)?\n\nThis will REPLACE all current data. Current data will be saved to bm-rollback-* keys in case you need to undo.')) {
+        return;
+      }
+
+      // STEP 3: Save current data as rollback BEFORE wiping
+      try {
+        var rollbackSnapshot = {};
         for (var i = 0; i < localStorage.length; i++) {
           var key = localStorage.key(i);
-          if (key && key.startsWith('bm-')) keysToRemove.push(key);
+          if (key && key.startsWith('bm-') && !key.startsWith('bm-rollback-')) {
+            rollbackSnapshot[key] = localStorage.getItem(key);
+          }
+        }
+        localStorage.setItem('bm-rollback-' + Date.now(), JSON.stringify(rollbackSnapshot));
+      } catch(err) {
+        if (!confirm('Could not save rollback (localStorage may be full). Continue anyway? This is irreversible.')) return;
+      }
+
+      // STEP 4: Now safe to clear + restore
+      try {
+        var keysToRemove = [];
+        for (var j = 0; j < localStorage.length; j++) {
+          var k = localStorage.key(j);
+          if (k && k.startsWith('bm-') && !k.startsWith('bm-rollback-')) keysToRemove.push(k);
         }
         keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
 
-        // Restore
         Object.keys(backup.data).forEach(function(key) {
           var val = backup.data[key];
           localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
         });
 
-        UI.toast('Data restored from ' + backup.date.split('T')[0] + '!');
-        setTimeout(function() { window.location.reload(); }, 1000);
-      } catch(e) {
-        UI.toast('Failed to parse backup file', 'error');
+        UI.toast('Data restored from ' + dateStr + '. Rollback saved to bm-rollback-*');
+        setTimeout(function() { window.location.reload(); }, 1500);
+      } catch(err) {
+        UI.toast('Restore failed: ' + err.message + '. Check bm-rollback-* to recover.', 'error');
       }
     };
     reader.readAsText(file);
+  },
+
+  // Rollback a botched restore
+  rollback: function() {
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('bm-rollback-')) keys.push(k);
+    }
+    if (keys.length === 0) { UI.toast('No rollback available', 'error'); return; }
+    keys.sort(); // oldest first
+    var latest = keys[keys.length - 1];
+    if (!confirm('Restore from rollback: ' + latest + '?\n\nThis will replace current data with what you had before the last restore.')) return;
+    try {
+      var snapshot = JSON.parse(localStorage.getItem(latest));
+      // Clear current bm- keys
+      var toRemove = [];
+      for (var j = 0; j < localStorage.length; j++) {
+        var key = localStorage.key(j);
+        if (key && key.startsWith('bm-') && !key.startsWith('bm-rollback-')) toRemove.push(key);
+      }
+      toRemove.forEach(function(k) { localStorage.removeItem(k); });
+      Object.keys(snapshot).forEach(function(k) { localStorage.setItem(k, snapshot[k]); });
+      UI.toast('Rolled back successfully');
+      setTimeout(function() { window.location.reload(); }, 1000);
+    } catch(e) { UI.toast('Rollback failed: ' + e.message, 'error'); }
   },
 
   _getHistory: function() {

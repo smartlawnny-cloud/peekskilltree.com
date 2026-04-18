@@ -874,9 +874,25 @@ var InvoicesPage = {
 
   save: function(e, invoiceId) {
     e.preventDefault();
-    var clientId = document.getElementById('inv-clientId').value;
-    if (!clientId) { UI.toast('Select a client', 'error'); return; }
+    var clientIdEl = document.getElementById('inv-clientId');
+    var clientId = clientIdEl ? clientIdEl.value : '';
+    if (!clientId) {
+      UI.toast('Client required — pick or create one before saving', 'error');
+      var clientArea = document.getElementById('inv-client-search') || document.getElementById('inv-client-block') || clientIdEl;
+      if (clientArea && clientArea.scrollIntoView) clientArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (clientArea) {
+        var orig = clientArea.style.boxShadow;
+        clientArea.style.boxShadow = '0 0 0 3px #dc3545';
+        clientArea.style.transition = 'box-shadow .3s';
+        setTimeout(function() { clientArea.style.boxShadow = orig || ''; }, 2500);
+      }
+      return;
+    }
     var client = DB.clients.getById(clientId);
+    if (!client) {
+      UI.toast('Selected client no longer exists — pick another', 'error');
+      return;
+    }
 
     var items = [];
     var subtotal = 0;

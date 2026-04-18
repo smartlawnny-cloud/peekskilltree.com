@@ -71,6 +71,12 @@ var DB = (function() {
     try {
       var table = REMOTE_TABLE[key];
       if (!table) return;
+      // If a full cloud pull is in progress, defer the push so it can't be overwritten
+      if (window._bmSyncLock) {
+        console.log('[DB push] sync lock active, deferring', table, record.id);
+        setTimeout(function() { _pushToCloud(key, record, method); }, 500);
+        return;
+      }
       var url = localStorage.getItem('bm-supabase-url') || 'https://ltpivkqahvplapyagljt.supabase.co';
       var apiKey = localStorage.getItem('bm-supabase-key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
       if (!url || !apiKey) return;

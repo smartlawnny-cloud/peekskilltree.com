@@ -165,6 +165,9 @@ var SupabaseDB = {
 
   _pullFromCloud: async function() {
     if (!SupabaseDB.ready) return;
+    if (SupabaseDB._pulling) { console.log('[Pull] already in progress, skipping'); return; }
+    SupabaseDB._pulling = true;
+    window._bmSyncLock = true; // DB.js will check this before pushing
     var sb = SupabaseDB.client;
 
     var tables = [
@@ -235,6 +238,8 @@ var SupabaseDB = {
         }
       }
     }
+    SupabaseDB._pulling = false;
+    window._bmSyncLock = false;
   },
 
   // Poll for new requests submitted via book.html (every 3 min)

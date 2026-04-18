@@ -64,9 +64,10 @@ var Payments = {
   _syncFromSupabase: function() {
     if (Payments._syncing) return;
     Payments._syncing = true;
-    var url = localStorage.getItem('bm-supabase-url');
-    var key = localStorage.getItem('bm-supabase-key');
+    var url = localStorage.getItem('bm-supabase-url') || 'https://ltpivkqahvplapyagljt.supabase.co';
+    var key = localStorage.getItem('bm-supabase-key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
     if (!url || !key) { Payments._syncing = false; return; }
+    console.log('[Payments] Fetching from', url);
     fetch(url + '/rest/v1/payments?select=*&order=date.desc&limit=5000', {
       headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
     }).then(function(r) { return r.json(); }).then(function(data) {
@@ -89,10 +90,9 @@ var Payments = {
       });
       localStorage.setItem('bm-payments-cache', JSON.stringify(converted));
       Payments._syncing = false;
-      // Re-render if still on payments page
-      if (window._currentPage === 'payments' || window._currentPage === 'invoices') {
-        var el = document.getElementById('payments-main');
-        if (el) el.innerHTML = Payments._renderContent();
+      // Re-render if still on payments tab/page
+      if (window._currentPage === 'payments' || (window._currentPage === 'invoices' && InvoicesPage && InvoicesPage._activeTab === 'payments')) {
+        if (typeof loadPage === 'function') loadPage(window._currentPage);
       }
     }).catch(function() { Payments._syncing = false; });
   },

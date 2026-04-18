@@ -119,7 +119,7 @@ var ClientsPage = {
           if (days < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
           return UI.dateShort(_lastAct);
         })() : '—';
-        html += '<tr onclick="ClientsPage._pendingDetail=\'' + c.id + '\';loadPage(\'clients\')" style="cursor:pointer;" data-status="' + c.status + '" data-cid="' + c.id + '">'
+        html += '<tr onclick="ClientsPage.showDetail(\'' + c.id + '\');" style="cursor:pointer;" data-status="' + c.status + '" data-cid="' + c.id + '">'
           + '<td><strong>' + UI.esc(c.name || '') + '</strong>' + (c.company ? '<br><span style="font-size:12px;color:var(--text-light);">' + UI.esc(c.company) + '</span>' : '') + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(c.address || '—') + '</td>'
           + '<td>' + (c.tags && c.tags.length ? c.tags.slice(0, 3).map(function(t) { return '<span style="padding:1px 7px;background:var(--green-bg);border-radius:8px;font-size:10px;font-weight:600;color:var(--green-dark);">' + UI.esc(t) + '</span>'; }).join(' ') + (c.tags.length > 3 ? ' <span style="font-size:10px;color:var(--text-light);">+' + (c.tags.length - 3) + '</span>' : '') : '<span style="color:var(--text-light);font-size:12px;">—</span>') + '</td>'
@@ -511,12 +511,18 @@ var ClientsPage = {
   },
 
   showDetail: function(id) {
+    console.log('[ClientsPage.showDetail] called with id:', id);
     var c = DB.clients.getById(id);
     if (!c) {
       console.warn('[ClientsPage] Client not found:', id);
-      UI.toast('Client not found — try refreshing', 'error');
+      if (typeof UI !== 'undefined' && UI.toast) UI.toast('Client not found: ' + id, 'error');
+      else alert('Client not found: ' + id);
       return;
     }
+    // Scroll to top so user sees the detail
+    window.scrollTo(0, 0);
+    var scrollable = document.querySelector('.content') || document.querySelector('.main');
+    if (scrollable) scrollable.scrollTop = 0;
 
     // Get related records (match by clientId OR clientName since imports may not have IDs linked)
     var cName = (c.name || '').trim().toLowerCase();

@@ -31,6 +31,24 @@ var ClientsPage = {
       self._pendingDetail = null;
       setTimeout(function() { ClientsPage.showDetail(_pid); }, 50);
     }
+    // Attach a FAILSAFE click handler after render — in case inline onclick doesn't fire
+    setTimeout(function() {
+      var rows = document.querySelectorAll('tr[data-cid]');
+      rows.forEach(function(row) {
+        if (row._bmHandled) return;
+        row._bmHandled = true;
+        row.addEventListener('click', function(e) {
+          var cid = this.getAttribute('data-cid');
+          console.log('[CLICK] row data-cid:', cid);
+          if (cid) ClientsPage.showDetail(cid);
+        });
+        row.addEventListener('touchend', function(e) {
+          var cid = this.getAttribute('data-cid');
+          if (cid) { e.preventDefault(); ClientsPage.showDetail(cid); }
+        });
+      });
+      console.log('[ClientsPage.render] attached click handlers to', rows.length, 'rows');
+    }, 100);
     var stats = DB.dashboard.getStats();
     var clients = self._getFiltered();
 

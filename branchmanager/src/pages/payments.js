@@ -5,10 +5,10 @@
 var Payments = {
   _co: function() {
     return {
-      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
-      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
-      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
-      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
+      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
+      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
+      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website
     };
   },
 
@@ -29,18 +29,72 @@ var Payments = {
   },
 
   _getAllPayments: function() {
-    var allPayments = [];
+    // Prefer the cached Supabase pull if available
+    var cached = [];
+    try { cached = JSON.parse(localStorage.getItem('bm-payments-cache') || '[]'); } catch(e) {}
+
+    // Merge with per-client localStorage keys (offline new payments not yet synced)
+    var byKey = {};
+    cached.forEach(function(p) {
+      var ts = p.date ? new Date(p.date).getTime() : 0;
+      byKey[(p.clientName || p.client_name || '') + '|' + ts + '|' + parseFloat(p.amount)] = p;
+    });
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
-      if (k && k.startsWith('bm-payments-')) {
+      if (k && k.startsWith('bm-payments-') && k !== 'bm-payments-cache') {
         try {
           var items = JSON.parse(localStorage.getItem(k)) || [];
-          items.forEach(function(p) { allPayments.push(p); });
+          items.forEach(function(p) {
+            var ts = p.date ? new Date(p.date).getTime() : 0;
+            var key = (p.clientName || p.client_name || '') + '|' + ts + '|' + parseFloat(p.amount);
+            if (!byKey[key]) byKey[key] = p;
+          });
         } catch(e) {}
       }
     }
+
+    var allPayments = Object.values(byKey);
     allPayments.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+
+    // Async fetch from Supabase + cache it
+    Payments._syncFromSupabase();
     return allPayments;
+  },
+
+  _syncFromSupabase: function() {
+    if (Payments._syncing) return;
+    Payments._syncing = true;
+    var url = localStorage.getItem('bm-supabase-url');
+    var key = localStorage.getItem('bm-supabase-key');
+    if (!url || !key) { Payments._syncing = false; return; }
+    fetch(url + '/rest/v1/payments?select=*&order=date.desc&limit=5000', {
+      headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (!Array.isArray(data)) return;
+      // Convert snake_case to camelCase for the UI
+      var converted = data.map(function(row) {
+        return {
+          id: row.id,
+          amount: parseFloat(row.amount) || 0,
+          date: row.date,
+          payoutDate: row.payout_date,
+          method: row.method,
+          status: row.status,
+          clientId: row.client_id,
+          clientName: row.client_name,
+          invoiceId: row.invoice_id,
+          source: row.source,
+          notes: row.notes
+        };
+      });
+      localStorage.setItem('bm-payments-cache', JSON.stringify(converted));
+      Payments._syncing = false;
+      // Re-render if still on payments page
+      if (window._currentPage === 'payments' || window._currentPage === 'invoices') {
+        var el = document.getElementById('payments-main');
+        if (el) el.innerHTML = Payments._renderContent();
+      }
+    }).catch(function() { Payments._syncing = false; });
   },
 
   _filterByPeriod: function(payments, period) {

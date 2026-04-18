@@ -376,8 +376,9 @@
     button#dark-mode-btn { display:flex !important; }
     button[onclick*="AI.toggle"] { display:flex !important; }
 
-    /* Compact + button */
-    .topbar-icon-create { width:28px !important; height:28px !important; }
+    /* + button — mobile: make it bigger + add label so it's findable */
+    .topbar-icon-create { width:auto !important; min-width:60px !important; height:36px !important; padding:0 14px !important; display:flex !important; align-items:center !important; gap:4px !important; font-weight:700 !important; color:#fff !important; }
+    .topbar-icon-create::after { content:'New'; font-size:13px; color:#fff; }
 
     /* Topbar compact padding */
     .topbar { padding:8px 12px !important; gap:8px; }

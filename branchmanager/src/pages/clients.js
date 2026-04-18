@@ -331,6 +331,35 @@ var ClientsPage = {
     }
   },
 
+  _showContactPicker: function(clientId) {
+    var c = DB.clients.getById(clientId);
+    if (!c || !c.phone) return;
+    var phoneClean = c.phone.replace(/\D/g, '');
+    var telHref = 'tel:' + phoneClean;
+    var smsHref = 'sms:' + phoneClean;
+    var name = (c.name || '').replace(/'/g, "\\'");
+    var dialpadConnected = false;
+    try { dialpadConnected = !!JSON.parse(localStorage.getItem('bm-receptionist-settings') || '{}').connected; } catch(e) {}
+
+    var html = '<div style="padding:8px 4px;">'
+      + '<div style="font-size:22px;font-weight:700;margin-bottom:4px;">' + UI.esc(c.name || 'Contact') + '</div>'
+      + '<div style="font-size:15px;color:var(--text-light);margin-bottom:20px;">' + UI.phone(c.phone) + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      // Call
+      + '<a href="' + telHref + '" onclick="UI.closeModal();' + (dialpadConnected ? 'Dialpad.call(\'' + phoneClean + '\',\'' + clientId + '\',\'' + name + '\');' : '') + '" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;background:var(--green-dark);color:#fff;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;">'
+      + '<span style="font-size:32px;">📞</span><span>Call</span></a>'
+      // Text
+      + '<a href="' + smsHref + '" onclick="' + (dialpadConnected ? 'event.preventDefault();UI.closeModal();Dialpad.showTextModal(\'' + clientId + '\',\'' + name + '\',\'' + phoneClean + '\');' : 'UI.closeModal();') + '" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;background:#7c3aed;color:#fff;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;">'
+      + '<span style="font-size:32px;">💬</span><span>Text</span></a>'
+      + '</div>'
+      + (dialpadConnected ? '<div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:14px;">Dialpad connected — calls & texts will sync to your inbox</div>' : '<div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:14px;">Opens your phone\'s dialer. <a onclick="UI.closeModal();loadPage(\'receptionist\')" style="color:var(--accent);cursor:pointer;">Connect Dialpad</a> to log calls/texts automatically.</div>')
+      + '</div>';
+
+    UI.showModal('Contact ' + (c.name || ''), html, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
+    });
+  },
+
   _showPortalMenu: function(clientId) {
     var c = DB.clients.getById(clientId);
     if (!c) return;
@@ -561,10 +590,10 @@ var ClientsPage = {
       + '<h3 style="font-size:18px;font-weight:700;">Properties</h3>'
       + '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="ClientsPage.showForm(\'' + id + '\')">+ New Property</button>'
       + '</div>'
-      + (c.address ? '<div style="display:flex;gap:12px;align-items:start;">'
-        + '<div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;color:#2e7d32;">📍</div>'
-        + '<div style="font-size:14px;line-height:1.6;">' + UI.esc(c.address).replace(/,/g, '<br>') + '</div>'
-        + '</div>' : '<div style="color:var(--text-light);font-size:13px;">No property address</div>')
+      + (c.address ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(c.address) + '" target="_blank" style="display:flex;gap:12px;align-items:start;text-decoration:none;color:inherit;padding:4px;border-radius:6px;transition:background .15s;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
+        + '<div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;color:#2e7d32;flex-shrink:0;">📍</div>'
+        + '<div style="font-size:14px;line-height:1.6;flex:1;">' + UI.esc(c.address).replace(/,/g, '<br>') + '<div style="font-size:11px;color:var(--accent);margin-top:2px;">Open in Maps →</div></div>'
+        + '</a>' : '<div style="color:var(--text-light);font-size:13px;">No property address</div>')
       + '</div>'
 
       // Schedule section
@@ -637,7 +666,7 @@ var ClientsPage = {
       + '<div style="margin-bottom:16px;">'
       + '<h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Contact info</h3>'
       + '<table style="width:100%;font-size:14px;border-collapse:collapse;">'
-      + (c.phone ? '<tr><td style="padding:8px 0;color:var(--text-light);width:60px;">Main</td><td style="padding:8px 0;"><a href="tel:' + c.phone.replace(/\D/g,'') + '" style="color:var(--text);text-decoration:none;">' + UI.phone(c.phone) + '</a></td></tr>' : '')
+      + (c.phone ? '<tr><td style="padding:8px 0;color:var(--text-light);width:60px;">Main</td><td style="padding:8px 0;"><a onclick="ClientsPage._showContactPicker(\'' + id + '\')" style="color:var(--accent);text-decoration:none;cursor:pointer;font-weight:600;">' + UI.phone(c.phone) + '</a> <span style="font-size:11px;color:var(--text-light);margin-left:6px;">tap to call/text</span></td></tr>' : '')
       + (c.email ? '<tr><td style="padding:8px 0;color:var(--text-light);">Main</td><td style="padding:8px 0;"><a href="mailto:' + c.email + '" style="color:#1565c0;text-decoration:none;">' + c.email + '</a></td></tr>' : '')
       + '<tr><td style="padding:8px 0;color:var(--text-light);">Status</td><td style="padding:8px 0;">' + UI.statusBadge(c.status) + '</td></tr>'
       + '<tr><td style="padding:8px 0;color:var(--text-light);">Revenue</td><td style="padding:8px 0;font-weight:600;">' + UI.moneyInt(totalRevenue) + '</td></tr>'
@@ -708,10 +737,15 @@ var ClientsPage = {
 
       // Quotes tab
       + '<div id="cd-quotes" class="cd-panel" style="display:none;">'
-      + (clientQuotes.length ? '<table class="data-table"><thead><tr><th>#</th><th>Description</th><th>Status</th><th>Total</th></tr></thead><tbody>'
-        + clientQuotes.map(function(q) {
-          return '<tr style="cursor:pointer;" onclick="QuotesPage.showDetail(\'' + q.id + '\')"><td><strong>' + (q.quoteNumber || '—') + '</strong></td><td>' + UI.esc(q.description || '—') + '</td><td>' + UI.statusBadge(q.status) + '</td><td style="font-weight:600;">' + UI.money(q.total) + '</td></tr>';
-        }).join('') + '</tbody></table>' : UI.emptyState('📋', 'No quotes yet', 'Create a quote for this client.', '+ New Quote', 'QuotesPage.showForm(null,\'' + id + '\')'))
+      + (clientQuotes.length ? (function() {
+          var sortedQ = clientQuotes.slice().sort(function(a,b){ return (b.createdAt||'') > (a.createdAt||'') ? 1 : -1; });
+          return '<table class="data-table"><thead><tr><th>#</th><th>Date</th><th>Description</th><th>Status</th><th>Total</th></tr></thead><tbody>'
+            + sortedQ.map(function(q) {
+              return '<tr style="cursor:pointer;" onclick="QuotesPage._pendingDetail=\'' + q.id + '\';loadPage(\'quotes\')"><td><strong>' + (q.quoteNumber || '—') + '</strong></td>'
+                + '<td style="white-space:nowrap;color:var(--text-light);font-size:12px;">' + UI.dateShort(q.createdAt) + '</td>'
+                + '<td>' + UI.esc(q.description || '—') + '</td><td>' + UI.statusBadge(q.status) + '</td><td style="font-weight:600;">' + UI.money(q.total) + '</td></tr>';
+            }).join('') + '</tbody></table>';
+        })() : UI.emptyState('📋', 'No quotes yet', 'Create a quote for this client.', '+ New Quote', 'QuotesPage.showForm(null,\'' + id + '\')'))
       + '</div>'
 
       // Invoices tab — last 10, sorted newest first

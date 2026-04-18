@@ -343,7 +343,7 @@ var SettingsPage = {
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="var k=document.getElementById(\'sendgrid-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-sendgrid-key\',k);if(typeof Email!==\'undefined\'){Email.apiKey=k;}UI.toast(\'SendGrid connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
       + (sgOk ? '<button onclick="if(typeof Email!==\'undefined\'){Email.send(\'info@peekskilltree.com\',\'Branch Manager Test\',\'SendGrid is connected and working!\').then(function(){UI.toast(\'Test sent! Check info@peekskilltree.com\');}).catch(function(e){UI.toast(\'Failed: \'+e.message,\'error\');});}else{UI.toast(\'Email module not loaded\',\'error\');}" style="background:#1a82e2;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Send Test Email</button>' : '')
-      + (sgOk ? '<button onclick="localStorage.removeItem(\'bm-sendgrid-key\');UI.toast(\'Key removed\');loadPage(\'settings\');" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + (sgOk ? '<button onclick="SettingsPage._removeKey(\'bm-sendgrid-key\',\'SendGrid\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Enables: automated quote follow-ups, invoice reminders, visit reminders, review requests. Free: 100 emails/day.</p>'
       + '</div>';
@@ -360,7 +360,7 @@ var SettingsPage = {
       + '<div style="margin-bottom:8px;"><input type="password" id="claude-ai-key" value="' + aiKey + '" placeholder="sk-ant-api03-..." style="width:100%;padding:10px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="var k=document.getElementById(\'claude-ai-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-claude-key\',k);if(typeof AI!==\'undefined\'){AI._apiKey=k;}UI.toast(\'AI Assistant connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
-      + (aiOk ? '<button onclick="localStorage.removeItem(\'bm-claude-key\');UI.toast(\'Key removed\');loadPage(\'settings\');" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + (aiOk ? '<button onclick="SettingsPage._removeKey(\'bm-claude-key\',\'AI Assistant\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at console.anthropic.com → API Keys → Create Key (free tier available)</p>'
       + '</div>';
@@ -867,6 +867,21 @@ var SettingsPage = {
     var el = document.getElementById('expenses-sql-block');
     var sql = el ? el.textContent : '';
     navigator.clipboard.writeText(sql).then(function() { UI.toast('Expenses SQL copied — paste into Supabase SQL Editor!'); });
+  },
+
+  _removeKey: function(storageKey, label) {
+    var existing = localStorage.getItem(storageKey);
+    if (!existing) {
+      UI.toast(label + ' key was not set', 'error');
+      return;
+    }
+    if (!confirm('Remove your ' + label + ' API key?\n\nYou can re-add it anytime.')) return;
+    localStorage.removeItem(storageKey);
+    // Also clear in-memory reference on the module
+    if (storageKey === 'bm-sendgrid-key' && typeof Email !== 'undefined') Email.apiKey = null;
+    if (storageKey === 'bm-claude-key' && typeof AI !== 'undefined') AI._apiKey = null;
+    UI.toast(label + ' key removed ✓');
+    loadPage('settings');
   },
 
   saveCompany: function() {

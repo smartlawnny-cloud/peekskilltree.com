@@ -1201,16 +1201,21 @@ var QuotesPage = {
   },
 
   _identifyTree: function(imageDataUrl, rowIndex) {
+    // Guard against concurrent calls (duplicates wasted API credits)
+    if (QuotesPage._identifying) {
+      UI.toast('Already identifying a tree, please wait...', 'error');
+      return;
+    }
     // Send to AI for tree identification
     var aiKey = localStorage.getItem('bm-claude-key');
     if (!aiKey) {
       // No AI key — just add the photo, user fills in manually
       UI.toast('Add AI key in Settings for auto tree ID');
-      // Auto-add next empty line item for next tree
       QuotesPage.addItem();
       return;
     }
 
+    QuotesPage._identifying = true;
     UI.toast('Identifying tree...');
 
     // Extract base64 from data URL
@@ -1262,7 +1267,6 @@ var QuotesPage = {
 
           QuotesPage.calcTotal();
           UI.toast('🌳 ' + tree.species + ' — ' + tree.dbh + '" DBH — $' + suggestedPrice + ' suggested');
-          // Auto-add next empty line item for next tree
           QuotesPage.addItem();
         }
       } catch(e) {
@@ -1270,11 +1274,13 @@ var QuotesPage = {
         UI.toast('Could not identify — fill in manually');
         QuotesPage.addItem();
       }
+      QuotesPage._identifying = false;
     })
     .catch(function(e) {
       console.warn('Tree ID error:', e);
       UI.toast('AI unavailable — fill in manually');
       QuotesPage.addItem();
+      QuotesPage._identifying = false;
     });
   },
 

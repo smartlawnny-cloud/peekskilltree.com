@@ -304,6 +304,17 @@ var AI = {
     var text = input.value.trim();
     if (!text || AI._loading) return;
 
+    // Find + visually disable the send button
+    var sendBtn = document.querySelector('button[onclick*="AI.send"]');
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.style.opacity = '0.5';
+      sendBtn.style.cursor = 'not-allowed';
+      sendBtn._origHTML = sendBtn.innerHTML;
+      sendBtn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span>';
+    }
+    input.disabled = true;
+
     // Add user message
     AI._messages.push({ role: 'user', content: text });
     input.value = '';
@@ -311,22 +322,30 @@ var AI = {
     AI._refreshMessages();
     AI._scrollToBottom();
 
-    // Build context about the business
     var context = AI._buildContext();
-
     AI._loading = true;
     AI._showTyping();
 
-    // Call Claude API
-    AI._callClaude(context, text).then(function(response) {
+    var restoreBtn = function() {
       AI._loading = false;
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.style.opacity = '';
+        sendBtn.style.cursor = '';
+        if (sendBtn._origHTML) sendBtn.innerHTML = sendBtn._origHTML;
+      }
+      if (input) input.disabled = false;
+    };
+
+    AI._callClaude(context, text).then(function(response) {
+      restoreBtn();
       AI._removeTyping();
       AI._messages.push({ role: 'assistant', content: response });
       AI._saveHistory();
       AI._refreshMessages();
       AI._scrollToBottom();
     }).catch(function(err) {
-      AI._loading = false;
+      restoreBtn();
       AI._removeTyping();
       AI._messages.push({ role: 'assistant', content: '❌ Error: ' + (err.message || 'Could not connect to Claude. Check your API key.') });
       AI._refreshMessages();
@@ -362,9 +381,9 @@ var AI = {
     var thisYear = new Date().getFullYear();
     var ytdRevenue = invoices.filter(function(i){return i.status==='paid' && new Date(i.paidDate||i.createdAt).getFullYear()===thisYear;}).reduce(function(s,i){return s+(i.total||0);},0);
 
-    var coName = localStorage.getItem('bm-co-name') || 'Second Nature Tree Service';
-    var coPhone = localStorage.getItem('bm-co-phone') || '(914) 391-5233';
-    var coEmail = localStorage.getItem('bm-co-email') || 'info@peekskilltree.com';
+    var coName = localStorage.getItem('bm-co-name') || BM_CONFIG.companyName;
+    var coPhone = localStorage.getItem('bm-co-phone') || BM_CONFIG.phone;
+    var coEmail = localStorage.getItem('bm-co-email') || BM_CONFIG.email;
     return 'You are Claude, an AI assistant built into Branch Manager — a field service management app for ' + coName + ' in Peekskill, NY.\n\n'
       + 'BUSINESS CONTEXT:\n'
       + '• Company: ' + coName + '\n'

@@ -196,8 +196,24 @@ var SupabaseDB = {
             });
             return newRow;
           });
-          localStorage.setItem(t.local, JSON.stringify(converted));
+
+          // MERGE with existing local — preserves unsynced local records
+          // Cloud wins for records with same id; local records not in cloud are kept
+          var existingLocal = [];
+          try { existingLocal = JSON.parse(localStorage.getItem(t.local) || '[]'); } catch(e) {}
+          var cloudIds = {};
+          converted.forEach(function(r) { cloudIds[r.id] = true; });
+          var localOnly = existingLocal.filter(function(r) {
+            // Keep local record if not in cloud AND created recently (< 5 min ago = probably unsynced)
+            if (cloudIds[r.id]) return false;
+            if (!r.createdAt) return false;
+            var ageMs = Date.now() - new Date(r.createdAt).getTime();
+            return ageMs < 5 * 60 * 1000; // 5 minute grace period
+          });
+          var merged = converted.concat(localOnly);
+          localStorage.setItem(t.local, JSON.stringify(merged));
           totalPulled += converted.length;
+          if (localOnly.length > 0) console.log('[Pull merge] kept ' + localOnly.length + ' unsynced local ' + t.remote);
           if (SupabaseDB._debug) console.log('Pulled ' + converted.length + ' rows from ' + t.remote);
         }
       } catch (e) {

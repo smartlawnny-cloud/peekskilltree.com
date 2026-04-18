@@ -187,7 +187,10 @@
           + '<input type="checkbox" id="sig-consent" style="width:18px;height:18px;flex-shrink:0;margin-top:2px;">'
           + '<span style="font-size:12px;color:#666;line-height:1.5;">I consent to signing this document electronically. I acknowledge that my electronic signature has the same legal effect as a handwritten signature under the federal ESIGN Act and ' + esc(BM_CONFIG.state) + ' ESRA. I have reviewed and agree to the scope of work, pricing, and terms described in this quote.</span>'
           + '</label>'
-          + '<button class="btn btn-approve" style="margin-top:12px;" onclick="confirmApprove()">✅ Confirm &amp; Approve</button>'
+          + '<div style="display:flex;gap:8px;margin-top:12px;">'
+          + '<button class="btn btn-approve" style="flex:1;" onclick="confirmApprove()">✅ Confirm &amp; Approve</button>'
+          + '<button class="btn" style="padding:10px 16px;background:#f5f5f5;color:#333;border:1px solid #ddd;" onclick="cancelSignature()">Cancel</button>'
+          + '</div>'
           + '</div>'
           + '<button class="btn btn-changes" onclick="toggleChanges()">💬 Request Changes</button>'
           + '<div class="changes-form" id="changes-form">'
@@ -297,6 +300,20 @@
       var canvas = el('sig-canvas');
       if (!canvas) return;
       canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function cancelSignature() {
+      // Hide the signature pad, show the main Approve button again
+      var sec = el('sig-section');
+      if (sec) sec.style.display = 'none';
+      var mainBtn = el('btn-approve-main');
+      if (mainBtn) mainBtn.style.display = '';
+      // Clear any drawing
+      clearSignature();
+      var nameInput = el('sig-name');
+      if (nameInput) nameInput.value = '';
+      var consent = el('sig-consent');
+      if (consent) consent.checked = false;
     }
 
     function _sigIsEmpty() {

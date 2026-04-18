@@ -128,6 +128,25 @@ var DB = (function() {
     _audit('delete', key, id, item ? (item.name || item.clientName || '') : '');
     var all = _get(key).filter(function(r) { return r.id !== id; });
     _set(key, all);
+    _deleteFromCloud(key, id);
+  }
+
+  function _deleteFromCloud(key, id) {
+    try {
+      var table = REMOTE_TABLE[key];
+      if (!table || !id) return;
+      if (window._bmSyncLock) {
+        setTimeout(function() { _deleteFromCloud(key, id); }, 500);
+        return;
+      }
+      var url = localStorage.getItem('bm-supabase-url') || 'https://ltpivkqahvplapyagljt.supabase.co';
+      var apiKey = localStorage.getItem('bm-supabase-key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+      if (!url || !apiKey) return;
+      fetch(url + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {
+        method: 'DELETE',
+        headers: { 'apikey': apiKey, 'Authorization': 'Bearer ' + apiKey }
+      }).catch(function(e) { console.warn('[DB cloud delete]', table, e); });
+    } catch(e) { console.warn('[DB cloud delete] error', e); }
   }
   function count(key, filterFn) {
     var all = _get(key);

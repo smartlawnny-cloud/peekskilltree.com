@@ -34,26 +34,29 @@ var Payments = {
     try { cached = JSON.parse(localStorage.getItem('bm-payments-cache') || '[]'); } catch(e) {}
 
     // Merge with per-client localStorage keys (offline new payments not yet synced)
-    var byKey = {};
-    cached.forEach(function(p) {
+    // Dedup by id PRIMARILY; fall back to composite key only if id is missing
+    var byId = {};
+    var byCompositeKey = {};
+    var addPayment = function(p) {
+      if (p.id && byId[p.id]) return; // already have this exact payment
+      if (p.id) { byId[p.id] = p; return; }
+      // Fallback: no id, use composite key (legacy data only)
       var ts = p.date ? new Date(p.date).getTime() : 0;
-      byKey[(p.clientName || p.client_name || '') + '|' + ts + '|' + parseFloat(p.amount)] = p;
-    });
+      var key = (p.clientName || p.client_name || '') + '|' + ts + '|' + parseFloat(p.amount);
+      if (!byCompositeKey[key]) byCompositeKey[key] = p;
+    };
+    cached.forEach(addPayment);
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
       if (k && k.startsWith('bm-payments-') && k !== 'bm-payments-cache') {
         try {
           var items = JSON.parse(localStorage.getItem(k)) || [];
-          items.forEach(function(p) {
-            var ts = p.date ? new Date(p.date).getTime() : 0;
-            var key = (p.clientName || p.client_name || '') + '|' + ts + '|' + parseFloat(p.amount);
-            if (!byKey[key]) byKey[key] = p;
-          });
+          items.forEach(addPayment);
         } catch(e) {}
       }
     }
 
-    var allPayments = Object.values(byKey);
+    var allPayments = Object.values(byId).concat(Object.values(byCompositeKey));
     allPayments.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
 
     // Async fetch from Supabase + cache it
@@ -70,8 +73,11 @@ var Payments = {
     console.log('[Payments] Fetching from', url);
     fetch(url + '/rest/v1/payments?select=*&order=date.desc&limit=5000', {
       headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
-    }).then(function(r) { return r.json(); }).then(function(data) {
-      if (!Array.isArray(data)) return;
+    }).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function(data) {
+      if (!Array.isArray(data)) { Payments._syncing = false; return; }
       // Convert snake_case to camelCase for the UI
       var converted = data.map(function(row) {
         return {
@@ -94,7 +100,7 @@ var Payments = {
       if (window._currentPage === 'payments' || (window._currentPage === 'invoices' && InvoicesPage && InvoicesPage._activeTab === 'payments')) {
         if (typeof loadPage === 'function') loadPage(window._currentPage);
       }
-    }).catch(function() { Payments._syncing = false; });
+    }).catch(function(err) { console.warn('[Payments sync] error:', err); Payments._syncing = false; });
   },
 
   _filterByPeriod: function(payments, period) {

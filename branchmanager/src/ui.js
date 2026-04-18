@@ -18,13 +18,23 @@ var UI = (function() {
       + (options.footer ? '<div class="modal-footer">' + options.footer + '</div>' : '')
       + '</div>';
     overlay.addEventListener('click', function(e) { if (e.target === overlay) UI.closeModal(); });
+
+    // ESC key closes the modal
+    var escHandler = function(e) { if (e.key === 'Escape') UI.closeModal(); };
+    document.addEventListener('keydown', escHandler);
+    overlay._escHandler = escHandler;
+
     document.body.appendChild(overlay);
     requestAnimationFrame(function() { overlay.classList.add('open'); });
     return overlay;
   }
   function closeModal() {
     var m = document.querySelector('.modal-overlay');
-    if (m) { m.classList.remove('open'); setTimeout(function() { m.remove(); }, 200); }
+    if (m) {
+      if (m._escHandler) document.removeEventListener('keydown', m._escHandler);
+      m.classList.remove('open');
+      setTimeout(function() { m.remove(); }, 200);
+    }
   }
 
   // ── Status Badge ──

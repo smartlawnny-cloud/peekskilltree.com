@@ -113,13 +113,24 @@ var Photos = {
     var overlay = document.createElement('div');
     overlay.id = 'photo-viewer';
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;';
-    overlay.innerHTML = '<img src="' + p.url + '" style="max-width:90vw;max-height:80vh;border-radius:8px;object-fit:contain;">'
-      + '<div style="color:#fff;margin-top:12px;font-size:14px;">' + (p.name || '') + ' — ' + (p.date ? UI.dateShort(p.date) : '') + '</div>'
-      + '<div style="display:flex;gap:12px;margin-top:12px;">'
-      + '<button onclick="Photos._labelPhoto(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#fff;color:#333;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Label</button>'
+
+    // Build DOM safely — no innerHTML with unescaped URL (XSS risk)
+    var img = document.createElement('img');
+    img.src = p.url;
+    img.style.cssText = 'max-width:90vw;max-height:80vh;border-radius:8px;object-fit:contain;';
+    overlay.appendChild(img);
+
+    var caption = document.createElement('div');
+    caption.style.cssText = 'color:#fff;margin-top:12px;font-size:14px;';
+    caption.textContent = (p.name || '') + ' — ' + (p.date ? UI.dateShort(p.date) : '');
+    overlay.appendChild(caption);
+
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:12px;margin-top:12px;';
+    btnRow.innerHTML = '<button onclick="Photos._labelPhoto(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#fff;color:#333;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Label</button>'
       + '<button onclick="Photos._deletePhoto(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#c0392b;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Delete</button>'
-      + '<button onclick="document.getElementById(\'photo-viewer\').remove()" style="background:#555;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Close</button>'
-      + '</div>';
+      + '<button onclick="document.getElementById(\'photo-viewer\').remove()" style="background:#555;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Close</button>';
+    overlay.appendChild(btnRow);
     overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);
   },

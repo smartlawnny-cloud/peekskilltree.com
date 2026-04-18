@@ -910,7 +910,7 @@ var InvoicesPage = {
         var orig = clientArea.style.boxShadow;
         clientArea.style.boxShadow = '0 0 0 3px #dc3545';
         clientArea.style.transition = 'box-shadow .3s';
-        setTimeout(function() { clientArea.style.boxShadow = orig || ''; }, 2500);
+        setTimeout(function() { if (document.contains(clientArea)) clientArea.style.boxShadow = orig || ''; }, 2500);
       }
       // Don't disable buttons — user needs to retry after picking client
       return;

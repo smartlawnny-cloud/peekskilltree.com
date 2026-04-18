@@ -529,6 +529,16 @@ var ClientsPage = {
   },
 
   showDetail: function(id) {
+    try { return ClientsPage._showDetailImpl(id); }
+    catch(err) {
+      console.error('[ClientsPage.showDetail] ERROR:', err);
+      alert('Error opening client: ' + (err && err.message ? err.message : err) + '\n\nSee console for details.');
+      var pc = document.getElementById('pageContent');
+      if (pc) pc.innerHTML = '<div style="padding:20px;"><h2>Error loading client</h2><pre style="background:#fee;padding:12px;border-radius:8px;overflow:auto;">' + (err && err.stack ? err.stack : String(err)) + '</pre><button onclick="loadPage(\'clients\')" style="padding:10px 20px;background:#1b5e20;color:#fff;border:none;border-radius:8px;">← Back to Clients</button></div>';
+    }
+  },
+
+  _showDetailImpl: function(id) {
     console.log('[ClientsPage.showDetail] called with id:', id);
     var c = DB.clients.getById(id);
     if (!c) {

@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 196; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 197; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -470,8 +470,8 @@
     .topbar-icon-create { width:40px !important; min-width:40px !important; height:40px !important; padding:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; font-weight:700 !important; color:#fff !important; border-radius:50% !important; }
     .topbar-icon-create::after { content:none !important; }
 
-    /* Topbar compact padding */
-    .topbar { padding:8px 12px !important; gap:8px; }
+    /* Topbar compact padding — preserve safe-area-inset-top with PWA floor */
+    .topbar { padding-left:12px !important; padding-right:12px !important; padding-bottom:8px !important; gap:8px; }
     #searchDropdown.mobile-open {
       position:fixed !important; top:0 !important; left:0 !important; right:0 !important;
       bottom:0 !important; margin:0 !important; border-radius:0 !important;
@@ -826,7 +826,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v196</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v197</span>
       </div>
     </div>
 

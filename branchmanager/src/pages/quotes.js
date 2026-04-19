@@ -1719,18 +1719,30 @@ var QuotesPage = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         apiKey: aiKey,
-        model: 'claude-sonnet-4-5-20250514',
-        max_tokens: 300,
+        model: 'claude-sonnet-4-5',
+        max_tokens: 400,
         messages: [{ role: 'user', content: content }]
       })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
+      // Surface API errors (bad model name, invalid key, rate limit) to the user
+      if (data.error) {
+        console.warn('AI error response:', data);
+        UI.toast('AI error: ' + (data.error.message || data.error.type || JSON.stringify(data.error).slice(0, 100)), 'error');
+        QuotesPage._identifying = false;
+        return;
+      }
       var text = data.content && data.content[0] ? data.content[0].text : '';
+      if (!text) {
+        console.warn('AI returned no content', data);
+        UI.toast('AI returned empty response — check API key in Settings', 'error');
+        QuotesPage._identifying = false;
+        return;
+      }
       try {
-        // Parse JSON from response
         var match = text.match(/\{[\s\S]*\}/);
-        if (!match) throw new Error('No JSON');
+        if (!match) throw new Error('No JSON in: ' + text.slice(0, 100));
         var tree = JSON.parse(match[0]);
 
         // Fill in the line item

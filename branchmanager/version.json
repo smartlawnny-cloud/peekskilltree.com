@@ -1,5 +1,5 @@
 {
-  "version": 233,
+  "version": 234,
   "released": "2026-04-19",
-  "notes": "Branch Cam expansion: tag chips replace single label (Before/After/Hazard/Damage/Equipment/Permit/Receipt/Crew/Property + custom). Branch Cam Library tab added under Tools — search by client/job, filter by tag, grid of every photo across all jobs. Requires SQL: ALTER TABLE photos ADD COLUMN tags text[];"
+  "notes": "Branch Cam full CompanyCam parity. (4) Public share link → share-photos.html?type=&id=. (5) Annotation editor — pen/arrow/circle/text overlay, saved as new photo with 'Annotated' tag. (6) Offline upload queue — failed uploads saved to localStorage, auto-flush on reconnect + boot. (7) One-tap 'New job at this location' — GPS + reverse-geocode + suggest existing client or create new + create request. (8) Photo report PDF — print-friendly photo report from gallery. SQL needed: ALTER TABLE photos ADD COLUMN tags text[];"
 }

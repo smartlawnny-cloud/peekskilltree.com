@@ -122,9 +122,12 @@ var Photos = {
     var html = '<div style="margin-top:16px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
       + '<h4 style="font-size:14px;">📸 Photos (' + photos.length + ')</h4>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      + (photos.length ? '<button onclick="Photos.shareGallery(\'' + recordType + '\', \'' + recordId + '\')" style="background:var(--white);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">🔗 Share</button>' : '')
+      + (photos.length ? '<button onclick="Photos.generateReport(\'' + recordType + '\', \'' + recordId + '\', \'' + recordType + '\')" style="background:var(--white);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📄 Report</button>' : '')
       + '<label style="background:var(--green-dark);color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">'
       + '+ Add Photo<input type="file" accept="image/*" multiple onchange="Photos.upload(event, \'' + recordType + '\', \'' + recordId + '\')" style="display:none;">'
-      + '</label></div>';
+      + '</label></div></div>';
 
     if (photos.length) {
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;">';
@@ -252,14 +255,19 @@ var Photos = {
     var stamped = await Photos._stampImage(file, gps);
     var reader = new FileReader();
     reader.onload = function(e) {
+      var dataUrl = e.target.result;
       Photos._savePhoto(recordType, recordId, {
-        url: e.target.result,
+        url: dataUrl,
         name: file.name,
         date: new Date().toISOString(),
         label: '',
         gps_lat: gps ? gps.lat : null,
         gps_lng: gps ? gps.lng : null
       });
+      // If we have Supabase but it failed (offline), queue for later flush
+      if (SupabaseDB && SupabaseDB.ready && !navigator.onLine) {
+        Photos._enqueue(recordType, recordId, dataUrl, file.name, gps);
+      }
     };
     reader.readAsDataURL(stamped);
   },
@@ -319,9 +327,10 @@ var Photos = {
 
     var btnRow = document.createElement('div');
     btnRow.style.cssText = 'display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center;';
-    btnRow.innerHTML = '<button onclick="Photos._customTag(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#fff;color:#333;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">+ Custom tag</button>'
-      + '<button onclick="Photos._deletePhoto(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#c0392b;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Delete</button>'
-      + '<button onclick="document.getElementById(\'photo-viewer\').remove()" style="background:#555;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Close</button>';
+    btnRow.innerHTML = '<button onclick="Photos._customTag(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#fff;color:#333;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;">+ Tag</button>'
+      + '<button onclick="document.getElementById(\'photo-viewer\').remove();Photos.annotate(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#fff;color:#333;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;">✎ Annotate</button>'
+      + '<button onclick="Photos._deletePhoto(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#c0392b;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;">Delete</button>'
+      + '<button onclick="document.getElementById(\'photo-viewer\').remove()" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;">Close</button>';
     overlay.appendChild(btnRow);
     overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);
@@ -429,8 +438,11 @@ var Photos = {
       return true;
     });
 
-    var html = '<div class="page-header"><h1>📸 Branch Cam Library</h1>'
-      + '<p style="color:var(--text-light);font-size:13px;">' + all.length + ' total photos · ' + filtered.length + ' shown</p></div>';
+    var html = '<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">'
+      + '<div><h1>📸 Branch Cam Library</h1>'
+      + '<p style="color:var(--text-light);font-size:13px;">' + all.length + ' total photos · ' + filtered.length + ' shown</p></div>'
+      + '<button class="btn btn-primary" onclick="Photos.newJobHere()" style="font-size:13px;">📍 New job at this location</button>'
+      + '</div>';
 
     // Search box
     html += '<div style="background:var(--white);padding:14px 16px;border-radius:12px;margin-bottom:14px;border:1px solid var(--border);">'
@@ -493,5 +505,284 @@ var Photos = {
     }
     document.getElementById('photo-viewer').remove();
     UI.toast('Photo deleted');
+  },
+
+  // ============ ONE-TAP NEW JOB AT GPS ============
+  newJobHere: async function() {
+    UI.toast('Getting your location...');
+    var gps = await Photos._getGps();
+    if (!gps) { UI.toast('Location unavailable', 'error'); return; }
+
+    // Reverse geocode via OpenStreetMap Nominatim (free, no key)
+    var address = gps.lat.toFixed(5) + ', ' + gps.lng.toFixed(5);
+    try {
+      var resp = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + gps.lat + '&lon=' + gps.lng);
+      var j = await resp.json();
+      if (j && j.display_name) address = j.display_name;
+    } catch (e) {}
+
+    // Suggest nearest existing client by name match in address (no lat/lng on clients yet)
+    var clients = (typeof DB !== 'undefined' && DB.clients) ? DB.clients.list() : [];
+    var matches = clients.filter(function(c) {
+      if (!c.address) return false;
+      // crude match: shared street name token
+      var addrTokens = address.toLowerCase().split(/[\s,]+/);
+      var cTokens = c.address.toLowerCase().split(/[\s,]+/);
+      return cTokens.some(function(t) { return t.length > 4 && addrTokens.indexOf(t) !== -1; });
+    });
+
+    var clientId = '';
+    if (matches.length === 1) {
+      if (confirm('Looks like ' + matches[0].name + '\'s property:\n' + matches[0].address + '\n\nUse this client?')) clientId = matches[0].id;
+    } else if (matches.length > 1) {
+      var pick = prompt('Pick a client (number):\n' + matches.map(function(c, i){ return (i+1) + '. ' + c.name + ' — ' + c.address; }).join('\n'));
+      var idx = parseInt(pick, 10) - 1;
+      if (matches[idx]) clientId = matches[idx].id;
+    }
+
+    if (!clientId) {
+      var name = prompt('New client name (cancel to abort):');
+      if (!name) return;
+      var newClient = DB.clients.create({ name: name, address: address, lat: gps.lat, lng: gps.lng });
+      clientId = newClient.id;
+    }
+
+    // Create request
+    var req = DB.requests.create({
+      clientId: clientId,
+      title: 'New job at ' + address.split(',').slice(0, 2).join(','),
+      description: 'GPS-pinned by Branch Cam: ' + gps.lat.toFixed(5) + ', ' + gps.lng.toFixed(5),
+      address: address,
+      lat: gps.lat,
+      lng: gps.lng,
+      status: 'new',
+      source: 'branchcam-gps',
+      createdAt: new Date().toISOString()
+    });
+    UI.toast('Request created ✓');
+    if (typeof loadPage === 'function') loadPage('requests');
+  },
+
+  // ============ SHARE LINK ============
+  shareGallery: function(recordType, recordId) {
+    var url = location.origin + location.pathname.replace(/[^/]*$/, '') + 'share-photos.html?type=' + encodeURIComponent(recordType) + '&id=' + encodeURIComponent(recordId);
+    var msg = 'Photos from your project: ' + url;
+    if (navigator.share) {
+      navigator.share({ title: 'Project Photos', text: 'Photos from your project', url: url }).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(url).then(function() { UI.toast('Share link copied!'); }, function() { prompt('Copy this link:', url); });
+    }
+    return url;
+  },
+
+  // ============ PHOTO REPORT PDF ============
+  generateReport: function(recordType, recordId, title) {
+    var photos = Photos.getPhotos(recordType, recordId);
+    if (!photos.length) { UI.toast('No photos to include', 'error'); return; }
+    var brand = (typeof BM_CONFIG !== 'undefined' && BM_CONFIG.companyName) || 'Branch Manager';
+    var w = window.open('', '_blank');
+    var body = '<html><head><title>Photo Report — ' + (title || recordId) + '</title><style>'
+      + 'body{font-family:-apple-system,sans-serif;max-width:800px;margin:0 auto;padding:30px;color:#333;}'
+      + 'h1{color:#1a3c12;border-bottom:3px solid #1a3c12;padding-bottom:10px;}'
+      + '.meta{color:#777;font-size:13px;margin-bottom:20px;}'
+      + '.photo{margin:20px 0;page-break-inside:avoid;}'
+      + '.photo img{width:100%;border-radius:8px;}'
+      + '.photo-meta{background:#f5f5f5;padding:10px 14px;border-radius:0 0 8px 8px;font-size:12px;}'
+      + '.tag{display:inline-block;background:#2e7d32;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:4px;}'
+      + '@media print{.no-print{display:none;}}'
+      + '</style></head><body>'
+      + '<button class="no-print" onclick="window.print()" style="float:right;background:#1a3c12;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;">🖨 Print / Save PDF</button>'
+      + '<h1>📸 Photo Report</h1>'
+      + '<div class="meta"><strong>' + brand + '</strong> · ' + (title || recordType + ' ' + recordId) + ' · ' + photos.length + ' photos · Generated ' + new Date().toLocaleDateString() + '</div>';
+    photos.forEach(function(p, i) {
+      var tags = Photos._getTags(p);
+      body += '<div class="photo"><img src="' + p.url + '">'
+        + '<div class="photo-meta">'
+        + tags.map(function(t){return '<span class="tag">'+t+'</span>';}).join('')
+        + ' #' + (i+1) + ' · ' + (p.date ? new Date(p.date).toLocaleString() : '')
+        + (p.gps_lat ? ' · 📍 ' + p.gps_lat.toFixed(4) + ', ' + p.gps_lng.toFixed(4) : '')
+        + '</div></div>';
+    });
+    body += '</body></html>';
+    w.document.write(body); w.document.close();
+  },
+
+  // ============ ANNOTATION ============
+  annotate: function(recordType, recordId, index) {
+    var photos = Photos.getPhotos(recordType, recordId);
+    if (!photos[index]) return;
+    var p = photos[index];
+
+    var overlay = document.createElement('div');
+    overlay.id = 'photo-annotator';
+    overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:10000;display:flex;flex-direction:column;';
+    overlay.innerHTML = '<div style="background:#1a1a1a;color:#fff;padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+      + '<button id="ann-undo" style="background:#333;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">↶ Undo</button>'
+      + '<button id="ann-clear" style="background:#333;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Clear</button>'
+      + '<input id="ann-color" type="color" value="#ff3b30" style="width:36px;height:32px;border:none;border-radius:6px;cursor:pointer;">'
+      + '<button data-tool="pen" class="ann-tool" style="background:#2e7d32;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">✎ Draw</button>'
+      + '<button data-tool="arrow" class="ann-tool" style="background:#333;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">→ Arrow</button>'
+      + '<button data-tool="circle" class="ann-tool" style="background:#333;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">◯ Circle</button>'
+      + '<button data-tool="text" class="ann-tool" style="background:#333;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">T Text</button>'
+      + '<div style="flex:1;"></div>'
+      + '<button id="ann-save" style="background:#2e7d32;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Save</button>'
+      + '<button id="ann-cancel" style="background:#c0392b;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Cancel</button>'
+      + '</div>'
+      + '<div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;"><canvas id="ann-canvas" style="max-width:100%;max-height:100%;cursor:crosshair;background:#000;"></canvas></div>';
+    document.body.appendChild(overlay);
+
+    var canvas = document.getElementById('ann-canvas');
+    var ctx = canvas.getContext('2d');
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+      Photos._annHistory = [canvas.toDataURL()];
+    };
+    img.src = p.url;
+
+    var tool = 'pen';
+    var drawing = false, startX = 0, startY = 0, snapshot = null;
+
+    document.querySelectorAll('.ann-tool').forEach(function(b) {
+      b.onclick = function() {
+        tool = b.dataset.tool;
+        document.querySelectorAll('.ann-tool').forEach(function(x){ x.style.background = '#333'; });
+        b.style.background = '#2e7d32';
+      };
+    });
+
+    function pos(e) {
+      var rect = canvas.getBoundingClientRect();
+      var sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+      var t = e.touches ? e.touches[0] : e;
+      return { x: (t.clientX - rect.left) * sx, y: (t.clientY - rect.top) * sy };
+    }
+
+    function start(e) {
+      e.preventDefault();
+      drawing = true;
+      var pt = pos(e); startX = pt.x; startY = pt.y;
+      ctx.strokeStyle = document.getElementById('ann-color').value;
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.lineWidth = Math.max(3, canvas.width / 200);
+      ctx.lineCap = 'round';
+      if (tool === 'text') {
+        var t = prompt('Text:'); if (!t) { drawing = false; return; }
+        ctx.font = 'bold ' + Math.max(20, canvas.width / 30) + 'px sans-serif';
+        ctx.fillText(t, pt.x, pt.y);
+        Photos._annHistory.push(canvas.toDataURL());
+        drawing = false; return;
+      }
+      if (tool === 'pen') { ctx.beginPath(); ctx.moveTo(pt.x, pt.y); }
+      else snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+    function move(e) {
+      if (!drawing) return; e.preventDefault();
+      var pt = pos(e);
+      if (tool === 'pen') { ctx.lineTo(pt.x, pt.y); ctx.stroke(); }
+      else if (tool === 'arrow') {
+        ctx.putImageData(snapshot, 0, 0);
+        ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(pt.x, pt.y); ctx.stroke();
+        var ang = Math.atan2(pt.y - startY, pt.x - startX);
+        var ah = Math.max(15, canvas.width / 60);
+        ctx.beginPath();
+        ctx.moveTo(pt.x, pt.y);
+        ctx.lineTo(pt.x - ah * Math.cos(ang - Math.PI/6), pt.y - ah * Math.sin(ang - Math.PI/6));
+        ctx.lineTo(pt.x - ah * Math.cos(ang + Math.PI/6), pt.y - ah * Math.sin(ang + Math.PI/6));
+        ctx.closePath(); ctx.fill();
+      } else if (tool === 'circle') {
+        ctx.putImageData(snapshot, 0, 0);
+        var rx = Math.abs(pt.x - startX), ry = Math.abs(pt.y - startY);
+        ctx.beginPath();
+        ctx.ellipse((startX+pt.x)/2, (startY+pt.y)/2, rx/2, ry/2, 0, 0, Math.PI*2);
+        ctx.stroke();
+      }
+    }
+    function end() { if (drawing) { drawing = false; Photos._annHistory.push(canvas.toDataURL()); } }
+    canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); canvas.addEventListener('mouseup', end); canvas.addEventListener('mouseleave', end);
+    canvas.addEventListener('touchstart', start); canvas.addEventListener('touchmove', move); canvas.addEventListener('touchend', end);
+
+    document.getElementById('ann-undo').onclick = function() {
+      if (Photos._annHistory.length > 1) { Photos._annHistory.pop(); var i2 = new Image(); i2.onload = function(){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(i2,0,0); }; i2.src = Photos._annHistory[Photos._annHistory.length-1]; }
+    };
+    document.getElementById('ann-clear').onclick = function() {
+      ctx.drawImage(img, 0, 0); Photos._annHistory = [canvas.toDataURL()];
+    };
+    document.getElementById('ann-cancel').onclick = function() { overlay.remove(); };
+    document.getElementById('ann-save').onclick = async function() {
+      UI.toast('Saving annotated photo...');
+      canvas.toBlob(async function(blob) {
+        try {
+          if (SupabaseDB && SupabaseDB.ready) {
+            var path = recordType + '/' + recordId + '/annotated_' + Date.now() + '.jpg';
+            var up = await SupabaseDB.client.storage.from(Photos.BUCKET).upload(path, blob, { contentType: 'image/jpeg' });
+            if (up.error) throw up.error;
+            var pub = SupabaseDB.client.storage.from(Photos.BUCKET).getPublicUrl(path);
+            var meta = { record_type: recordType, record_id: recordId, url: pub.data.publicUrl, storage_path: path, name: 'annotated.jpg', label: 'Annotated', tags: ['Annotated'].concat(Photos._getTags(p)), taken_at: new Date().toISOString() };
+            var tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+            if (tid) meta.tenant_id = tid;
+            if (p.gps_lat) { meta.gps_lat = p.gps_lat; meta.gps_lng = p.gps_lng; }
+            var ins = await SupabaseDB.client.from('photos').insert(meta).select().single();
+            Photos._savePhoto(recordType, recordId, { id: ins.data && ins.data.id, url: pub.data.publicUrl, storage_path: path, name: 'annotated.jpg', label: 'Annotated', tags: meta.tags, date: meta.taken_at, gps_lat: meta.gps_lat, gps_lng: meta.gps_lng });
+          } else {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+              Photos._savePhoto(recordType, recordId, { url: e.target.result, name: 'annotated.jpg', label: 'Annotated', tags: ['Annotated'], date: new Date().toISOString() });
+            };
+            reader.readAsDataURL(blob);
+          }
+          overlay.remove();
+          UI.toast('Annotated photo saved ✓');
+          if (typeof loadPage === 'function') { var c = document.querySelector('.nav-item.active'); if (c) c.click(); }
+        } catch (e) { UI.toast('Save failed: ' + e.message, 'error'); console.warn(e); }
+      }, 'image/jpeg', 0.9);
+    };
+  },
+
+  // ============ OFFLINE QUEUE ============
+  // If upload fails (offline), file is stashed in IndexedDB-style localStorage queue
+  // and flushed when online comes back
+  _queueKey: 'bm-photo-upload-queue',
+  _enqueue: function(recordType, recordId, dataUrl, name, gps) {
+    var q = [];
+    try { q = JSON.parse(localStorage.getItem(Photos._queueKey)) || []; } catch(e) {}
+    q.push({ recordType: recordType, recordId: recordId, dataUrl: dataUrl, name: name, gps: gps, queuedAt: Date.now() });
+    try { localStorage.setItem(Photos._queueKey, JSON.stringify(q)); } catch(e) { console.warn('Queue full:', e); }
+  },
+  flushQueue: async function() {
+    if (!navigator.onLine || !SupabaseDB || !SupabaseDB.ready) return;
+    var q = [];
+    try { q = JSON.parse(localStorage.getItem(Photos._queueKey)) || []; } catch(e) { return; }
+    if (!q.length) return;
+    UI.toast('Uploading ' + q.length + ' queued photos...');
+    var remaining = [];
+    for (var i = 0; i < q.length; i++) {
+      var item = q[i];
+      try {
+        var blob = await (await fetch(item.dataUrl)).blob();
+        var path = item.recordType + '/' + item.recordId + '/' + Date.now() + '_q.jpg';
+        var up = await SupabaseDB.client.storage.from(Photos.BUCKET).upload(path, blob, { contentType: 'image/jpeg' });
+        if (up.error) throw up.error;
+        var pub = SupabaseDB.client.storage.from(Photos.BUCKET).getPublicUrl(path);
+        var meta = { record_type: item.recordType, record_id: item.recordId, url: pub.data.publicUrl, storage_path: path, name: item.name, taken_at: new Date(item.queuedAt).toISOString() };
+        var tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+        if (tid) meta.tenant_id = tid;
+        if (item.gps) { meta.gps_lat = item.gps.lat; meta.gps_lng = item.gps.lng; }
+        await SupabaseDB.client.from('photos').insert(meta);
+      } catch (e) {
+        console.warn('Flush failed for queued item:', e);
+        remaining.push(item);
+      }
+    }
+    localStorage.setItem(Photos._queueKey, JSON.stringify(remaining));
+    UI.toast(remaining.length ? 'Uploaded ' + (q.length - remaining.length) + ', ' + remaining.length + ' still queued' : 'All queued photos uploaded ✓');
   }
 };
+
+// Auto-flush when network returns
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', function() { if (typeof Photos !== 'undefined') Photos.flushQueue(); });
+}

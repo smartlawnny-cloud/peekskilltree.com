@@ -208,10 +208,12 @@ var CloudSync = {
       CloudSync.init().then(function() {
         CloudSync.wrapWrites();
         if (typeof Photos !== 'undefined' && Photos.syncFromCloud) Photos.syncFromCloud();
+        if (typeof Photos !== 'undefined' && Photos.flushQueue) Photos.flushQueue();
       });
     } else {
       CloudSync.wrapWrites();
       if (typeof Photos !== 'undefined' && Photos.syncFromCloud) Photos.syncFromCloud();
+      if (typeof Photos !== 'undefined' && Photos.flushQueue) Photos.flushQueue();
       if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: using cached data (' + JSON.parse(localClients).length + ' clients)');
     }
   } else if (attempts > 0) {

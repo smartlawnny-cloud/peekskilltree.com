@@ -1,5 +1,5 @@
 {
-  "version": 240,
+  "version": 241,
   "released": "2026-04-19",
-  "notes": "Topbar PWA fix — add 8px breathing room below iOS safe-area so buttons aren't intercepted as Control Center pull near the top edge"
+  "notes": "PWA topbar — bg fills status-bar area; buttons hug bottom (flex-end) below the iOS reserved zone for guaranteed tappability"
 }

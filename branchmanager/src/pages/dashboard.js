@@ -56,17 +56,10 @@ var DashboardPage = {
     }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
     var _monthPct = _goalData.monthly > 0 ? Math.min(Math.round((_monthRevenue / _goalData.monthly) * 100), 100) : 0;
 
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
-      + '<div>'
+    html += '<div style="margin-bottom:16px;">'
       + '<div style="font-size:13px;color:var(--text-light);">' + dayNames[now.getDay()] + ', ' + monthFull[now.getMonth()] + ' ' + now.getDate() + '</div>'
       + '<h2 style="font-size:28px;font-weight:700;margin-top:2px;">' + greeting + ', ' + userName.split(' ')[0] + '</h2>'
-      + '</div>'
-      + '<div style="text-align:right;min-width:0;flex:1;max-width:200px;">'
-      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:3px;">' + monthFull[now.getMonth()] + ': ' + UI.moneyInt(_monthRevenue) + ' / ' + UI.moneyInt(_goalData.monthly) + '</div>'
-      + '<div style="background:#e8e8e8;border-radius:4px;height:6px;width:100%;max-width:180px;overflow:hidden;margin-left:auto;">'
-      + '<div style="background:var(--green-dark);height:100%;width:' + _monthPct + '%;border-radius:4px;"></div></div>'
-      + '<div style="font-size:11px;color:' + (_monthPct >= 100 ? 'var(--green-dark)' : 'var(--text-light)') + ';margin-top:2px;">' + _monthPct + '% of monthly goal</div>'
-      + '</div></div>';
+      + '</div>';
 
     // === MONEY ON THE TABLE widget — REMOVED per user request (Apr 19, 2026) ===
     // The same signals are already in the Smart Daily Briefing + action alerts below.

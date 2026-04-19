@@ -362,7 +362,59 @@ var SettingsPage = {
       + '<button onclick="var k=document.getElementById(\'claude-ai-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-claude-key\',k);if(typeof AI!==\'undefined\'){AI._apiKey=k;}UI.toast(\'AI Assistant connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
       + (aiOk ? '<button onclick="SettingsPage._removeKey(\'bm-claude-key\',\'AI Assistant\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at console.anthropic.com → API Keys → Create Key (free tier available)</p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a> → API Keys → Create Key (free tier available)</p>'
+      + '</div>';
+
+    // ── Stripe Payment Link ──
+    var stripeLink = localStorage.getItem('bm-stripe-base-link') || '';
+    var stripeOkNow = stripeLink.length > 20;
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (stripeOkNow ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+      + '<div style="width:40px;height:40px;background:#635BFF;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">💳</div>'
+      + '<div><h3 style="margin:0;">Stripe Payments</h3>'
+      + '<div style="font-size:12px;color:' + (stripeOkNow ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (stripeOkNow ? '✅ Connected — clients can pay invoices online' : '⚠️ Not connected — paste your Stripe payment link') + '</div>'
+      + '</div></div>'
+      + '<div style="margin-bottom:8px;"><input type="text" id="stripe-link" value="' + stripeLink + '" placeholder="https://buy.stripe.com/xxxxxxxxxx" style="width:100%;padding:10px;border:2px solid ' + (stripeOkNow ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button onclick="var k=document.getElementById(\'stripe-link\').value.trim();if(!k){UI.toast(\'Paste your Stripe link first\',\'error\');return;}if(!/^https:\\/\\/buy\\.stripe\\.com\\//.test(k)){UI.toast(\'Must be a buy.stripe.com link\',\'error\');return;}localStorage.setItem(\'bm-stripe-base-link\',k);UI.toast(\'Stripe connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Link</button>'
+      + (stripeOkNow ? '<button onclick="SettingsPage._removeKey(\'bm-stripe-base-link\',\'Stripe\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + '</div>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Create at <a href="https://dashboard.stripe.com/payment-links/create" target="_blank" style="color:var(--accent);">Stripe → Payment Links → New</a>. Set "Customer pays what they want" with a reasonable default. Redirect after payment to <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:10px;">https://peekskilltree.com/branchmanager/paid.html</code></p>'
+      + '</div>';
+
+    // ── Dialpad ──
+    var dialpadKey = localStorage.getItem('bm-dialpad-key') || '';
+    var dialpadOk = dialpadKey.length > 10;
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (dialpadOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+      + '<div style="width:40px;height:40px;background:#7A49D6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">📞</div>'
+      + '<div><h3 style="margin:0;">Dialpad Phone / SMS</h3>'
+      + '<div style="font-size:12px;color:' + (dialpadOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (dialpadOk ? '✅ Connected — calls & texts log automatically' : '⚠️ Not connected — paste your Dialpad API token') + '</div>'
+      + '</div></div>'
+      + '<div style="margin-bottom:8px;"><input type="password" id="dialpad-key" value="' + dialpadKey + '" placeholder="dp_api_xxxxxxxxxxxx" style="width:100%;padding:10px;border:2px solid ' + (dialpadOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button onclick="var k=document.getElementById(\'dialpad-key\').value.trim();if(!k){UI.toast(\'Paste your token first\',\'error\');return;}localStorage.setItem(\'bm-dialpad-key\',k);localStorage.setItem(\'bm-receptionist-settings\',JSON.stringify({connected:true}));if(typeof Dialpad!==\'undefined\'){Dialpad.apiKey=k;}UI.toast(\'Dialpad connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Token</button>'
+      + (dialpadOk ? '<button onclick="SettingsPage._removeKey(\'bm-dialpad-key\',\'Dialpad\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + '</div>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get token at <a href="https://dialpad.com/accounts/api/keys" target="_blank" style="color:var(--accent);">dialpad.com → API Keys</a>. Also register a 10DLC number for SMS compliance.</p>'
+      + '</div>';
+
+    // ── Gusto ──
+    var gustoKey = localStorage.getItem('bm-gusto-api-key') || '';
+    var gustoOk = gustoKey.length > 10;
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (gustoOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+      + '<div style="width:40px;height:40px;background:#F45D22;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">💼</div>'
+      + '<div><h3 style="margin:0;">Gusto Payroll</h3>'
+      + '<div style="font-size:12px;color:' + (gustoOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (gustoOk ? '✅ Connected — payroll export enabled' : '⚠️ Not connected — API token optional, CSV export works without it') + '</div>'
+      + '</div></div>'
+      + '<div style="margin-bottom:8px;"><input type="password" id="gusto-key" value="' + gustoKey + '" placeholder="gst_access_token_xxxxxxx (optional)" style="width:100%;padding:10px;border:2px solid ' + (gustoOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button onclick="var k=document.getElementById(\'gusto-key\').value.trim();if(!k){UI.toast(\'Paste your token first\',\'error\');return;}localStorage.setItem(\'bm-gusto-api-key\',k);UI.toast(\'Gusto connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Token</button>'
+      + '<button onclick="loadPage(\'payroll\');" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Open Payroll</button>'
+      + (gustoOk ? '<button onclick="SettingsPage._removeKey(\'bm-gusto-api-key\',\'Gusto\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + '</div>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Sign up at <a href="https://gusto.com" target="_blank" style="color:var(--accent);">gusto.com</a> ($40/mo + $6/employee). API token is optional — BM Payroll page exports CSV you upload to Gusto manually each pay period. Get token from Gusto Dev Portal.</p>'
       + '</div>';
 
     // Photo Storage info

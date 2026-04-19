@@ -1,5 +1,5 @@
 {
-  "version": 258,
+  "version": 259,
   "released": "2026-04-19",
-  "notes": "Restore bug + XSS fix — line items restore deferred 250ms so q-items container is ready; client error UI no longer renders stack as HTML"
+  "notes": "Quotes list: tap a quote now opens the edit FORM (tree-card line items) instead of the compact detail view. Same UX as creating a new quote."
 }

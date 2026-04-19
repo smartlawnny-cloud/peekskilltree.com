@@ -112,7 +112,7 @@ var QuotesPage = {
       page.forEach(function(q) {
         var isStale = (q.status === 'sent' || q.status === 'awaiting') && q.createdAt && new Date(q.createdAt) < now7ago;
         var staleDot = isStale ? '<span title="Stale — sent 7+ days ago, needs follow-up" style="display:inline-block;width:8px;height:8px;background:#f59e0b;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>' : '';
-        html += '<tr onclick="QuotesPage.showDetail(\'' + q.id + '\')" style="cursor:pointer;">'
+        html += '<tr onclick="QuotesPage.showForm(\'' + q.id + '\')" style="cursor:pointer;">'
           + '<td onclick="event.stopPropagation()"><input type="checkbox" class="q-check" value="' + q.id + '" onchange="QuotesPage._updateBulk()" style="width:16px;height:16px;"></td>'
           + '<td>' + staleDot + '<strong>' + UI.esc(q.clientName || '—') + '</strong>'
           +   (q.property ? '<div style="font-size:11px;color:var(--text-light);margin-top:2px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(q.property) + '</div>' : '') + '</td>'
@@ -175,7 +175,7 @@ var QuotesPage = {
         card.addEventListener('click', function() {
           if (moved) return;
           var qid = this.getAttribute('data-qid');
-          if (qid) QuotesPage.showDetail(qid);
+          if (qid) QuotesPage.showForm(qid);
         });
       });
     }, 0);

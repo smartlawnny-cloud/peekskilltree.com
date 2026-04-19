@@ -343,7 +343,7 @@ var QuotesPage = {
     var clientExpanded = !client; // if no client yet, start open
     var clientSummaryName = client ? UI.esc(client.name) : 'Pick a client';
     var clientSummaryAddr = _qProperty ? ' · 📍 ' + UI.esc(_qProperty) : '';
-    html += '<div class="q-client-box" style="background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;">'
+    html += '<div class="q-client-box" style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       // Summary header (always visible)
       + '<div onclick="QuotesPage._toggleClientBox(this)" style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;">'
       +   '<div style="width:36px;height:36px;border-radius:50%;background:' + (client ? 'var(--green-bg)' : 'var(--bg)') + ';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:var(--green-dark);">👤</div>'
@@ -713,7 +713,7 @@ var QuotesPage = {
       + '</div>'
       + '</div>';
 
-    return '<div class="q-item-wrap" data-index="' + index + '" style="margin-bottom:10px;padding:12px 14px;background:var(--bg);border-radius:10px;border:1px solid var(--border);">'
+    return '<div class="q-item-wrap" data-index="' + index + '" style="margin-bottom:10px;padding:12px 14px;background:var(--white);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + summary
       + body
       + '</div>';

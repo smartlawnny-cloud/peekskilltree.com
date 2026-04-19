@@ -1955,119 +1955,101 @@ var QuotesPage = {
   },
 
   _identifyTree: function(images, rowIndex) {
-    // Accept a single data URL OR an array — normalize to array
+    // Tree ID via PlantNet — free, no Claude tokens consumed.
+    // PlantNet returns species only; DBH/condition/price get sane defaults.
     var imgArr = Array.isArray(images) ? images : [images];
 
     if (QuotesPage._identifying) {
       UI.toast('Already identifying a tree, please wait...', 'error');
       return;
     }
-    var aiKey = localStorage.getItem('bm-claude-key');
-    if (!aiKey) {
-      UI.toast('Add AI key in Settings for auto tree ID');
-      return;
+
+    var key = localStorage.getItem('bm-plantnet-key') || '';
+    if (!key) {
+      key = prompt('Paste your PlantNet API key (free at my.plantnet.org):');
+      if (!key) return;
+      localStorage.setItem('bm-plantnet-key', key.trim());
     }
 
     QuotesPage._identifying = true;
-    UI.toast(imgArr.length > 1 ? 'Analyzing ' + imgArr.length + ' photos…' : 'Identifying tree…');
+    UI.toast(imgArr.length > 1 ? '🌿 Identifying with PlantNet (' + imgArr.length + ' photos)…' : '🌿 Identifying with PlantNet…');
 
-    // Build content array: all images followed by the prompt
-    var content = imgArr.map(function(dataUrl) {
-      return {
-        type: 'image',
-        source: { type: 'base64', media_type: dataUrl.split(';')[0].split(':')[1], data: dataUrl.split(',')[1] }
-      };
-    });
-    content.push({
-      type: 'text',
-      text: 'You are a certified arborist in ZIP ' + (localStorage.getItem('bm-zip') || '10566') + '. '
-        + (imgArr.length > 1 ? 'You have ' + imgArr.length + ' photos of the SAME tree (different angles). Use them together for better accuracy. ' : '')
-        + (QuotesPage._pendingService ? 'The user selected service: ' + QuotesPage._pendingService + '. Use that for suggestedService.' : 'Pick the MOST LIKELY service this tree needs based on its condition (Tree Removal if dead/hazardous, Tree Pruning if healthy with overgrowth, Stump Grinding if only stump, Cabling if split/weak fork, Clean Up if debris).')
-        + ' Respond in ONLY this JSON format: {"species":"Common Name","dbh":"estimated diameter in inches as a number","heightFt":"estimated height in feet as a number","condition":"good/fair/poor/dead","notes":"1 sentence assessment","suggestedService":"Tree Removal OR Tree Pruning OR Stump Grinding OR Cabling OR Clean Up","diseases":"top disease risk for this species"}'
+    // PlantNet wants multipart/form-data with image blobs
+    var form = new FormData();
+    imgArr.slice(0, 5).forEach(function(dataUrl, i) {
+      var parts = dataUrl.split(',');
+      var mime = (parts[0].match(/:(.*?);/) || [,'image/jpeg'])[1];
+      var bin = atob(parts[1]);
+      var buf = new Uint8Array(bin.length);
+      for (var j = 0; j < bin.length; j++) buf[j] = bin.charCodeAt(j);
+      form.append('images', new Blob([buf], { type: mime }), 'tree' + i + '.jpg');
+      form.append('organs', 'auto');
     });
 
-    fetch('https://ltpivkqahvplapyagljt.supabase.co/functions/v1/ai-chat', {
+    fetch('https://my-api.plantnet.org/v2/identify/all?api-key=' + encodeURIComponent(key) + '&nb-results=3', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        apiKey: aiKey,
-        model: 'claude-sonnet-4-5',
-        max_tokens: 400,
-        messages: [{ role: 'user', content: content }]
-      })
+      body: form
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      // Surface API errors (bad model name, invalid key, rate limit) to the user
-      if (data.error) {
-        console.warn('AI error response:', data);
-        UI.toast('AI error: ' + (data.error.message || data.error.type || JSON.stringify(data.error).slice(0, 100)), 'error');
+      if (data.statusCode === 404 || data.error) {
+        UI.toast('PlantNet: ' + (data.message || data.error || 'no match'), 'error');
         QuotesPage._identifying = false;
         return;
       }
-      var text = data.content && data.content[0] ? data.content[0].text : '';
-      if (!text) {
-        console.warn('AI returned no content', data);
-        UI.toast('AI returned empty response — check API key in Settings', 'error');
+      var results = data.results || [];
+      if (!results.length) {
+        UI.toast('PlantNet: no species matched — fill in manually');
         QuotesPage._identifying = false;
         return;
       }
-      try {
-        var match = text.match(/\{[\s\S]*\}/);
-        if (!match) throw new Error('No JSON in: ' + text.slice(0, 100));
-        var tree = JSON.parse(match[0]);
 
-        // Fill in the line item
-        var rows = document.querySelectorAll('.quote-item-row');
-        var row = rows[rowIndex];
-        if (row) {
-          var serviceEl = row.querySelector('.q-item-service');
-          var descEl = row.querySelector('.q-item-desc');
-          var rateEl = row.querySelector('.q-item-rate');
-          var qtyEl = row.querySelector('.q-item-qty');
+      var top = results[0];
+      var species = (top.species && top.species.commonNames && top.species.commonNames[0])
+        || (top.species && top.species.scientificNameWithoutAuthor) || 'Tree';
+      var pct = Math.round((top.score || 0) * 100);
 
-          if (serviceEl) serviceEl.value = tree.suggestedService || 'Tree Removal';
-          // Store species separately so the summary header shows it cleanly
-          var wrapEl = row.closest('.q-item-wrap');
-          var speciesEl = wrapEl ? wrapEl.querySelector('.q-item-species') : null;
-          if (speciesEl) speciesEl.value = tree.species || '';
-          var heightStr = tree.heightFt ? ' — ' + tree.heightFt + '\' tall' : '';
-          // Description now holds just the details (no species up front — species is its own field above)
-          if (descEl) descEl.value = (tree.dbh || '?') + '" DBH' + heightStr + ' — ' + (tree.condition || '') + (tree.notes ? ' — ' + tree.notes : '');
-          if (qtyEl) qtyEl.value = '1';
+      // Sane defaults — user can override
+      var defaultDbh = 18; // tree-service average
+      var defaultService = QuotesPage._pendingService || 'Tree Removal';
+      var suggestedPrice = Math.round(defaultDbh * 100 / 50) * 50;
 
-          // Price suggestion: $100 per inch of DBH
-          var dbh = parseInt(tree.dbh) || 18;
-          var suggestedPrice = Math.round(dbh * 100 / 50) * 50; // round to nearest $50
-          if (rateEl) rateEl.value = suggestedPrice;
+      var rows = document.querySelectorAll('.quote-item-row');
+      var row = rows[rowIndex];
+      if (row) {
+        var serviceEl = row.querySelector('.q-item-service');
+        var descEl = row.querySelector('.q-item-desc');
+        var rateEl = row.querySelector('.q-item-rate');
+        var qtyEl = row.querySelector('.q-item-qty');
 
-          QuotesPage.calcTotal();
-          UI.toast('🌳 ' + tree.species + ' · ' + tree.dbh + '" DBH' + (tree.heightFt ? ' · ' + tree.heightFt + 'ft' : '') + ' · $' + suggestedPrice);
-          // Update the collapsed summary header so it reflects AI-filled data even when body hidden
-          if (descEl) {
-            QuotesPage._syncSummary(descEl);
-            QuotesPage._updateFormula(descEl);
-          }
-          // Make sure the just-filled row is visible to the user
-          var wrap = row.closest('.q-item-wrap');
-          if (wrap) {
-            var wb = wrap.querySelector('.q-item-body');
-            if (wb) wb.style.display = 'block';
-            var wc = wrap.querySelector('.q-item-chevron');
-            if (wc) wc.style.transform = 'rotate(0deg)';
-            wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }
-          // NO auto-addItem — user taps "Add Another Tree" explicitly when ready.
+        if (serviceEl) serviceEl.value = defaultService;
+        var wrapEl = row.closest('.q-item-wrap');
+        var speciesEl = wrapEl ? wrapEl.querySelector('.q-item-species') : null;
+        if (speciesEl) speciesEl.value = species;
+        if (descEl) descEl.value = defaultDbh + '" DBH (estimate — adjust)';
+        if (qtyEl) qtyEl.value = '1';
+        if (rateEl) rateEl.value = suggestedPrice;
+
+        QuotesPage.calcTotal();
+        UI.toast('🌳 ' + species + ' (' + pct + '% match) — verify DBH + price');
+        if (descEl) {
+          QuotesPage._syncSummary(descEl);
+          QuotesPage._updateFormula(descEl);
         }
-      } catch(e) {
-        console.warn('Tree ID parse error:', e, text);
-        UI.toast('Could not identify — fill in manually');
+        var wrap = row.closest('.q-item-wrap');
+        if (wrap) {
+          var wb = wrap.querySelector('.q-item-body');
+          if (wb) wb.style.display = 'block';
+          var wc = wrap.querySelector('.q-item-chevron');
+          if (wc) wc.style.transform = 'rotate(0deg)';
+          wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       }
       QuotesPage._identifying = false;
     })
     .catch(function(e) {
-      console.warn('Tree ID error:', e);
-      UI.toast('AI unavailable — fill in manually');
+      console.warn('PlantNet error:', e);
+      UI.toast('PlantNet unavailable — fill in manually', 'error');
       QuotesPage._identifying = false;
     });
   },

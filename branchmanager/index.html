@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 246; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 247; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -846,7 +846,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v246</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v247</span>
 <script>(function(){try{var b=document.getElementById('bmVersionBadge');if(b&&typeof BUNDLED_VERSION!=='undefined')b.textContent='v'+BUNDLED_VERSION;}catch(e){}})();</script>
       </div>
     </div>
@@ -1318,14 +1318,9 @@ function loadPage(page) {
   window._currentPage = page;
   var config = pageConfigs[page] || { title: page, action: null };
   document.getElementById('pageTitle').textContent = config.title;
+  // pageAction button permanently hidden — universal '+' in topbar covers create.
   var actionBtn = document.getElementById('pageAction');
-  if (config.action) {
-    actionBtn.textContent = config.action;
-    actionBtn.style.display = '';
-    actionBtn.onclick = config.actionFn ? function() { try { (new Function(config.actionFn))(); } catch(e) { console.warn('Action error:', e); } } : null;
-  } else {
-    actionBtn.style.display = 'none';
-  }
+  if (actionBtn) actionBtn.style.cssText = 'display:none !important;';
 
   // Update sidebar badges
   var newReqs = DB.requests.countNew();

@@ -29,9 +29,12 @@ var JobsPage = {
       setTimeout(function() { JobsPage.showDetail(_pid); }, 50);
     }
     var activeTab = self._activeTab || 'jobs';
+    // Daily pre-trip inspection prompt at top of Jobs page (moved from Dashboard)
+    var _inspHtml = (typeof DailyInspection !== 'undefined') ? DailyInspection.render() : '';
 
-    // Tab bar
-    var html = '<div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;">'
+    // Tab bar (prefixed by the pre-trip inspection prompt)
+    var html = _inspHtml
+      + '<div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;">'
       + '<button onclick="JobsPage.switchTab(\'jobs\')" style="padding:10px 20px;font-size:14px;font-weight:' + (activeTab==='jobs'?'700':'500') + ';border:none;background:none;cursor:pointer;color:' + (activeTab==='jobs'?'var(--accent)':'var(--text-light)') + ';border-bottom:2px solid ' + (activeTab==='jobs'?'var(--accent)':'transparent') + ';margin-bottom:-2px;">Jobs</button>'
       + '<button onclick="JobsPage.switchTab(\'visits\')" style="padding:10px 20px;font-size:14px;font-weight:' + (activeTab==='visits'?'700':'500') + ';border:none;background:none;cursor:pointer;color:' + (activeTab==='visits'?'var(--accent)':'var(--text-light)') + ';border-bottom:2px solid ' + (activeTab==='visits'?'var(--accent)':'transparent') + ';margin-bottom:-2px;">Visits</button>'
       + '</div>';

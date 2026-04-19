@@ -373,41 +373,8 @@ var DashboardPage = {
       html += '</div>';
     }
 
-    // Daily Vehicle Inspection — shows once per day until completed
-    var inspDateKey = 'bm-inspection-' + now.toISOString().split('T')[0];
-    if (!localStorage.getItem(inspDateKey)) {
-      html += '<div id="daily-inspection" style="background:var(--white);border-radius:12px;border:2px solid #e65100;margin-bottom:16px;overflow:hidden;">'
-        + '<div style="background:#fff3e0;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">'
-        + '<div style="display:flex;align-items:center;gap:10px;">'
-        + '<span style="font-size:22px;">🚛</span>'
-        + '<div><div style="font-size:15px;font-weight:700;color:#e65100;">Daily Pre-Trip Inspection</div>'
-        + '<div style="font-size:12px;color:#bf360c;">FMCSA/DOT — required before first trip</div></div>'
-        + '</div>'
-        + '<button onclick="DashboardPage._toggleInspection()" style="background:#e65100;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;" id="insp-toggle-btn">Start ▾</button>'
-        + '</div>'
-        + '<div id="insp-body" style="display:none;padding:16px 20px;">'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
-        + '<input type="text" id="insp-driver" placeholder="Driver name" style="padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
-        + '<input type="text" id="insp-vehicle" placeholder="Vehicle / plate #" style="padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
-        + '</div>';
-      var inspItems = [
-        ['🚛','Truck',['Engine oil level','Coolant level','Tires (pressure, tread)','Lights (head, brake, turn, hazard)','Brakes (pedal firm, no pull)','Mirrors adjusted','Horn working','Windshield + wipers','Seatbelts','Fire extinguisher','First aid kit','Registration + insurance']],
-        ['⚙️','Equipment',['Chipper (blades, safety bar, oil)','Chainsaws (chain, bar oil, fuel, brake)','Ropes & rigging (no damage)','PPE on truck (hats, chaps, glasses, ears)','Cones & signs']],
-        ['🪵','Trailer',['Hitch + safety chains','Trailer lights','Tires OK','Load secured']],
-      ];
-      inspItems.forEach(function(sec) {
-        html += '<div style="font-size:12px;font-weight:700;color:#e65100;margin:10px 0 4px;">' + sec[0] + ' ' + sec[1] + '</div>';
-        sec[2].forEach(function(item, i) {
-          html += '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;border-bottom:1px solid #f5f5f5;">'
-            + '<input type="checkbox" class="insp-check" style="width:16px;height:16px;accent-color:#1b5e20;" onchange="DashboardPage._inspCount()">'
-            + ' ' + item + '</label>';
-        });
-      });
-      html += '<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">'
-        + '<span id="insp-count" style="font-size:12px;color:var(--text-light);">0 / 21 checked</span>'
-        + '<button onclick="DashboardPage._completeInspection()" style="background:#1b5e20;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">✓ Complete Inspection</button>'
-        + '</div></div></div>';
-    }
+    // Daily Vehicle Inspection widget moved to Jobs + Crew View (Apr 19 2026).
+    // If you miss it here, call DailyInspection.render() and paste.
 
     // Today's Jobs — Jobber shows this on dashboard
     var todayDateStr2 = now.getFullYear() + '-' + (now.getMonth()+1<10?'0':'') + (now.getMonth()+1) + '-' + (now.getDate()<10?'0':'') + now.getDate();

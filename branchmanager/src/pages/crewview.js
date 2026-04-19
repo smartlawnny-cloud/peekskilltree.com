@@ -20,7 +20,10 @@ var CrewView = {
     var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name : 'Crew';
 
     // Header
-    var html = '<div style="text-align:center;padding:20px 0 12px;">'
+    // Daily pre-trip inspection at top of Crew View (moved from Dashboard)
+    var _inspHtml = (typeof DailyInspection !== 'undefined') ? DailyInspection.render() : '';
+    var html = _inspHtml
+      + '<div style="text-align:center;padding:20px 0 12px;">'
       + '<div style="font-size:36px;margin-bottom:8px;">🌳</div>'
       + '<h2 style="font-size:20px;">Good ' + CrewView._greeting() + ', ' + userName.split(' ')[0] + '!</h2>'
       + '<div style="color:var(--text-light);font-size:14px;">' + today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + '</div>'

@@ -599,6 +599,52 @@ var SettingsPage = {
     }
     html += '</div>';
 
+    // === T&M PRICING RATES (editable) ===
+    var _tmRates = (typeof QuotesPage !== 'undefined' && QuotesPage.getTMRates) ? QuotesPage.getTMRates() : {};
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">'
+      + '<h3 style="margin-bottom:6px;">🛠 T&M Pricing Rates</h3>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Used by the Price Check (Mode 2) calculation on every quote. Override defaults per your crew + equipment costs.</p>'
+      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Crew (hourly)</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;">'
+      +   SettingsPage._rateInput('Climber', 'climber', _tmRates.climber)
+      +   SettingsPage._rateInput('Groundsman', 'ground', _tmRates.ground)
+      +   SettingsPage._rateInput('Foreman', 'foreman', _tmRates.foreman)
+      + '</div>'
+      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Equipment (hourly)</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;">'
+      +   SettingsPage._rateInput('Bucket truck', 'bucket', _tmRates.bucket)
+      +   SettingsPage._rateInput('Chipper', 'chipper', _tmRates.chipper)
+      +   SettingsPage._rateInput('Crane', 'crane', _tmRates.crane)
+      +   SettingsPage._rateInput('Stump grinder', 'stumpGrinder', _tmRates.stumpGrinder)
+      +   SettingsPage._rateInput('Mini-skid', 'miniSkid', _tmRates.miniSkid)
+      +   SettingsPage._rateInput('Dump truck', 'dumpTruck', _tmRates.dumpTruck)
+      +   SettingsPage._rateInput('Man lift / ladder', 'liftLadder', _tmRates.liftLadder)
+      +   SettingsPage._rateInput('Trailer', 'trailer', _tmRates.trailer)
+      + '</div>'
+      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Markup + Overhead</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'
+      +   '<div><label style="font-size:11px;color:var(--text-light);display:block;">Insurance/overhead %</label>'
+      +     '<input type="number" id="tm-rate-insurance" value="' + Math.round((_tmRates.insurance || 0.31) * 100) + '" step="1" min="0" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      +   '<div><label style="font-size:11px;color:var(--text-light);display:block;">Markup multiplier (×)</label>'
+      +     '<input type="number" id="tm-rate-markup" value="' + (_tmRates.markup || 1.5) + '" step="0.05" min="1" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;">'
+      +   '<button onclick="SettingsPage._saveTMRates()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Rates</button>'
+      +   '<button onclick="if(confirm(\'Reset all T&amp;M rates to defaults?\')){localStorage.removeItem(\'bm-tm-rates\');loadPage(\'settings\');UI.toast(\'Rates reset to defaults\');}" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 18px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">Reset to Defaults</button>'
+      + '</div>'
+      + '</div>';
+
+    // === PLANTNET API KEY ===
+    var _pnKey = localStorage.getItem('bm-plantnet-key') || '';
+    var _pnOk = _pnKey.length > 10;
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">'
+      + '<h3 style="margin-bottom:6px;">🌿 PlantNet API Key</h3>'
+      + '<div style="font-size:12px;color:' + (_pnOk ? 'var(--green-dark)' : '#e07c24') + ';margin-bottom:10px;font-weight:600;">' + (_pnOk ? '✅ Connected — 2nd Opinion button will use this' : '⚠️ Not connected — 2nd Opinion will prompt for key') + '</div>'
+      + '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
+      + '<button onclick="var v=document.getElementById(\'plantnet-key-input\').value.trim();localStorage.setItem(\'bm-plantnet-key\',v);UI.toast(\'PlantNet key saved ✓\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Key</button>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 requests/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" style="color:var(--accent);">my.plantnet.org</a></p>'
+      + '</div>';
+
     // === APPEARANCE (placed right under Database Connection per user) ===
     var _dark = (document.documentElement.getAttribute('data-theme') === 'dark') || localStorage.getItem('bm-dark-mode') === 'dark';
     if (true) {
@@ -970,6 +1016,28 @@ var SettingsPage = {
       // Most common failure: CORS — Dialpad API doesn't allow browser calls from arbitrary origins.
       if (out) out.innerHTML = '<span style="color:#c0392b;">❌ ' + (e.message || 'Network error') + '<br><span style="font-size:11px;color:var(--text-light);">If this says "CORS" or "Failed to fetch", the call is blocked by Dialpad\'s browser policy. The token can still work from our server-side webhook — click Save Token and continue.</span></span>';
     });
+  },
+
+  // Small hourly-rate input for T&M pricing settings
+  _rateInput: function(label, key, value) {
+    return '<div><label style="font-size:11px;color:var(--text-light);display:block;">' + label + ' $/hr</label>'
+      + '<input type="number" id="tm-rate-' + key + '" value="' + (value || 0) + '" step="1" min="0" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
+      + '</div>';
+  },
+
+  _saveTMRates: function() {
+    var keys = ['climber','ground','foreman','bucket','chipper','crane','stumpGrinder','miniSkid','dumpTruck','liftLadder','trailer'];
+    var rates = {};
+    keys.forEach(function(k) {
+      var el = document.getElementById('tm-rate-' + k);
+      if (el) rates[k] = parseFloat(el.value) || 0;
+    });
+    var ins = document.getElementById('tm-rate-insurance');
+    if (ins) rates.insurance = (parseFloat(ins.value) || 0) / 100; // store as decimal
+    var mk = document.getElementById('tm-rate-markup');
+    if (mk) rates.markup = parseFloat(mk.value) || 1.5;
+    localStorage.setItem('bm-tm-rates', JSON.stringify(rates));
+    UI.toast('T&M rates saved ✓');
   },
 
   _removeKey: function(storageKey, label) {

@@ -820,7 +820,8 @@ var QuotesPage = {
       +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Amount</label><div class="q-item-amount" style="font-size:14px;font-weight:700;color:var(--green-dark);padding:8px 0;">' + UI.money(lineTotal) + '</div></div>'
       +   '<button type="button" style="background:none;border:none;font-size:20px;color:var(--red);cursor:pointer;padding-bottom:8px;opacity:.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" onclick="this.closest(\'.q-item-wrap\').remove();QuotesPage.calcTotal();">✕</button>'
       + '</div>'
-      + '<div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">'
+      + '<div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">'
+      +   '<button type="button" onclick="QuotesPage._plantNetSecondOpinion(this)" style="padding:8px 14px;background:#fff;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" title="Verify species with PlantNet (second AI opinion)">🌿 2nd Opinion</button>'
       +   '<button type="button" onclick="QuotesPage._openMeasureModal(this)" style="padding:8px 14px;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📏 Measure DBH</button>'
       +   '<button type="button" onclick="QuotesPage._collapseRow(this)" style="padding:8px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✓ Done with this tree</button>'
       + '</div>'
@@ -913,6 +914,98 @@ var QuotesPage = {
       var c = document.getElementById('lb-count'); if (c) c.textContent = (idx+1) + ' / ' + photos.length;
     });
     document.body.appendChild(overlay);
+  },
+
+  // PlantNet second-opinion — sends the line item's photos to PlantNet API
+  // for a pure species ID. Overwrites/suggests species if different from what
+  // Claude picked. Key from Settings: bm-plantnet-key. Sign up: my.plantnet.org
+  _plantNetSecondOpinion: function(btn) {
+    var wrap = btn.closest('.q-item-wrap');
+    if (!wrap) return;
+    var row = wrap.querySelector('.quote-item-row');
+    var photos = [];
+    if (row && row.dataset.photos) { try { photos = JSON.parse(row.dataset.photos); } catch(e){} }
+    else if (row && row.dataset.photo) { photos = [row.dataset.photo]; }
+    if (!photos.length) { UI.toast('Upload a photo first before asking for a 2nd opinion', 'error'); return; }
+
+    var key = localStorage.getItem('bm-plantnet-key') || '';
+    if (!key) {
+      key = prompt('Paste your PlantNet API key (free at my.plantnet.org):');
+      if (!key) return;
+      localStorage.setItem('bm-plantnet-key', key.trim());
+    }
+
+    UI.toast('🌿 Getting 2nd opinion from PlantNet…');
+
+    // PlantNet wants multipart/form-data with image files, not base64 JSON.
+    // Convert each data URL to a Blob and build FormData.
+    var form = new FormData();
+    photos.slice(0, 5).forEach(function(dataUrl, i) {
+      var parts = dataUrl.split(',');
+      var mime = (parts[0].match(/:(.*?);/) || [,'image/jpeg'])[1];
+      var bin = atob(parts[1]);
+      var buf = new Uint8Array(bin.length);
+      for (var j = 0; j < bin.length; j++) buf[j] = bin.charCodeAt(j);
+      form.append('images', new Blob([buf], { type: mime }), 'tree' + i + '.jpg');
+      form.append('organs', 'auto');
+    });
+
+    fetch('https://my-api.plantnet.org/v2/identify/all?api-key=' + encodeURIComponent(key) + '&nb-results=3', {
+      method: 'POST',
+      body: form
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.statusCode === 404 || data.error) {
+        UI.toast('PlantNet: ' + (data.message || data.error || 'no match'), 'error');
+        return;
+      }
+      var results = data.results || [];
+      if (!results.length) { UI.toast('PlantNet: no species matched'); return; }
+      var top = results[0];
+      var common = (top.species && top.species.commonNames && top.species.commonNames[0]) || '';
+      var scientific = (top.species && top.species.scientificNameWithoutAuthor) || '';
+      var pct = Math.round((top.score || 0) * 100);
+
+      // Build a small popup to confirm replacement — user sees top 3 matches
+      var choices = results.slice(0, 3).map(function(res, i) {
+        var c = (res.species && res.species.commonNames && res.species.commonNames[0]) || res.species.scientificNameWithoutAuthor || 'Unknown';
+        var s = res.species.scientificNameWithoutAuthor || '';
+        var p = Math.round((res.score || 0) * 100);
+        return '<button type="button" onclick="QuotesPage._applyPlantNetPick(this,\'' + c.replace(/'/g, "\\'") + '\')" style="display:block;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;margin-bottom:6px;font-size:13px;">'
+          + '<strong>' + UI.esc(c) + '</strong> <span style="color:var(--text-light);font-size:11px;">(' + p + '% match)</span>'
+          + (s ? '<div style="font-size:11px;color:var(--text-light);font-style:italic;">' + UI.esc(s) + '</div>' : '')
+          + '</button>';
+      }).join('');
+
+      var modal = document.createElement('div');
+      modal.id = 'plantnet-popup';
+      modal.dataset.wrapId = wrap.dataset.index || '';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:20px;max-width:420px;width:100%;" onclick="event.stopPropagation();">'
+        + '<h3 style="margin:0 0 8px;">🌿 PlantNet 2nd Opinion</h3>'
+        + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Tap a match to use it as the species.</div>'
+        + choices
+        + '<button type="button" onclick="document.getElementById(\'plantnet-popup\').remove();" style="width:100%;margin-top:8px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;">Cancel</button>'
+        + '</div>';
+      modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+      // Keep reference to wrap so _applyPlantNetPick can find its species input
+      modal._targetWrap = wrap;
+      document.body.appendChild(modal);
+    })
+    .catch(function(e) {
+      UI.toast('PlantNet error: ' + (e.message || 'network'), 'error');
+    });
+  },
+
+  _applyPlantNetPick: function(btn, commonName) {
+    var modal = document.getElementById('plantnet-popup');
+    var wrap = modal && modal._targetWrap;
+    if (!wrap) { if (modal) modal.remove(); return; }
+    var speciesEl = wrap.querySelector('.q-item-species');
+    if (speciesEl) { speciesEl.value = commonName; QuotesPage._syncSummary(speciesEl); }
+    if (modal) modal.remove();
+    UI.toast('Species updated to ' + commonName);
   },
 
   // Tree-measure modal: opens TreeMeasure in an iframe-less inline container + writes back to current row's DBH
@@ -1811,19 +1904,34 @@ var QuotesPage = {
   },
 
   // ── Time & Material Calculator ──
-  _TM_RATES: {
-    // Crew
+  // Default rates — user can override in Settings → T&M Pricing Rates
+  _TM_DEFAULTS: {
     climber: 50, ground: 30, foreman: 60,
-    // Equipment
     bucket: 75, chipper: 44, crane: 200, stumpGrinder: 50,
     miniSkid: 60, dumpTruck: 40, liftLadder: 60, trailer: 25,
-    insurance: 0.31, // WC 9% + GL 9% + disability 2% + payroll 8% + auto 3%
-    markup: 1.5 // 50% markup on cost
+    insurance: 0.31,  // WC 9% + GL 9% + disability 2% + payroll 8% + auto 3%
+    markup: 1.5       // 50% markup on cost
   },
 
-  // Build a single equipment pill checkbox for the T&M picker
-  _tmEquipPill: function(key, label, rate, tmData) {
+  // Read user-customized rates merged over defaults.
+  // Key: bm-tm-rates (plain object in localStorage).
+  getTMRates: function() {
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem('bm-tm-rates') || '{}'); } catch(e) {}
+    var out = {};
+    for (var k in QuotesPage._TM_DEFAULTS) out[k] = QuotesPage._TM_DEFAULTS[k];
+    for (var k2 in saved) if (typeof saved[k2] === 'number') out[k2] = saved[k2];
+    return out;
+  },
+
+  // Back-compat shim: code referencing QuotesPage._TM_RATES still works via getter
+  get _TM_RATES() { return QuotesPage.getTMRates(); },
+
+  // Build a single equipment pill checkbox — rate read dynamically from settings
+  _tmEquipPill: function(key, label, defaultRate, tmData) {
     var checked = !!tmData[key];
+    var rates = QuotesPage.getTMRates();
+    var rate = rates[key] || defaultRate;
     return '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (checked ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
       + '<input type="checkbox" id="q-tm-' + key.toLowerCase() + '" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (checked ? ' checked' : '') + ' style="width:18px;height:18px;">'
       + '<span style="flex:1;">' + label + '</span>'

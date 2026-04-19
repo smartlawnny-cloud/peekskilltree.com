@@ -1,5 +1,5 @@
 {
-  "version": 266,
+  "version": 267,
   "released": "2026-04-19",
-  "notes": "PropertyMap UI cleanup: emoji-only markers, rotation handle on-select only, collapsible mobile equipment drawer, unified right-side tool panel (2D/3D + terrain stacked)"
+  "notes": "Fix equipment marker drift on rotation — rotate INNER div now, outer left for MapLibre's positioning transform"
 }

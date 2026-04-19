@@ -360,19 +360,27 @@ var PropertyMap = {
     var eq = self.equipmentList.find(function(e) { return e.id === eqId; });
     if (!eq) return;
 
-    // Marker: footprint rectangle (shows real equipment size) + big emoji on top
+    // Marker: OUTER div is MapLibre-controlled (don't touch its transform!).
+    // INNER div holds the visual + gets rotated so MapLibre positioning stays intact.
     var el = document.createElement('div');
     var rotation = savedRotation || 0;
     var minW = Math.max(eq.w * 1.5, 34);
     var minH = Math.max(eq.h * 1.5, 20);
-    el.style.cssText = 'width:' + minW + 'px;height:' + minH + 'px;background:' + eq.color + 'cc;'
-      + 'border-radius:4px;display:flex;align-items:center;justify-content:center;'
-      + 'border:2px solid rgba(255,255,255,.9);box-shadow:0 3px 10px rgba(0,0,0,.55);cursor:grab;'
-      + 'transition:transform 0.2s ease,box-shadow .15s;position:relative;backdrop-filter:blur(2px);';
-    // Emoji only — label hidden, shown as tooltip only
-    var iconSize = Math.max(Math.min(minH * 0.85, 28), 16);
-    el.innerHTML = '<span style="font-size:' + iconSize + 'px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));pointer-events:none;line-height:1;">' + (eq.icon || '📍') + '</span>';
+    // Outer wrapper: sized, but no background/rotation (MapLibre will position via transform)
+    el.style.cssText = 'width:' + minW + 'px;height:' + minH + 'px;cursor:grab;position:relative;';
     el.title = eq.label + ' — tap to select, drag to move';
+
+    // Inner: the actual visual + rotation target
+    var inner = document.createElement('div');
+    inner.className = 'equip-inner';
+    inner.style.cssText = 'width:100%;height:100%;background:' + eq.color + 'cc;'
+      + 'border-radius:4px;display:flex;align-items:center;justify-content:center;'
+      + 'border:2px solid rgba(255,255,255,.9);box-shadow:0 3px 10px rgba(0,0,0,.55);'
+      + 'transition:transform .2s ease,box-shadow .15s;backdrop-filter:blur(2px);'
+      + 'transform-origin:50% 50%;transform:rotate(' + rotation + 'deg);';
+    var iconSize = Math.max(Math.min(minH * 0.85, 28), 16);
+    inner.innerHTML = '<span style="font-size:' + iconSize + 'px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));pointer-events:none;line-height:1;">' + (eq.icon || '📍') + '</span>';
+    el.appendChild(inner);
 
     // Rotation handle — hidden by default, revealed when marker is selected
     var handle = document.createElement('div');
@@ -386,30 +394,31 @@ var PropertyMap = {
 
     function bumpRotation() {
       rotation = (rotation + 45) % 360;
-      el.style.transform = 'rotate(' + rotation + 'deg)';
+      inner.style.transform = 'rotate(' + rotation + 'deg)';
       markerData.rotation = rotation;
       if (typeof window._bmEquipmentMapHook === 'function') window._bmEquipmentMapHook(self.markers);
     }
 
-    // Select/deselect on tap — shows handle + selection ring
+    // Select/deselect on tap — shows handle + selection ring (on INNER div)
     function setSelected(on) {
       if (on) {
-        el.style.boxShadow = '0 0 0 3px ' + eq.color + ', 0 3px 14px rgba(0,0,0,.55)';
+        inner.style.boxShadow = '0 0 0 3px ' + eq.color + ', 0 3px 14px rgba(0,0,0,.55)';
         handle.style.display = 'flex';
       } else {
-        el.style.boxShadow = '0 3px 10px rgba(0,0,0,.55)';
+        inner.style.boxShadow = '0 3px 10px rgba(0,0,0,.55)';
         handle.style.display = 'none';
       }
     }
     el.addEventListener('click', function(e) {
       e.stopPropagation();
-      // Deselect siblings
+      // Deselect other markers' inner elements + hide their handles
       self.markers.forEach(function(m) {
         if (m.marker && m.marker.getElement && m.marker.getElement() !== el) {
           var other = m.marker.getElement();
-          var otherHandle = other.querySelector('div');
+          var otherInner = other.querySelector('.equip-inner');
+          if (otherInner) otherInner.style.boxShadow = '0 3px 10px rgba(0,0,0,.55)';
+          var otherHandle = other.querySelector('div[title^="Tap to rotate"]');
           if (otherHandle) otherHandle.style.display = 'none';
-          other.style.boxShadow = '0 3px 10px rgba(0,0,0,.55)';
         }
       });
       setSelected(handle.style.display !== 'flex');
@@ -419,7 +428,7 @@ var PropertyMap = {
     handle.addEventListener('touchend', function(e) { e.stopPropagation(); e.preventDefault(); bumpRotation(); });
     el.addEventListener('contextmenu', function(e) { e.preventDefault(); e.stopPropagation(); bumpRotation(); });
 
-    // Update size on zoom (preserve rotation). Emoji + label scale too.
+    // Update size on zoom — touch OUTER size + INNER rotation only (never outer transform)
     var updateSize = function() {
       var scale = Math.pow(2, (self.map.getZoom() - 18)) * 1.5;
       scale = Math.max(scale, 0.5);
@@ -428,10 +437,9 @@ var PropertyMap = {
       var h = Math.max(eq.h * scale, 20);
       el.style.width = w + 'px';
       el.style.height = h + 'px';
-      // Scale the emoji inside proportionally
-      var iconSpan = el.querySelector('span');
+      var iconSpan = inner.querySelector('span');
       if (iconSpan) iconSpan.style.fontSize = Math.max(Math.min(h * 0.8, 28), 14) + 'px';
-      el.style.transform = 'rotate(' + rotation + 'deg)';
+      inner.style.transform = 'rotate(' + rotation + 'deg)';
     };
     self.map.on('zoom', updateSize);
 

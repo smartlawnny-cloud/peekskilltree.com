@@ -1,5 +1,5 @@
 {
-  "version": 259,
+  "version": 260,
   "released": "2026-04-19",
-  "notes": "Quotes list: tap a quote now opens the edit FORM (tree-card line items) instead of the compact detail view. Same UX as creating a new quote."
+  "notes": "PropertyMap 2D/3D: pitch visualizer on compass; explicit 2D/3D toggle button; drag-rotate + touch-pitch enabled for mobile two-finger gestures"
 }

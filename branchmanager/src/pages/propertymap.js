@@ -203,7 +203,38 @@ var PropertyMap = {
         zoom: 18,
         maxPitch: 60
       });
-      self.map.addControl(new maplibregl.NavigationControl(), 'top-right');
+      // Enhanced nav: compass + pitch visualizer (2D/3D tilt indicator in the control)
+      self.map.addControl(new maplibregl.NavigationControl({
+        visualizePitch: true,
+        showZoom: true,
+        showCompass: true
+      }), 'top-right');
+
+      // Mobile: enable drag-rotate on touch (disabled by default in MapLibre)
+      // Two-finger rotate/pitch gestures
+      if (self.map.touchZoomRotate) self.map.touchZoomRotate.enable();
+      if (self.map.touchPitch) self.map.touchPitch.enable();
+      if (self.map.dragRotate) self.map.dragRotate.enable();
+
+      // Add a 2D / 3D toggle button
+      var toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.textContent = '3D';
+      toggleBtn.title = 'Toggle 2D / 3D tilt';
+      toggleBtn.style.cssText = 'position:absolute;top:10px;right:54px;z-index:10;background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);min-width:38px;min-height:34px;';
+      toggleBtn.onclick = function() {
+        var cur = self.map.getPitch();
+        if (cur > 5) {
+          self.map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+          toggleBtn.textContent = '3D';
+        } else {
+          self.map.easeTo({ pitch: 60, duration: 400 });
+          toggleBtn.textContent = '2D';
+        }
+      };
+      var mapContainer = document.getElementById('prop-map');
+      if (mapContainer && mapContainer.parentElement) mapContainer.parentElement.appendChild(toggleBtn);
+
       self.markers = [];
 
       // If address provided, geocode immediately

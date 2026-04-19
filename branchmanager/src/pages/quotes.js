@@ -508,57 +508,47 @@ var QuotesPage = {
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Enter total job hours, then pick the equipment and crew you\'ll use.</p>'
 
       // ═══ STEP 1 — Total job hours (big, prominent) ═══
-      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;">'
-      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px;">Step 1 — How long is this job?</label>'
+      // ═══ STEP 1 — Crew (how many + roles) ═══
+      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 1 — Crew needed</label>'
+      +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">'
+      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;"># Climbers <span style="color:#94a3b8;">($50/hr)</span></label>'
+      +       '<input type="number" id="q-tm-climber-count" value="' + (tmData.climberCount || '') + '" placeholder="0" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;"># Groundsmen <span style="color:#94a3b8;">($30/hr)</span></label>'
+      +       '<input type="number" id="q-tm-ground-count" value="' + (tmData.groundCount || '') + '" placeholder="0" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;"># Foreman <span style="color:#94a3b8;">($60/hr)</span></label>'
+      +       '<input type="number" id="q-tm-foreman-count" value="' + (tmData.foremanCount || '') + '" placeholder="0" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      +   '</div>'
+      + '</div>'
+
+      // ═══ STEP 2 — Equipment (expanded list, pill-style) ═══
+      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 2 — Equipment needed</label>'
+      +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;">'
+      +     QuotesPage._tmEquipPill('bucket', '🚛 Bucket truck', 75, tmData)
+      +     + QuotesPage._tmEquipPill('chipper', '🪵 Chipper', 44, tmData)
+      +     + QuotesPage._tmEquipPill('crane', '🏗 Crane', 200, tmData)
+      +     + QuotesPage._tmEquipPill('stumpGrinder', '🪓 Stump grinder', 50, tmData)
+      +     + QuotesPage._tmEquipPill('miniSkid', '🚜 Mini-skid / loader', 60, tmData)
+      +     + QuotesPage._tmEquipPill('dumpTruck', '🛻 Dump truck', 40, tmData)
+      +     + QuotesPage._tmEquipPill('liftLadder', '🪜 Man lift / ladder truck', 60, tmData)
+      +     + QuotesPage._tmEquipPill('trailer', '🚚 Trailer / haul rig', 25, tmData)
+      +   '</div>'
+      + '</div>'
+
+      // ═══ STEP 3 — Hours ═══
+      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px;">Step 3 — Job hours</label>'
       +   '<div style="display:flex;align-items:center;gap:10px;">'
       +     '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:8px;font-size:22px;font-weight:700;text-align:center;">'
-      +     '<span style="font-size:14px;color:var(--text-light);font-weight:600;">hours total</span>'
+      +     '<span style="font-size:14px;color:var(--text-light);font-weight:600;">hrs on site</span>'
       +   '</div>'
+      +   '<div style="font-size:11px;color:var(--text-light);margin-top:6px;">Each crew member + equipment piece multiplies by these hours.</div>'
       + '</div>'
 
-      // ═══ STEP 2 — Pick equipment (pill/card style, shows rate) ═══
-      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;">'
-      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 2 — Pick equipment</label>'
-      +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;">'
-      +     '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (tmData.bucket ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
-      +       '<input type="checkbox" id="q-tm-bucket" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (tmData.bucket ? ' checked' : '') + ' style="width:18px;height:18px;">'
-      +       '<span style="flex:1;">🚛 Bucket truck</span>'
-      +       '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$75/hr</span>'
-      +     '</label>'
-      +     '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (tmData.chipper ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
-      +       '<input type="checkbox" id="q-tm-chipper" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (tmData.chipper ? ' checked' : '') + ' style="width:18px;height:18px;">'
-      +       '<span style="flex:1;">🪵 Chipper</span>'
-      +       '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$44/hr</span>'
-      +     '</label>'
-      +     '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (tmData.crane ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
-      +       '<input type="checkbox" id="q-tm-crane" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (tmData.crane ? ' checked' : '') + ' style="width:18px;height:18px;">'
-      +       '<span style="flex:1;">🏗 Crane</span>'
-      +       '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$200/hr</span>'
-      +     '</label>'
-      +     '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (tmData.stumpGrinder ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
-      +       '<input type="checkbox" id="q-tm-stumpgrinder" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (tmData.stumpGrinder ? ' checked' : '') + ' style="width:18px;height:18px;">'
-      +       '<span style="flex:1;">🪓 Stump grinder</span>'
-      +       '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$50/hr</span>'
-      +     '</label>'
-      +   '</div>'
-      + '</div>'
-
-      // ═══ STEP 3 — Crew (compact) ═══
-      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;">'
-      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 3 — Crew on site</label>'
-      +   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'
-      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;">Climber hrs <span style="color:#94a3b8;">(@$50/hr)</span></label>'
-      +       '<input type="number" id="q-tm-climber-hrs" value="' + (tmData.climberHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;"># ground</label>'
-      +       '<input type="number" id="q-tm-ground-count" value="' + (tmData.groundCount || '2') + '" placeholder="2" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground hrs <span style="color:#94a3b8;">(@$30/hr)</span></label>'
-      +       '<input type="number" id="q-tm-ground-hrs" value="' + (tmData.groundHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      +   '</div>'
-      + '</div>'
-
-      // ═══ STEP 4 — Disposal fee (optional) ═══
-      + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:0 2px;">'
-      +   '<label style="font-size:12px;color:var(--text-light);font-weight:600;flex-shrink:0;">Dump / disposal fee:</label>'
+      // ═══ STEP 4 — Disposal (optional) ═══
+      + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:0 2px;">'
+      +   '<label style="font-size:12px;color:var(--text-light);font-weight:600;flex-shrink:0;">Step 4 — Dump / disposal fee:</label>'
       +   '<input type="number" id="q-tm-disposal" value="' + (tmData.disposal || '') + '" placeholder="0" min="0" oninput="QuotesPage._calcTM()" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
       +   '<span style="font-size:12px;color:var(--text-light);">$</span>'
       + '</div>'
@@ -1819,51 +1809,76 @@ var QuotesPage = {
 
   // ── Time & Material Calculator ──
   _TM_RATES: {
-    climber: 50, ground: 30, bucket: 75, chipper: 44, crane: 200, stumpGrinder: 50,
+    // Crew
+    climber: 50, ground: 30, foreman: 60,
+    // Equipment
+    bucket: 75, chipper: 44, crane: 200, stumpGrinder: 50,
+    miniSkid: 60, dumpTruck: 40, liftLadder: 60, trailer: 25,
     insurance: 0.31, // WC 9% + GL 9% + disability 2% + payroll 8% + auto 3%
     markup: 1.5 // 50% markup on cost
   },
 
+  // Build a single equipment pill checkbox for the T&M picker
+  _tmEquipPill: function(key, label, rate, tmData) {
+    var checked = !!tmData[key];
+    return '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (checked ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
+      + '<input type="checkbox" id="q-tm-' + key.toLowerCase() + '" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (checked ? ' checked' : '') + ' style="width:18px;height:18px;">'
+      + '<span style="flex:1;">' + label + '</span>'
+      + '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$' + rate + '/hr</span>'
+      + '</label>';
+  },
+
   _calcTM: function() {
     var r = QuotesPage._TM_RATES;
-    var climberHrs = parseFloat(document.getElementById('q-tm-climber-hrs').value) || 0;
-    var groundCount = parseFloat(document.getElementById('q-tm-ground-count').value) || 0;
-    var groundHrs = parseFloat(document.getElementById('q-tm-ground-hrs').value) || 0;
-    var totalHrs = parseFloat(document.getElementById('q-tm-total-hrs').value) || 0;
-    var disposal = parseFloat(document.getElementById('q-tm-disposal').value) || 0;
-    var bucket = document.getElementById('q-tm-bucket').checked;
-    var chipper = document.getElementById('q-tm-chipper').checked;
-    var crane = document.getElementById('q-tm-crane').checked;
-    var stumpGrinder = document.getElementById('q-tm-stumpgrinder').checked;
+    function num(id) { var el = document.getElementById(id); return el ? (parseFloat(el.value) || 0) : 0; }
+    function chk(id) { var el = document.getElementById(id); return !!(el && el.checked); }
 
-    var laborCost = (climberHrs * r.climber) + (groundCount * groundHrs * r.ground);
-    var equipCost = (bucket ? totalHrs * r.bucket : 0) + (chipper ? totalHrs * r.chipper : 0)
-      + (crane ? totalHrs * r.crane : 0) + (stumpGrinder ? totalHrs * r.stumpGrinder : 0);
+    // Crew (counts × hours)
+    var climberCount = num('q-tm-climber-count');
+    var groundCount  = num('q-tm-ground-count');
+    var foremanCount = num('q-tm-foreman-count');
+    // Job hours
+    var totalHrs = num('q-tm-total-hrs');
+    var disposal = num('q-tm-disposal');
+
+    // Equipment picks (ids match _tmEquipPill key.toLowerCase())
+    var EQUIP = [
+      { key:'bucket',       id:'q-tm-bucket',       label:'Bucket truck',       rate:r.bucket },
+      { key:'chipper',      id:'q-tm-chipper',      label:'Chipper',            rate:r.chipper },
+      { key:'crane',        id:'q-tm-crane',        label:'Crane',              rate:r.crane },
+      { key:'stumpGrinder', id:'q-tm-stumpgrinder', label:'Stump grinder',      rate:r.stumpGrinder },
+      { key:'miniSkid',     id:'q-tm-miniskid',     label:'Mini-skid / loader', rate:r.miniSkid },
+      { key:'dumpTruck',    id:'q-tm-dumptruck',    label:'Dump truck',         rate:r.dumpTruck },
+      { key:'liftLadder',   id:'q-tm-liftladder',   label:'Man lift / ladder',  rate:r.liftLadder },
+      { key:'trailer',      id:'q-tm-trailer',      label:'Trailer',            rate:r.trailer }
+    ];
+    var activeEquip = EQUIP.filter(function(e){ return chk(e.id); });
+
+    var climberCost = climberCount * totalHrs * r.climber;
+    var groundLaborCost = groundCount * totalHrs * r.ground;
+    var foremanCost = foremanCount * totalHrs * r.foreman;
+    var laborCost = climberCost + groundLaborCost + foremanCost;
+    var equipCost = activeEquip.reduce(function(s,e){ return s + (totalHrs * e.rate); }, 0);
     var insuranceCost = laborCost * r.insurance;
     var subtotalCost = laborCost + equipCost + insuranceCost + disposal;
     var tmTotal = Math.round(subtotalCost * r.markup);
 
-    // Show detailed per-piece breakdown
     var breakdown = document.getElementById('q-tm-breakdown');
     if (breakdown) {
       var rows = '';
-      // Labor lines — only show ones with actual hours
-      if (climberHrs > 0) {
-        rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Climber — ' + climberHrs + 'hr × $' + r.climber + '/hr</span><span>' + UI.money(climberHrs * r.climber) + '</span></div>';
+      function line(txt, amt) {
+        return '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>' + txt + '</span><span>' + UI.money(amt) + '</span></div>';
       }
-      if (groundHrs > 0 && groundCount > 0) {
-        rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Ground crew — ' + groundCount + ' × ' + groundHrs + 'hr × $' + r.ground + '/hr</span><span>' + UI.money(groundCount * groundHrs * r.ground) + '</span></div>';
-      }
-      // Equipment lines — only active pieces
-      if (bucket && totalHrs > 0) rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Bucket truck — ' + totalHrs + 'hr × $' + r.bucket + '/hr</span><span>' + UI.money(totalHrs * r.bucket) + '</span></div>';
-      if (chipper && totalHrs > 0) rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Chipper — ' + totalHrs + 'hr × $' + r.chipper + '/hr</span><span>' + UI.money(totalHrs * r.chipper) + '</span></div>';
-      if (crane && totalHrs > 0) rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Crane — ' + totalHrs + 'hr × $' + r.crane + '/hr</span><span>' + UI.money(totalHrs * r.crane) + '</span></div>';
-      if (stumpGrinder && totalHrs > 0) rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Stump grinder — ' + totalHrs + 'hr × $' + r.stumpGrinder + '/hr</span><span>' + UI.money(totalHrs * r.stumpGrinder) + '</span></div>';
-
-      if (!rows) rows = '<div style="font-size:12px;color:var(--text-light);padding:4px 0;">Enter crew hours + check equipment above to see cost breakdown.</div>';
+      if (climberCount > 0 && totalHrs > 0) rows += line(climberCount + ' × Climber — ' + totalHrs + 'hr × $' + r.climber + '/hr', climberCost);
+      if (groundCount > 0 && totalHrs > 0)  rows += line(groundCount + ' × Groundsman — ' + totalHrs + 'hr × $' + r.ground + '/hr', groundLaborCost);
+      if (foremanCount > 0 && totalHrs > 0) rows += line(foremanCount + ' × Foreman — ' + totalHrs + 'hr × $' + r.foreman + '/hr', foremanCost);
+      activeEquip.forEach(function(e) {
+        if (totalHrs > 0) rows += line(e.label + ' — ' + totalHrs + 'hr × $' + e.rate + '/hr', totalHrs * e.rate);
+      });
+      if (!rows) rows = '<div style="font-size:12px;color:var(--text-light);padding:4px 0;">Enter crew counts + hours + pick equipment to see breakdown.</div>';
 
       breakdown.innerHTML = rows
-        + (rows !== '' && (laborCost > 0 || equipCost > 0) ? '<div style="display:flex;justify-content:space-between;padding:6px 0 3px;border-top:1px dashed var(--border);margin-top:4px;"><span>Labor subtotal</span><span>' + UI.money(laborCost) + '</span></div>' : '')
+        + (laborCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:6px 0 3px;border-top:1px dashed var(--border);margin-top:4px;"><span>Labor subtotal</span><span>' + UI.money(laborCost) + '</span></div>' : '')
         + (equipCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Equipment subtotal</span><span>' + UI.money(equipCost) + '</span></div>' : '')
         + (insuranceCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Insurance + overhead (31%)</span><span>' + UI.money(insuranceCost) + '</span></div>' : '')
         + (disposal > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Disposal</span><span>' + UI.money(disposal) + '</span></div>' : '')

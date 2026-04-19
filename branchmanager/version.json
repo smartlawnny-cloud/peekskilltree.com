@@ -1,5 +1,5 @@
 {
-  "version": 237,
+  "version": 238,
   "released": "2026-04-19",
-  "notes": "Project Diary timeline view per job + bump-version.sh tooling to prevent stuck-PWA"
+  "notes": "Fix AI model alias — was claude-sonnet-4-5-20250514 (invalid), now claude-sonnet-4-5. Restores tree ID + AI chat + video quote."
 }

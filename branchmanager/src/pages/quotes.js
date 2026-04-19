@@ -511,37 +511,62 @@ var QuotesPage = {
 
     html += '<div id="q-mode-tm" style="display:' + (tmData.totalHrs ? 'block' : 'none') + ';border:2px solid #7c3aed;border-radius:10px;padding:16px;margin-bottom:12px;">'
       + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Production Estimate (T&M)</div>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Estimate crew hours + equipment to verify your pricing.</p>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Enter total job hours, then pick the equipment and crew you\'ll use.</p>'
 
-      // Property Map
-      + '<div style="margin-bottom:16px;"><button type="button" class="btn btn-outline" style="width:100%;" onclick="PropertyMap.show(document.getElementById(\'q-property\').value)">🗺️ Open Property Map — Place Equipment</button></div>'
-
-      // Crew
-      + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Crew</div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Climber</label>'
-      + '<input type="number" id="q-tm-climber-hrs" value="' + (tmData.climberHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground crew</label>'
-      + '<input type="number" id="q-tm-ground-count" value="' + (tmData.groundCount || '2') + '" placeholder="#" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground hrs</label>'
-      + '<input type="number" id="q-tm-ground-hrs" value="' + (tmData.groundHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      // ═══ STEP 1 — Total job hours (big, prominent) ═══
+      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;">'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px;">Step 1 — How long is this job?</label>'
+      +   '<div style="display:flex;align-items:center;gap:10px;">'
+      +     '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:8px;font-size:22px;font-weight:700;text-align:center;">'
+      +     '<span style="font-size:14px;color:var(--text-light);font-weight:600;">hours total</span>'
+      +   '</div>'
       + '</div>'
 
-      // Equipment
-      + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Equipment</div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
-      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-bucket" onchange="QuotesPage._calcTM()"' + (tmData.bucket ? ' checked' : '') + '> Bucket truck</label>'
-      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-chipper" onchange="QuotesPage._calcTM()"' + (tmData.chipper ? ' checked' : '') + '> Chipper</label>'
-      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-crane" onchange="QuotesPage._calcTM()"' + (tmData.crane ? ' checked' : '') + '> Crane</label>'
-      + '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="q-tm-stumpgrinder" onchange="QuotesPage._calcTM()"' + (tmData.stumpGrinder ? ' checked' : '') + '> Stump grinder</label>'
+      // ═══ STEP 2 — Pick equipment (pill/card style, shows rate) ═══
+      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;">'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 2 — Pick equipment</label>'
+      +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;">'
+      +     '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (tmData.bucket ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
+      +       '<input type="checkbox" id="q-tm-bucket" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (tmData.bucket ? ' checked' : '') + ' style="width:18px;height:18px;">'
+      +       '<span style="flex:1;">🚛 Bucket truck</span>'
+      +       '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$75/hr</span>'
+      +     '</label>'
+      +     '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (tmData.chipper ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
+      +       '<input type="checkbox" id="q-tm-chipper" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (tmData.chipper ? ' checked' : '') + ' style="width:18px;height:18px;">'
+      +       '<span style="flex:1;">🪵 Chipper</span>'
+      +       '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$44/hr</span>'
+      +     '</label>'
+      +     '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (tmData.crane ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
+      +       '<input type="checkbox" id="q-tm-crane" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (tmData.crane ? ' checked' : '') + ' style="width:18px;height:18px;">'
+      +       '<span style="flex:1;">🏗 Crane</span>'
+      +       '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$200/hr</span>'
+      +     '</label>'
+      +     '<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:2px solid ' + (tmData.stumpGrinder ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">'
+      +       '<input type="checkbox" id="q-tm-stumpgrinder" onchange="QuotesPage._calcTM();this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';"' + (tmData.stumpGrinder ? ' checked' : '') + ' style="width:18px;height:18px;">'
+      +       '<span style="flex:1;">🪓 Stump grinder</span>'
+      +       '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$50/hr</span>'
+      +     '</label>'
+      +   '</div>'
       + '</div>'
 
-      // Duration
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Total job hours</label>'
-      + '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="hrs" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      + '<div><label style="font-size:11px;color:var(--text-light);display:block;">Dump / disposal</label>'
-      + '<input type="number" id="q-tm-disposal" value="' + (tmData.disposal || '') + '" placeholder="$" min="0" oninput="QuotesPage._calcTM()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      // ═══ STEP 3 — Crew (compact) ═══
+      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;">'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 3 — Crew on site</label>'
+      +   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'
+      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;">Climber hrs <span style="color:#94a3b8;">(@$50/hr)</span></label>'
+      +       '<input type="number" id="q-tm-climber-hrs" value="' + (tmData.climberHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;"># ground</label>'
+      +       '<input type="number" id="q-tm-ground-count" value="' + (tmData.groundCount || '2') + '" placeholder="2" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;">Ground hrs <span style="color:#94a3b8;">(@$30/hr)</span></label>'
+      +       '<input type="number" id="q-tm-ground-hrs" value="' + (tmData.groundHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      +   '</div>'
+      + '</div>'
+
+      // ═══ STEP 4 — Disposal fee (optional) ═══
+      + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:0 2px;">'
+      +   '<label style="font-size:12px;color:var(--text-light);font-weight:600;flex-shrink:0;">Dump / disposal fee:</label>'
+      +   '<input type="number" id="q-tm-disposal" value="' + (tmData.disposal || '') + '" placeholder="0" min="0" oninput="QuotesPage._calcTM()" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
+      +   '<span style="font-size:12px;color:var(--text-light);">$</span>'
       + '</div>'
 
       // T&M Total

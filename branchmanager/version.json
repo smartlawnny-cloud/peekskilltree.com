@@ -1,5 +1,7 @@
 {
-  "version": 220,
+  "version": 221,
   "released": "2026-04-19",
-  "notes": "App-wide UI consistency polish — standardized card border-radius (12px) and added subtle box-shadow across Dashboard, Settings, Insights, Reports, P&L, Budget, Crew Performance, Employee Center, Payments, Notifications, and Media Center."
+  "notes": "Settings page — grouped remaining cards into 6 collapsible sections (Business Info, Quote & Invoice Defaults, Services & Products, Database & Storage, Data Import/Export/Backup, Security + Admin) to reduce visual clutter."
 }
+</content>
+</invoke>

@@ -44,6 +44,14 @@ var SettingsPage = {
       website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
       taxRate: localStorage.getItem('bm-tax-rate') || '8.375'
     };
+    // ═══ GROUP: Business Info (collapsible) ═══
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>🏢 Business Info</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
+
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Company Info</h3>'
@@ -138,6 +146,17 @@ var SettingsPage = {
       + '<div><strong>Geofence Auto Clock-In</strong><div style="font-size:12px;color:var(--text-light);">Automatically clock crew in when they arrive at a job site</div></div></label>'
       + '</div>'
       + '</div>';
+
+    // ═══ /GROUP: Business Info ═══
+    html += '</div></details>';
+
+    // ═══ GROUP: Quote & Invoice Defaults (collapsible) ═══
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>📄 Quote & Invoice Defaults</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
     // ── Notification Preferences ──
     var notif = {
@@ -276,6 +295,17 @@ var SettingsPage = {
       + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">12 Hour (1:30 PM)</div></div>'
       + '</div></div>';
 
+    // ═══ /GROUP: Quote & Invoice Defaults ═══
+    html += '</div></details>';
+
+    // ═══ GROUP: Services & Products (collapsible) ═══
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>🛠 Services & Products</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
+
     // ── Connected Apps ──
     var connectedApps = [
       { name: 'SendGrid', status: !!(localStorage.getItem('bm-sendgrid-key')), desc: 'Email delivery' },
@@ -329,6 +359,9 @@ var SettingsPage = {
       + '<div class="stat-card"><div class="stat-label">Invoices</div><div class="stat-value">' + DB.invoices.count() + '</div></div>'
       + '<div class="stat-card"><div class="stat-label">Quotes</div><div class="stat-value">' + DB.quotes.count() + '</div></div>'
       + '</div></div>';
+
+    // ═══ /GROUP: Services & Products (Data Summary included) ═══
+    html += '</div></details>';
 
     // ═══ API Keys & Integrations (collapsible group) ═══
     // Wraps SendGrid, AI, Stripe, Dialpad, Gusto, PlantNet in one foldable section
@@ -447,6 +480,14 @@ var SettingsPage = {
 
     // ═══ close API Keys collapsible ═══
     html += '</div></details>';
+
+    // ═══ GROUP: Database & Storage (collapsible) ═══
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>🗄 Database & Storage</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
     // Photo Storage info
     html += '<div style="background:#f0f7ff;border-radius:12px;padding:14px 18px;border:1px solid #b3d4f5;margin-bottom:16px;display:flex;align-items:center;gap:12px;">'
@@ -628,6 +669,9 @@ var SettingsPage = {
     }
     html += '</div>';
 
+    // ═══ /GROUP: Database & Storage ═══
+    html += '</div></details>';
+
     // === AI ASSISTANT TOGGLE ===
     // Turn off auto-AI tree ID (for poor service or preference). When off, photo upload still
     // works but the 🤖 Run AI button on each tree is the only way to fire the call.
@@ -681,6 +725,19 @@ var SettingsPage = {
 
     // PlantNet card moved inside the API Keys & Integrations collapsible above.
 
+    // === SYNC KEYS ACROSS DEVICES ===
+    // Export all bm-* settings as a base64 code; paste on another device to restore.
+    // Private — the code only works if you have it. No server changes needed.
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      + '<h3 style="margin-bottom:6px;">🔄 Sync Settings Across Devices</h3>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Export a code from this device, paste it on another (phone/laptop) to copy all API keys + rates + preferences. Keys stay private — the code only works where you paste it.</p>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +   '<button onclick="SettingsPage._exportKeys()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">📋 Export code</button>'
+      +   '<button onclick="SettingsPage._importKeys()" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 18px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">📥 Import code</button>'
+      + '</div>'
+      + '<textarea id="sync-code-output" readonly placeholder="Your sync code will appear here after you tap Export…" style="width:100%;height:80px;margin-top:12px;padding:10px;border:1px solid var(--border);border-radius:6px;font-family:monospace;font-size:11px;box-sizing:border-box;"></textarea>'
+      + '</div>';
+
     // === APPEARANCE (placed right under Database Connection per user) ===
     var _dark = (document.documentElement.getAttribute('data-theme') === 'dark') || localStorage.getItem('bm-dark-mode') === 'dark';
     if (true) {
@@ -696,6 +753,14 @@ var SettingsPage = {
         +   '</label>'
         + '</div>';
     }
+
+    // ═══ GROUP: Data Import / Export / Backup (collapsible) ═══
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>📥 Data Import / Export / Backup</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
     // Import from previous system
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
@@ -732,6 +797,17 @@ var SettingsPage = {
       + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">"Fix Duplicate Tags" removes duplicate tags from imported client records (e.g., [VIP, VIP] → [VIP]).</div>'
       + '</div>';
+
+    // ═══ /GROUP: Data Import / Export / Backup ═══
+    html += '</div></details>';
+
+    // ═══ GROUP: Security + Admin (collapsible) ═══
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>🔒 Security + Admin</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
     // Security
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
@@ -778,6 +854,9 @@ var SettingsPage = {
       + '<button onclick="loadPage(\'backup\')" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;font-size:13px;font-weight:600;color:var(--text);"><span style="font-size:18px;">💾</span><div>Backup & Restore<div style="font-size:11px;font-weight:400;color:var(--text-light);margin-top:2px;">Export/import all data</div></div></button>'
       + '<button onclick="loadPage(\'import\')" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;font-size:13px;font-weight:600;color:var(--text);"><span style="font-size:18px;">📥</span><div>Import Data<div style="font-size:11px;font-weight:400;color:var(--text-light);margin-top:2px;">CSV, Jobber, bulk import</div></div></button>'
       + '</div></div>';
+
+    // ═══ /GROUP: Security + Admin ═══
+    html += '</div></details>';
 
     // About
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
@@ -1059,6 +1138,41 @@ var SettingsPage = {
     return '<div><label style="font-size:11px;color:var(--text-light);display:block;">' + label + ' $/hr</label>'
       + '<input type="number" id="tm-rate-' + key + '" value="' + (value || 0) + '" step="1" min="0" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
       + '</div>';
+  },
+
+  // Build a base64 code of all relevant bm-* localStorage keys
+  _exportKeys: function() {
+    var KEYS = ['bm-sendgrid-key','bm-claude-key','bm-stripe-base-link','bm-dialpad-key',
+                'bm-gusto-api-key','bm-plantnet-key','bm-tm-rates','bm-ai-enabled',
+                'bm-dark-mode','bm-co-name','bm-co-phone','bm-co-email','bm-co-address',
+                'bm-co-website','bm-tax-rate','bm-zip','bm-revenue-goals','bm-receptionist-settings'];
+    var bag = {};
+    KEYS.forEach(function(k) {
+      var v = localStorage.getItem(k);
+      if (v !== null && v !== '') bag[k] = v;
+    });
+    if (Object.keys(bag).length === 0) { UI.toast('Nothing to export yet', 'error'); return; }
+    try {
+      var code = btoa(JSON.stringify(bag));
+      var ta = document.getElementById('sync-code-output');
+      if (ta) { ta.value = code; ta.select(); }
+      if (navigator.clipboard) navigator.clipboard.writeText(code);
+      UI.toast('✓ ' + Object.keys(bag).length + ' settings exported + copied to clipboard');
+    } catch(e) { UI.toast('Export failed: ' + e.message, 'error'); }
+  },
+
+  _importKeys: function() {
+    var code = prompt('Paste your sync code:');
+    if (!code) return;
+    try {
+      var bag = JSON.parse(atob(code.trim()));
+      var n = 0;
+      Object.keys(bag).forEach(function(k) {
+        if (k.indexOf('bm-') === 0) { localStorage.setItem(k, bag[k]); n++; }
+      });
+      UI.toast('✓ ' + n + ' settings imported — reloading');
+      setTimeout(function() { location.reload(); }, 600);
+    } catch(e) { UI.toast('Bad code — make sure you copied the whole thing', 'error'); }
   },
 
   _saveTMRates: function() {

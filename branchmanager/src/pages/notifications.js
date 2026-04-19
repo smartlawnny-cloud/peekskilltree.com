@@ -143,7 +143,8 @@ var NotificationsPage = {
     requests.forEach(function(r) {
       allCount++;
       if (r.createdAt && r.createdAt < ninetyDaysAgo) return;
-      feed.push({ type: 'request', refId: r.id, title: 'New request from ' + (r.clientName || 'Unknown'), description: r.property || r.notes || '', date: r.createdAt, unread: r.status === 'new' });
+      var reqWho = r.clientName || r.phone || r.email || 'New Contact';
+      feed.push({ type: 'request', refId: r.id, title: 'New request from ' + reqWho, description: r.property || r.notes || '', date: r.createdAt, unread: r.status === 'new' });
     });
 
     // Quotes — only meaningful statuses, last 90 days, skip import-date artifacts

@@ -295,9 +295,8 @@ var RequestsPage = {
     if (filtered.length === 0) {
       html += UI.emptyState('&#128229;', 'No requests found', self._search ? 'Try a different search term.' : 'New requests from your website form will appear here.');
     } else {
-      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;">';
-
-      // Table header
+      // ── DESKTOP table ──
+      html += '<div class="q-desktop-only" style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;">';
       html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
         + '<thead><tr style="background:var(--bg);border-bottom:1px solid var(--border);">'
         + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Client</th>'
@@ -326,6 +325,50 @@ var RequestsPage = {
       });
 
       html += '</tbody></table></div>';
+
+      // ── MOBILE cards ──
+      html += '<div class="q-mobile-only" style="display:none;">';
+      filtered.forEach(function(r) {
+        var isOverdue = self._isOverdue(r);
+        var displayStatus = isOverdue && r.status === 'new' ? 'overdue' : r.status;
+        var desc = r.service || r.notes || '';
+        if (desc.length > 60) desc = desc.substring(0, 60) + '...';
+        var returning = r.clientId ? '<span style="display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;background:#e8f0fe;color:#2b6cb0;margin-left:6px;font-weight:600;">Returning</span>' : '';
+        html += '<div data-rid="' + r.id + '" class="request-card" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'
+          +   '<div style="flex:1;min-width:0;">'
+          +     '<div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(r.clientName || 'Unknown') + returning + '</div>'
+          +     (desc ? '<div style="font-size:13px;color:var(--text);margin-top:4px;">' + UI.esc(desc) + '</div>' : '')
+          +     (r.property ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + UI.esc(r.property) + '</div>' : '')
+          +   '</div>'
+          +   '<div style="flex-shrink:0;">' + UI.statusBadge(displayStatus) + '</div>'
+          + '</div>'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;flex-wrap:wrap;">'
+          +   '<div style="font-size:11px;color:var(--text-light);">' + UI.esc(r.source || 'website') + '</div>'
+          +   '<div style="font-size:11px;color:var(--text-light);">' + UI.dateShort(r.createdAt) + '</div>'
+          + '</div>'
+          + '</div>';
+      });
+      html += '</div>';
+
+      // Mobile tap handlers
+      setTimeout(function() {
+        document.querySelectorAll('.request-card').forEach(function(card) {
+          var startX, startY, moved;
+          card.addEventListener('touchstart', function(e) {
+            var t = e.touches[0]; startX = t.clientX; startY = t.clientY; moved = false;
+          }, { passive: true });
+          card.addEventListener('touchmove', function(e) {
+            var t = e.touches[0];
+            if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) moved = true;
+          }, { passive: true });
+          card.addEventListener('click', function() {
+            if (moved) return;
+            var rid = this.getAttribute('data-rid');
+            if (rid) RequestsPage.showDetail(rid);
+          });
+        });
+      }, 0);
     }
 
     return html;

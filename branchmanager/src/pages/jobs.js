@@ -159,7 +159,8 @@ var JobsPage = {
       + '</div></div>'
       + '<style>@keyframes batchSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>';
 
-    html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
+    // ── DESKTOP table ──
+    html += '<div class="q-desktop-only" style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
       + self._sortTh('Client', 'clientName') + self._sortTh('Job number', 'jobNumber') + '<th>Property</th>' + self._sortTh('Schedule', 'scheduledDate') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
       + '</tr></thead><tbody>';
@@ -181,6 +182,49 @@ var JobsPage = {
       });
     }
     html += '</tbody></table></div>';
+
+    // ── MOBILE card layout ──
+    if (page.length > 0) {
+      html += '<div class="q-mobile-only" style="display:none;">';
+      page.forEach(function(j) {
+        var relSched = j.scheduledDate ? UI.dateShort(j.scheduledDate) : 'Unscheduled';
+        html += '<div data-jid="' + j.id + '" class="job-card" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'
+          +   '<div style="flex:1;min-width:0;">'
+          +     '<div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(j.clientName || '—') + '</div>'
+          +     (j.property ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + UI.esc(j.property) + '</div>' : '')
+          +   '</div>'
+          +   '<div style="font-size:17px;font-weight:800;color:var(--text);flex-shrink:0;">' + UI.money(j.total) + '</div>'
+          + '</div>'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;flex-wrap:wrap;">'
+          +   '<div>' + UI.statusBadge(j.status) + '</div>'
+          +   '<div style="font-size:11px;color:var(--text-light);">'
+          +     relSched + ' · #' + (j.jobNumber || '')
+          +   '</div>'
+          + '</div>'
+          + '</div>';
+      });
+      html += '</div>';
+
+      // Mobile card tap handlers (scroll-safe)
+      setTimeout(function() {
+        document.querySelectorAll('.job-card').forEach(function(card) {
+          var startX, startY, moved;
+          card.addEventListener('touchstart', function(e) {
+            var t = e.touches[0]; startX = t.clientX; startY = t.clientY; moved = false;
+          }, { passive: true });
+          card.addEventListener('touchmove', function(e) {
+            var t = e.touches[0];
+            if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) moved = true;
+          }, { passive: true });
+          card.addEventListener('click', function() {
+            if (moved) return;
+            var jid = this.getAttribute('data-jid');
+            if (jid) JobsPage.showDetail(jid);
+          });
+        });
+      }, 0);
+    }
 
     // Pagination
     var totalPages = Math.ceil(filtered.length / self._perPage);

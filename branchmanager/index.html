@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 194; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 195; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -291,11 +291,11 @@
     html[data-theme="dark"] { /* un-applies dark vars by not matching */ }
   }
 
-  /* Quotes list — same card-on-mobile pattern */
+  /* Quotes / Jobs / Invoices / Requests list — same card-on-mobile pattern */
   @media (hover: hover) {
-    .quote-card:hover { box-shadow:0 4px 14px rgba(0,0,0,0.08) !important; transform:translateY(-1px); }
+    .quote-card:hover, .job-card:hover, .invoice-card:hover, .request-card:hover { box-shadow:0 4px 14px rgba(0,0,0,0.08) !important; transform:translateY(-1px); }
   }
-  .quote-card:active { box-shadow:0 2px 6px rgba(0,0,0,0.06) !important; background:var(--green-bg) !important; }
+  .quote-card:active, .job-card:active, .invoice-card:active, .request-card:active { box-shadow:0 2px 6px rgba(0,0,0,0.06) !important; background:var(--green-bg) !important; }
   .q-mobile-only { display:none; }
   .q-desktop-only { display:block; }
   @media (max-width:720px) {
@@ -840,7 +840,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v194</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v195</span>
       </div>
     </div>
 
@@ -857,10 +857,10 @@
 <script src="src/ui.js?v=149"></script>
 <script defer src="src/pages/dashboard.js?v=140"></script>
 <script defer src="src/pages/clients.js?v=152"></script>
-<script defer src="src/pages/requests.js?v=147"></script>
+<script defer src="src/pages/requests.js?v=195"></script>
 <script defer src="src/pages/quotes.js?v=149"></script>
-<script defer src="src/pages/jobs.js?v=148"></script>
-<script defer src="src/pages/invoices.js?v=149"></script>
+<script defer src="src/pages/jobs.js?v=195"></script>
+<script defer src="src/pages/invoices.js?v=195"></script>
 <script defer src="src/pages/schedule.js?v=140"></script>
 <script defer src="src/pages/insights.js?v=140"></script>
 <script src="src/geofence.js"></script>

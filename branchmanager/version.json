@@ -1,5 +1,5 @@
 {
-  "version": 190,
+  "version": 191,
   "released": "2026-04-19",
   "notes": "4 new 10X tools, 31 missing Jobber records inserted, multi-tenant migration SQL + rollout plan"
 }

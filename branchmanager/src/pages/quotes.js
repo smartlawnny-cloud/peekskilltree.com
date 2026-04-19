@@ -505,7 +505,7 @@ var QuotesPage = {
     // ═══ MODE 2: Time & Materials sanity check (hidden until user clicks "Price-check this quote") ═══
     html += '<div style="margin:20px 0 12px;padding:14px;background:#f5f3ff;border:1px dashed #c4b5fd;border-radius:10px;">'
       +   '<div style="font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:4px;">💡 Price Check (Mode 2 — Time & Materials)</div>'
-      +   '<div style="font-size:12px;color:#6d28d9;margin-bottom:10px;">Sanity-check your line-item quote against what the job would cost billed hourly. <strong>Your line-item total should be HIGHER than T&M</strong> — that\'s your profit margin.</div>'
+      +   '<div style="font-size:12px;color:#6d28d9;margin-bottom:10px;">Sanity-check your line-item quote against what the job would cost billed hourly. <strong>Your line-item total should be HIGHER than T&M.</strong></div>'
       +   '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';document.getElementById(\'q-mode-tm\').scrollIntoView({behavior:\'smooth\'});" style="width:100%;padding:12px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;' + (tmData.totalHrs ? 'display:none;' : '') + '">📊 Run T&M Price Check</button>'
       + '</div>';
 

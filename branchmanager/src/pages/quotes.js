@@ -471,10 +471,8 @@ var QuotesPage = {
       + '<div id="q-pertree-total" style="margin-top:12px;text-align:right;font-size:15px;font-weight:700;color:var(--green-dark);"></div>'
       + '</div>';
 
-    // ═══ EQUIPMENT ON THIS JOB — open Property Map to place equipment; ticked auto-sync ═══
-    // Hidden checkboxes below track which pieces are "on the job" (T&M reads them).
-    // User interacts via PropertyMap — dropping a pin auto-ticks the matching checkbox.
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+    // Equipment block rendered below (after Internal Notes) — build string now, inject later
+    var _equipHtml = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">'
       +   '<div>'
       +     '<div style="font-size:14px;font-weight:800;">🛠 Equipment on this job</div>'
@@ -490,7 +488,6 @@ var QuotesPage = {
             : 'No equipment planned yet. Open the map to drag what you\'ll bring.';
         })()
       + '</div>'
-      // Hidden checkboxes — still wired as the source of truth for T&M cost
       + '<div style="display:none;">'
       +   QuotesPage._tmEquipPill('bucket', 'Bucket truck', 75, tmData)
       +   QuotesPage._tmEquipPill('chipper', 'Chipper', 44, tmData)
@@ -527,6 +524,9 @@ var QuotesPage = {
     // Property Map moved to Step 2
 
     html += UI.formField('Internal Notes', 'textarea', 'q-notes', q.notes, { placeholder: 'Notes (not shown to client)' });
+
+    // Equipment block (moved to after Internal Notes per user request)
+    html += _equipHtml;
 
     // Expiry
     html += '<div style="margin-bottom:16px;">'

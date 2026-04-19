@@ -8,6 +8,25 @@ var SettingsPage = {
 
     var html = '<div style="max-width:700px;">';
 
+    // === APPEARANCE ===
+    // Dark-mode button used to live in the topbar; moved here per user request.
+    // Also hidden when running as a PWA (we force-light on install).
+    var _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    var _dark = (document.documentElement.getAttribute('data-theme') === 'dark') || localStorage.getItem('bm-dark-mode') === 'dark';
+    if (!_isStandalone) {
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+        +   '<div>'
+        +     '<div style="font-size:14px;font-weight:700;color:var(--text);">🌓 Dark Mode</div>'
+        +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Desktop only — PWA stays light.</div>'
+        +   '</div>'
+        +   '<label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;flex-shrink:0;">'
+        +     '<input type="checkbox" onchange="toggleDarkMode()"' + (_dark ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'
+        +     '<span style="position:absolute;inset:0;background:' + (_dark ? 'var(--green-dark)' : '#cbd5e1') + ';border-radius:26px;transition:.2s;"></span>'
+        +     '<span style="position:absolute;top:3px;left:' + (_dark ? '25px' : '3px') + ';width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
+        +   '</label>'
+        + '</div>';
+    }
+
     // === ONE-TIME SETUP CHECKLIST ===
     var sgOk2 = (localStorage.getItem('bm-sendgrid-key') || '').length > 10;
     var stripeOk = !!(localStorage.getItem('bm-stripe-base-link'));

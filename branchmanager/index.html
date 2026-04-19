@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 169; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 170; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -395,7 +395,9 @@
 
     /* Safe areas for iPhone notch/home indicator */
     .content { padding-bottom:max(24px, env(safe-area-inset-bottom)) !important; }
-    .toast { bottom:max(24px, env(safe-area-inset-bottom)) !important; left:16px !important; right:16px !important; border-radius:12px !important; }
+    /* Full-width centered toast on mobile — reset the desktop translateX(-50%) since we pin both edges */
+    .toast { bottom:max(24px, env(safe-area-inset-bottom)) !important; left:16px !important; right:16px !important; border-radius:12px !important; transform:translateY(120%) !important; text-align:center !important; }
+    .toast.show { transform:translateY(0) !important; }
     .modal { padding-bottom:env(safe-area-inset-bottom) !important; }
 
     /* z-index hierarchy: sidebar-overlay(150) < sidebar(200) < modal(300) < toast(400) < search(500) */
@@ -814,7 +816,7 @@
           </div>
         </div>
         <button class="btn btn-primary" id="pageAction" style="display:none;">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v169</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v170</span>
       </div>
     </div>
 

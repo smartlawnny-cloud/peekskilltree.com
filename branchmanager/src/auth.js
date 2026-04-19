@@ -215,7 +215,10 @@ var Auth = {
       'clienthub','formbuilder','mediacenter','beforeafter','campaigns','referrals','receptionist',
       'import','backup','settings','crewview','crewperformance','employeecenter','equipment',
       'materials','comms','emailtemplates','customfields','visits','checklists','workflow',
-      'ai','treemeasure','reminders','search'];
+      'ai','treemeasure','reminders','search',
+      // Hub pages + recent additions — were missing, hid them in nav
+      'operations','marketing','tools','branchcam','teamchat','taskreminders',
+      'modeselector','permissions','payroll','dailyinspection','cardone','videoquote'];
 
     if (Auth.role === 'crew_member') {
       return ['crewview','dispatch','schedule','timesheet','employeecenter','budget','notifications'];

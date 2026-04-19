@@ -1966,9 +1966,9 @@ var QuotesPage = {
 
     var key = localStorage.getItem('bm-plantnet-key') || '';
     if (!key) {
-      key = prompt('Paste your PlantNet API key (free at my.plantnet.org):');
-      if (!key) return;
-      localStorage.setItem('bm-plantnet-key', key.trim());
+      // Photo already saved to the line item — don't block. Just skip AI.
+      UI.toast('Photo saved. Add PlantNet key in Settings for auto tree ID.');
+      return;
     }
 
     QuotesPage._identifying = true;

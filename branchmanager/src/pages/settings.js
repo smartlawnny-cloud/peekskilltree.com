@@ -330,10 +330,22 @@ var SettingsPage = {
       + '<div class="stat-card"><div class="stat-label">Quotes</div><div class="stat-value">' + DB.quotes.count() + '</div></div>'
       + '</div></div>';
 
-    // Email (SendGrid) — inline, always first integration shown
+    // ═══ API Keys & Integrations (collapsible group) ═══
+    // Wraps SendGrid, AI, Stripe, Dialpad, Gusto, PlantNet in one foldable section
+    // so the Settings page doesn't feel like a mile of cards.
+    var _intCount = ['bm-sendgrid-key','bm-claude-key','bm-stripe-base-link','bm-dialpad-key','bm-gusto-api-key','bm-plantnet-key']
+      .filter(function(k){ return (localStorage.getItem(k) || '').length > 5; }).length;
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);" ' + (_intCount === 0 ? 'open' : '') + '>'
+      + '<summary style="padding:16px 20px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>🔌 API Keys &amp; Integrations</span>'
+      +   '<span style="font-size:12px;color:var(--text-light);font-weight:500;">' + _intCount + ' / 6 connected · tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:0 20px 16px;border-top:1px solid var(--border);margin-top:0;">';
+
+    // Email (SendGrid)
     var sgKey = localStorage.getItem('bm-sendgrid-key') || '';
     var sgOk = sgKey.length > 10;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (sgOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (sgOk ? 'var(--green-light)' : 'var(--border)') + ';margin-top:16px;margin-bottom:16px;">'
       + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
       + '<div style="width:40px;height:40px;background:#1a82e2;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;">SG</div>'
       + '<div><h3 style="margin:0;">SendGrid Email</h3>'
@@ -418,6 +430,23 @@ var SettingsPage = {
       + '</div>'
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Sign up at <a href="https://gusto.com" target="_blank" style="color:var(--accent);">gusto.com</a> ($40/mo + $6/employee). API token is optional — BM Payroll page exports CSV you upload to Gusto manually each pay period. Get token from Gusto Dev Portal.</p>'
       + '</div>';
+
+    // ── PlantNet (moved inside the API collapsible) ──
+    var _pnKey = localStorage.getItem('bm-plantnet-key') || '';
+    var _pnOk = _pnKey.length > 10;
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (_pnOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+      + '<div style="width:40px;height:40px;background:#15803d;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🌿</div>'
+      + '<div><h3 style="margin:0;">PlantNet (Tree ID 2nd Opinion)</h3>'
+      + '<div style="font-size:12px;color:' + (_pnOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (_pnOk ? '✅ Connected — 2nd Opinion button will use this' : '⚠️ Not connected — 2nd Opinion will prompt for key') + '</div>'
+      + '</div></div>'
+      + '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
+      + '<button onclick="var v=document.getElementById(\'plantnet-key-input\').value.trim();localStorage.setItem(\'bm-plantnet-key\',v);UI.toast(\'PlantNet key saved ✓\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Key</button>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 requests/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" style="color:var(--accent);">my.plantnet.org</a></p>'
+      + '</div>';
+
+    // ═══ close API Keys collapsible ═══
+    html += '</div></details>';
 
     // Photo Storage info
     html += '<div style="background:#f0f7ff;border-radius:12px;padding:14px 18px;border:1px solid #b3d4f5;margin-bottom:16px;display:flex;align-items:center;gap:12px;">'
@@ -650,16 +679,7 @@ var SettingsPage = {
       + '</div>'
       + '</div>';
 
-    // === PLANTNET API KEY ===
-    var _pnKey = localStorage.getItem('bm-plantnet-key') || '';
-    var _pnOk = _pnKey.length > 10;
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<h3 style="margin-bottom:6px;">🌿 PlantNet API Key</h3>'
-      + '<div style="font-size:12px;color:' + (_pnOk ? 'var(--green-dark)' : '#e07c24') + ';margin-bottom:10px;font-weight:600;">' + (_pnOk ? '✅ Connected — 2nd Opinion button will use this' : '⚠️ Not connected — 2nd Opinion will prompt for key') + '</div>'
-      + '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
-      + '<button onclick="var v=document.getElementById(\'plantnet-key-input\').value.trim();localStorage.setItem(\'bm-plantnet-key\',v);UI.toast(\'PlantNet key saved ✓\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Key</button>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 requests/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" style="color:var(--accent);">my.plantnet.org</a></p>'
-      + '</div>';
+    // PlantNet card moved inside the API Keys & Integrations collapsible above.
 
     // === APPEARANCE (placed right under Database Connection per user) ===
     var _dark = (document.documentElement.getAttribute('data-theme') === 'dark') || localStorage.getItem('bm-dark-mode') === 'dark';

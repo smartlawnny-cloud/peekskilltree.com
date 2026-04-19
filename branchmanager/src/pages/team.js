@@ -169,23 +169,8 @@ var TeamPage = {
           { value: 'crew_member', label: 'Crew Member — Clock in/out, today\'s jobs' }
         ]})
 
-      // ISA Certification section
-      + '<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">'
-      + '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">ISA / TCIA Certification</div>'
-      + UI.formField('Certification Type', 'select', 'tm-cert-type', m.isaCertType || '', { options: [
-          { value: '', label: 'None / Not certified' },
-          { value: 'isa_arborist', label: 'ISA Certified Arborist' },
-          { value: 'isa_bcma', label: 'ISA Board Certified Master Arborist' },
-          { value: 'isa_mu', label: 'ISA Municipal Specialist' },
-          { value: 'isa_uu', label: 'ISA Utility Specialist' },
-          { value: 'tcia', label: 'TCIA Accredited' },
-          { value: 'other', label: 'Other certification' }
-        ]})
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
-      + UI.formField('Credential / Badge #', 'text', 'tm-cert-number', m.isaCertNumber, { placeholder: 'e.g. SO-10897TX' })
-      + UI.formField('Expiration Date', 'date', 'tm-cert-expiry', m.isaCertExpiry, {})
-      + '</div>'
-      + '</div>'
+      // ISA Certification section removed per user request — data still preserved on existing members,
+      // just no UI to edit it. If you want it back, this block was here.
       + '</form>';
 
     // If editing an existing member w/ email — show "Create / Reset Login" option

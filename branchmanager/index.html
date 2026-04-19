@@ -874,7 +874,7 @@
 <script defer src="src/pages/comms.js?v=140"></script>
 <script defer src="src/pages/messaging.js?v=140"></script>
 <script defer src="src/pages/profitloss.js?v=160"></script>
-<script src="src/photos.js?v=232"></script>
+<script src="src/photos.js?v=233"></script>
 <script src="src/dailyinspection.js"></script>
 <script defer src="src/pages/clientmap.js"></script>
 <script defer src="src/pages/photomap.js"></script>
@@ -1012,6 +1012,7 @@ var pageConfigs = {
   dispatch: { title: 'Dispatch', action: 'Open Route', actionFn: 'DispatchPage.openRoute()' },
   clientmap: { title: 'Client Map', action: null },
   photomap: { title: 'Photo Map', action: null },
+  branchcam: { title: 'Branch Cam Library', action: null },
   messaging: { title: 'Messages', action: null },
   equipment: { title: 'Equipment', action: '+ Add', actionFn: 'EquipmentPage.showForm()' },
   jobcosting: { title: 'Job Costing', action: null },
@@ -1124,7 +1125,8 @@ var ToolsHub = {
     var tabs = [
       ['calculators', 'Calculators'],
       ['cardone', '10X Tools'],
-      ['videoquote', 'Video Quote']
+      ['videoquote', 'Video Quote'],
+      ['branchcam', '📸 Branch Cam']
     ];
     var r = _renderHubTabs('_toolsTab', tabs, 'calculators');
     var body = '';
@@ -1132,6 +1134,7 @@ var ToolsHub = {
       if (r.tab === 'calculators') body = pageRenderers.calculators();
       else if (r.tab === 'cardone') body = CardoneTools.render();
       else if (r.tab === 'videoquote') body = VideoQuote.render();
+      else if (r.tab === 'branchcam') { setTimeout(function(){ Photos.openLibrary(); }, 0); body = '<div id="page-content"></div>'; }
     } catch (e) { body = '<div style="padding:16px;color:var(--red);">Error loading tab: ' + e.message + '</div>'; }
     return r.html + body;
   }
@@ -1192,6 +1195,7 @@ var pageRenderers = {
   dispatch: function() { return DispatchPage.render(); },
   clientmap: function() { return ClientMapPage.render(); },
   photomap: function() { return PhotoMap.render(); },
+  branchcam: function() { setTimeout(function() { Photos.openLibrary(); }, 0); return '<div id="page-content"></div>'; },
   messaging: function() { return MessagingPage.render(); },
   equipment: function() { return EquipmentPage.render(); },
   jobcosting: function() { return JobCosting.render(); },

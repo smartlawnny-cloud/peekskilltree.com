@@ -1,5 +1,5 @@
 {
-  "version": 232,
+  "version": 233,
   "released": "2026-04-19",
-  "notes": "Branch Cam launched. Every photo now stamped with date+time, GPS coordinates, and Branch Cam brand pill before upload (CompanyCam-style proof-of-work). GPS captured once per batch (60s cache). Works for both cloud + local fallback. Requires SQL: ALTER TABLE photos ADD COLUMN gps_lat numeric, ADD COLUMN gps_lng numeric;"
+  "notes": "Branch Cam expansion: tag chips replace single label (Before/After/Hazard/Damage/Equipment/Permit/Receipt/Crew/Property + custom). Branch Cam Library tab added under Tools — search by client/job, filter by tag, grid of every photo across all jobs. Requires SQL: ALTER TABLE photos ADD COLUMN tags text[];"
 }

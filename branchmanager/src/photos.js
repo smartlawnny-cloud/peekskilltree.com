@@ -233,7 +233,8 @@ var Photos = {
           label: row.label || '',
           date: row.taken_at || row.created_at,
           gps_lat: row.gps_lat || null,
-          gps_lng: row.gps_lng || null
+          gps_lng: row.gps_lng || null,
+          tags: Array.isArray(row.tags) ? row.tags : (row.label ? row.label.split(',').map(function(s){return s.trim();}).filter(Boolean) : [])
         });
       });
       Object.keys(groups).forEach(function(k) {
@@ -277,29 +278,48 @@ var Photos = {
     try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e) { return []; }
   },
 
+  // Standard tags for tree-service work
+  STANDARD_TAGS: ['Before', 'After', 'Hazard', 'Damage', 'Equipment', 'Permit', 'Receipt', 'Crew', 'Property'],
+
   viewFull: function(recordType, recordId, index) {
     var photos = Photos.getPhotos(recordType, recordId);
     if (!photos[index]) return;
     var p = photos[index];
+    var tags = Photos._getTags(p);
 
     var overlay = document.createElement('div');
     overlay.id = 'photo-viewer';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:16px;overflow-y:auto;';
 
-    // Build DOM safely — no innerHTML with unescaped URL (XSS risk)
     var img = document.createElement('img');
     img.src = p.url;
-    img.style.cssText = 'max-width:90vw;max-height:80vh;border-radius:8px;object-fit:contain;';
+    img.style.cssText = 'max-width:90vw;max-height:65vh;border-radius:8px;object-fit:contain;';
     overlay.appendChild(img);
 
     var caption = document.createElement('div');
-    caption.style.cssText = 'color:#fff;margin-top:12px;font-size:14px;';
-    caption.textContent = (p.name || '') + ' — ' + (p.date ? UI.dateShort(p.date) : '');
+    caption.style.cssText = 'color:#fff;margin-top:10px;font-size:13px;text-align:center;';
+    var capParts = [];
+    if (p.date) capParts.push(UI.dateShort(p.date));
+    if (p.gps_lat) capParts.push('📍 ' + p.gps_lat.toFixed(4) + ', ' + p.gps_lng.toFixed(4));
+    caption.textContent = capParts.join('  ·  ');
     overlay.appendChild(caption);
 
+    // Tag chip picker
+    var tagWrap = document.createElement('div');
+    tagWrap.style.cssText = 'margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:90vw;';
+    Photos.STANDARD_TAGS.forEach(function(t) {
+      var on = tags.indexOf(t) !== -1;
+      var chip = document.createElement('button');
+      chip.textContent = t;
+      chip.style.cssText = 'background:' + (on ? '#2e7d32' : 'rgba(255,255,255,0.15)') + ';color:#fff;border:1px solid ' + (on ? '#2e7d32' : 'rgba(255,255,255,0.3)') + ';padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;';
+      chip.onclick = function() { Photos._toggleTag(recordType, recordId, index, t); };
+      tagWrap.appendChild(chip);
+    });
+    overlay.appendChild(tagWrap);
+
     var btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex;gap:12px;margin-top:12px;';
-    btnRow.innerHTML = '<button onclick="Photos._labelPhoto(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#fff;color:#333;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Label</button>'
+    btnRow.style.cssText = 'display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center;';
+    btnRow.innerHTML = '<button onclick="Photos._customTag(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#fff;color:#333;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">+ Custom tag</button>'
       + '<button onclick="Photos._deletePhoto(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#c0392b;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Delete</button>'
       + '<button onclick="document.getElementById(\'photo-viewer\').remove()" style="background:#555;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Close</button>';
     overlay.appendChild(btnRow);
@@ -307,24 +327,148 @@ var Photos = {
     document.body.appendChild(overlay);
   },
 
-  _labelPhoto: function(recordType, recordId, index) {
-    var label = prompt('Label this photo (e.g. "Before", "After", "Damage"):');
-    if (label === null) return;
+  _getTags: function(p) {
+    if (Array.isArray(p.tags)) return p.tags;
+    if (p.label) return p.label.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+    return [];
+  },
+
+  _saveTags: function(recordType, recordId, index, tags) {
     var key = 'bm-photos-' + recordType + '-' + recordId;
     var photos = [];
     try { photos = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
-    if (photos[index]) {
-      photos[index].label = label;
-      localStorage.setItem(key, JSON.stringify(photos));
-      // Sync to cloud
-      if (photos[index].id && SupabaseDB && SupabaseDB.ready) {
-        SupabaseDB.client.from('photos').update({ label: label }).eq('id', photos[index].id).then(function(res) {
-          if (res.error) console.warn('Photos label sync failed:', res.error.message);
-        });
-      }
-      document.getElementById('photo-viewer').remove();
-      UI.toast('Photo labeled: ' + label);
+    if (!photos[index]) return null;
+    photos[index].tags = tags;
+    photos[index].label = tags.join(', '); // mirror for legacy compat
+    localStorage.setItem(key, JSON.stringify(photos));
+    if (photos[index].id && SupabaseDB && SupabaseDB.ready) {
+      SupabaseDB.client.from('photos').update({ tags: tags, label: tags.join(', ') }).eq('id', photos[index].id).then(function(res) {
+        if (res.error) console.warn('Photos tags sync failed:', res.error.message);
+      });
     }
+    return photos[index];
+  },
+
+  _toggleTag: function(recordType, recordId, index, tag) {
+    var photos = Photos.getPhotos(recordType, recordId);
+    if (!photos[index]) return;
+    var tags = Photos._getTags(photos[index]);
+    var i = tags.indexOf(tag);
+    if (i === -1) tags.push(tag); else tags.splice(i, 1);
+    Photos._saveTags(recordType, recordId, index, tags);
+    document.getElementById('photo-viewer').remove();
+    Photos.viewFull(recordType, recordId, index);
+  },
+
+  _customTag: function(recordType, recordId, index) {
+    var t = prompt('Custom tag:');
+    if (!t) return;
+    t = t.trim();
+    if (!t) return;
+    var photos = Photos.getPhotos(recordType, recordId);
+    if (!photos[index]) return;
+    var tags = Photos._getTags(photos[index]);
+    if (tags.indexOf(t) === -1) tags.push(t);
+    Photos._saveTags(recordType, recordId, index, tags);
+    document.getElementById('photo-viewer').remove();
+    Photos.viewFull(recordType, recordId, index);
+  },
+
+  // ============ BRANCH CAM LIBRARY ============
+  // All-photos browser with tag filter + search by client/job
+  openLibrary: function() {
+    var container = document.getElementById('page-content');
+    if (!container) return;
+
+    // Aggregate every photo from every bm-photos-* key
+    var all = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('bm-photos-') !== 0) continue;
+      var parts = k.replace('bm-photos-', '').split('-');
+      var recordType = parts.shift();
+      var recordId = parts.join('-');
+      var arr = [];
+      try { arr = JSON.parse(localStorage.getItem(k)) || []; } catch(e) { continue; }
+      arr.forEach(function(p, idx) {
+        all.push({
+          recordType: recordType,
+          recordId: recordId,
+          index: idx,
+          url: p.url,
+          date: p.date,
+          tags: Photos._getTags(p),
+          gps_lat: p.gps_lat,
+          gps_lng: p.gps_lng
+        });
+      });
+    }
+    // Sort newest first
+    all.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+
+    // Build tag tally
+    var tagCounts = {};
+    all.forEach(function(ph) { ph.tags.forEach(function(t) { tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
+    var allTags = Object.keys(tagCounts).sort(function(a, b) { return tagCounts[b] - tagCounts[a]; });
+
+    var activeTag = Photos._libFilter || '';
+    var activeQuery = Photos._libQuery || '';
+
+    // Filter
+    var clientLookup = {};
+    if (typeof DB !== 'undefined' && DB.clients) {
+      DB.clients.list().forEach(function(c) { clientLookup[c.id] = c.name || ''; });
+    }
+    var filtered = all.filter(function(ph) {
+      if (activeTag && ph.tags.indexOf(activeTag) === -1) return false;
+      if (activeQuery) {
+        var q = activeQuery.toLowerCase();
+        var hay = (ph.recordType + ' ' + ph.recordId + ' ' + (clientLookup[ph.recordId] || '') + ' ' + ph.tags.join(' ')).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    var html = '<div class="page-header"><h1>📸 Branch Cam Library</h1>'
+      + '<p style="color:var(--text-light);font-size:13px;">' + all.length + ' total photos · ' + filtered.length + ' shown</p></div>';
+
+    // Search box
+    html += '<div style="background:var(--white);padding:14px 16px;border-radius:12px;margin-bottom:14px;border:1px solid var(--border);">'
+      + '<input id="branchcam-search" type="text" placeholder="Search by client, job ID, tag…" value="' + activeQuery.replace(/"/g, '&quot;') + '" '
+      +   'oninput="Photos._libQuery=this.value; clearTimeout(window._lqT); window._lqT=setTimeout(function(){Photos.openLibrary();},250);" '
+      +   'style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;">'
+      + '</div>';
+
+    // Tag chips
+    if (allTags.length) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">';
+      html += '<button onclick="Photos._libFilter=\'\'; Photos.openLibrary();" style="background:' + (!activeTag ? '#2e7d32' : 'var(--white)') + ';color:' + (!activeTag ? '#fff' : 'var(--text)') + ';border:1px solid ' + (!activeTag ? '#2e7d32' : 'var(--border)') + ';padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;">All (' + all.length + ')</button>';
+      allTags.forEach(function(t) {
+        var on = activeTag === t;
+        html += '<button onclick="Photos._libFilter=\'' + t.replace(/'/g, "\\'") + '\'; Photos.openLibrary();" style="background:' + (on ? '#2e7d32' : 'var(--white)') + ';color:' + (on ? '#fff' : 'var(--text)') + ';border:1px solid ' + (on ? '#2e7d32' : 'var(--border)') + ';padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;">' + t + ' (' + tagCounts[t] + ')</button>';
+      });
+      html += '</div>';
+    }
+
+    // Grid
+    if (!filtered.length) {
+      html += '<div style="text-align:center;padding:40px;color:var(--text-light);">No photos match.</div>';
+    } else {
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">';
+      filtered.forEach(function(ph) {
+        var subtitle = clientLookup[ph.recordId] || (ph.recordType + ':' + ph.recordId.substring(0,6));
+        html += '<div style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;cursor:pointer;background:#000;" '
+          + 'onclick="Photos.viewFull(\'' + ph.recordType + '\', \'' + ph.recordId + '\', ' + ph.index + ')">'
+          + '<img src="' + ph.url + '" loading="lazy" style="width:100%;height:100%;object-fit:cover;">'
+          + '<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.75));padding:6px 8px;color:#fff;font-size:10px;">'
+          + '<div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + subtitle + '</div>'
+          + '<div style="opacity:0.8;">' + (ph.date ? UI.dateShort(ph.date) : '') + '</div>'
+          + '</div></div>';
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
   },
 
   _deletePhoto: function(recordType, recordId, index) {

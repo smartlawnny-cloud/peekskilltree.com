@@ -1737,15 +1737,32 @@ var QuotesPage = {
     var subtotalCost = laborCost + equipCost + insuranceCost + disposal;
     var tmTotal = Math.round(subtotalCost * r.markup);
 
-    // Show breakdown
+    // Show detailed per-piece breakdown
     var breakdown = document.getElementById('q-tm-breakdown');
     if (breakdown) {
-      breakdown.innerHTML = '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Labor</span><span>' + UI.money(laborCost) + '</span></div>'
-        + '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Equipment</span><span>' + UI.money(equipCost) + '</span></div>'
-        + '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Insurance (31%)</span><span>' + UI.money(insuranceCost) + '</span></div>'
+      var rows = '';
+      // Labor lines — only show ones with actual hours
+      if (climberHrs > 0) {
+        rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Climber — ' + climberHrs + 'hr × $' + r.climber + '/hr</span><span>' + UI.money(climberHrs * r.climber) + '</span></div>';
+      }
+      if (groundHrs > 0 && groundCount > 0) {
+        rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Ground crew — ' + groundCount + ' × ' + groundHrs + 'hr × $' + r.ground + '/hr</span><span>' + UI.money(groundCount * groundHrs * r.ground) + '</span></div>';
+      }
+      // Equipment lines — only active pieces
+      if (bucket && totalHrs > 0) rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Bucket truck — ' + totalHrs + 'hr × $' + r.bucket + '/hr</span><span>' + UI.money(totalHrs * r.bucket) + '</span></div>';
+      if (chipper && totalHrs > 0) rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Chipper — ' + totalHrs + 'hr × $' + r.chipper + '/hr</span><span>' + UI.money(totalHrs * r.chipper) + '</span></div>';
+      if (crane && totalHrs > 0) rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Crane — ' + totalHrs + 'hr × $' + r.crane + '/hr</span><span>' + UI.money(totalHrs * r.crane) + '</span></div>';
+      if (stumpGrinder && totalHrs > 0) rows += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>Stump grinder — ' + totalHrs + 'hr × $' + r.stumpGrinder + '/hr</span><span>' + UI.money(totalHrs * r.stumpGrinder) + '</span></div>';
+
+      if (!rows) rows = '<div style="font-size:12px;color:var(--text-light);padding:4px 0;">Enter crew hours + check equipment above to see cost breakdown.</div>';
+
+      breakdown.innerHTML = rows
+        + (rows !== '' && (laborCost > 0 || equipCost > 0) ? '<div style="display:flex;justify-content:space-between;padding:6px 0 3px;border-top:1px dashed var(--border);margin-top:4px;"><span>Labor subtotal</span><span>' + UI.money(laborCost) + '</span></div>' : '')
+        + (equipCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Equipment subtotal</span><span>' + UI.money(equipCost) + '</span></div>' : '')
+        + (insuranceCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Insurance + overhead (31%)</span><span>' + UI.money(insuranceCost) + '</span></div>' : '')
         + (disposal > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Disposal</span><span>' + UI.money(disposal) + '</span></div>' : '')
-        + '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);font-weight:600;"><span>Cost</span><span>' + UI.money(subtotalCost) + '</span></div>'
-        + '<div style="display:flex;justify-content:space-between;padding:3px 0;font-weight:700;color:var(--accent);"><span>T&M Price (1.5x)</span><span>' + UI.money(tmTotal) + '</span></div>';
+        + (subtotalCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);font-weight:600;"><span>Cost</span><span>' + UI.money(subtotalCost) + '</span></div>' : '')
+        + (tmTotal > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;font-weight:700;color:var(--accent);"><span>T&M Price (1.5× markup)</span><span>' + UI.money(tmTotal) + '</span></div>' : '');
     }
     var tmTotalEl = document.getElementById('q-tm-total');
     if (tmTotalEl) tmTotalEl.textContent = 'T&M Total: ' + UI.money(tmTotal);

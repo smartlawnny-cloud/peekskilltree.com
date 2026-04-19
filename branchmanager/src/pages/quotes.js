@@ -1955,8 +1955,7 @@ var QuotesPage = {
   },
 
   _identifyTree: function(images, rowIndex) {
-    // Tree ID via PlantNet — free, no Claude tokens consumed.
-    // PlantNet returns species only; DBH/condition/price get sane defaults.
+    // Smart fallback: try PlantNet first (free species-only), then Claude (rich DBH+price+condition).
     var imgArr = Array.isArray(images) ? images : [images];
 
     if (QuotesPage._identifying) {
@@ -1964,17 +1963,23 @@ var QuotesPage = {
       return;
     }
 
-    var key = localStorage.getItem('bm-plantnet-key') || '';
-    if (!key) {
-      // Photo already saved to the line item — don't block. Just skip AI.
-      UI.toast('Photo saved. Add PlantNet key in Settings for auto tree ID.');
+    var plantNetKey = localStorage.getItem('bm-plantnet-key') || '';
+    var claudeKey = localStorage.getItem('bm-claude-key') || '';
+
+    if (!plantNetKey && !claudeKey) {
+      UI.toast('Photo saved. Add PlantNet or Claude key in Settings for auto tree ID.');
+      return;
+    }
+
+    // No PlantNet? Go straight to Claude fallback.
+    if (!plantNetKey) {
+      QuotesPage._identifyTreeClaude(imgArr, rowIndex);
       return;
     }
 
     QuotesPage._identifying = true;
     UI.toast(imgArr.length > 1 ? '🌿 Identifying with PlantNet (' + imgArr.length + ' photos)…' : '🌿 Identifying with PlantNet…');
 
-    // PlantNet wants multipart/form-data with image blobs
     var form = new FormData();
     imgArr.slice(0, 5).forEach(function(dataUrl, i) {
       var parts = dataUrl.split(',');
@@ -1986,21 +1991,32 @@ var QuotesPage = {
       form.append('organs', 'auto');
     });
 
-    fetch('https://my-api.plantnet.org/v2/identify/all?api-key=' + encodeURIComponent(key) + '&nb-results=3', {
+    fetch('https://my-api.plantnet.org/v2/identify/all?api-key=' + encodeURIComponent(plantNetKey) + '&nb-results=3', {
       method: 'POST',
       body: form
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
+      // PlantNet failed → try Claude if we have a key
       if (data.statusCode === 404 || data.error) {
-        UI.toast('PlantNet: ' + (data.message || data.error || 'no match'), 'error');
         QuotesPage._identifying = false;
+        if (claudeKey) {
+          UI.toast('PlantNet miss — trying Claude…');
+          QuotesPage._identifyTreeClaude(imgArr, rowIndex);
+        } else {
+          UI.toast('PlantNet: ' + (data.message || data.error || 'no match'), 'error');
+        }
         return;
       }
       var results = data.results || [];
       if (!results.length) {
-        UI.toast('PlantNet: no species matched — fill in manually');
         QuotesPage._identifying = false;
+        if (claudeKey) {
+          UI.toast('No species match — trying Claude…');
+          QuotesPage._identifyTreeClaude(imgArr, rowIndex);
+        } else {
+          UI.toast('PlantNet: no species matched — fill in manually');
+        }
         return;
       }
 
@@ -2049,9 +2065,80 @@ var QuotesPage = {
     })
     .catch(function(e) {
       console.warn('PlantNet error:', e);
-      UI.toast('PlantNet unavailable — fill in manually', 'error');
       QuotesPage._identifying = false;
+      if (claudeKey) {
+        UI.toast('PlantNet unreachable — trying Claude…');
+        QuotesPage._identifyTreeClaude(imgArr, rowIndex);
+      } else {
+        UI.toast('PlantNet unavailable — fill in manually', 'error');
+      }
     });
+  },
+
+  // Claude-based tree ID (richer than PlantNet — gets DBH + condition + price suggestion)
+  _identifyTreeClaude: function(imgArr, rowIndex) {
+    if (QuotesPage._identifying) return;
+    var aiKey = localStorage.getItem('bm-claude-key');
+    if (!aiKey) { UI.toast('No AI key configured', 'error'); return; }
+
+    QuotesPage._identifying = true;
+    UI.toast(imgArr.length > 1 ? '🤖 Claude analyzing ' + imgArr.length + ' photos…' : '🤖 Claude identifying tree…');
+
+    var content = imgArr.map(function(dataUrl) {
+      return { type: 'image', source: { type: 'base64', media_type: dataUrl.split(';')[0].split(':')[1], data: dataUrl.split(',')[1] } };
+    });
+    content.push({
+      type: 'text',
+      text: 'You are a certified arborist in ZIP ' + (localStorage.getItem('bm-zip') || '10566') + '. '
+        + (imgArr.length > 1 ? 'Multiple photos of the SAME tree. ' : '')
+        + (QuotesPage._pendingService ? 'Service: ' + QuotesPage._pendingService + '. ' : 'Pick most likely service (Tree Removal/Pruning/Stump Grinding/Cabling/Clean Up). ')
+        + 'Respond ONLY JSON: {"species":"Common","dbh":"inches as number","heightFt":"feet as number","condition":"good/fair/poor/dead","notes":"1 sentence","suggestedService":"name","diseases":"top risk"}'
+    });
+
+    fetch('https://ltpivkqahvplapyagljt.supabase.co/functions/v1/ai-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: aiKey, model: 'claude-sonnet-4-5', max_tokens: 400, messages: [{ role: 'user', content: content }] })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) { UI.toast('Claude error: ' + (data.error.message || data.error.type || 'unknown'), 'error'); QuotesPage._identifying = false; return; }
+      var text = data.content && data.content[0] ? data.content[0].text : '';
+      if (!text) { UI.toast('Claude empty — check key', 'error'); QuotesPage._identifying = false; return; }
+      try {
+        var match = text.match(/\{[\s\S]*\}/);
+        var tree = JSON.parse(match[0]);
+        var rows = document.querySelectorAll('.quote-item-row');
+        var row = rows[rowIndex];
+        if (row) {
+          var serviceEl = row.querySelector('.q-item-service');
+          var descEl = row.querySelector('.q-item-desc');
+          var rateEl = row.querySelector('.q-item-rate');
+          var qtyEl = row.querySelector('.q-item-qty');
+          if (serviceEl) serviceEl.value = tree.suggestedService || 'Tree Removal';
+          var wrapEl = row.closest('.q-item-wrap');
+          var speciesEl = wrapEl ? wrapEl.querySelector('.q-item-species') : null;
+          if (speciesEl) speciesEl.value = tree.species || '';
+          var heightStr = tree.heightFt ? ' — ' + tree.heightFt + "' tall" : '';
+          if (descEl) descEl.value = (tree.dbh || '?') + '" DBH' + heightStr + ' — ' + (tree.condition || '') + (tree.notes ? ' — ' + tree.notes : '');
+          if (qtyEl) qtyEl.value = '1';
+          var dbh = parseInt(tree.dbh) || 18;
+          var suggestedPrice = Math.round(dbh * 100 / 50) * 50;
+          if (rateEl) rateEl.value = suggestedPrice;
+          QuotesPage.calcTotal();
+          UI.toast('🌳 ' + tree.species + ' · ' + tree.dbh + '" DBH · $' + suggestedPrice);
+          if (descEl) { QuotesPage._syncSummary(descEl); QuotesPage._updateFormula(descEl); }
+          var wrap = row.closest('.q-item-wrap');
+          if (wrap) {
+            var wb = wrap.querySelector('.q-item-body'); if (wb) wb.style.display = 'block';
+            var wc = wrap.querySelector('.q-item-chevron'); if (wc) wc.style.transform = 'rotate(0deg)';
+            wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      } catch(e) { UI.toast('Could not parse Claude response — fill in manually'); }
+      QuotesPage._identifying = false;
+    })
+    .catch(function() { UI.toast('Claude unavailable — fill in manually'); QuotesPage._identifying = false; });
   },
 
   // ── Dual Pricing (removed tabs — now sequential) ──

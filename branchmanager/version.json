@@ -1,5 +1,5 @@
 {
-  "version": 251,
+  "version": 252,
   "released": "2026-04-19",
-  "notes": "Photo upload: don't block quote photo upload when PlantNet key is missing — save the photo, skip AI, show friendly toast"
+  "notes": "Tree ID smart fallback — PlantNet (free) first, Claude if PlantNet misses or not keyed; cloudkeys.js added to SW cache; extra pages in nav allowlist"
 }

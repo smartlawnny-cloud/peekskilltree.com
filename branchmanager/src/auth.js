@@ -218,7 +218,8 @@ var Auth = {
       'ai','treemeasure','reminders','search',
       // Hub pages + recent additions — were missing, hid them in nav
       'operations','marketing','tools','branchcam','teamchat','taskreminders',
-      'modeselector','permissions','payroll','dailyinspection','cardone','videoquote'];
+      'modeselector','permissions','payroll','dailyinspection','cardone','videoquote',
+      'aitreeid','estimator','photomap','recurring'];
 
     if (Auth.role === 'crew_member') {
       return ['crewview','dispatch','schedule','timesheet','employeecenter','budget','notifications'];

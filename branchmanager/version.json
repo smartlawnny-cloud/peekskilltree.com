@@ -1,5 +1,5 @@
 {
-  "version": 247,
+  "version": 248,
   "released": "2026-04-19",
-  "notes": "Tree ID switched from Claude to PlantNet (free, no token cost) + universal '+ New' button hidden permanently across all pages (jobs, quotes, requests, invoices)"
+  "notes": "Fix Operations hub — dispatch map now initializes when page=operations + opsTab=dispatch (was only firing on standalone dispatch page)"
 }

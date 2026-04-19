@@ -1,5 +1,5 @@
 {
-  "version": 231,
+  "version": 232,
   "released": "2026-04-19",
-  "notes": "Jobber quote-photo migration tool. Settings → Database & Storage now has a button to move base64 photos out of quote line_items into the job-photos bucket + creates photos metadata rows. Re-runnable, skips already-URL'd entries."
+  "notes": "Branch Cam launched. Every photo now stamped with date+time, GPS coordinates, and Branch Cam brand pill before upload (CompanyCam-style proof-of-work). GPS captured once per batch (60s cache). Works for both cloud + local fallback. Requires SQL: ALTER TABLE photos ADD COLUMN gps_lat numeric, ADD COLUMN gps_lng numeric;"
 }

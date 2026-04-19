@@ -1,10 +1,120 @@
 /**
- * Branch Manager — Photo Upload & Gallery
+ * Branch Cam — Photo Upload & Gallery
  * Attach before/after photos to jobs, quotes, and clients
+ * GPS + timestamp burned into every shot for proof-of-work
  * Uses Supabase Storage when connected, falls back to base64 in localStorage
  */
 var Photos = {
   BUCKET: 'job-photos',
+  BRAND: 'Branch Cam',
+
+  // Capture GPS once, reuse across uploads in the same batch (saves prompts + battery)
+  _lastGps: null,
+  _lastGpsTime: 0,
+  _getGps: function() {
+    return new Promise(function(resolve) {
+      // Reuse if fetched in last 60s
+      if (Photos._lastGps && (Date.now() - Photos._lastGpsTime) < 60000) {
+        return resolve(Photos._lastGps);
+      }
+      if (!navigator.geolocation) return resolve(null);
+      var done = false;
+      var timer = setTimeout(function() { if (!done) { done = true; resolve(null); } }, 4000);
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        if (done) return; done = true; clearTimeout(timer);
+        Photos._lastGps = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+        Photos._lastGpsTime = Date.now();
+        resolve(Photos._lastGps);
+      }, function() {
+        if (done) return; done = true; clearTimeout(timer); resolve(null);
+      }, { enableHighAccuracy: true, timeout: 4000, maximumAge: 60000 });
+    });
+  },
+
+  // Burn watermark (date/time + GPS + Branch Cam brand) into image, return Blob
+  _stampImage: function(file, gps) {
+    return new Promise(function(resolve) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          // Resize to max 1600px (CompanyCam-style — keep readable but slim)
+          var maxSize = 1600;
+          var w = img.width, h = img.height;
+          if (w > maxSize || h > maxSize) {
+            if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+            else { w = Math.round(w * maxSize / h); h = maxSize; }
+          }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          // --- Watermark band ---
+          var pad = Math.max(10, Math.round(w * 0.012));
+          var fontPx = Math.max(14, Math.round(w * 0.024));
+          ctx.font = '600 ' + fontPx + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+          var smallPx = Math.max(11, Math.round(w * 0.018));
+
+          var d = new Date();
+          var dateStr = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+          var timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          var gpsStr = gps ? (gps.lat.toFixed(5) + '°, ' + gps.lng.toFixed(5) + '°') : 'GPS unavailable';
+
+          var bandH = Math.round(fontPx * 2.6 + smallPx * 1.6 + pad * 1.4);
+          // Gradient bg for readability over any image
+          var grad = ctx.createLinearGradient(0, h - bandH, 0, h);
+          grad.addColorStop(0, 'rgba(0,0,0,0)');
+          grad.addColorStop(0.4, 'rgba(0,0,0,0.55)');
+          grad.addColorStop(1, 'rgba(0,0,0,0.85)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, h - bandH, w, bandH);
+
+          // Brand pill (top-left of band)
+          var pillTxt = '🌳 ' + Photos.BRAND;
+          ctx.font = '700 ' + smallPx + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+          var pillW = ctx.measureText(pillTxt).width + smallPx * 1.4;
+          var pillH = smallPx * 1.8;
+          var pillY = h - bandH + pad * 0.6;
+          ctx.fillStyle = 'rgba(46, 125, 50, 0.95)';
+          Photos._roundRect(ctx, pad, pillY, pillW, pillH, pillH / 2);
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(pillTxt, pad + smallPx * 0.7, pillY + pillH / 2);
+
+          // Date + time (left, big)
+          ctx.font = '700 ' + fontPx + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillStyle = '#fff';
+          ctx.fillText(dateStr + ' · ' + timeStr, pad, h - pad - smallPx - 4);
+
+          // GPS (bottom-left, small)
+          ctx.font = '500 ' + smallPx + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.fillText('📍 ' + gpsStr, pad, h - pad);
+
+          canvas.toBlob(function(blob) {
+            resolve(blob || file);
+          }, 'image/jpeg', 0.85);
+        };
+        img.onerror = function() { resolve(file); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function() { resolve(file); };
+      reader.readAsDataURL(file);
+    });
+  },
+
+  _roundRect: function(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  },
 
   // Render upload button + gallery for a record
   renderGallery: function(recordType, recordId) {
@@ -38,16 +148,23 @@ var Photos = {
     var files = event.target.files;
     if (!files || !files.length) return;
 
+    // Get GPS once for the whole batch (in parallel with first file read)
+    var gpsPromise = Photos._getGps();
+
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
-      UI.toast('Uploading ' + file.name + '...');
+      UI.toast('Stamping ' + file.name + '...');
+
+      // Branch Cam stamp: timestamp + GPS + brand
+      var gps = await gpsPromise;
+      var stamped = await Photos._stampImage(file, gps);
 
       if (SupabaseDB && SupabaseDB.ready) {
         // Upload to Supabase Storage + write metadata row to `photos` table
         try {
-          var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          var safeName = (file.name || 'photo.jpg').replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.[^.]+$/, '.jpg');
           var path = recordType + '/' + recordId + '/' + Date.now() + '_' + safeName;
-          var { error } = await SupabaseDB.client.storage.from(Photos.BUCKET).upload(path, file);
+          var { error } = await SupabaseDB.client.storage.from(Photos.BUCKET).upload(path, stamped, { contentType: 'image/jpeg' });
           if (error) throw error;
           var { data: urlData } = SupabaseDB.client.storage.from(Photos.BUCKET).getPublicUrl(path);
 
@@ -60,6 +177,7 @@ var Photos = {
             label: '',
             taken_at: new Date().toISOString()
           };
+          if (gps) { meta.gps_lat = gps.lat; meta.gps_lng = gps.lng; }
           var tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
           if (tid) meta.tenant_id = tid;
 
@@ -113,7 +231,9 @@ var Photos = {
           storage_path: row.storage_path,
           name: row.name,
           label: row.label || '',
-          date: row.taken_at || row.created_at
+          date: row.taken_at || row.created_at,
+          gps_lat: row.gps_lat || null,
+          gps_lng: row.gps_lng || null
         });
       });
       Object.keys(groups).forEach(function(k) {
@@ -125,28 +245,22 @@ var Photos = {
     }
   },
 
-  _uploadLocal: function(file, recordType, recordId) {
+  _uploadLocal: async function(file, recordType, recordId) {
+    // Stamp with Branch Cam watermark even in local-only mode
+    var gps = await Photos._getGps();
+    var stamped = await Photos._stampImage(file, gps);
     var reader = new FileReader();
     reader.onload = function(e) {
-      // Resize to max 800px to save localStorage space
-      var img = new Image();
-      img.onload = function() {
-        var canvas = document.createElement('canvas');
-        var maxSize = 800;
-        var w = img.width, h = img.height;
-        if (w > maxSize || h > maxSize) {
-          if (w > h) { h = h * maxSize / w; w = maxSize; }
-          else { w = w * maxSize / h; h = maxSize; }
-        }
-        canvas.width = w;
-        canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        Photos._savePhoto(recordType, recordId, { url: dataUrl, name: file.name, date: new Date().toISOString(), label: '' });
-      };
-      img.src = e.target.result;
+      Photos._savePhoto(recordType, recordId, {
+        url: e.target.result,
+        name: file.name,
+        date: new Date().toISOString(),
+        label: '',
+        gps_lat: gps ? gps.lat : null,
+        gps_lng: gps ? gps.lng : null
+      });
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(stamped);
   },
 
   _savePhoto: function(recordType, recordId, photo) {

@@ -25,107 +25,129 @@ var QuotesPage = {
       setTimeout(function() { QuotesPage.showDetail(_pid); }, 50);
     }
     var all = DB.quotes.getAll();
-    var draft = all.filter(function(q) { return q.status === 'draft'; }).length;
-    var sent = all.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).length;
-    var approved = all.filter(function(q) { return q.status === 'approved'; }).length;
+    var now7ago = new Date(Date.now() - 7 * 86400000);
 
-    // Jobber-style stat cards row
-    var converted = all.filter(function(q) { return q.status === 'converted'; });
-    var changesReq = all.filter(function(q) { return q.status === 'changes_requested'; });
-    var sentTotal = all.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; }).reduce(function(s,q){return s+(q.total||0);},0);
-    var convertedTotal = converted.reduce(function(s,q){return s+(q.total||0);},0);
-    var convRate = all.length > 0 ? Math.round((converted.length + approved) / all.length * 100) : 0;
+    // ── 3 clean KPI cards ──
+    var active = all.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting' || q.status === 'changes_requested'; });
+    var activeTotal = active.reduce(function(s,q){return s+(q.total||0);},0);
+    var closed = all.filter(function(q) { return q.status === 'converted' || q.status === 'approved'; });
+    var convRate = all.length > 0 ? Math.round(closed.length / all.length * 100) : 0;
+    var stale = active.filter(function(q) { return q.createdAt && new Date(q.createdAt) < now7ago; });
+    var convColor = convRate >= 40 ? '#059669' : convRate >= 25 ? '#d97706' : '#dc2626';
 
-    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
-      // Overview
-      + '<div onclick="QuotesPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
-      + '<div style="font-size:12px;"><span style="color:#6c757d;">●</span> Draft (' + draft + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#e6a817;">●</span> Awaiting response (' + sent + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#dc3545;">●</span> Changes requested (' + changesReq.length + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#2e7d32;">●</span> Approved (' + approved + ')</div>'
+    var html = '<div class="stat-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;">'
+      +   '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Active Pipeline</div>'
+      +   '<div style="font-size:24px;font-weight:800;color:var(--text);margin-top:4px;">' + UI.moneyInt(activeTotal) + '</div>'
+      +   '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + active.length + ' awaiting</div>'
       + '</div>'
-      // Conversion rate
-      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
-      + '<div style="font-size:14px;font-weight:700;">Conversion rate</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">All time</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + convRate + '%</div>'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;">'
+      +   '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Conversion</div>'
+      +   '<div style="font-size:24px;font-weight:800;color:' + convColor + ';margin-top:4px;">' + convRate + '%</div>'
+      +   '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + closed.length + ' of ' + all.length + '</div>'
       + '</div>'
-      // Sent (currently awaiting)
-      + '<div onclick="QuotesPage._setFilter(\'sent\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;">Sent</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + sent + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(sentTotal) + '</div>'
-      + '</div>'
-      // Converted
-      + '<div onclick="QuotesPage._setFilter(\'converted\')" style="padding:14px 16px;cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;">Converted</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">All time</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + converted.length + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">' + UI.moneyInt(convertedTotal) + '</div>'
+      + '<div style="background:' + (stale.length > 0 ? '#fffbeb' : 'var(--white)') + ';border:1px solid ' + (stale.length > 0 ? '#fcd34d' : 'var(--border)') + ';border-radius:12px;padding:16px 18px;cursor:pointer;" onclick="QuotesPage._setFilter(\'stale\')">'
+      +   '<div style="font-size:11px;font-weight:600;color:' + (stale.length > 0 ? '#92400e' : 'var(--text-light)') + ';text-transform:uppercase;letter-spacing:.04em;">Stale · 7d+</div>'
+      +   '<div style="font-size:24px;font-weight:800;color:' + (stale.length > 0 ? '#b45309' : 'var(--text)') + ';margin-top:4px;">' + stale.length + '</div>'
+      +   '<div style="font-size:12px;color:' + (stale.length > 0 ? '#92400e' : 'var(--text-light)') + ';margin-top:2px;">' + (stale.length > 0 ? 'Follow up →' : 'All caught up ✓') + '</div>'
       + '</div>'
       + '</div>';
 
     var filtered = self._getFiltered();
     var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
-    // Jobber-style "All quotes (X results)" + filter chips + search
+    // ── Header: title + chip filters + search ──
+    var chipDefs = [['all','All'],['draft','Draft'],['awaiting','Awaiting'],['stale','Stale 7d+'],['changes_requested','Changes Req.'],['approved','Approved'],['converted','Converted']];
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
-      + '<h3 style="font-size:16px;font-weight:700;margin:0;">All quotes</h3>'
-      + '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>'
-      + (function() {
-        var chips = [['all','All'],['draft','Draft'],['awaiting','Awaiting Response'],['changes_requested','Changes Requested'],['approved','Approved'],['converted','Converted']];
-        var out = '';
-        for (var ci = 0; ci < chips.length; ci++) {
-          var val = chips[ci][0], label = chips[ci][1];
-          var isActive = self._filter === val;
-          out += '<button onclick="QuotesPage._setFilter(\'' + val + '\')" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid ' + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';">' + label + '</button>';
-        }
-        return out;
-      })()
+      + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+      +   '<h3 style="font-size:16px;font-weight:700;margin:0;">Quotes</h3>'
+      +   '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ')</span>'
       + '</div>'
-      + '<button onclick="loadPage(\'propertymap\')" style="background:none;border:1px solid var(--border);padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--accent);white-space:nowrap;" title="Property map for site assessments">📍 Property Map</button>'
       + '<div class="search-box" style="min-width:200px;max-width:280px;">'
-      + '<span style="color:var(--text-light);">🔍</span>'
-      + '<input type="text" placeholder="Search quotes..." value="' + UI.esc(self._search) + '" oninput="QuotesPage._search=this.value;QuotesPage._page=0;loadPage(\'quotes\')">'
-      + '</div></div>';
+      +   '<span style="color:var(--text-light);">🔍</span>'
+      +   '<input type="text" placeholder="Search quotes..." value="' + UI.esc(self._search) + '" oninput="QuotesPage._search=this.value;QuotesPage._page=0;loadPage(\'quotes\')">'
+      + '</div></div>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;">';
+    for (var ci = 0; ci < chipDefs.length; ci++) {
+      var val = chipDefs[ci][0], label = chipDefs[ci][1];
+      var isActive = self._filter === val;
+      html += '<button onclick="QuotesPage._setFilter(\'' + val + '\')" style="font-size:12px;padding:6px 14px;border-radius:20px;border:1px solid ' + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';white-space:nowrap;">' + label + '</button>';
+    }
+    html += '</div>';
 
-    // Batch action bar (mobile-safe: no left offset on narrow screens)
+    // ── Batch action bar ──
     html += '<div id="q-batch-bar" class="bm-batch-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);">'
       + '<span id="q-batch-count" style="font-weight:700;font-size:14px;">0 selected</span>'
       + '<div style="display:flex;gap:8px;align-items:center;">'
-      + '<button onclick="QuotesPage._batchFollowUp()" style="background:#e6a817;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📬 Send Follow-up</button>'
-      + '<button onclick="QuotesPage._batchDecline()" style="background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✗ Mark Declined</button>'
-      + '<button onclick="QuotesPage._batchClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
+      +   '<button onclick="QuotesPage._batchFollowUp()" style="background:#e6a817;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📬 Send Follow-up</button>'
+      +   '<button onclick="QuotesPage._batchDecline()" style="background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✗ Mark Declined</button>'
+      +   '<button onclick="QuotesPage._batchClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
       + '</div></div>';
 
-    var now7ago = new Date(Date.now() - 7 * 86400000);
-    html += '<div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
-      + '<table class="data-table"><thead><tr>'
-      + '<th style="width:32px;"><input type="checkbox" onchange="QuotesPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
-      + self._sortTh('Client', 'clientName') + self._sortTh('Quote number', 'quoteNumber') + '<th>Property</th>' + self._sortTh('Created', 'createdAt') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
-      + '</tr></thead><tbody>';
-
+    // ── Empty state with "Clear filter" affordance ──
     if (page.length === 0) {
-      html += '<tr><td colspan="8">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No quotes match "' + self._search + '"</div>' : UI.emptyState('📋', 'No quotes yet', 'Create your first quote.', '+ New Quote', 'QuotesPage.showForm()')) + '</td></tr>';
+      if (self._search || self._filter !== 'all') {
+        html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:40px 20px;text-align:center;color:var(--text-light);">'
+          +   '<div style="font-size:36px;margin-bottom:10px;">📋</div>'
+          +   '<div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--text);">No quotes match this view</div>'
+          +   '<div style="font-size:13px;margin-bottom:14px;">' + (self._search ? 'Search: "' + UI.esc(self._search) + '"' : 'Filter: ' + self._filter) + '</div>'
+          +   '<button class="btn btn-outline" onclick="QuotesPage._search=\'\';QuotesPage._filter=\'all\';QuotesPage._page=0;loadPage(\'quotes\')" style="font-size:13px;">Clear filters</button>'
+          + '</div>';
+      } else {
+        html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">'
+          + UI.emptyState('📋', 'No quotes yet', 'Create your first quote.', '+ New Quote', 'QuotesPage.showForm()')
+          + '</div>';
+      }
     } else {
+      // ── DESKTOP: table (column order: Client → Total → Status → Date → Quote#) ──
+      html += '<div class="q-desktop-only" style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
+        + '<table class="data-table"><thead><tr>'
+        +   '<th style="width:32px;"><input type="checkbox" onchange="QuotesPage._selectAll(this.checked)" style="width:16px;height:16px;"></th>'
+        +   self._sortTh('Client', 'clientName')
+        +   self._sortTh('Total', 'total', 'text-align:right;')
+        +   self._sortTh('Status', 'status')
+        +   self._sortTh('Created', 'createdAt')
+        +   self._sortTh('Quote #', 'quoteNumber')
+        + '</tr></thead><tbody>';
       page.forEach(function(q) {
         var isStale = (q.status === 'sent' || q.status === 'awaiting') && q.createdAt && new Date(q.createdAt) < now7ago;
-        var rowStyle = 'cursor:pointer;' + (isStale ? 'background:#fffbf0;' : '');
-        html += '<tr onclick="QuotesPage.showDetail(\'' + q.id + '\')" style="' + rowStyle + '">'
+        var staleDot = isStale ? '<span title="Stale — sent 7+ days ago, needs follow-up" style="display:inline-block;width:8px;height:8px;background:#f59e0b;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>' : '';
+        html += '<tr onclick="QuotesPage.showDetail(\'' + q.id + '\')" style="cursor:pointer;">'
           + '<td onclick="event.stopPropagation()"><input type="checkbox" class="q-check" value="' + q.id + '" onchange="QuotesPage._updateBulk()" style="width:16px;height:16px;"></td>'
-          + '<td><strong>' + UI.esc(q.clientName || '—') + '</strong>' + (isStale ? ' <span title="Sent 7+ days ago" style="font-size:10px;color:#e6a817;font-weight:700;background:#fff3cd;padding:1px 5px;border-radius:3px;">FOLLOW UP</span>' : '') + '</td>'
-          + '<td>#' + (q.quoteNumber || '') + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(q.property || '—') + '</td>'
-          + '<td>' + UI.dateShort(q.createdAt) + '</td>'
+          + '<td>' + staleDot + '<strong>' + UI.esc(q.clientName || '—') + '</strong>'
+          +   (q.property ? '<div style="font-size:11px;color:var(--text-light);margin-top:2px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(q.property) + '</div>' : '') + '</td>'
+          + '<td style="text-align:right;font-weight:700;font-size:14px;">' + UI.money(q.total) + '</td>'
           + '<td>' + UI.statusBadge(q.status) + '</td>'
-          + '<td style="text-align:right;font-weight:600;">' + UI.money(q.total) + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);">' + UI.dateShort(q.createdAt) + '</td>'
+          + '<td style="font-size:12px;color:var(--text-light);">#' + (q.quoteNumber || '') + '</td>'
           + '</tr>';
       });
+      html += '</tbody></table></div>';
+
+      // ── MOBILE: card layout ──
+      html += '<div class="q-mobile-only" style="display:none;">';
+      page.forEach(function(q) {
+        var isStale = (q.status === 'sent' || q.status === 'awaiting') && q.createdAt && new Date(q.createdAt) < now7ago;
+        var staleBar = isStale ? 'border-left:3px solid #f59e0b;' : 'border-left:3px solid transparent;';
+        html += '<div data-qid="' + q.id + '" class="quote-card" style="background:var(--white);border:1px solid var(--border);' + staleBar + 'border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'
+          +   '<div style="flex:1;min-width:0;">'
+          +     '<div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(q.clientName || '—') + '</div>'
+          +     (q.property ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + UI.esc(q.property) + '</div>' : '')
+          +   '</div>'
+          +   '<div style="font-size:17px;font-weight:800;color:var(--text);flex-shrink:0;">' + UI.money(q.total) + '</div>'
+          + '</div>'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;flex-wrap:wrap;">'
+          +   '<div>' + UI.statusBadge(q.status) + '</div>'
+          +   '<div style="font-size:11px;color:var(--text-light);">'
+          +     (isStale ? '<span style="color:#b45309;font-weight:600;">Stale · </span>' : '')
+          +     UI.dateShort(q.createdAt) + ' · #' + (q.quoteNumber || '')
+          +   '</div>'
+          + '</div>'
+          + '</div>';
+      });
+      html += '</div>';
     }
-    html += '</tbody></table></div>';
 
     // Pagination
     var totalPages = Math.ceil(filtered.length / self._perPage);
@@ -138,6 +160,26 @@ var QuotesPage = {
       html += '<button class="btn btn-outline" onclick="QuotesPage._goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
       html += '</div>';
     }
+
+    // Mobile card tap handlers (scroll-safe — same pattern as clients page)
+    setTimeout(function() {
+      document.querySelectorAll('.quote-card').forEach(function(card) {
+        var startX, startY, moved;
+        card.addEventListener('touchstart', function(e) {
+          var t = e.touches[0]; startX = t.clientX; startY = t.clientY; moved = false;
+        }, { passive: true });
+        card.addEventListener('touchmove', function(e) {
+          var t = e.touches[0];
+          if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) moved = true;
+        }, { passive: true });
+        card.addEventListener('click', function() {
+          if (moved) return;
+          var qid = this.getAttribute('data-qid');
+          if (qid) QuotesPage.showDetail(qid);
+        });
+      });
+    }, 0);
+
     return html;
   },
 
@@ -145,10 +187,17 @@ var QuotesPage = {
     var self = QuotesPage;
     var all = DB.quotes.getAll();
     if (self._filter !== 'all') {
-      all = all.filter(function(q) {
-        if (self._filter === 'awaiting' || self._filter === 'sent') return q.status === 'sent' || q.status === 'awaiting';
-        return q.status === self._filter;
-      });
+      if (self._filter === 'stale') {
+        var sevenAgo = new Date(Date.now() - 7 * 86400000);
+        all = all.filter(function(q) {
+          return (q.status === 'sent' || q.status === 'awaiting') && q.createdAt && new Date(q.createdAt) < sevenAgo;
+        });
+      } else {
+        all = all.filter(function(q) {
+          if (self._filter === 'awaiting' || self._filter === 'sent') return q.status === 'sent' || q.status === 'awaiting';
+          return q.status === self._filter;
+        });
+      }
     }
     if (self._search && self._search.length >= 2) {
       var s = self._search.toLowerCase();

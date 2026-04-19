@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 167; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 168; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -282,6 +282,18 @@
   }
   .client-card:active { box-shadow:0 2px 6px rgba(0,0,0,0.06) !important; background:var(--green-bg) !important; }
   [data-theme="dark"] .client-card { background:var(--white) !important; border-color:var(--border) !important; }
+
+  /* Quotes list — same card-on-mobile pattern */
+  @media (hover: hover) {
+    .quote-card:hover { box-shadow:0 4px 14px rgba(0,0,0,0.08) !important; transform:translateY(-1px); }
+  }
+  .quote-card:active { box-shadow:0 2px 6px rgba(0,0,0,0.06) !important; background:var(--green-bg) !important; }
+  .q-mobile-only { display:none; }
+  .q-desktop-only { display:block; }
+  @media (max-width:720px) {
+    .q-mobile-only { display:block !important; }
+    .q-desktop-only { display:none !important; }
+  }
 
   /* ── Status Badges (App colors) ── */
   .status-badge {
@@ -802,7 +814,7 @@
           </div>
         </div>
         <button class="btn btn-primary" id="pageAction" style="display:none;">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v167</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v168</span>
       </div>
     </div>
 

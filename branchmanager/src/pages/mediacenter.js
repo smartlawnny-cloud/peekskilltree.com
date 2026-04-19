@@ -91,7 +91,7 @@ var MediaCenter = {
     var storageLimit = 5; // MB (localStorage limit ~5-10MB)
     var storagePct = Math.min(100, storageBytes / (storageLimit * 1048576) * 100);
     var storageColor = storagePct > 80 ? '#dc3545' : storagePct > 60 ? '#e65100' : 'var(--green-dark)';
-    html += '<div style="background:var(--white);border-radius:10px;padding:10px 16px;border:1px solid var(--border);margin-bottom:16px;display:flex;align-items:center;gap:12px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:10px 16px;border:1px solid var(--border);margin-bottom:16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<span style="font-size:12px;color:var(--text-light);white-space:nowrap;">&#128190; Storage: <strong style="color:' + storageColor + ';">' + storageMB + ' MB</strong> / ~5 MB available</span>'
       + '<div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;">'
       + '<div style="height:100%;width:' + storagePct.toFixed(1) + '%;background:' + storageColor + ';border-radius:3px;transition:width 0.3s;"></div>'

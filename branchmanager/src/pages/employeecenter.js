@@ -54,7 +54,7 @@ var EmployeeCenter = {
       + '</div>';
 
     // Weekly hours goal progress bar
-    html += '<div style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
       + '<h3 style="font-size:15px;margin:0;">🎯 Weekly Hours Goal</h3>'
       + '<div style="display:flex;gap:8px;align-items:center;">'
@@ -68,7 +68,7 @@ var EmployeeCenter = {
       + '</div>';
 
     // Paycheck estimator
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:16px;margin-bottom:16px;">💰 Paycheck Estimator</h3>';
 
     var taxes = EmployeeCenter._calcTaxes(monthPay);
@@ -131,7 +131,7 @@ var EmployeeCenter = {
     var sickHours = ptoYear.filter(function(p) { return p.type === 'Sick'; }).reduce(function(s, p) { return s + (p.hours || 0); }, 0);
     var holidayHours = ptoYear.filter(function(p) { return p.type === 'Holiday'; }).reduce(function(s, p) { return s + (p.hours || 0); }, 0);
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
       + '<h3 style="font-size:16px;margin:0;">🏖️ Time Off This Year</h3>'
       + '<button onclick="EmployeeCenter.logTimeOff()" style="background:var(--green-dark);color:#fff;border:none;padding:7px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">+ Log Time Off</button>'
@@ -157,7 +157,7 @@ var EmployeeCenter = {
     html += '</div>';
 
     // Recent time entries
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:16px;margin-bottom:12px;">⏱ Recent Time Entries</h3>';
     if (entries.length) {
       entries.slice(0, 14).forEach(function(e) {
@@ -176,7 +176,7 @@ var EmployeeCenter = {
     var projectedAnnual = avgWeeklyHours * 52 * hourlyRate;
     var annualTaxes = EmployeeCenter._calcTaxes(projectedAnnual);
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:16px;margin-bottom:12px;">📊 Annual Projection</h3>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">'
       + '<div style="padding:12px;background:var(--bg);border-radius:8px;"><div style="font-size:11px;color:var(--text-light);">Avg Weekly Hours</div><div style="font-size:18px;font-weight:700;">' + avgWeeklyHours.toFixed(1) + '</div></div>'

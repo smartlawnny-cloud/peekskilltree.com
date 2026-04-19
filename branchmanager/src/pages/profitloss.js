@@ -72,7 +72,7 @@ var ProfitLossPage = {
 
     // Visual P&L bar
     var maxBar = Math.max(revenue, totalExpenses, 1);
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:15px;margin-bottom:16px;">Revenue vs Costs — ' + periodLabel + '</h3>'
       + '<div style="margin-bottom:12px;">'
       + '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>Revenue</span><strong>' + UI.moneyInt(revenue) + '</strong></div>'
@@ -91,7 +91,7 @@ var ProfitLossPage = {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
 
     // Revenue breakdown
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:15px;margin-bottom:12px;">Revenue Breakdown</h3>';
     if (periodInvoices.length) {
       var statusGroups = {};
@@ -113,7 +113,7 @@ var ProfitLossPage = {
     html += '</div>';
 
     // Cost breakdown
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:15px;margin-bottom:12px;">Cost Breakdown</h3>';
     // Fixed costs
     html += '<div style="font-size:12px;color:var(--text-light);font-weight:600;margin-bottom:4px;">FIXED (monthly)</div>';
@@ -167,7 +167,7 @@ var ProfitLossPage = {
         if (pxRev > maxMRev) maxMRev = pxRev;
       }
 
-      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
         + '<h3 style="font-size:15px;margin:0;">Monthly Trend — ' + year + '</h3>'
         + '<div style="display:flex;gap:12px;font-size:11px;color:var(--text-light);">'

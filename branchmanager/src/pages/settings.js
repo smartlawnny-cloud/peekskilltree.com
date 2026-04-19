@@ -44,7 +44,7 @@ var SettingsPage = {
       website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
       taxRate: localStorage.getItem('bm-tax-rate') || '8.375'
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Company Info</h3>'
       + '<button onclick="SettingsPage.saveCompany()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
@@ -72,7 +72,7 @@ var SettingsPage = {
       minJobDuration: localStorage.getItem('bm-min-job-hrs') || '2',
       crewSeeClientInfo: localStorage.getItem('bm-crew-see-client') !== 'false'
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Work Settings</h3>'
       + '<button onclick="SettingsPage._saveWorkSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
@@ -121,7 +121,7 @@ var SettingsPage = {
     var locTrack = localStorage.getItem('bm-gps-tracking') !== 'false';
     var locWorkOnly = localStorage.getItem('bm-gps-work-only') !== 'false';
     var locGeofence = localStorage.getItem('bm-geofence') === 'true';
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Location Services</h3>'
       + '<button onclick="SettingsPage._saveLocationSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
@@ -148,7 +148,7 @@ var SettingsPage = {
       dailySummary: localStorage.getItem('bm-notif-daily-summary') === 'true',
       jobCompleted: localStorage.getItem('bm-notif-job-completed') !== 'false'
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Notifications</h3>'
       + '<button onclick="SettingsPage._saveNotifSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
@@ -176,7 +176,7 @@ var SettingsPage = {
       showLineItemPrices: localStorage.getItem('bm-show-line-prices') !== 'false',
       companyLogo: localStorage.getItem('bm-company-logo') || ''
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Quote & Invoice Defaults</h3>'
       + '<button onclick="SettingsPage._saveQuoteDefaults()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
@@ -210,7 +210,7 @@ var SettingsPage = {
       requireAddress: localStorage.getItem('bm-booking-require-address') !== 'false',
       showServices: localStorage.getItem('bm-booking-show-services') !== 'false'
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Online Booking</h3>'
       + '<button onclick="SettingsPage._saveBookingSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
@@ -240,7 +240,7 @@ var SettingsPage = {
       delayDays: localStorage.getItem('bm-review-delay') || '1',
       autoSend: localStorage.getItem('bm-review-auto') === 'true'
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Review Requests</h3>'
       + '<button onclick="SettingsPage._saveReviewSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
@@ -263,7 +263,7 @@ var SettingsPage = {
       + '</div>';
 
     // ── Regional Settings ──
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin:0 0 16px;">Regional Settings</h3>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Country</label>'
@@ -285,7 +285,7 @@ var SettingsPage = {
       { name: 'Dialpad', status: !!(localStorage.getItem('bm-dialpad-key')), desc: 'Phone system' },
       { name: 'SendJim', status: !!(localStorage.getItem('bm-sendjim-key')), desc: 'Direct mail' }
     ];
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin:0 0 16px;">Connected Apps</h3>';
     connectedApps.forEach(function(app) {
       html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;">'
@@ -301,7 +301,7 @@ var SettingsPage = {
 
     // Products & Services Catalog
     var allServices = DB.services.getAll();
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<div><h3 style="margin:0;">Products &amp; Services</h3>'
       + '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + allServices.length + ' items — used in quotes and invoices</div>'
@@ -321,7 +321,7 @@ var SettingsPage = {
     html += '</div></div>';
 
     // Data Summary
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:16px;">Data Summary</h3>'
       + '<div class="stat-grid" style="margin-bottom:0;">'
       + '<div class="stat-card"><div class="stat-label">Clients</div><div class="stat-value">' + stats.totalClients + '</div></div>'
@@ -454,7 +454,7 @@ var SettingsPage = {
 
     // Checklist Templates
     if (typeof Checklists !== 'undefined') {
-      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
         + Checklists.renderTemplateManager()
         + '</div>';
     }
@@ -465,7 +465,7 @@ var SettingsPage = {
     }
 
     // Crew Performance link
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;">'
       + '<div><h3 style="margin-bottom:4px;">Crew Performance</h3>'
       + '<p style="font-size:13px;color:var(--text-light);margin:0;">View crew metrics, leaderboards, and productivity stats</p></div>'
@@ -473,7 +473,7 @@ var SettingsPage = {
       + '</div></div>';
 
     // Sync from Cloud
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;">'
       + '<div><h3 style="margin-bottom:4px;">Cloud Sync</h3>'
       + '<p style="font-size:13px;color:var(--text-light);margin:0;">Pull latest data from Supabase to this device</p></div>'
@@ -482,7 +482,7 @@ var SettingsPage = {
 
     // Supabase Connection
     var isConnected = (typeof SupabaseDB !== 'undefined' && SupabaseDB.ready) || stats.totalClients > 100;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:8px;">Database Connection</h3>';
     if (isConnected) {
       html += '<div style="display:inline-block;padding:6px 12px;background:#e8f5e9;border-radius:8px;font-size:13px;font-weight:600;color:#2e7d32;margin-bottom:12px;">Connected to Supabase</div>'
@@ -601,7 +601,7 @@ var SettingsPage = {
 
     // === T&M PRICING RATES (editable) ===
     var _tmRates = (typeof QuotesPage !== 'undefined' && QuotesPage.getTMRates) ? QuotesPage.getTMRates() : {};
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:6px;">🛠 T&M Pricing Rates</h3>'
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Used by the Price Check (Mode 2) calculation on every quote. Override defaults per your crew + equipment costs.</p>'
       + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Crew (hourly)</div>'
@@ -637,7 +637,7 @@ var SettingsPage = {
     // === PLANTNET API KEY ===
     var _pnKey = localStorage.getItem('bm-plantnet-key') || '';
     var _pnOk = _pnKey.length > 10;
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:6px;">🌿 PlantNet API Key</h3>'
       + '<div style="font-size:12px;color:' + (_pnOk ? 'var(--green-dark)' : '#e07c24') + ';margin-bottom:10px;font-weight:600;">' + (_pnOk ? '✅ Connected — 2nd Opinion button will use this' : '⚠️ Not connected — 2nd Opinion will prompt for key') + '</div>'
       + '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
@@ -662,7 +662,7 @@ var SettingsPage = {
     }
 
     // Import from previous system
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:8px;">Import from previous system</h3>'
       + '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Export CSVs from previous system (Clients → More Actions → Export) and import them here.</p>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
@@ -698,7 +698,7 @@ var SettingsPage = {
       + '</div>';
 
     // Security
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:12px;">🔒 Security</h3>'
       + '<div style="display:grid;gap:12px;">'
       // Session timeout
@@ -734,7 +734,7 @@ var SettingsPage = {
       + '</div></div>';
 
     // Admin Tools
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:14px;">Admin Tools</h3>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
       + '<button onclick="loadPage(\'permissions\')" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;font-size:13px;font-weight:600;color:var(--text);"><span style="font-size:18px;">🛡</span><div>Permissions & Roles<div style="font-size:11px;font-weight:400;color:var(--text-light);margin-top:2px;">RBAC roles, 25 permissions</div></div></button>'
@@ -744,7 +744,7 @@ var SettingsPage = {
       + '</div></div>';
 
     // About
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:12px;">About Branch Manager</h3>'
       + '<div style="font-size:13px;color:var(--text-light);line-height:1.8;">'
       + '<div><strong>Version:</strong> 2.0.0</div>'

@@ -46,7 +46,7 @@ var BudgetPage = {
       { num: 7, title: 'Build Wealth & Give', desc: 'Live and give like no one else!', target: 0 }
     ];
 
-    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:16px;margin-bottom:16px;">🎯 Baby Steps</h3>'
       + '<div style="display:flex;gap:4px;margin-bottom:16px;">';
 
@@ -99,7 +99,7 @@ var BudgetPage = {
     var totalSpent = envelopes.reduce(function(s, e) { return s + (e.spent || 0); }, 0);
     var remaining = takeHome - totalBudgeted;
 
-    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="font-size:16px;">✉️ Monthly Budget (Envelopes)</h3>'
       + '<span style="font-size:13px;color:' + (remaining >= 0 ? 'var(--green-dark)' : 'var(--red)') + ';font-weight:600;">' + (remaining >= 0 ? UI.money(remaining) + ' unassigned' : UI.money(Math.abs(remaining)) + ' over budget!') + '</span></div>';
@@ -128,7 +128,7 @@ var BudgetPage = {
   _renderDebtSnowball: function(budget) {
     var debts = budget.debts || [];
 
-    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
       + '<h3 style="font-size:16px;">⛄ Debt Snowball</h3>'
       + '<button onclick="BudgetPage.addDebt()" style="background:var(--green-dark);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">+ Add Debt</button></div>'
@@ -166,7 +166,7 @@ var BudgetPage = {
 
   _renderSavingsGoals: function(budget) {
     var goals = budget.savingsGoals || [];
-    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
       + '<h3 style="font-size:16px;">🎯 Savings Goals</h3>'
       + '<button onclick="BudgetPage.addGoal()" style="background:var(--green-dark);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">+ Add Goal</button></div>';
@@ -194,7 +194,7 @@ var BudgetPage = {
     var unassigned = takeHome - totalBudgeted;
     var budgetedPct = takeHome > 0 ? Math.min(100, Math.round(totalBudgeted / takeHome * 100)) : 0;
 
-    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+    var html = '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
       + '<h3 style="font-size:16px;">📅 Monthly Snapshot</h3>'
       + '<button onclick="BudgetPage.startNewMonth()" style="background:var(--green-dark);color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">+ Start New Month</button></div>';

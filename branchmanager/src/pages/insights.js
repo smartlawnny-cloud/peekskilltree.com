@@ -144,22 +144,22 @@ var InsightsPage = {
 
     // Quick KPI row (4 cards)
     html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;" class="stat-row">'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">' + monthNames[now.getMonth()] + ' Revenue</div>'
       + '<div style="font-size:26px;font-weight:800;color:var(--green-dark);margin:4px 0;">' + UI.moneyInt(thisMonthRev) + '</div>'
       + (momChange !== null ? '<div style="font-size:12px;font-weight:700;color:' + (momChange >= 0 ? '#2e7d32' : '#dc3545') + ';">' + (momChange >= 0 ? '↑' : '↓') + Math.abs(momChange) + '% vs last month</div>' : '<div style="font-size:12px;color:var(--text-light);">vs last month N/A</div>')
       + '</div>'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Open Pipeline</div>'
       + '<div style="font-size:26px;font-weight:800;color:#1565c0;margin:4px 0;">' + UI.moneyInt(openPipeline) + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">Sent quotes awaiting approval</div>'
       + '</div>'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Scheduled Value</div>'
       + '<div style="font-size:26px;font-weight:800;color:#e65100;margin:4px 0;">' + UI.moneyInt(scheduledRevenue) + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">Jobs on the calendar</div>'
       + '</div>'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Receivables</div>'
       + '<div style="font-size:26px;font-weight:800;color:#c62828;margin:4px 0;">' + UI.moneyInt(totalReceivable) + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">Outstanding balances</div>'
@@ -177,7 +177,7 @@ var InsightsPage = {
       + '</div>';
 
     // Revenue bar chart
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:16px;">Revenue by Month — ' + year + '</h3>'
       + '<div style="display:flex;align-items:flex-end;gap:6px;height:200px;padding-bottom:24px;position:relative;">';
 
@@ -209,7 +209,7 @@ var InsightsPage = {
     if (totalRevLastYear > 0) {
       var yoyChange = totalRevLastYear > 0 ? Math.round(((totalRevYear - totalRevLastYear) / totalRevLastYear) * 100) : null;
 
-      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
         + '<h3 style="margin:0;">Year-over-Year Comparison</h3>'
         + (yoyChange !== null ? '<span style="font-size:14px;font-weight:700;color:' + (yoyChange >= 0 ? '#2e7d32' : '#dc3545') + ';background:' + (yoyChange >= 0 ? '#e8f5e9' : '#ffebee') + ';padding:4px 12px;border-radius:20px;">' + (yoyChange >= 0 ? '↑' : '↓') + Math.abs(yoyChange) + '% vs ' + lastYearNum + '</span>' : '')
@@ -266,7 +266,7 @@ var InsightsPage = {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
 
     // Funnel
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:16px;">Pipeline Funnel</h3>';
     var quoteRate = totalLeads > 0 ? Math.round((totalQuotes / totalLeads) * 100) : 0;
     var closeRate = totalQuotes > 0 ? Math.round((convertedQuotes / totalQuotes) * 100) : 0;
@@ -291,7 +291,7 @@ var InsightsPage = {
     html += '</div>';
 
     // Marketing sources
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:16px;">Lead Sources</h3>';
     if (sourceList.length === 0) {
       html += '<div style="text-align:center;color:var(--text-light);padding:20px;font-size:14px;">No request data yet</div>';
@@ -338,7 +338,7 @@ var InsightsPage = {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">';
 
     // Revenue by service type
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:16px;">Revenue by Service Type</h3>';
     if (serviceList.length === 0) {
       html += '<div style="text-align:center;color:var(--text-light);padding:20px;">No job data yet</div>';
@@ -368,7 +368,7 @@ var InsightsPage = {
       return { name: k, count: clientRevenue[k].count, revenue: clientRevenue[k].revenue };
     }).sort(function(a, b) { return b.revenue - a.revenue; });
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:16px;">Top Clients by Revenue</h3>';
     if (topClients.length === 0) {
       html += '<div style="text-align:center;color:var(--text-light);padding:20px;">No client data yet</div>';
@@ -402,16 +402,16 @@ var InsightsPage = {
     var avgConversionDays = quotesToJobDays.length > 0 ? Math.round(quotesToJobDays.reduce(function(s,d){return s+d;},0) / quotesToJobDays.length) : null;
 
     html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;" class="stat-row">'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Avg Job Value</div>'
       + '<div style="font-size:24px;font-weight:800;color:var(--green-dark);margin-top:4px;">' + UI.moneyInt(avgJobValue) + '</div></div>'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Avg Quote Value</div>'
       + '<div style="font-size:24px;font-weight:800;color:#1565c0;margin-top:4px;">' + UI.moneyInt(avgQuoteValue) + '</div></div>'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Close Rate</div>'
       + '<div style="font-size:24px;font-weight:800;color:#e65100;margin-top:4px;">' + closeRate + '%</div></div>'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;">Quote → Job</div>'
       + '<div style="font-size:24px;font-weight:800;color:#6a1b9a;margin-top:4px;">' + (avgConversionDays !== null ? avgConversionDays + ' days' : '—') + '</div></div>'
       + '</div>';

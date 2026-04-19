@@ -48,7 +48,7 @@ var ReportsPage = {
     });
     var sumOf = function(arr) { return arr.reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0); };
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:20px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:16px;">Invoice Aging</h3>'
       + '<div class="stat-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">'
       + '<div style="text-align:center;padding:14px;background:#e8f5e9;border-radius:10px;"><div style="font-size:11px;color:#666;text-transform:uppercase;font-weight:600;">Current</div><div style="font-size:22px;font-weight:800;color:#2e7d32;">' + UI.moneyInt(sumOf(aging.current)) + '</div><div style="font-size:12px;color:#666;">' + aging.current.length + ' invoice' + (aging.current.length !== 1 ? 's' : '') + '</div></div>'
@@ -140,7 +140,7 @@ var ReportsPage = {
     }
     var maxMonthly = Math.max.apply(null, monthlyIncome) || 1;
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:20px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Profit & Loss Statement</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">January \u2013 December ' + currentYear + '</span>'
@@ -222,7 +222,7 @@ var ReportsPage = {
 
     html += '<div style="display:grid;gap:12px;">';
     reports.forEach(function(r) {
-      html += '<div style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
         + '<div style="display:flex;align-items:center;gap:12px;">'
         + '<span style="font-size:24px;">' + r.icon + '</span>'
         + '<div><strong style="font-size:14px;">' + r.label + '</strong>'
@@ -240,7 +240,7 @@ var ReportsPage = {
     var totalPaid = invoices.filter(function(i) { return i.status === 'paid'; }).reduce(function(s, i) { return s + (i.total || 0); }, 0);
     var totalOutstanding = invoices.filter(function(i) { return i.balance > 0; }).reduce(function(s, i) { return s + (i.balance || 0); }, 0);
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:15px;margin-bottom:12px;">Quick Numbers</h3>'
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">'
       + '<div style="padding:12px;background:var(--green-bg);border-radius:8px;text-align:center;"><div style="font-size:11px;color:var(--text-light);">Total Invoiced</div><div style="font-size:20px;font-weight:800;color:var(--green-dark);">' + UI.moneyInt(totalRevenue) + '</div></div>'
@@ -272,7 +272,7 @@ var ReportsPage = {
     });
     var hasServiceData = sortedServiceTypes.some(function(s) { return serviceCount[s] > 0; });
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:15px;margin-bottom:12px;">&#127795; Service Type Analysis</h3>';
     if (hasServiceData) {
       html += '<table class="data-table"><thead><tr>'
@@ -307,7 +307,7 @@ var ReportsPage = {
       return sources[b].count - sources[a].count;
     });
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:15px;margin-bottom:12px;">&#128202; Lead Source Analysis</h3>';
     if (sourceKeys.length > 0) {
       html += '<table class="data-table"><thead><tr>'
@@ -345,7 +345,7 @@ var ReportsPage = {
       momRows.push({ label: monthLabel, rev: monthRev, jobs: monthJobs, avg: monthAvg });
     }
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="font-size:15px;margin-bottom:12px;">&#128197; Month-over-Month Revenue (Last 12 Months)</h3>'
       + '<table class="data-table"><thead><tr>'
       + '<th>Month</th><th style="text-align:right;">Revenue</th><th style="text-align:right;">Invoices Paid</th><th style="text-align:right;">Avg Invoice</th>'

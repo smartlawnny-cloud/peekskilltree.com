@@ -252,7 +252,7 @@ var Payments = {
       return 'padding:6px 12px;border-radius:6px;border:1.5px solid ' + (active ? 'var(--green-dark)' : 'var(--border)') + ';background:' + (active ? 'var(--green-dark)' : 'var(--white)') + ';color:' + (active ? '#fff' : 'var(--text)') + ';cursor:pointer;font-size:13px;font-weight:600;';
     };
 
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">'
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<span style="font-size:13px;font-weight:600;color:var(--text-light);margin-right:4px;">Period:</span>';
     periodFilters.forEach(function(f) {
       html += '<button style="' + filterBtnStyle(Payments._filterPeriod === f.val) + '" onclick="Payments.setFilter(\'period\',\'' + f.val + '\')">' + f.label + '</button>';
@@ -327,7 +327,7 @@ var Payments = {
         ? '<a href="#" onclick="loadPage(\'invoices\');setTimeout(function(){if(typeof InvoicesPage!==\'undefined\')InvoicesPage.showDetail(\'' + p.invoiceId + '\');},100);return false;" style="color:var(--green-dark);font-size:13px;text-decoration:none;">Invoice #' + UI.esc(invNum) + '</a>'
         : '<span style="font-size:13px;color:var(--text-light);">No invoice</span>';
 
-      html += '<div class="detail-grid" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:6px;display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 110px;gap:8px;align-items:center;">'
+      html += '<div class="detail-grid" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 110px;gap:8px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
 
         // Client name + invoice link
         + '<div>'

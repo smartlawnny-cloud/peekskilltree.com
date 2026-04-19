@@ -108,7 +108,7 @@ var NotificationsPage = {
     var clickTarget = { request: 'requests', quote: 'quotes', job: 'jobs', invoice: 'invoices', payment: 'invoices' }[a.type] || '';
     var clickHandler = clickTarget ? 'onclick="loadPage(\'' + clickTarget + '\')"' : '';
 
-    return '<div ' + clickHandler + ' style="background:var(--white);border-radius:10px;padding:14px 16px;border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;'
+    return '<div ' + clickHandler + ' style="background:var(--white);border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;box-shadow:0 1px 3px rgba(0,0,0,0.04);'
       + (a.unread ? 'border-left:3px solid ' + (a.type === 'invoice' ? '#ff9800' : 'var(--green-light)') + ';' : '')
       + (clickTarget ? 'cursor:pointer;' : '')
       + '" '

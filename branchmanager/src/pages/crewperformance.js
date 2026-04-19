@@ -92,7 +92,7 @@ var CrewPerformance = {
         var roleLabel = cs.member.role || 'Crew';
 
         html += '<div onclick="CrewPerformance._showDetail(\'' + cs.member.id + '\')" '
-          + 'style="background:var(--white);border-radius:10px;padding:16px 20px;border:1px solid var(--border);margin-bottom:10px;cursor:pointer;'
+          + 'style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);'
           + 'transition:box-shadow .15s;position:relative;overflow:hidden;" '
           + 'onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.08)\';" '
           + 'onmouseout="this.style.boxShadow=\'none\';">';
@@ -200,7 +200,7 @@ var CrewPerformance = {
     // ── Team Totals Footer ──
     if (crewStats.length > 0) {
       var teamAvgRating = ratedCount > 0 ? (avgRating).toFixed(1) : '—';
-      html += '<div style="background:var(--white);border-radius:10px;padding:16px 20px;border:2px solid var(--border);margin-top:4px;">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-top:4px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
         + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:12px;">Team Totals</div>'
         + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'
         + '<div style="text-align:center;padding:10px 6px;background:#f8fdf8;border-radius:8px;">'
@@ -382,7 +382,7 @@ var CrewPerformance = {
     html += '</div>';
 
     // ── Monthly trend chart (div-based bar chart) ──
-    html += '<div style="background:var(--white);border-radius:10px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:12px;">Monthly Revenue Trend</div>';
 
     var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -413,7 +413,7 @@ var CrewPerformance = {
     html += '</div></div>';
 
     // ── Rating breakdown ──
-    html += '<div style="background:var(--white);border-radius:10px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:12px;">Rating Breakdown</div>';
 
     if (stats.ratings.length === 0) {
@@ -438,7 +438,7 @@ var CrewPerformance = {
 
     // ── Skills / Certifications (editable tags) ──
     var savedSkills = JSON.parse(localStorage.getItem('bm-crew-skills-' + memberId) || '[]');
-    html += '<div style="background:var(--white);border-radius:10px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
       + '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);">Skills & Certifications</div>'
       + '<button onclick="CrewPerformance._addSkill(\'' + memberId + '\')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--green-dark);font-weight:600;">+ Add</button>'
@@ -458,7 +458,7 @@ var CrewPerformance = {
     html += '</div></div>';
 
     // ── Recent jobs list ──
-    html += '<div style="background:var(--white);border-radius:10px;padding:16px;border:1px solid var(--border);">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:12px;">Recent Jobs</div>';
 
     if (stats.recentJobs.length === 0) {

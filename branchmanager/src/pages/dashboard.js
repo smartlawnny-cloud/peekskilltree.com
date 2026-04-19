@@ -210,7 +210,7 @@ var DashboardPage = {
     var overdueTotal = overdueInvoices.reduce(function(s,i){return s+(i.balance||0);},0);
 
     html += '<h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Workflow</h3>';
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;background:var(--white);">';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;background:var(--white);box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
 
     // Requests card
     var allRequests = DB.requests.getAll();
@@ -277,7 +277,7 @@ var DashboardPage = {
       // auto-fit so a single card stretches full-width instead of hugging the left
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:16px;">';
       if (dashApproved.length > 0) {
-        html += '<div style="background:var(--white);border-radius:10px;padding:16px;border:1px solid #c8e6c9;">'
+        html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid #c8e6c9;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
           + '<div style="font-size:12px;font-weight:700;color:var(--green-dark);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Ready to Convert (' + dashApproved.length + ')</div>';
         dashApproved.slice(0, 3).forEach(function(q) {
           html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">'
@@ -290,7 +290,7 @@ var DashboardPage = {
         html += '</div>';
       }
       if (dashNeedsInv.length > 0) {
-        html += '<div style="background:var(--white);border-radius:10px;padding:16px;border:1px solid #ffe0b2;">'
+        html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid #ffe0b2;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
           + '<div style="font-size:12px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Ready to Invoice (' + dashNeedsInv.length + ')</div>';
         dashNeedsInv.slice(0, 3).forEach(function(j) {
           html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">'
@@ -312,7 +312,7 @@ var DashboardPage = {
     var todayDateStr2 = now.getFullYear() + '-' + (now.getMonth()+1<10?'0':'') + (now.getMonth()+1) + '-' + (now.getDate()<10?'0':'') + now.getDate();
     var todayJobList = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === todayDateStr2; });
     var todayComplete = todayJobList.filter(function(j) { return j.status === 'completed'; }).length;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
       + '<div><h3 style="font-size:16px;font-weight:700;margin:0;">Today\'s Jobs</h3>'
       + (todayJobList.length > 0 ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + todayComplete + ' of ' + todayJobList.length + ' complete</div>' : '')
@@ -359,7 +359,7 @@ var DashboardPage = {
 
     // Action Items — detailed lists (like Receivables)
     if (overdueInvCount > 0) {
-      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid #ffcdd2;margin-bottom:16px;">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid #ffcdd2;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
         + '<h3 style="font-size:16px;margin:0;color:#c62828;">Overdue Invoices</h3>'
         + '<span style="font-size:20px;font-weight:800;color:#c62828;">' + UI.moneyInt(overdueInvTotal) + '</span></div>';
@@ -374,7 +374,7 @@ var DashboardPage = {
     }
 
     if (expiringQuotes.length > 0) {
-      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid #ffe082;margin-bottom:16px;">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid #ffe082;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
         + '<h3 style="font-size:16px;margin:0;color:#e65100;">Quotes Need Follow-up</h3>'
         + '<span style="font-size:13px;color:#e65100;">' + expiringQuotes.length + ' sent 7+ days ago</span></div>';
@@ -389,7 +389,7 @@ var DashboardPage = {
     }
 
     if (unscheduledJobs.length > 0) {
-      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid #90caf9;margin-bottom:16px;">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid #90caf9;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
         + '<h3 style="font-size:16px;margin:0;color:#1565c0;">Needs Scheduling</h3>'
         + '<span style="font-size:13px;color:#1565c0;">' + unscheduledJobs.length + ' jobs</span></div>';
@@ -406,7 +406,7 @@ var DashboardPage = {
     var rcvTotalOwed = rcvUnpaid.reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0);
     if (rcvUnpaid.length > 0) {
       rcvUnpaid.sort(function(a, b) { return (b.balance || b.total || 0) - (a.balance || a.total || 0); });
-      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;">'
+      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
         + '<h3 style="font-size:16px;margin:0;">Receivables</h3>'
         + '<span style="font-size:12px;color:var(--text-light);">' + rcvUnpaid.length + ' client' + (rcvUnpaid.length !== 1 ? 's' : '') + ' owe you</span></div>'

@@ -727,10 +727,16 @@ var SettingsPage = {
     // === SYNC KEYS ACROSS DEVICES ===
     // Export all bm-* settings as a base64 code; paste on another device to restore.
     // Private — the code only works if you have it. No server changes needed.
+    var ckOn = typeof CloudKeys !== 'undefined' && CloudKeys.ready;
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:6px;">🔄 Sync Settings Across Devices</h3>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Export a code from this device, paste it on another (phone/laptop) to copy all API keys + rates + preferences. Keys stay private — the code only works where you paste it.</p>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">'
+      + (ckOn
+          ? '<span style="color:var(--green-dark);font-weight:700;">✓ Cloud sync ON</span> — keys + preferences sync automatically when you log in. Tap below to force a refresh.'
+          : 'Manual sync: export a code from this device, paste it on another. (Cloud sync requires Supabase login + the tenant_settings table — see release notes.)')
+      + '</p>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +   '<button onclick="if(typeof CloudKeys!==\'undefined\')CloudKeys.refresh();else UI.toast(\'Cloud sync not ready\',\'error\');" style="background:#1a3c12;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">☁ Sync from cloud now</button>'
       +   '<button onclick="SettingsPage._exportKeys()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">📋 Export code</button>'
       +   '<button onclick="SettingsPage._importKeys()" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 18px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">📥 Import code</button>'
       + '</div>'

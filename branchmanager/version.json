@@ -1,5 +1,5 @@
 {
-  "version": 238,
+  "version": 239,
   "released": "2026-04-19",
-  "notes": "Fix AI model alias — was claude-sonnet-4-5-20250514 (invalid), now claude-sonnet-4-5. Restores tree ID + AI chat + video quote."
+  "notes": "Cloud Settings Sync — API keys and prefs auto-sync per tenant via new tenant_settings table. Set on one device, every device gets it on next login. Requires SQL migration."
 }

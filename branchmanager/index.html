@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 171; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 172; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -293,6 +293,13 @@
   @media (max-width:720px) {
     .q-mobile-only { display:block !important; }
     .q-desktop-only { display:none !important; }
+
+    /* Quote form line items — stack vertically on mobile (was 6-col crush) */
+    .quote-item-row { grid-template-columns: 1fr 1fr 1fr !important; gap:8px !important; padding:14px !important; }
+    .quote-item-row > .form-group:nth-child(1),
+    .quote-item-row > .form-group:nth-child(2) { grid-column: 1 / -1 !important; }
+    .quote-item-row > button[onclick*="parentElement.remove"] { grid-column: 1 / -1 !important; padding:10px 0 !important; background:var(--bg) !important; border-radius:8px !important; font-size:14px !important; }
+    .quote-item-row input, .quote-item-row select { font-size:16px !important; padding:12px !important; } /* 16px prevents iOS auto-zoom on focus */
   }
 
   /* ── Status Badges (App colors) ── */
@@ -816,7 +823,7 @@
           </div>
         </div>
         <button class="btn btn-primary" id="pageAction" style="display:none;">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v171</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v172</span>
       </div>
     </div>
 

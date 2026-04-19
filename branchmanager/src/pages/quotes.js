@@ -389,7 +389,10 @@ var QuotesPage = {
       html += QuotesPage._itemRow(i, item, services);
     });
     html += '</div>'
-      + '<button type="button" class="btn btn-outline" style="margin-top:8px;font-size:12px;" onclick="QuotesPage.addItem()">+ Add without photo</button>'
+      + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">'
+      +   '<button type="button" onclick="QuotesPage._addPhotoFirst()" style="flex:1;min-width:160px;padding:12px;background:#fff;color:var(--green-dark);border:2px dashed var(--green-light);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Add Another Tree (Photo + AI)</button>'
+      +   '<button type="button" onclick="QuotesPage.addItem()" style="padding:12px 16px;background:#fff;color:var(--text-light);border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">+ Manual</button>'
+      + '</div>'
       + '<div id="q-pertree-total" style="margin-top:12px;text-align:right;font-size:15px;font-weight:700;color:var(--green-dark);"></div>'
       + '</div>';
 
@@ -1216,33 +1219,41 @@ var QuotesPage = {
     }, 0);
   },
 
-  // ── Photo-first flow (AI picks service + fills all fields) ──
+  // ── Photo-first flow — focused one-tree-at-a-time with MULTIPLE photos for AI ──
   _addPhotoFirst: function() {
-    // Add an empty line item now so _identifyTree can fill it in place.
     QuotesPage.addItem();
     QuotesPage._pendingService = ''; // let AI choose the service itself
-    // Open picker (no capture attr — native Take/Library sheet)
     var input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
+    input.multiple = true; // ← allow multi-select (trunk + crown + whole tree) for better AI accuracy
     input.onchange = function(e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function(ev) {
-        var dataUrl = ev.target.result;
+      var files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      // Hard cap at 5 to keep payload reasonable
+      if (files.length > 5) { UI.toast('Max 5 photos per tree — using first 5'); files = files.slice(0, 5); }
+      Promise.all(files.map(function(f) {
+        return new Promise(function(resolve) {
+          var r = new FileReader();
+          r.onload = function(ev) { resolve(ev.target.result); };
+          r.readAsDataURL(f);
+        });
+      })).then(function(dataUrls) {
         var rows = document.querySelectorAll('.quote-item-row');
         var lastRow = rows[rows.length - 1];
         if (lastRow) {
-          lastRow.dataset.photo = dataUrl;
+          lastRow.dataset.photos = JSON.stringify(dataUrls);
+          lastRow.dataset.photo = dataUrls[0]; // back-compat: first photo as primary
+          // Render a photo grid above the row content
           var thumb = document.createElement('div');
-          thumb.style.cssText = 'margin-bottom:8px;';
-          thumb.innerHTML = '<img src="' + dataUrl + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">';
+          thumb.style.cssText = 'margin-bottom:8px;display:grid;grid-template-columns:repeat(' + Math.min(dataUrls.length, 3) + ',1fr);gap:4px;';
+          thumb.innerHTML = dataUrls.map(function(u) {
+            return '<img src="' + u + '" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">';
+          }).join('') + (dataUrls.length > 1 ? '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;margin-top:2px;">' + dataUrls.length + ' photos — AI will analyze all</div>' : '');
           lastRow.insertBefore(thumb, lastRow.firstChild);
         }
-        QuotesPage._identifyTree(dataUrl, rows.length - 1);
-      };
-      reader.readAsDataURL(file);
+        QuotesPage._identifyTree(dataUrls, rows.length - 1);
+      });
     };
     input.click();
   },
@@ -1333,27 +1344,37 @@ var QuotesPage = {
     input.click();
   },
 
-  _identifyTree: function(imageDataUrl, rowIndex) {
-    // Guard against concurrent calls (duplicates wasted API credits)
+  _identifyTree: function(images, rowIndex) {
+    // Accept a single data URL OR an array — normalize to array
+    var imgArr = Array.isArray(images) ? images : [images];
+
     if (QuotesPage._identifying) {
       UI.toast('Already identifying a tree, please wait...', 'error');
       return;
     }
-    // Send to AI for tree identification
     var aiKey = localStorage.getItem('bm-claude-key');
     if (!aiKey) {
-      // No AI key — just add the photo, user fills in manually
       UI.toast('Add AI key in Settings for auto tree ID');
-      QuotesPage.addItem();
       return;
     }
 
     QuotesPage._identifying = true;
-    UI.toast('Identifying tree...');
+    UI.toast(imgArr.length > 1 ? 'Analyzing ' + imgArr.length + ' photos…' : 'Identifying tree…');
 
-    // Extract base64 from data URL
-    var base64 = imageDataUrl.split(',')[1];
-    var mediaType = imageDataUrl.split(';')[0].split(':')[1];
+    // Build content array: all images followed by the prompt
+    var content = imgArr.map(function(dataUrl) {
+      return {
+        type: 'image',
+        source: { type: 'base64', media_type: dataUrl.split(';')[0].split(':')[1], data: dataUrl.split(',')[1] }
+      };
+    });
+    content.push({
+      type: 'text',
+      text: 'You are a certified arborist in ZIP ' + (localStorage.getItem('bm-zip') || '10566') + '. '
+        + (imgArr.length > 1 ? 'You have ' + imgArr.length + ' photos of the SAME tree (different angles). Use them together for better accuracy. ' : '')
+        + (QuotesPage._pendingService ? 'The user selected service: ' + QuotesPage._pendingService + '. Use that for suggestedService.' : 'Pick the MOST LIKELY service this tree needs based on its condition (Tree Removal if dead/hazardous, Tree Pruning if healthy with overgrowth, Stump Grinding if only stump, Cabling if split/weak fork, Clean Up if debris).')
+        + ' Respond in ONLY this JSON format: {"species":"Common Name","dbh":"estimated diameter in inches as a number","heightFt":"estimated height in feet as a number","condition":"good/fair/poor/dead","notes":"1 sentence assessment","suggestedService":"Tree Removal OR Tree Pruning OR Stump Grinding OR Cabling OR Clean Up","diseases":"top disease risk for this species"}'
+    });
 
     fetch('https://ltpivkqahvplapyagljt.supabase.co/functions/v1/ai-chat', {
       method: 'POST',
@@ -1361,14 +1382,8 @@ var QuotesPage = {
       body: JSON.stringify({
         apiKey: aiKey,
         model: 'claude-sonnet-4-5-20250514',
-        max_tokens: 200,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: 'You are a certified arborist in ZIP ' + (localStorage.getItem('bm-zip') || '10566') + '. ' + (QuotesPage._pendingService ? 'The user selected service: ' + QuotesPage._pendingService + '. Use that for suggestedService.' : 'Pick the MOST LIKELY service this tree needs based on its condition (Tree Removal if dead/hazardous, Tree Pruning if healthy with overgrowth, Stump Grinding if only stump, Cabling if split/weak fork, Clean Up if debris).') + ' Identify this tree and respond in ONLY this JSON format: {"species":"Common Name","dbh":"estimated diameter in inches as a number","heightFt":"estimated height in feet as a number","condition":"good/fair/poor/dead","notes":"1 sentence assessment","suggestedService":"Tree Removal OR Tree Pruning OR Stump Grinding OR Cabling OR Clean Up","diseases":"top disease risk for this species"}' }
-          ]
-        }]
+        max_tokens: 300,
+        messages: [{ role: 'user', content: content }]
       })
     })
     .then(function(r) { return r.json(); })
@@ -1401,19 +1416,17 @@ var QuotesPage = {
 
           QuotesPage.calcTotal();
           UI.toast('🌳 ' + tree.species + ' · ' + tree.dbh + '" DBH' + (tree.heightFt ? ' · ' + tree.heightFt + 'ft' : '') + ' · $' + suggestedPrice);
-          QuotesPage.addItem();
+          // NO auto-addItem — user taps "Add Another Tree" explicitly when ready.
         }
       } catch(e) {
         console.warn('Tree ID parse error:', e, text);
         UI.toast('Could not identify — fill in manually');
-        QuotesPage.addItem();
       }
       QuotesPage._identifying = false;
     })
     .catch(function(e) {
       console.warn('Tree ID error:', e);
       UI.toast('AI unavailable — fill in manually');
-      QuotesPage.addItem();
       QuotesPage._identifying = false;
     });
   },

@@ -462,8 +462,23 @@ var QuotesPage = {
       + '<div id="q-pertree-total" style="margin-top:12px;text-align:right;font-size:15px;font-weight:700;color:var(--green-dark);"></div>'
       + '</div>';
 
+    // ═══ EQUIPMENT ON THIS JOB (between Line Items and Totals) ═══
+    // Lives outside the T&M collapsible so it's visible upfront.
+    // T&M reads from these same checkboxes to compute its price check.
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      + '<div style="font-size:14px;font-weight:800;margin-bottom:4px;">🛠 Equipment on this job</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Pick what you\'ll bring. Used by the T&M price check below.</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;">'
+      +   QuotesPage._tmEquipPill('bucket', '🚛 Bucket truck', 75, tmData)
+      +   QuotesPage._tmEquipPill('chipper', '🪵 Chipper', 44, tmData)
+      +   QuotesPage._tmEquipPill('crane', '🏗 Crane', 200, tmData)
+      +   QuotesPage._tmEquipPill('stumpGrinder', '🪓 Stump grinder', 50, tmData)
+      +   QuotesPage._tmEquipPill('miniSkid', '🚜 Mini-skid / loader', 60, tmData)
+      +   QuotesPage._tmEquipPill('dumpTruck', '🛻 Dump truck', 40, tmData)
+      +   QuotesPage._tmEquipPill('liftLadder', '🪜 Man lift / ladder', 60, tmData)
+      +   QuotesPage._tmEquipPill('trailer', '🚚 Trailer / haul rig', 25, tmData)
+      + '</div>'
       + '</div>';
-
 
     // Total display with tax breakdown (Jobber style)
     var _qSubtotal = 0;
@@ -521,24 +536,12 @@ var QuotesPage = {
       +   '</div>'
       + '</div>'
 
-      // ═══ STEP 2 — Equipment (expanded list, pill-style) ═══
-      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
-      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 2 — Equipment needed</label>'
-      +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;">'
-      +     QuotesPage._tmEquipPill('bucket', '🚛 Bucket truck', 75, tmData)
-      +     + QuotesPage._tmEquipPill('chipper', '🪵 Chipper', 44, tmData)
-      +     + QuotesPage._tmEquipPill('crane', '🏗 Crane', 200, tmData)
-      +     + QuotesPage._tmEquipPill('stumpGrinder', '🪓 Stump grinder', 50, tmData)
-      +     + QuotesPage._tmEquipPill('miniSkid', '🚜 Mini-skid / loader', 60, tmData)
-      +     + QuotesPage._tmEquipPill('dumpTruck', '🛻 Dump truck', 40, tmData)
-      +     + QuotesPage._tmEquipPill('liftLadder', '🪜 Man lift / ladder truck', 60, tmData)
-      +     + QuotesPage._tmEquipPill('trailer', '🚚 Trailer / haul rig', 25, tmData)
-      +   '</div>'
-      + '</div>'
+      // Equipment section removed here — now lives above the Totals card, outside T&M.
+      // T&M reads the same #q-tm-* checkboxes to compute cost.
 
-      // ═══ STEP 3 — Hours ═══
+      // ═══ STEP 2 — Job hours ═══
       + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
-      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px;">Step 3 — Job hours</label>'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px;">Step 2 — Job hours</label>'
       +   '<div style="display:flex;align-items:center;gap:10px;">'
       +     '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:8px;font-size:22px;font-weight:700;text-align:center;">'
       +     '<span style="font-size:14px;color:var(--text-light);font-weight:600;">hrs on site</span>'
@@ -546,9 +549,9 @@ var QuotesPage = {
       +   '<div style="font-size:11px;color:var(--text-light);margin-top:6px;">Each crew member + equipment piece multiplies by these hours.</div>'
       + '</div>'
 
-      // ═══ STEP 4 — Disposal (optional) ═══
+      // ═══ STEP 3 — Disposal (optional) ═══
       + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:0 2px;">'
-      +   '<label style="font-size:12px;color:var(--text-light);font-weight:600;flex-shrink:0;">Step 4 — Dump / disposal fee:</label>'
+      +   '<label style="font-size:12px;color:var(--text-light);font-weight:600;flex-shrink:0;">Step 3 — Dump / disposal fee:</label>'
       +   '<input type="number" id="q-tm-disposal" value="' + (tmData.disposal || '') + '" placeholder="0" min="0" oninput="QuotesPage._calcTM()" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
       +   '<span style="font-size:12px;color:var(--text-light);">$</span>'
       + '</div>'

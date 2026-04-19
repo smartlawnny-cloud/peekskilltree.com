@@ -192,10 +192,31 @@ var PropertyMap = {
               type: 'raster',
               tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}'],
               tileSize: 256, maxzoom: 19
+            },
+            // Free global DEM from AWS Terrain Tiles (Mapzen/Nextzen mirror).
+            // Terrarium RGB encoding — MapLibre decodes natively.
+            'terrain-rgb': {
+              type: 'raster-dem',
+              tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              maxzoom: 15,
+              encoding: 'terrarium'
             }
           },
           layers: [
             { id: 'satellite-layer', type: 'raster', source: 'satellite' },
+            {
+              id: 'hillshade-layer',
+              type: 'hillshade',
+              source: 'terrain-rgb',
+              layout: { visibility: 'none' },
+              paint: {
+                'hillshade-exaggeration': 0.6,
+                'hillshade-shadow-color': '#1a3c12',
+                'hillshade-highlight-color': '#fffbe0',
+                'hillshade-accent-color': '#e07c24'
+              }
+            },
             { id: 'labels-layer', type: 'raster', source: 'labels', paint: { 'raster-opacity': 0.6 } }
           ]
         },
@@ -234,6 +255,21 @@ var PropertyMap = {
       };
       var mapContainer = document.getElementById('prop-map');
       if (mapContainer && mapContainer.parentElement) mapContainer.parentElement.appendChild(toggleBtn);
+
+      // Terrain shading toggle — turns the hillshade layer on/off
+      var terrainBtn = document.createElement('button');
+      terrainBtn.type = 'button';
+      terrainBtn.textContent = '⛰';
+      terrainBtn.title = 'Toggle elevation shading';
+      terrainBtn.style.cssText = 'position:absolute;top:10px;right:98px;z-index:10;background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:6px 10px;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);min-width:38px;min-height:34px;';
+      terrainBtn.onclick = function() {
+        var vis = self.map.getLayoutProperty('hillshade-layer', 'visibility');
+        var on = vis === 'visible';
+        self.map.setLayoutProperty('hillshade-layer', 'visibility', on ? 'none' : 'visible');
+        terrainBtn.style.background = on ? 'rgba(255,255,255,.95)' : '#1a3c12';
+        terrainBtn.style.color = on ? 'var(--text)' : '#fff';
+      };
+      if (mapContainer && mapContainer.parentElement) mapContainer.parentElement.appendChild(terrainBtn);
 
       // Elevation readout — tap map → show elevation in feet (USGS free service)
       var elevReadout = document.createElement('div');

@@ -1,5 +1,5 @@
 {
-  "version": 261,
+  "version": 262,
   "released": "2026-04-19",
-  "notes": "PropertyMap: tap any point → elevation in feet via free USGS Elevation Point Query Service (US coverage)"
+  "notes": "PropertyMap terrain shading: free AWS Terrarium DEM + MapLibre hillshade layer with green/orange/cream color ramp. ⛰ button toggles overlay."
 }

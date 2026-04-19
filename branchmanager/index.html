@@ -232,6 +232,11 @@
   .data-table tr:last-child td { border:none; }
   .data-table td:first-child { font-weight:500; }
 
+  /* Card-style list (Airbnb/Jobber look) */
+  .client-card:hover, .client-card:active { box-shadow:0 4px 14px rgba(0,0,0,0.08) !important; transform:translateY(-1px); }
+  .client-card:active { transform:scale(0.99); background:var(--green-bg) !important; }
+  [data-theme="dark"] .client-card { background:var(--white) !important; border-color:var(--border) !important; }
+
   /* ── Status Badges (App colors) ── */
   .status-badge {
     display:inline-block; padding:2px 10px; border-radius:12px;
@@ -765,7 +770,7 @@
 <script src="src/db.js?v=149"></script>
 <script src="src/ui.js?v=149"></script>
 <script defer src="src/pages/dashboard.js?v=140"></script>
-<script defer src="src/pages/clients.js?v=150"></script>
+<script defer src="src/pages/clients.js?v=152"></script>
 <script defer src="src/pages/requests.js?v=147"></script>
 <script defer src="src/pages/quotes.js?v=149"></script>
 <script defer src="src/pages/jobs.js?v=148"></script>

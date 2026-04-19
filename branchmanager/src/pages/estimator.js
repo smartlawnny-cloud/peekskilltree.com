@@ -48,6 +48,57 @@ var Estimator = {
 
   INS_RATES: { wc: 9, gl: 5, dis: 2, payroll: 8, auto: 3 },
 
+  // Full-page render (for /estimator page nav)
+  render: function() {
+    var html = '<div style="max-width:720px;margin:0 auto;">'
+      + '<h2 style="font-size:22px;font-weight:700;margin-bottom:16px;">🧮 Job Estimator</h2>'
+      + '<div style="font-size:13px;color:var(--text-light);margin-bottom:20px;">Quickly price a job: crew + equipment + insurance + markup → suggested quote</div>'
+      + Estimator._buildFormHTML()
+      + '</div>';
+    // Apply default preset after render
+    setTimeout(function() { Estimator.applyPreset('removal'); }, 150);
+    return html;
+  },
+
+  _buildFormHTML: function() {
+    // Extracted from show() so both modal + page use same HTML
+    var html = '<div id="est-calc">';
+    html += '<div style="margin-bottom:16px;"><div style="font-weight:700;margin-bottom:8px;">Job Type</div><div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    Object.keys(Estimator.PRESETS).forEach(function(key) {
+      var p = Estimator.PRESETS[key];
+      html += '<button class="btn btn-outline est-preset" data-preset="' + key + '" onclick="Estimator.applyPreset(\'' + key + '\')" style="font-size:13px;">' + p.label + '</button>';
+    });
+    html += '</div></div>';
+    html += '<div style="margin-bottom:16px;"><div style="font-weight:700;margin-bottom:8px;">Duration</div><div style="display:flex;gap:6px;">'
+      + '<button class="btn btn-outline est-dur" data-dur="half" onclick="Estimator.setDuration(\'half\')">Half Day (4hr)</button>'
+      + '<button class="btn btn-primary est-dur" data-dur="full" onclick="Estimator.setDuration(\'full\')">Full Day (8hr)</button>'
+      + '<button class="btn btn-outline est-dur" data-dur="custom" onclick="Estimator.setDuration(\'custom\')">Custom</button>'
+      + '</div><div id="est-custom-hrs" style="display:none;margin-top:8px;">'
+      + '<input type="number" id="est-hrs" value="6" min="1" max="16" style="width:80px;padding:6px;border:2px solid var(--border);border-radius:8px;font-size:14px;" oninput="Estimator.calc()"> hours'
+      + '</div></div>';
+    html += '<div style="margin-bottom:16px;padding:16px;background:var(--bg);border-radius:10px;"><div style="font-weight:700;margin-bottom:8px;">Crew</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+    ['climber','bucketop','ground'].forEach(function(key) {
+      var r = Estimator.RATES[key];
+      html += '<div style="display:flex;align-items:center;gap:8px;"><input type="number" class="est-crew" data-key="' + key + '" value="0" min="0" max="10" style="width:50px;padding:6px;border:2px solid var(--border);border-radius:8px;font-size:14px;text-align:center;" oninput="Estimator.calc()"><span style="font-size:13px;">' + r.label + ' <span style="color:var(--text-light);">$' + r.hr + '/hr</span></span></div>';
+    });
+    html += '</div></div>';
+    html += '<div style="margin-bottom:16px;padding:16px;background:var(--bg);border-radius:10px;"><div style="font-weight:700;margin-bottom:8px;">Equipment</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+    ['chipper','chiptruck','bucket','ram','loader','trailer','stump','crane'].forEach(function(key) {
+      var r = Estimator.RATES[key];
+      html += '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" class="est-equip" data-key="' + key + '" onchange="Estimator.calc()" style="width:18px;height:18px;">' + r.label + ' <span style="color:var(--text-light);">$' + r.hr + '/hr</span></label>';
+    });
+    html += '</div></div>';
+    html += '<div style="margin-bottom:16px;padding:16px;background:var(--bg);border-radius:10px;"><div style="font-weight:700;margin-bottom:8px;">Insurance & Overhead</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px;">';
+    [['wc','WC',9],['gl','GL',5],['dis','Disab',2],['payroll','Payroll',8],['auto','Auto',3]].forEach(function(ins) {
+      html += '<div style="display:flex;align-items:center;gap:4px;"><span>' + ins[1] + ':</span><input type="number" class="est-ins" data-key="' + ins[0] + '" value="' + ins[2] + '" min="0" max="30" style="width:45px;padding:4px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center;" oninput="Estimator.calc()">%</div>';
+    });
+    html += '</div></div>';
+    html += '<div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;"><span style="font-weight:700;">Profit Markup:</span><input type="number" id="est-markup" value="30" min="0" max="200" step="5" style="width:70px;padding:6px;border:2px solid var(--border);border-radius:8px;font-size:14px;text-align:center;" oninput="Estimator.calc()">%</div>';
+    html += '<div id="est-results" style="background:var(--green-dark);border-radius:12px;padding:20px;color:#fff;"></div>';
+    html += '</div>';
+    return html;
+  },
+
   // Show the estimator modal — optionally with a callback to populate quote
   show: function(callback) {
     var html = '<div id="est-calc">';

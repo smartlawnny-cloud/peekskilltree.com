@@ -378,6 +378,70 @@ var ClientsPage = {
     });
   },
 
+  // Import contact from iPhone — pre-fills the New Client form
+  _importVCard: function() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.vcf,text/vcard,text/x-vcard';
+    input.onchange = function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var vcf = ev.target.result;
+        var p = ClientsPage._parseVCard(vcf);
+        if (!p.name && !p.phones.length && !p.emails.length) {
+          UI.toast('Could not parse contact', 'error');
+          return;
+        }
+        // Pre-fill the existing form
+        var first = p.firstName || (p.name || '').split(' ')[0] || '';
+        var last = p.lastName || (p.name || '').split(' ').slice(1).join(' ') || '';
+        var phoneEl = document.getElementById('c-phone');
+        var emailEl = document.getElementById('c-email');
+        var addrEl = document.getElementById('c-address');
+        var coEl = document.getElementById('c-company');
+        var firstEl = document.getElementById('c-first');
+        var lastEl = document.getElementById('c-last');
+        if (firstEl && !firstEl.value) firstEl.value = first;
+        if (lastEl && !lastEl.value) lastEl.value = last;
+        if (phoneEl && !phoneEl.value && p.phones[0]) phoneEl.value = p.phones[0];
+        if (emailEl && !emailEl.value && p.emails[0]) emailEl.value = p.emails[0];
+        if (addrEl && !addrEl.value && p.addresses[0]) addrEl.value = p.addresses[0];
+        if (coEl && !coEl.value && p.org) coEl.value = p.org;
+        UI.toast('Contact imported — review & save');
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  },
+
+  _parseVCard: function(text) {
+    var lines = text.replace(/\r\n[ \t]/g, '').split(/\r?\n/);
+    var d = { name: '', firstName: '', lastName: '', phones: [], emails: [], addresses: [], org: '' };
+    lines.forEach(function(line) {
+      var m = line.match(/^([A-Z]+)(;[^:]+)?:(.+)$/i);
+      if (!m) return;
+      var field = m[1].toUpperCase();
+      var value = m[3];
+      if (field === 'FN') d.name = value.trim();
+      else if (field === 'N') {
+        var parts = value.split(';');
+        d.lastName = (parts[0] || '').trim();
+        d.firstName = (parts[1] || '').trim();
+      }
+      else if (field === 'TEL') d.phones.push(value.replace(/[^\d+]/g, '').replace(/^\+?1/, ''));
+      else if (field === 'EMAIL') d.emails.push(value.trim());
+      else if (field === 'ADR') {
+        var a = value.split(';');
+        var addr = [a[2], a[3], a[4], a[5]].filter(Boolean).join(', ');
+        if (addr) d.addresses.push(addr);
+      }
+      else if (field === 'ORG') d.org = value.split(';')[0].trim();
+    });
+    return d;
+  },
+
   _showPortalMenu: function(clientId) {
     var c = DB.clients.getById(clientId);
     if (!c) return;
@@ -467,6 +531,10 @@ var ClientsPage = {
     }
 
     var html = '<form id="client-form" onsubmit="ClientsPage.save(event, \'' + (id || '') + '\')">'
+      + (id ? '' : '<div style="background:var(--bg);border:1px dashed var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">'
+        + '<div style="font-size:13px;color:var(--text-light);">📇 Import from iPhone Contacts (vCard)</div>'
+        + '<button type="button" class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="ClientsPage._importVCard()">Import .vcf</button>'
+        + '</div>')
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
       + UI.formField('First Name *', 'text', 'c-first', _fn, { required: true, placeholder: 'First' })
       + UI.formField('Last Name', 'text', 'c-last', _ln, { placeholder: 'Last' })

@@ -639,10 +639,23 @@ var QuotesPage = {
   _autoSave: function() {
     var form = document.getElementById('quote-form');
     if (!form) return;
+    // Client name comes from the search box (while picking) OR the summary
+    // label inside the collapsible client box (after picking).
+    var cid = (document.getElementById('q-clientId') || {}).value || '';
+    var cname = (document.getElementById('q-client-search') || {}).value || '';
+    if (!cname && cid) {
+      var sumEl = document.querySelector('.q-client-summary-name');
+      if (sumEl) cname = sumEl.textContent || '';
+      if (!cname && typeof DB !== 'undefined' && DB.clients) {
+        var cc = DB.clients.getById(cid);
+        if (cc) cname = cc.name || '';
+      }
+    }
     var data = {
       savedAt: new Date().toISOString(),
-      clientId: (document.getElementById('q-clientId') || {}).value || '',
-      clientName: (document.getElementById('q-client-search') || {}).value || '',
+      clientId: cid,
+      clientName: cname,
+      property: (document.getElementById('q-property') || {}).value || '',
       description: (document.getElementById('q-description') || {}).value || '',
       notes: (document.getElementById('q-notes') || {}).value || '',
       lineItems: []
@@ -671,34 +684,56 @@ var QuotesPage = {
   _restoreAutoSave: function() {
     try {
       var data = JSON.parse(localStorage.getItem(QuotesPage._autoSaveKey));
-      if (!data) return;
-      var clientSearch = document.getElementById('q-client-search');
-      if (clientSearch && data.clientName) clientSearch.value = data.clientName;
-      var clientId = document.getElementById('q-clientId');
-      if (clientId && data.clientId) clientId.value = data.clientId;
+      if (!data) { UI.toast('Nothing to restore', 'error'); return; }
+
+      // If a client was previously picked, trigger the full _selectClient flow so
+      // the gate lifts and the Line Items section appears. Otherwise just fill the
+      // search field so the user can re-pick.
+      if (data.clientId) {
+        QuotesPage._selectClient(data.clientId, data.clientName || '');
+      } else if (data.clientName) {
+        var cs = document.getElementById('q-client-search');
+        if (cs) cs.value = data.clientName;
+      }
+      var prop = document.getElementById('q-property');
+      if (prop && data.property) prop.value = data.property;
       var desc = document.getElementById('q-description');
       if (desc && data.description) desc.value = data.description;
       var notes = document.getElementById('q-notes');
       if (notes && data.notes) notes.value = data.notes;
-      // Restore line items
+
+      // Line items — populate even if hidden, they render once section unhides
       if (data.lineItems && data.lineItems.length > 0) {
-        var rows = document.querySelectorAll('.quote-item-row');
+        // Clear existing items container first
+        var container = document.getElementById('q-items');
+        if (container) container.innerHTML = '';
+        var services = (typeof DB !== 'undefined' && DB.services) ? DB.services.getAll() : [];
         data.lineItems.forEach(function(li, i) {
-          if (i >= rows.length) QuotesPage.addItem();
-          var row = document.querySelectorAll('.quote-item-row')[i];
-          if (!row) return;
-          var svc = row.querySelector('.q-item-service'); if (svc) svc.value = li.service;
-          var dsc = row.querySelector('.q-item-desc'); if (dsc) dsc.value = li.description;
-          var qty = row.querySelector('.q-item-qty'); if (qty) qty.value = li.qty;
-          var rate = row.querySelector('.q-item-rate'); if (rate) rate.value = li.rate;
+          // Render via _itemRow so species + location + photos all come back
+          var tmp = document.createElement('div');
+          tmp.innerHTML = QuotesPage._itemRow(i, li, services, /*expanded=*/ i === data.lineItems.length - 1);
+          var newWrap = tmp.firstChild;
+          if (newWrap && container) {
+            container.appendChild(newWrap);
+            // Rehydrate photos onto the row's dataset so they persist through save
+            var row = newWrap.querySelector('.quote-item-row');
+            if (row) {
+              if (li.photos && li.photos.length) row.dataset.photos = JSON.stringify(li.photos);
+              if (li.photo) row.dataset.photo = li.photo;
+            }
+          }
         });
         QuotesPage.calcTotal();
       }
-      // Remove recovery banner
-      var banner = document.querySelector('[style*="fff3e0"]');
-      if (banner) banner.remove();
+
+      // Remove recovery banner (try any matching selector — color may vary)
+      var banners = document.querySelectorAll('[style*="fff3e0"], [style*="fef3c7"]');
+      banners.forEach(function(b) { if (b.textContent && b.textContent.indexOf('Recovered') >= 0) b.remove(); });
       UI.toast('Draft restored ✅');
-    } catch(e) { UI.toast('Could not restore draft', 'error'); }
+    } catch(e) {
+      console.error('restore error', e);
+      UI.toast('Could not restore draft: ' + (e.message || e), 'error');
+    }
   },
 
   _beforeUnload: function(e) {

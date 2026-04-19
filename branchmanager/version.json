@@ -1,5 +1,5 @@
 {
-  "version": 255,
+  "version": 256,
   "released": "2026-04-19",
-  "notes": "Tree ID models: Sonnet 4.5 → Haiku 4.5 (~10x cheaper, fine for species). AI chat + video quote stay on Sonnet for writing quality."
+  "notes": "Equipment map: layout persists per property address across open/close/return. Rotation handle bigger (26px) + works on mobile touch. Hook fires on add/move/rotate/remove/clear."
 }

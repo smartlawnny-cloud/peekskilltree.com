@@ -1066,13 +1066,20 @@ var QuotesPage = {
     }
     if (!address) { UI.toast('Add a client + property first so the map knows where to show', 'error'); return; }
 
+    // Load any previously-saved equipment layout for THIS address
+    var storageKey = 'bm-equip-map-' + address.trim().toLowerCase();
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); } catch(e) {}
+
     // Register a hook so PropertyMap calls us when its markers array changes/closes.
+    // Also persists to localStorage so layout survives leaving & returning.
     window._bmEquipmentMapHook = function(markers) {
       QuotesPage._syncEquipmentFromMap(markers || []);
+      try { localStorage.setItem(storageKey, JSON.stringify(markers || [])); } catch(e) {}
     };
 
     if (typeof PropertyMap !== 'undefined' && PropertyMap.show) {
-      PropertyMap.show(address, null);
+      PropertyMap.show(address, saved);
     } else {
       UI.toast('Property map unavailable', 'error');
     }

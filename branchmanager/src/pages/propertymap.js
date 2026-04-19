@@ -211,10 +211,10 @@ var PropertyMap = {
         setTimeout(function() { self.geocode(); }, 500);
       }
 
-      // Restore existing markers
+      // Restore existing markers (incl. saved rotation)
       if (existingMarkers && existingMarkers.length) {
         existingMarkers.forEach(function(m) {
-          self._placeMarker(m.id, m.lng, m.lat, m.notes);
+          self._placeMarker(m.id, m.lng, m.lat, m.notes, m.rotation || 0);
         });
       }
     }, 300);
@@ -256,14 +256,14 @@ var PropertyMap = {
     return Math.max(feet * pixelsPerFoot, 1);
   },
 
-  _placeMarker: function(eqId, lng, lat, notes) {
+  _placeMarker: function(eqId, lng, lat, notes, savedRotation) {
     var self = PropertyMap;
     var eq = self.equipmentList.find(function(e) { return e.id === eqId; });
     if (!eq) return;
 
     // Create scaled rectangle element with rotation support
     var el = document.createElement('div');
-    var rotation = 0;
+    var rotation = savedRotation || 0;
     var minW = Math.max(eq.w * 1.5, 30);
     var minH = Math.max(eq.h * 1.5, 16);
     el.style.cssText = 'width:' + minW + 'px;height:' + minH + 'px;background:' + eq.color + ';'
@@ -275,32 +275,26 @@ var PropertyMap = {
     el.textContent = eq.label;
     el.title = eq.label + ' — tap to rotate, drag to move';
 
-    // Rotate handle (small circle at corner)
+    // Rotate handle — bigger + clearer on touch
     var handle = document.createElement('div');
-    handle.style.cssText = 'position:absolute;top:-8px;right:-8px;width:16px;height:16px;'
+    handle.style.cssText = 'position:absolute;top:-12px;right:-12px;width:26px;height:26px;'
       + 'background:#fff;border:2px solid ' + eq.color + ';border-radius:50%;cursor:pointer;'
-      + 'display:flex;align-items:center;justify-content:center;font-size:9px;color:' + eq.color + ';'
-      + 'box-shadow:0 1px 4px rgba(0,0,0,.3);z-index:5;';
+      + 'display:flex;align-items:center;justify-content:center;font-size:14px;color:' + eq.color + ';'
+      + 'box-shadow:0 2px 6px rgba(0,0,0,.4);z-index:5;font-weight:900;';
     handle.textContent = '↻';
-    handle.title = 'Click to rotate 45°';
+    handle.title = 'Tap to rotate 45°';
     el.appendChild(handle);
 
-    // Click handle to rotate 45° each click
-    handle.addEventListener('click', function(e) {
-      e.stopPropagation();
+    function bumpRotation() {
       rotation = (rotation + 45) % 360;
       el.style.transform = 'rotate(' + rotation + 'deg)';
       markerData.rotation = rotation;
-    });
+      if (typeof window._bmEquipmentMapHook === 'function') window._bmEquipmentMapHook(self.markers);
+    }
 
-    // Right-click on equipment to rotate 45° (desktop alternative)
-    el.addEventListener('contextmenu', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      rotation = (rotation + 45) % 360;
-      el.style.transform = 'rotate(' + rotation + 'deg)';
-      markerData.rotation = rotation;
-    });
+    handle.addEventListener('click', function(e) { e.stopPropagation(); bumpRotation(); });
+    handle.addEventListener('touchend', function(e) { e.stopPropagation(); e.preventDefault(); bumpRotation(); });
+    el.addEventListener('contextmenu', function(e) { e.preventDefault(); e.stopPropagation(); bumpRotation(); });
 
     // Update size on zoom (preserve rotation)
     var updateSize = function() {
@@ -326,6 +320,7 @@ var PropertyMap = {
       var pos = marker.getLngLat();
       markerData.lng = pos.lng;
       markerData.lat = pos.lat;
+      if (typeof window._bmEquipmentMapHook === 'function') window._bmEquipmentMapHook(self.markers);
     });
 
     self._updatePlacedList();
@@ -369,6 +364,7 @@ var PropertyMap = {
       self.markers[index].marker.remove();
       self.markers.splice(index, 1);
       self._updatePlacedList();
+      if (typeof window._bmEquipmentMapHook === 'function') window._bmEquipmentMapHook(self.markers);
     }
   },
 
@@ -377,6 +373,7 @@ var PropertyMap = {
     self.markers.forEach(function(m) { m.marker.remove(); });
     self.markers = [];
     self._updatePlacedList();
+    if (typeof window._bmEquipmentMapHook === 'function') window._bmEquipmentMapHook(self.markers);
   },
 
   getMarkerData: function() {

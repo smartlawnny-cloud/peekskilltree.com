@@ -1,5 +1,5 @@
 {
-  "version": 253,
+  "version": 254,
   "released": "2026-04-19",
-  "notes": "Quote line-item photos: tap-to-delete via lightbox Delete button"
+  "notes": "Tree ID: Claude is now primary auto-ID (richer data — DBH, condition, price). PlantNet stays as optional 2nd Opinion button on each row."
 }

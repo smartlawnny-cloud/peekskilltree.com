@@ -2009,7 +2009,8 @@ var QuotesPage = {
   },
 
   _identifyTree: function(images, rowIndex) {
-    // Smart fallback: try PlantNet first (free species-only), then Claude (rich DBH+price+condition).
+    // Claude is primary (rich DBH+price+condition). PlantNet lives on as an
+    // optional 2nd Opinion button on the row.
     var imgArr = Array.isArray(images) ? images : [images];
 
     if (QuotesPage._identifying) {
@@ -2017,19 +2018,17 @@ var QuotesPage = {
       return;
     }
 
-    var plantNetKey = localStorage.getItem('bm-plantnet-key') || '';
     var claudeKey = localStorage.getItem('bm-claude-key') || '';
-
-    if (!plantNetKey && !claudeKey) {
-      UI.toast('Photo saved. Add PlantNet or Claude key in Settings for auto tree ID.');
+    if (!claudeKey) {
+      UI.toast('Photo saved. Add Claude API key in Settings for auto tree ID.');
       return;
     }
 
-    // No PlantNet? Go straight to Claude fallback.
-    if (!plantNetKey) {
-      QuotesPage._identifyTreeClaude(imgArr, rowIndex);
-      return;
-    }
+    QuotesPage._identifyTreeClaude(imgArr, rowIndex);
+    return;
+
+    // --- PlantNet path kept below for reference; never reached ---
+    var plantNetKey = localStorage.getItem('bm-plantnet-key') || '';
 
     QuotesPage._identifying = true;
     UI.toast(imgArr.length > 1 ? '🌿 Identifying with PlantNet (' + imgArr.length + ' photos)…' : '🌿 Identifying with PlantNet…');

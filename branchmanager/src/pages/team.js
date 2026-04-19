@@ -334,9 +334,17 @@ var TeamPage = {
       });
     }
 
-    UI.showModal(m.name, html, {
-      footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
-        + ' <button class="btn btn-primary" onclick="UI.closeModal();TeamPage.showForm(\'' + id + '\')">Edit</button>'
-    });
+    // Render as full page (not a modal popup)
+    var pageHtml = '<div style="max-width:760px;margin:0 auto;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
+      +   '<button class="btn btn-outline" onclick="loadPage(\'team\')" style="padding:6px 12px;font-size:12px;">← Back to Team</button>'
+      +   '<button class="btn btn-primary" onclick="TeamPage.showForm(\'' + id + '\')">Edit</button>'
+      + '</div>'
+      + html
+      + '</div>';
+    document.getElementById('pageTitle').textContent = m.name;
+    document.getElementById('pageContent').innerHTML = pageHtml;
+    document.getElementById('pageAction').style.display = 'none';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   }
 };

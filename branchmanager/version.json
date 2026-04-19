@@ -1,5 +1,5 @@
 {
-  "version": 194,
+  "version": 195,
   "released": "2026-04-19",
-  "notes": "Marketing dashboard — lead sources, conversion funnel, response time, SocialPilot+GBP stubs"
+  "notes": "Mobile card layouts for Jobs, Invoices, Requests lists (matches Quotes/Clients pattern)"
 }

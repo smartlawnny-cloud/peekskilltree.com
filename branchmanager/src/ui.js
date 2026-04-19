@@ -4,8 +4,52 @@
  */
 var UI = (function() {
 
-  // ── Modal ──
-  function showModal(title, content, options) {
+  // ── Modal / Full-Page Dialog ──
+  // v201: by default, "modals" render as a full page (no more popups).
+  // Pass { keepModal: true } to keep the old popup behavior (used by UI.confirm).
+  window._bmPageStack = window._bmPageStack || [];
+
+  function _renderAsPage(title, content, options) {
+    options = options || {};
+    var pageTitleEl = document.getElementById('pageTitle');
+    var pageContentEl = document.getElementById('pageContent');
+    var pageActionEl = document.getElementById('pageAction');
+    if (!pageContentEl) {
+      // Fallback — render as modal if the page shell isn't available
+      return _renderAsModal(title, content, options);
+    }
+    // Snapshot current page so closeModal() can restore it
+    window._bmPageStack.push({
+      page: window._currentPage || null,
+      title: pageTitleEl ? pageTitleEl.textContent : '',
+      content: pageContentEl.innerHTML,
+      actionDisplay: pageActionEl ? pageActionEl.style.display : 'none',
+      actionText: pageActionEl ? pageActionEl.textContent : '',
+      actionOnclick: pageActionEl ? pageActionEl.onclick : null
+    });
+
+    var backBtn = '<button class="btn btn-outline" onclick="UI.closeModal()" style="padding:6px 12px;font-size:12px;">← Back</button>';
+    var footerHtml = options.footer
+      ? '<div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">' + options.footer + '</div>'
+      : '';
+    var pageHtml = '<div class="bm-dialog-page" style="max-width:' + (options.wide ? '1000px' : '760px') + ';margin:0 auto;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:8px;flex-wrap:wrap;">'
+      +   backBtn
+      + '</div>'
+      + '<div>' + content + '</div>'
+      + footerHtml
+      + '</div>';
+
+    if (pageTitleEl) pageTitleEl.textContent = title;
+    pageContentEl.innerHTML = pageHtml;
+    if (pageActionEl) pageActionEl.style.display = 'none';
+    // Scroll to top so user sees the back button
+    try { window.scrollTo(0, 0); } catch(e){}
+    if (typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch(e){} }
+    return null;
+  }
+
+  function _renderAsModal(title, content, options) {
     options = options || {};
     var overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -28,12 +72,39 @@ var UI = (function() {
     requestAnimationFrame(function() { overlay.classList.add('open'); });
     return overlay;
   }
+
+  function showModal(title, content, options) {
+    options = options || {};
+    if (options.keepModal) return _renderAsModal(title, content, options);
+    return _renderAsPage(title, content, options);
+  }
+
   function closeModal() {
+    // If there's an actual modal overlay, close it first
     var m = document.querySelector('.modal-overlay');
     if (m) {
       if (m._escHandler) document.removeEventListener('keydown', m._escHandler);
       m.classList.remove('open');
       setTimeout(function() { m.remove(); }, 200);
+      return;
+    }
+    // Otherwise pop the page stack (full-page dialog -> previous page)
+    var stack = window._bmPageStack || [];
+    if (stack.length === 0) return;
+    var prev = stack.pop();
+    // Prefer reloading the underlying page to get fresh data
+    if (prev.page && typeof loadPage === 'function') {
+      try { loadPage(prev.page); return; } catch(e){}
+    }
+    var pageTitleEl = document.getElementById('pageTitle');
+    var pageContentEl = document.getElementById('pageContent');
+    var pageActionEl = document.getElementById('pageAction');
+    if (pageTitleEl) pageTitleEl.textContent = prev.title;
+    if (pageContentEl) pageContentEl.innerHTML = prev.content;
+    if (pageActionEl) {
+      pageActionEl.style.display = prev.actionDisplay;
+      if (prev.actionText) pageActionEl.textContent = prev.actionText;
+      pageActionEl.onclick = prev.actionOnclick;
     }
   }
 
@@ -135,7 +206,7 @@ var UI = (function() {
     window._uiConfirmYes = onYes;
     window._uiConfirmNo = onNo;
     showModal('Confirm', '<p style="font-size:15px;margin-bottom:16px;">' + message + '</p>',
-      { footer: '<button class="btn btn-outline" onclick="UI.closeModal();if(window._uiConfirmNo)window._uiConfirmNo();">Cancel</button> <button class="btn btn-primary" onclick="UI.closeModal();if(window._uiConfirmYes)window._uiConfirmYes();">Yes, Continue</button>' });
+      { keepModal: true, footer: '<button class="btn btn-outline" onclick="UI.closeModal();if(window._uiConfirmNo)window._uiConfirmNo();">Cancel</button> <button class="btn btn-primary" onclick="UI.closeModal();if(window._uiConfirmYes)window._uiConfirmYes();">Yes, Continue</button>' });
   }
 
   // ── Toast / Notification ──

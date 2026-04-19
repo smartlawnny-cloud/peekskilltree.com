@@ -1,5 +1,5 @@
 {
-  "version": 200,
+  "version": 201,
   "released": "2026-04-19",
-  "notes": "Mobile card layouts for Jobs, Invoices, Requests lists (matches Quotes/Clients pattern)"
+  "notes": "No more popups — UI.showModal renders as full-page by default (confirmations and shortcut reference still modal)"
 }

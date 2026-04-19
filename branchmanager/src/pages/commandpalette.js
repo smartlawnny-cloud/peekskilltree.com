@@ -199,6 +199,6 @@ var CommandPalette = {
       + '<div style="display:flex;justify-content:space-between;"><span>Invoices</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">6</kbd></div>'
       + '<div style="display:flex;justify-content:space-between;"><span>Pipeline</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">7</kbd></div>'
       + '<div style="display:flex;justify-content:space-between;"><span>Dark Mode</span><kbd style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:12px;">⌘D</kbd></div>'
-      + '</div>');
+      + '</div>', { keepModal: true });
   }
 };

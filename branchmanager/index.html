@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 200; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 201; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -826,7 +826,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v200</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v201</span>
       </div>
     </div>
 
@@ -840,7 +840,7 @@
 <script src="config.js?v=143"></script>
 <script src="src/auth.js?v=140"></script>
 <script src="src/db.js?v=149"></script>
-<script src="src/ui.js?v=149"></script>
+<script src="src/ui.js?v=201"></script>
 <script defer src="src/pages/dashboard.js?v=140"></script>
 <script defer src="src/pages/clients.js?v=152"></script>
 <script defer src="src/pages/requests.js?v=195"></script>
@@ -863,7 +863,7 @@
 <script defer src="src/pages/budget.js?v=140"></script>
 <script defer src="src/pages/equipment.js?v=140"></script>
 <script defer src="src/pages/jobcosting.js?v=140"></script>
-<script defer src="src/pages/dispatch.js?v=140"></script>
+<script defer src="src/pages/dispatch.js?v=201"></script>
 <script defer src="src/pages/recurring.js?v=140"></script>
 <script defer src="src/pages/notifications.js?v=140"></script>
 <script defer src="src/pages/expenses.js?v=140"></script>
@@ -917,7 +917,7 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script defer src="src/pages/commandpalette.js"></script>
 <script defer src="src/pages/ai.js?v=146"></script>
 <script defer src="src/pages/satisfaction.js?v=140"></script>
-<script defer src="src/pages/emailtemplates.js?v=140"></script>
+<script defer src="src/pages/emailtemplates.js?v=201"></script>
 <script defer src="src/pages/crewperformance.js?v=140"></script>
 <script defer src="src/pages/materials.js"></script>
 <script defer src="src/pages/beforeafter.js?v=140"></script>

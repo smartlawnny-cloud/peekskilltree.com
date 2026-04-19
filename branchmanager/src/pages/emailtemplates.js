@@ -683,7 +683,7 @@ var EmailTemplates = {
       + '<button class="btn btn-primary" onclick="EmailTemplates.delete(\'' + id + '\');UI.closeModal();EmailTemplates._refreshSettings();" style="font-size:13px;background:#c0392b;">Delete</button>'
       + '</div></div>';
 
-    UI.showModal('Delete Template', html);
+    UI.showModal('Delete Template', html, { keepModal: true });
   },
 
   /** Check if a default template has been modified */

@@ -402,7 +402,6 @@ var DispatchPage = {
     // Fallback — show a modal with the message + copy button
     var safeText = (msg.text || '').replace(/</g, '&lt;');
     var html = '<div style="padding:4px 0;">'
-      + '<h3 style="margin-bottom:6px;">🚛 Share Truck Route</h3>'
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Copy + paste into text message to crew. Waypoints are locked in order — Google Maps won\'t reroute them.</p>'
       + '<textarea id="bm-route-text" readonly style="width:100%;height:260px;font-family:monospace;font-size:12px;padding:10px;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;">' + safeText + '</textarea>'
       + '<div style="display:flex;gap:8px;margin-top:12px;">'
@@ -410,7 +409,7 @@ var DispatchPage = {
       +   '<button class="btn btn-outline" onclick="window.open(\'sms:?&body=\' + encodeURIComponent(document.getElementById(\'bm-route-text\').value))">💬 Send via SMS</button>'
       + '</div>'
       + '</div>';
-    UI.showModal(html);
+    UI.showModal('🚛 Share Truck Route', html);
   },
 
   startJob: function(jobId) {

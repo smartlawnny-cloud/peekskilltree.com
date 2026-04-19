@@ -1,5 +1,5 @@
 {
-  "version": 245,
+  "version": 246,
   "released": "2026-04-19",
-  "notes": "Revert topbar to v227-era CSS — my v240-244 attempts made it worse, going back to what worked"
+  "notes": "Quotes split: T&M calc + price comparison + margin moved out of quotes.js (2901→2670 lines) into quotes-tm.js"
 }

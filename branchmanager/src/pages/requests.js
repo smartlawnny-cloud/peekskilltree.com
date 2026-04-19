@@ -3,6 +3,35 @@
  * Matches Jobber: filter chips, stat cards, row actions, detail view
  */
 var RequestsPage = {
+
+  // Look up existing client by phone (last-10-digits match) or email (case-insensitive).
+  // Returns the client object, or null. If found, also auto-backfills missing phone/email
+  // on the client record so we accumulate contact methods over time.
+  _matchClient: function(phone, email, name) {
+    var phoneDigits = (phone || '').replace(/\D/g, '').slice(-10);
+    var emailNorm = (email || '').trim().toLowerCase();
+    if (!phoneDigits && !emailNorm) return null;
+    var clients = [];
+    try { clients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
+    var match = null;
+    for (var i = 0; i < clients.length; i++) {
+      var c = clients[i];
+      var cPhone = (c.phone || '').replace(/\D/g, '').slice(-10);
+      var cEmail = (c.email || '').trim().toLowerCase();
+      if (phoneDigits && cPhone && cPhone === phoneDigits) { match = c; break; }
+      if (emailNorm && cEmail && cEmail === emailNorm) { match = c; break; }
+    }
+    if (!match) return null;
+    // Backfill missing contact on matched client
+    var patch = {};
+    if (phoneDigits && !(match.phone || '').replace(/\D/g, '').length) patch.phone = phone;
+    if (emailNorm && !(match.email || '').trim()) patch.email = email;
+    if (Object.keys(patch).length) {
+      try { DB.clients.update(match.id, patch); Object.assign(match, patch); } catch(e){}
+    }
+    return match;
+  },
+
   _co: function() {
     return {
       name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
@@ -46,12 +75,14 @@ var RequestsPage = {
                   e.property && row.property && e.property.substring(0,8) === row.property.substring(0,8));
         });
         if (!dup) {
+          var matched = RequestsPage._matchClient(row.phone, row.email, row.client_name);
           DB.requests.create({
             supabaseId: row.id,
-            clientName: row.client_name || '',
-            email: row.email || '',
-            phone: row.phone || '',
-            property: row.property || '',
+            clientId: matched ? matched.id : undefined,
+            clientName: (matched && matched.name) || row.client_name || '',
+            email: row.email || (matched && matched.email) || '',
+            phone: row.phone || (matched && matched.phone) || '',
+            property: row.property || (matched && matched.address) || '',
             source: row.source || 'Online Form',
             notes: row.notes || '',
             status: row.status || 'new',
@@ -89,12 +120,14 @@ var RequestsPage = {
                   e.property && row.property && e.property.substring(0,8) === row.property.substring(0,8));
         });
         if (!dup) {
+          var matched = RequestsPage._matchClient(row.phone, row.email, row.client_name);
           DB.requests.create({
             supabaseId: row.id,
-            clientName: row.client_name || '',
-            email: row.email || '',
-            phone: row.phone || '',
-            property: row.property || '',
+            clientId: matched ? matched.id : undefined,
+            clientName: (matched && matched.name) || row.client_name || '',
+            email: row.email || (matched && matched.email) || '',
+            phone: row.phone || (matched && matched.phone) || '',
+            property: row.property || (matched && matched.address) || '',
             source: row.source || 'Online Form',
             notes: row.notes || '',
             status: row.status || 'new',
@@ -401,14 +434,22 @@ var RequestsPage = {
       if (!client) { UI.toast('Client not found', 'error'); return; }
     } else {
       var name = (document.getElementById('r-name')||{}).value.trim();
+      var rphone = (document.getElementById('r-phone')||{}).value.trim();
+      var remail = (document.getElementById('r-email')||{}).value.trim();
       if (!name) { UI.toast('Enter a client name or select an existing client', 'error'); return; }
-      client = DB.clients.create({
-        name: name,
-        phone: (document.getElementById('r-phone')||{}).value.trim(),
-        email: (document.getElementById('r-email')||{}).value.trim(),
-        address: property,
-        status: 'lead'
-      });
+      // Auto-match to an existing client by phone/email to avoid duplicate records.
+      client = RequestsPage._matchClient(rphone, remail, name);
+      if (client) {
+        UI.toast('Matched existing client: ' + client.name + ' ✓');
+      } else {
+        client = DB.clients.create({
+          name: name,
+          phone: rphone,
+          email: remail,
+          address: property,
+          status: 'lead'
+        });
+      }
     }
 
     DB.requests.create({

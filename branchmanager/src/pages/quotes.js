@@ -1190,11 +1190,11 @@ var QuotesPage = {
   },
 
   _addTreePhoto: function() {
-    // Use camera or file input
+    // Use camera or file input — no `capture` attr so iOS/Android show the
+    // native picker (Take Photo / Photo Library / Browse) instead of forcing camera.
     var input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.capture = 'environment'; // rear camera on mobile
     input.onchange = function(e) {
       var file = e.target.files[0];
       if (!file) return;

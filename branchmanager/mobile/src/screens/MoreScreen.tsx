@@ -5,8 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { Avatar } from '../components/Avatar';
@@ -21,6 +21,16 @@ interface MenuItem {
 
 const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
   {
+    title: 'Pipeline',
+    items: [
+      { icon: '📥', label: 'Requests', desc: 'Incoming service requests', screen: 'RequestsList' },
+      { icon: '📋', label: 'Quotes', desc: 'Estimates & proposals', screen: 'QuotesList' },
+      { icon: '🔧', label: 'Jobs', desc: 'Scheduled & active work', screen: 'JobsList' },
+      { icon: '🧾', label: 'Invoices', desc: 'Billing & collections', screen: 'InvoicesList' },
+      { icon: '💳', label: 'Payments', desc: 'Payment history', screen: 'PaymentsList' },
+    ],
+  },
+  {
     title: 'Team',
     items: [
       { icon: '👥', label: 'Employees', desc: 'Manage team members', screen: 'EmployeeProfile' },
@@ -31,8 +41,6 @@ const MENU_SECTIONS: { title: string; items: MenuItem[] }[] = [
   {
     title: 'Financial',
     items: [
-      { icon: '🧾', label: 'Invoices', desc: 'View & manage invoices', screen: 'Search' },
-      { icon: '💳', label: 'Payments', desc: 'Track payments', screen: 'Search' },
       { icon: '📊', label: 'Reports', desc: 'Revenue & analytics', screen: 'Reports', ownerOnly: true },
       { icon: '💵', label: 'Expenses', desc: 'Track business expenses', screen: 'Expenses', ownerOnly: true },
     ],
@@ -62,7 +70,7 @@ import { useAuth } from '../hooks/useAuth';
 export function MoreScreen({ navigation }: any) {
   const { user, hasPermission, isOwner } = useAuth();
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>More</Text>
       </View>
@@ -70,11 +78,11 @@ export function MoreScreen({ navigation }: any) {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Profile Card */}
         <Card style={styles.profileCard}>
-          <Avatar name="Doug Brown" size={48} color={colors.greenDark} />
+          <Avatar name={user?.name || 'User'} size={48} color={colors.greenDark} />
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Doug Brown</Text>
-            <Text style={styles.profileRole}>Owner</Text>
-            <Text style={styles.profileEmail}>info@peekskilltree.com</Text>
+            <Text style={styles.profileName}>{user?.name || 'User'}</Text>
+            <Text style={styles.profileRole}>{user?.role ? user.role.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'User'}</Text>
+            <Text style={styles.profileEmail}>{user?.email || '—'}</Text>
           </View>
         </Card>
 

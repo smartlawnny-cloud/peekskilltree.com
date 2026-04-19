@@ -166,7 +166,6 @@ var TeamChat = {
     var input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.capture = 'environment';
     input.onchange = function(e) {
       var file = e.target.files[0];
       if (!file) return;

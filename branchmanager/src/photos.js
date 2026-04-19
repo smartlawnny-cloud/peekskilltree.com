@@ -13,7 +13,7 @@ var Photos = {
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
       + '<h4 style="font-size:14px;">📸 Photos (' + photos.length + ')</h4>'
       + '<label style="background:var(--green-dark);color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">'
-      + '+ Add Photo<input type="file" accept="image/*" capture="environment" multiple onchange="Photos.upload(event, \'' + recordType + '\', \'' + recordId + '\')" style="display:none;">'
+      + '+ Add Photo<input type="file" accept="image/*" multiple onchange="Photos.upload(event, \'' + recordType + '\', \'' + recordId + '\')" style="display:none;">'
       + '</label></div>';
 
     if (photos.length) {

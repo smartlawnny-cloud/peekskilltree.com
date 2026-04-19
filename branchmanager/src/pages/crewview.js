@@ -113,7 +113,7 @@ var CrewView = {
         html += '</div>'
           + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">'
           + '<label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--bg);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-light);">'
-          + '📸 Photo<input type="file" accept="image/*" capture="environment" onchange="if(typeof Photos!==\'undefined\')Photos.upload(event,\'job\',\'' + j.id + '\')" style="display:none;">'
+          + '📸 Photo<input type="file" accept="image/*" multiple onchange="if(typeof Photos!==\'undefined\')Photos.upload(event,\'job\',\'' + j.id + '\')" style="display:none;">'
           + '</label>'
           + '<button onclick="CrewView.addNote(\'' + j.id + '\')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--bg);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-light);border:none;">📝 Add Note</button>'
           + '</div>'

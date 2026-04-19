@@ -10,10 +10,10 @@ var BeforeAfter = {
 
   _co: function() {
     return {
-      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
-      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
-      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
-      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
+      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
+      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
+      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website
     };
   },
 
@@ -292,7 +292,7 @@ var BeforeAfter = {
       + '<img id="ba-before-img" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;">'
       + '<button onclick="BeforeAfter._clearPhoto(\'before\')" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;">&times;</button>'
       + '</div>'
-      + '<input type="file" id="ba-before-file" accept="image/*" capture="environment" onchange="BeforeAfter._handlePhoto(\'before\', this)" '
+      + '<input type="file" id="ba-before-file" accept="image/*" onchange="BeforeAfter._handlePhoto(\'before\', this)" '
       + 'style="display:none;">'
       + '<button onclick="document.getElementById(\'ba-before-file\').click()" id="ba-before-btn" style="width:100%;padding:24px;border:2px dashed var(--border);border-radius:8px;background:#fafafa;cursor:pointer;font-size:14px;color:var(--text-light);">'
       + '📷 Take or Choose BEFORE Photo</button>'
@@ -305,7 +305,7 @@ var BeforeAfter = {
       + '<img id="ba-after-img" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;">'
       + '<button onclick="BeforeAfter._clearPhoto(\'after\')" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;">&times;</button>'
       + '</div>'
-      + '<input type="file" id="ba-after-file" accept="image/*" capture="environment" onchange="BeforeAfter._handlePhoto(\'after\', this)" '
+      + '<input type="file" id="ba-after-file" accept="image/*" onchange="BeforeAfter._handlePhoto(\'after\', this)" '
       + 'style="display:none;">'
       + '<button onclick="document.getElementById(\'ba-after-file\').click()" id="ba-after-btn" style="width:100%;padding:24px;border:2px dashed var(--border);border-radius:8px;background:#fafafa;cursor:pointer;font-size:14px;color:var(--text-light);">'
       + '📷 Take or Choose AFTER Photo</button>'

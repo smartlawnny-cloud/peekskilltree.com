@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, SafeAreaView, Alert,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, fontSize } from '../theme';
 import { WeekSelector } from '../components/WeekSelector';
 import { SummaryCard } from '../components/SummaryCard';
@@ -101,7 +102,7 @@ export function TimesheetScreen({ navigation }: any) {
   const allApproved = approvedCount === employees.length && employees.length > 0;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Timesheets</Text>
         <View style={styles.headerActions}>

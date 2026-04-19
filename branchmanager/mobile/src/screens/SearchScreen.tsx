@@ -6,10 +6,10 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { Avatar } from '../components/Avatar';
@@ -100,7 +100,7 @@ export function SearchScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Search</Text>
       </View>

@@ -25,6 +25,11 @@ import { DispatchScreen } from '../screens/DispatchScreen';
 import { VoiceToQuoteScreen } from '../screens/VoiceToQuoteScreen';
 import { AssistantScreen } from '../screens/AssistantScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { RequestsListScreen } from '../screens/RequestsListScreen';
+import { QuotesListScreen } from '../screens/QuotesListScreen';
+import { JobsListScreen } from '../screens/JobsListScreen';
+import { InvoicesListScreen } from '../screens/InvoicesListScreen';
+import { PaymentsListScreen } from '../screens/PaymentsListScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +49,13 @@ export function AppNavigator() {
       <Stack.Screen name="ClientPortal" component={ClientPortalScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="Dispatch" component={DispatchScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="Reports" component={ReportsScreen} options={{ animation: 'slide_from_right' }} />
+
+      {/* List screens */}
+      <Stack.Screen name="RequestsList" component={RequestsListScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="QuotesList" component={QuotesListScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="JobsList" component={JobsListScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="InvoicesList" component={InvoicesListScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="PaymentsList" component={PaymentsListScreen} options={{ animation: 'slide_from_right' }} />
 
       {/* Builder/create screens */}
       <Stack.Screen name="QuoteBuilder" component={QuoteBuilderScreen} options={{ animation: 'slide_from_right' }} />

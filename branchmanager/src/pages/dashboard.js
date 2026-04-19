@@ -52,11 +52,13 @@ var DashboardPage = {
       + '<div style="font-size:11px;color:' + (_monthPct >= 100 ? 'var(--green-dark)' : 'var(--text-light)') + ';margin-top:2px;">' + _monthPct + '% of monthly goal</div>'
       + '</div></div>';
 
-    // === MONEY ON THE TABLE widget ===
+    // === MONEY ON THE TABLE widget — REMOVED per user request (Apr 19, 2026) ===
+    // The same signals are already in the Smart Daily Briefing + action alerts below.
+    // Code kept inside `if (false)` so we can re-enable easily.
     var now0 = new Date();
     var todayDateStr = now0.getFullYear() + '-' + (now0.getMonth()+1<10?'0':'') + (now0.getMonth()+1) + '-' + (now0.getDate()<10?'0':'') + now0.getDate();
     var mottDismissKey = 'bm-mott-dismissed-' + todayDateStr;
-    if (!localStorage.getItem(mottDismissKey)) {
+    if (false && !localStorage.getItem(mottDismissKey)) {
       var mottAllInvoices = DB.invoices.getAll();
       var mottAllQuotes = DB.quotes.getAll();
       var mottAllJobs = DB.jobs.getAll();

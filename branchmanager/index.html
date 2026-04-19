@@ -2,6 +2,48 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+// Self-healing version check — runs BEFORE anything else caches.
+// Fetches version.json with no-store; if the server's version doesn't match
+// what's bundled here, we unregister all SWs, blow away all caches, and reload.
+// This breaks the iOS "stale SW holds cached SW" deadlock permanently.
+(function() {
+  var BUNDLED_VERSION = 164; // bump with every deploy (must match version.json)
+  try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
+  // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
+  if (/[?&]reset=/.test(location.search)) return;
+  fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data || typeof data.version !== 'number') return;
+      if (data.version > BUNDLED_VERSION) {
+        console.log('[BM] Stale app (bundled ' + BUNDLED_VERSION + ' < server ' + data.version + ') — force refresh.');
+        try {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              Promise.all(regs.map(function(r){ return r.unregister(); })).then(function() {
+                if (window.caches) {
+                  caches.keys().then(function(keys) {
+                    Promise.all(keys.map(function(k){ return caches.delete(k); })).then(function() {
+                      location.reload();
+                    });
+                  });
+                } else { location.reload(); }
+              });
+            });
+          } else if (window.caches) {
+            caches.keys().then(function(keys) {
+              Promise.all(keys.map(function(k){ return caches.delete(k); })).then(function() {
+                location.reload();
+              });
+            });
+          } else { location.reload(); }
+        } catch(e) { location.reload(); }
+      }
+    })
+    .catch(function(){ /* offline is fine — skip check */ });
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Branch Manager</title>
 <meta name="description" content="Second Nature Tree Service — Job Management">
@@ -688,6 +730,7 @@
         <div class="nav-section">Tools</div>
         <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> AI Assistant</button>
         <button class="nav-item" data-page="calculators"><span class="icon"><i data-lucide="calculator" class="li"></i></span> Calculators</button>
+        <button class="nav-item" data-page="cardone"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> 10X Tools</button>
         <button class="nav-item" data-page="aitreeid"><span class="icon"><i data-lucide="scan-eye" class="li"></i></span> AI Tree ID <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
         <button class="nav-item" data-page="videoquote"><span class="icon"><i data-lucide="video" class="li"></i></span> Video Quote <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
         <button class="nav-item" data-page="treemeasure"><span class="icon"><i data-lucide="ruler" class="li"></i></span> Tree Measure</button>
@@ -755,6 +798,7 @@
           </div>
         </div>
         <button class="btn btn-primary" id="pageAction" style="display:none;">+ New</button>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v164</span>
       </div>
     </div>
 
@@ -811,6 +855,7 @@
 <script defer src="src/pages/settings.js?v=151"></script>
 <script defer src="src/pages/propertymap.js?v=140"></script>
 <script defer src="src/pages/estimator.js"></script>
+<script defer src="src/pages/cardone.js?v=160"></script>
 <script defer src="src/pages/aitreeid.js?v=140"></script>
 <script defer src="src/pages/videoquote.js?v=140"></script>
 <script defer src="src/pages/treemeasure.js"></script>
@@ -891,70 +936,71 @@ function toggleSidebar() {
 
 // ── Page Config ──
 var pageConfigs = {
-  dashboard: { title: 'Dashboard', action: null },
-  pipeline: { title: 'Pipeline', action: '+ Add Deal', actionFn: 'PipelinePage.addDeal("new_lead")' },
-  schedule: { title: 'Schedule', action: null },
-  clients: { title: 'Clients', action: '+ New Client', actionFn: 'ClientsPage.showForm()' },
-  requests: { title: 'Requests', action: '+ New Request', actionFn: 'RequestsPage.showForm()' },
-  quotes: { title: 'Quotes', action: '+ New Quote', actionFn: 'QuotesPage.showForm()' },
-  jobs: { title: 'Jobs', action: null },
-  invoices: { title: 'Invoices', action: '+ New Invoice', actionFn: 'InvoicesPage.showForm()' },
-  insights: { title: 'Insights', action: null },
-  reviews: { title: 'Reviews', action: null },
-  team: { title: 'Team', action: '+ Add Member', actionFn: 'TeamPage.showForm()' },
-  timesheet: { title: 'Timesheet', action: null },
-  automations: { title: 'Automations', action: null },
-  calculators: { title: 'Calculators', action: null },
-  estimator: { title: 'Job Estimator', action: null },
-  aitreeid: { title: 'AI Tree ID', action: null },
-  videoquote: { title: 'Video Quote', action: null },
-  treemeasure: { title: 'Tree Measure', action: null },
-  crewview: { title: 'Crew View', action: null },
-  employeecenter: { title: 'My Pay & Hours', action: null },
-  budget: { title: 'Budget Planner', action: null },
-  dispatch: { title: 'Dispatch', action: 'Open Route', actionFn: 'DispatchPage.openRoute()' },
-  clientmap: { title: 'Client Map', action: null },
-  photomap: { title: 'Photo Map', action: null },
-  messaging: { title: 'Messages', action: null },
-  equipment: { title: 'Equipment', action: '+ Add', actionFn: 'EquipmentPage.showForm()' },
-  jobcosting: { title: 'Job Costing', action: null },
-  recurring: { title: 'Recurring Jobs', action: null },
-  notifications: { title: 'Activity', action: null },
-  expenses: { title: 'Expenses', action: '+ Add Expense', actionFn: 'loadPage("expenses")' },
-  profitloss: { title: 'Profit & Loss', action: null },
-  weeklysummary: { title: 'Weekly Summary', action: null },
-  reviewtools: { title: 'Review Tools', action: null },
-  reports: { title: 'Reports & Exports', action: null },
-  onlinebooking: { title: 'Online Booking', action: null },
-  formbuilder: { title: 'Form Builder', action: null },
-  receptionist: { title: 'Receptionist', action: null },
-  campaigns: { title: 'Campaigns', action: '+ New Campaign', actionFn: 'loadPage("campaigns")' },
-  referrals: { title: 'Referrals', action: null },
-  import: { title: 'Import Data', action: null },
-  backup: { title: 'Backup & Restore', action: null },
-  settings: { title: 'Settings', action: null },
-  crewperformance: { title: 'Crew Performance', action: null },
-  materials: { title: 'Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
-  beforeafter: { title: 'Before & After', action: null },
-  modeselector: { title: 'Branch Manager', action: null },
-  taskreminders: { title: 'Tasks & Reminders', action: '+ New Task', actionFn: 'TaskReminders._showForm()' },
-  teamchat: { title: 'Team Chat', action: null },
-  mediacenter: { title: 'Media Center', action: '+ Upload Photos', actionFn: 'MediaCenter.showUploadForm()' },
-  reminders: { title: 'Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' },
-  comms: { title: 'Communication Log', action: null },
-  satisfaction: { title: 'Client Satisfaction', action: null },
-  emailtemplates: { title: 'Email Templates', action: '+ New Template', actionFn: 'EmailTemplates._showNewTemplateForm()' },
-  customfields: { title: 'Custom Fields', action: null },
-  checklists: { title: 'Checklists', action: null },
-  payments: { title: 'Payment History', action: null },
-  ai: { title: 'AI Assistant', action: null },
-  clienthub: { title: 'Client Portal', action: null },
-  visits: { title: 'Visits', action: null },
-  workflow: { title: 'Workflow', action: null },
-  propertymap: { title: 'Property Map', action: null },
-  payroll: { title: 'Payroll', action: 'Summary', actionFn: 'PayrollPage.showPayrollSummary(PayrollPage._getWeekDates(PayrollPage._weekOffset)[0])' },
-  permissions: { title: 'Permissions & Roles', action: null },
-  search: { title: 'Search', action: null }
+  dashboard: { title: '🏠 Dashboard', action: null },
+  pipeline: { title: '🚀 Pipeline', action: '+ Add Deal', actionFn: 'PipelinePage.addDeal("new_lead")' },
+  schedule: { title: '📅 Schedule', action: null },
+  clients: { title: '👥 Clients', action: '+ New Client', actionFn: 'ClientsPage.showForm()' },
+  requests: { title: '📥 Requests', action: '+ New Request', actionFn: 'RequestsPage.showForm()' },
+  quotes: { title: '📋 Quotes', action: '+ New Quote', actionFn: 'QuotesPage.showForm()' },
+  jobs: { title: '🔧 Jobs', action: null },
+  invoices: { title: '💰 Invoices', action: '+ New Invoice', actionFn: 'InvoicesPage.showForm()' },
+  insights: { title: '📊 Insights', action: null },
+  reviews: { title: '⭐ Reviews', action: null },
+  team: { title: '👷 Team', action: '+ Add Member', actionFn: 'TeamPage.showForm()' },
+  timesheet: { title: '⏱ Timesheet', action: null },
+  automations: { title: '⚡ Automations', action: null },
+  calculators: { title: '🧮 Calculators', action: null },
+  cardone: { title: '🚀 10X Tools', action: null },
+  estimator: { title: '🌳 Job Estimator', action: null },
+  aitreeid: { title: '🔍 AI Tree ID', action: null },
+  videoquote: { title: '🎥 Video Quote', action: null },
+  treemeasure: { title: '📏 Tree Measure', action: null },
+  crewview: { title: '🚜 Crew View', action: null },
+  employeecenter: { title: '💵 My Pay & Hours', action: null },
+  budget: { title: '💼 Budget Planner', action: null },
+  dispatch: { title: '🗺 Dispatch', action: 'Open Route', actionFn: 'DispatchPage.openRoute()' },
+  clientmap: { title: '📍 Client Map', action: null },
+  photomap: { title: '📷 Photo Map', action: null },
+  messaging: { title: '💬 Messages', action: null },
+  equipment: { title: '🚛 Equipment', action: '+ Add', actionFn: 'EquipmentPage.showForm()' },
+  jobcosting: { title: '📈 Job Costing', action: null },
+  recurring: { title: '🔁 Recurring Jobs', action: null },
+  notifications: { title: '🔔 Activity', action: null },
+  expenses: { title: '💳 Expenses', action: '+ Add Expense', actionFn: 'loadPage("expenses")' },
+  profitloss: { title: '📑 Profit & Loss', action: null },
+  weeklysummary: { title: '🗓 Weekly Summary', action: null },
+  reviewtools: { title: '🌟 Review Tools', action: null },
+  reports: { title: '📤 Reports & Exports', action: null },
+  onlinebooking: { title: '🌐 Online Booking', action: null },
+  formbuilder: { title: '📝 Form Builder', action: null },
+  receptionist: { title: '📞 Receptionist', action: null },
+  campaigns: { title: '📣 Campaigns', action: '+ New Campaign', actionFn: 'loadPage("campaigns")' },
+  referrals: { title: '🤝 Referrals', action: null },
+  import: { title: '📦 Import Data', action: null },
+  backup: { title: '💾 Backup & Restore', action: null },
+  settings: { title: '⚙️ Settings', action: null },
+  crewperformance: { title: '🏆 Crew Performance', action: null },
+  materials: { title: '📦 Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
+  beforeafter: { title: '🖼 Before & After', action: null },
+  modeselector: { title: '🌲 Branch Manager', action: null },
+  taskreminders: { title: '✅ Tasks & Reminders', action: '+ New Task', actionFn: 'TaskReminders._showForm()' },
+  teamchat: { title: '💬 Team Chat', action: null },
+  mediacenter: { title: '📸 Media Center', action: '+ Upload Photos', actionFn: 'MediaCenter.showUploadForm()' },
+  reminders: { title: '🛡 Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' },
+  comms: { title: '📨 Communication Log', action: null },
+  satisfaction: { title: '😊 Client Satisfaction', action: null },
+  emailtemplates: { title: '✉️ Email Templates', action: '+ New Template', actionFn: 'EmailTemplates._showNewTemplateForm()' },
+  customfields: { title: '🔧 Custom Fields', action: null },
+  checklists: { title: '☑️ Checklists', action: null },
+  payments: { title: '💵 Payment History', action: null },
+  ai: { title: '🤖 AI Assistant', action: null },
+  clienthub: { title: '🏡 Client Portal', action: null },
+  visits: { title: '📅 Visits', action: null },
+  workflow: { title: '🔀 Workflow', action: null },
+  propertymap: { title: '🗺 Property Map', action: null },
+  payroll: { title: '💸 Payroll', action: 'Summary', actionFn: 'PayrollPage.showPayrollSummary(PayrollPage._getWeekDates(PayrollPage._weekOffset)[0])' },
+  permissions: { title: '🔐 Permissions & Roles', action: null },
+  search: { title: '🔎 Search', action: null }
 };
 
 var pageRenderers = {
@@ -1022,6 +1068,7 @@ var pageRenderers = {
   payroll: function() { return PayrollPage.render(); },
   permissions: function() { return RBAC.render(); },
   estimator: function() { return Estimator.render(); },
+  cardone: function() { return CardoneTools.render(); },
   calculators: function() {
     return '<div class="stat-grid">'
       + '<div class="stat-card" style="cursor:pointer;" onclick="loadPage(\'estimator\')">'
@@ -1486,9 +1533,18 @@ if ('serviceWorker' in navigator) {
       } catch(e) { alert('Reset error: ' + e.message); }
     })();
   } else {
-    navigator.serviceWorker.register('sw.js').then(function(reg) {
+    // updateViaCache:'none' tells the browser NEVER to HTTP-cache sw.js itself
+    // (iOS PWA bug: without this, iOS holds the old sw.js for up to 24h and
+    // updates never land even when reg.update() fires).
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function(reg) {
       // Check for SW update every time page loads
       reg.update();
+      // Also re-check when the PWA comes back to foreground (iOS re-focus)
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') { try { reg.update(); } catch(e){} }
+      });
+      // And every 15 minutes if the app stays open
+      setInterval(function() { try { reg.update(); } catch(e){} }, 15 * 60 * 1000);
       // If new SW waiting, activate it immediately
       if (reg.waiting) { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); }
       reg.addEventListener('updatefound', function() {

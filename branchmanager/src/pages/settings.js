@@ -39,7 +39,7 @@ var SettingsPage = {
       name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
       phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
       email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
-      address: localStorage.getItem('bm-co-address') || '1 Highland Industrial Park, Peekskill, NY 10566',
+      address: localStorage.getItem('bm-co-address') || (typeof BM_CONFIG !== 'undefined' ? BM_CONFIG.address : ''),
       licenses: localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644',
       website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
       taxRate: localStorage.getItem('bm-tax-rate') || '8.375'
@@ -394,8 +394,10 @@ var SettingsPage = {
       + '<div style="margin-bottom:8px;"><input type="password" id="dialpad-key" value="' + dialpadKey + '" placeholder="dp_api_xxxxxxxxxxxx" style="width:100%;padding:10px;border:2px solid ' + (dialpadOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="var k=document.getElementById(\'dialpad-key\').value.trim();if(!k){UI.toast(\'Paste your token first\',\'error\');return;}localStorage.setItem(\'bm-dialpad-key\',k);localStorage.setItem(\'bm-receptionist-settings\',JSON.stringify({connected:true}));if(typeof Dialpad!==\'undefined\'){Dialpad.apiKey=k;}UI.toast(\'Dialpad connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Token</button>'
+      + '<button onclick="SettingsPage._testDialpad()" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-weight:600;font-size:14px;cursor:pointer;">🔌 Test Connection</button>'
       + (dialpadOk ? '<button onclick="SettingsPage._removeKey(\'bm-dialpad-key\',\'Dialpad\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
+      + '<div id="dialpad-test-result" style="margin-top:10px;font-size:13px;"></div>'
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get token at <a href="https://dialpad.com/accounts/api/keys" target="_blank" style="color:var(--accent);">dialpad.com → API Keys</a>. Also register a 10DLC number for SMS compliance.</p>'
       + '</div>';
 
@@ -921,6 +923,39 @@ var SettingsPage = {
     navigator.clipboard.writeText(sql).then(function() { UI.toast('Expenses SQL copied — paste into Supabase SQL Editor!'); });
   },
 
+  _testDialpad: function() {
+    var key = (document.getElementById('dialpad-key') || {}).value;
+    if (!key) key = localStorage.getItem('bm-dialpad-key') || '';
+    key = (key || '').trim();
+    var out = document.getElementById('dialpad-test-result');
+    if (!key) {
+      if (out) out.innerHTML = '<span style="color:#e07c24;">⚠️ Paste your Dialpad API token first.</span>';
+      return;
+    }
+    if (out) out.innerHTML = '<span style="color:var(--text-light);">Pinging Dialpad…</span>';
+    // Dialpad API: GET /api/v2/users/me — lightweight auth check
+    fetch('https://dialpad.com/api/v2/users/me', {
+      headers: { 'Authorization': 'Bearer ' + key, 'Accept': 'application/json' }
+    }).then(function(r) {
+      if (r.status === 401 || r.status === 403) {
+        if (out) out.innerHTML = '<span style="color:#c0392b;">❌ Invalid token (401/403). Regenerate at dialpad.com → API Keys.</span>';
+        return null;
+      }
+      if (!r.ok) {
+        if (out) out.innerHTML = '<span style="color:#c0392b;">❌ Dialpad returned ' + r.status + '. Check token + account status.</span>';
+        return null;
+      }
+      return r.json();
+    }).then(function(data) {
+      if (!data) return;
+      var name = (data.display_name || data.email || 'Dialpad user');
+      if (out) out.innerHTML = '<span style="color:var(--green-dark);font-weight:600;">✅ Connected as ' + UI.esc(name) + '</span>';
+    }).catch(function(e) {
+      // Most common failure: CORS — Dialpad API doesn't allow browser calls from arbitrary origins.
+      if (out) out.innerHTML = '<span style="color:#c0392b;">❌ ' + (e.message || 'Network error') + '<br><span style="font-size:11px;color:var(--text-light);">If this says "CORS" or "Failed to fetch", the call is blocked by Dialpad\'s browser policy. The token can still work from our server-side webhook — click Save Token and continue.</span></span>';
+    });
+  },
+
   _removeKey: function(storageKey, label) {
     var existing = localStorage.getItem(storageKey);
     if (!existing) {
@@ -1046,7 +1081,11 @@ var SettingsPage = {
     var hashes = {};
     try { hashes = JSON.parse(localStorage.getItem('bm-auth-hashes') || '{}'); } catch(e) {}
     var storedHash = hashes[email.toLowerCase()];
-    var defaultUsers = { 'info@peekskilltree.com': '28006cfd', 'crew@peekskilltree.com': '14b65440', 'doug@peekskilltree.com': '28006cfd' };
+    // Default users are a first-install fallback only; real accounts use hashes stored in localStorage.
+    var defaultUsers = {};
+    if (typeof BM_CONFIG !== 'undefined' && BM_CONFIG.email) {
+      defaultUsers[BM_CONFIG.email.toLowerCase()] = '28006cfd';
+    }
     var expectedHash = storedHash || defaultUsers[email.toLowerCase()];
     if (expectedHash && Auth._hash(current) !== expectedHash) {
       UI.toast('Current password is incorrect', 'error');

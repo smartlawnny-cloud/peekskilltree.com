@@ -288,7 +288,7 @@ var MediaCenter = {
       + '<div style="font-size:32px;margin-bottom:8px;">&#128247;</div>'
       + '<div style="font-size:14px;color:var(--text-light);">Tap to choose photos or videos</div>'
       + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">JPG, PNG, HEIC, MP4, MOV · Multiple files OK</div>'
-      + '<input type="file" id="mc-file-input" accept="image/*,video/*" multiple capture="environment" style="display:none;" onchange="MediaCenter._previewFiles(this.files)">'
+      + '<input type="file" id="mc-file-input" accept="image/*,video/*" multiple style="display:none;" onchange="MediaCenter._previewFiles(this.files)">'
       + '</div>'
       + '<div id="mc-preview-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>'
       + '</div>'

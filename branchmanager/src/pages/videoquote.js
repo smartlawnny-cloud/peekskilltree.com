@@ -95,7 +95,6 @@ var VideoQuote = {
     var input = document.createElement('input');
     input.type = 'file';
     input.accept = 'video/*';
-    input.capture = 'environment';
     input.onchange = function(e) {
       var file = e.target.files[0];
       if (file) VideoQuote._handleVideo(file);

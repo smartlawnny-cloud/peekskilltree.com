@@ -5,9 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   RefreshControl,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { Avatar } from '../components/Avatar';
@@ -47,9 +48,14 @@ export function ScheduleScreen({ navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Schedule</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <TouchableOpacity onPress={() => navigation.navigate('CreateJob')}>
+            <Ionicons name="add-circle" size={26} color={colors.greenDark} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Week Strip */}
@@ -122,6 +128,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: { fontSize: fontSize.xl, fontWeight: '800' },
   weekStrip: {

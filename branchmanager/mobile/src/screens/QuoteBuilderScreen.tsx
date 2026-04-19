@@ -12,13 +12,25 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Image,
+  Platform,
 } from 'react-native';
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { LineItemRow } from '../components/LineItemRow';
 import { LineItemEditor } from '../components/LineItemEditor';
 import { currency } from '../utils/format';
+import { takePhoto } from '../utils/photos';
 import type { LineItem } from '../models/types';
+
+const SERVICES = [
+  { label: 'Tree Removal', value: 'Tree Removal' },
+  { label: 'Tree Pruning', value: 'Tree Pruning' },
+  { label: 'Stump Grinding', value: 'Stump Removal' },
+  { label: 'Cabling', value: 'Cabling' },
+  { label: 'Clean Up', value: 'Clean Up' },
+  { label: 'Other', value: 'Other' },
+];
 
 let _id = 1;
 function nextId() {
@@ -39,6 +51,15 @@ export function QuoteBuilderScreen({ navigation, route }: any) {
   const [lineItems, setLineItems] = useState<LineItem[]>(existing?.lineItems || []);
   const [showEditor, setShowEditor] = useState(false);
   const [editingItem, setEditingItem] = useState<LineItem | undefined>(undefined);
+
+  // Description
+  const [description, setDescription] = useState<string>(existing?.description || '');
+
+  // Service selector
+  const [selectedService, setSelectedService] = useState<string>(SERVICES[0].value);
+
+  // Photos attached to line items (keyed by line item id)
+  const [itemPhotos, setItemPhotos] = useState<Record<string, string[]>>({});
 
   // Notes
   const [notes, setNotes] = useState<string>(existing?.notes || '');
@@ -73,6 +94,96 @@ export function QuoteBuilderScreen({ navigation, route }: any) {
     setShowEditor(true);
   };
 
+  const handleServiceAdd = () => {
+    const service = selectedService;
+
+    const addLineItemWithMeasurement = (name: string, desc: string, qty: number, unitPrice: number) => {
+      const id = nextId();
+      const newItem: LineItem = {
+        id,
+        name,
+        description: desc,
+        quantity: qty,
+        unitPrice,
+        total: qty * unitPrice,
+      };
+      setLineItems(prev => [...prev, newItem]);
+
+      // Prompt for photo
+      Alert.alert('Add Photo?', `Take a photo for "${name}"?`, [
+        { text: 'Skip', style: 'cancel' },
+        {
+          text: 'Camera',
+          onPress: async () => {
+            const photo = await takePhoto();
+            if (photo) {
+              setItemPhotos(prev => ({
+                ...prev,
+                [id]: [...(prev[id] || []), photo.uri],
+              }));
+            }
+          },
+        },
+      ]);
+    };
+
+    if (service === 'Tree Removal') {
+      if (Platform.OS === 'ios') {
+        Alert.prompt('Tree Diameter', 'Enter DBH in inches (price = DBH x $100)', [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Add',
+            onPress: (val) => {
+              const dbh = parseFloat(val || '0');
+              if (dbh > 0) {
+                addLineItemWithMeasurement('Tree Removal', `${dbh}" DBH`, 1, dbh * 100);
+              }
+            },
+          },
+        ], 'plain-text', '', 'decimal-pad');
+      } else {
+        // Android fallback - no Alert.prompt
+        addLineItemWithMeasurement('Tree Removal', '', 1, 0);
+      }
+    } else if (service === 'Stump Removal') {
+      if (Platform.OS === 'ios') {
+        Alert.prompt('Stump Radius', 'Enter radius in inches (price = radius x $10)', [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Add',
+            onPress: (val) => {
+              const r = parseFloat(val || '0');
+              if (r > 0) {
+                addLineItemWithMeasurement('Stump Removal', `${r}" radius`, 1, r * 10);
+              }
+            },
+          },
+        ], 'plain-text', '', 'decimal-pad');
+      } else {
+        addLineItemWithMeasurement('Stump Removal', '', 1, 0);
+      }
+    } else if (service === 'Cabling') {
+      if (Platform.OS === 'ios') {
+        Alert.prompt('Cable Length', 'Enter length in feet (price = feet x $10)', [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Add',
+            onPress: (val) => {
+              const ft = parseFloat(val || '0');
+              if (ft > 0) {
+                addLineItemWithMeasurement('Cabling', `${ft} ft`, 1, ft * 10);
+              }
+            },
+          },
+        ], 'plain-text', '', 'decimal-pad');
+      } else {
+        addLineItemWithMeasurement('Cabling', '', 1, 0);
+      }
+    } else {
+      addLineItemWithMeasurement(service, '', 1, 0);
+    }
+  };
+
   const handleDeleteItem = (id: string) => {
     Alert.alert('Remove Item', 'Remove this line item from the quote?', [
       { text: 'Cancel', style: 'cancel' },
@@ -91,7 +202,7 @@ export function QuoteBuilderScreen({ navigation, route }: any) {
       client_email: clientEmail,
       client_phone: clientPhone,
       property: property,
-      description: lineItems.map(i => i.name).join(', '),
+      description: description.trim() || lineItems.map(i => i.name).join(', '),
       line_items: lineItems,
       total,
       status,
@@ -216,21 +327,82 @@ export function QuoteBuilderScreen({ navigation, route }: any) {
           </View>
         </Card>
 
+        {/* Description */}
+        <Text style={styles.sectionLabel}>Description</Text>
+        <Card style={styles.card}>
+          <TextInput
+            style={[styles.input, styles.textarea]}
+            placeholder="Job description..."
+            placeholderTextColor={colors.textLight}
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            textAlignVertical="top"
+          />
+        </Card>
+
+        {/* Service Selector */}
+        <Text style={styles.sectionLabel}>Add Service</Text>
+        <Card style={styles.card}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.serviceScroll}
+          >
+            {SERVICES.map(s => (
+              <TouchableOpacity
+                key={s.value}
+                style={[
+                  styles.serviceChip,
+                  selectedService === s.value && styles.serviceChipActive,
+                ]}
+                onPress={() => setSelectedService(s.value)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.serviceChipText,
+                    selectedService === s.value && styles.serviceChipTextActive,
+                  ]}
+                >
+                  {s.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.addServiceBtn}
+            onPress={handleServiceAdd}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.addServiceBtnText}>+ Add {SERVICES.find(s => s.value === selectedService)?.label}</Text>
+          </TouchableOpacity>
+        </Card>
+
         {/* Line Items */}
         <Text style={styles.sectionLabel}>Line Items</Text>
         <Card style={styles.card}>
           {lineItems.length === 0 ? (
-            <Text style={styles.emptyText}>No items yet — tap below to add a service.</Text>
+            <Text style={styles.emptyText}>No items yet — select a service above to add.</Text>
           ) : (
             lineItems.map((item, i) => (
-              <TouchableOpacity
-                key={item.id}
-                activeOpacity={0.7}
-                onPress={() => handleItemPress(item)}
-                onLongPress={() => handleDeleteItem(item.id)}
-              >
-                <LineItemRow item={item} index={i} />
-              </TouchableOpacity>
+              <View key={item.id}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleItemPress(item)}
+                  onLongPress={() => handleDeleteItem(item.id)}
+                >
+                  <LineItemRow item={item} index={i} />
+                </TouchableOpacity>
+                {/* Show attached photos */}
+                {itemPhotos[item.id] && itemPhotos[item.id].length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.itemPhotoScroll}>
+                    {itemPhotos[item.id].map((uri, pi) => (
+                      <Image key={pi} source={{ uri }} style={styles.itemPhoto} />
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
             ))
           )}
 
@@ -245,7 +417,7 @@ export function QuoteBuilderScreen({ navigation, route }: any) {
             </View>
           ) : (
             <TouchableOpacity style={styles.addItemBtn} onPress={handleAddItem} activeOpacity={0.7}>
-              <Text style={styles.addItemText}>+ Add Line Item</Text>
+              <Text style={styles.addItemText}>+ Add Custom Item</Text>
             </TouchableOpacity>
           )}
         </Card>
@@ -262,19 +434,6 @@ export function QuoteBuilderScreen({ navigation, route }: any) {
             multiline
             textAlignVertical="top"
           />
-        </Card>
-
-        {/* Photos */}
-        <Text style={styles.sectionLabel}>Photos</Text>
-        <Card style={styles.card}>
-          <View style={styles.photoGrid}>
-            {[0, 1, 2].map(i => (
-              <TouchableOpacity key={i} style={styles.photoSlot} activeOpacity={0.7}>
-                <Text style={styles.photoIcon}>📷</Text>
-                <Text style={styles.photoHint}>Add Photo</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
         </Card>
 
         {/* Totals */}
@@ -389,24 +548,55 @@ const styles = StyleSheet.create({
     color: colors.greenDark,
   },
 
-  // Photos
-  photoGrid: {
+  // Service selector
+  serviceScroll: {
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: spacing.sm,
+    paddingBottom: spacing.md,
   },
-  photoSlot: {
-    flex: 1,
-    aspectRatio: 1,
-    borderRadius: radius.md,
-    backgroundColor: colors.bg,
+  serviceChip: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full || 24,
     borderWidth: 1.5,
     borderColor: colors.border,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.white,
   },
-  photoIcon: { fontSize: 22 },
-  photoHint: { fontSize: fontSize.xs, color: colors.textLight, marginTop: 4 },
+  serviceChipActive: {
+    borderColor: colors.greenDark,
+    backgroundColor: colors.greenDark,
+  },
+  serviceChipText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  serviceChipTextActive: {
+    color: colors.white,
+  },
+  addServiceBtn: {
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.greenDark,
+    alignItems: 'center',
+  },
+  addServiceBtnText: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    color: colors.white,
+  },
+
+  // Per-item photos
+  itemPhotoScroll: {
+    paddingLeft: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  itemPhoto: {
+    width: 60,
+    height: 60,
+    borderRadius: radius.sm,
+    marginRight: spacing.sm,
+  },
 
   // Totals
   totalRow: {

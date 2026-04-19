@@ -96,7 +96,7 @@ var OnlineBooking = {
 
     html += '<div><label style="font-size:12px;color:var(--text-light);display:block;margin-bottom:4px;font-weight:600;">Auto-reply message (sent after form submission)</label>'
       + '<textarea id="booking-autoreply" rows="3" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">'
-      + (localStorage.getItem('bm-booking-autoreply') || "Thanks for your request! We'll review it and get back to you within 2 hours during business hours. — Doug, " + (localStorage.getItem('bm-co-name') || 'Second Nature Tree Service'))
+      + (localStorage.getItem('bm-booking-autoreply') || "Thanks for your request! We'll review it and get back to you within 2 hours during business hours. — Doug, " + (localStorage.getItem('bm-co-name') || BM_CONFIG.companyName))
       + '</textarea>'
       + '<button onclick="localStorage.setItem(\'bm-booking-autoreply\',document.getElementById(\'booking-autoreply\').value);UI.toast(\'Auto-reply saved!\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;margin-top:6px;">Save Message</button>'
       + '</div></div></div>';
@@ -141,7 +141,7 @@ var OnlineBooking = {
     return '<div style="text-align:center;margin-bottom:20px;">'
       + '<div style="font-size:24px;">🌳</div>'
       + '<h3 style="font-size:18px;color:#1a3c12;">Request a Free Estimate</h3>'
-      + '<p style="font-size:13px;color:#666;">' + (localStorage.getItem('bm-co-name') || 'Second Nature Tree Service') + ' — Peekskill, NY</p></div>'
+      + '<p style="font-size:13px;color:#666;">' + (localStorage.getItem('bm-co-name') || BM_CONFIG.companyName) + ' — Peekskill, NY</p></div>'
       + '<div style="display:grid;gap:10px;">'
       + '<input type="text" placeholder="Your Name *" style="padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;" disabled>'
       + '<input type="tel" placeholder="Phone Number *" style="padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;" disabled>'

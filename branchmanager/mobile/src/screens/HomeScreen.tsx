@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -6,10 +7,11 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
-  SafeAreaView,
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing, radius, fontSize } from '../theme';
 import { Card } from '../components/Card';
 import { Avatar } from '../components/Avatar';
@@ -18,6 +20,7 @@ import { formatTime, today as getToday } from '../utils/date';
 import { currency } from '../utils/format';
 import { fetchTodayJobs } from '../api/jobs';
 import { supabase } from '../api/supabase';
+import { useAuth } from '../hooks/useAuth';
 import type { Job } from '../models/types';
 
 const STATUS_VARIANT: Record<string, 'info' | 'success' | 'warning' | 'error'> = {
@@ -28,24 +31,65 @@ const STATUS_VARIANT: Record<string, 'info' | 'success' | 'warning' | 'error'> =
 };
 
 export function HomeScreen({ navigation }: any) {
+  const { user } = useAuth();
+  const [companyName, setCompanyName] = useState('Branch Manager');
   const [refreshing, setRefreshing] = useState(false);
   const [clockedIn, setClockedIn] = useState(false);
   const [clockInTime, setClockInTime] = useState<string | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [stats, setStats] = useState({ unpaid: 0, todayValue: 0, clients: 0 });
+  const [workflow, setWorkflow] = useState({ requests: 0, quotes: 0, jobs: 0, invoices: 0 });
+  const [receivables, setReceivables] = useState<Array<{ id: string; client_name: string; balance: number; due_date: string; days_late: number }>>([]);
+  const [approvedQuotes, setApprovedQuotes] = useState<Array<{ id: string; client_name: string; total: number; quote_number: number }>>([]);
+  const [needsInvoicing, setNeedsInvoicing] = useState<Array<{ id: string; client_name: string; total: number; job_number: number }>>([]);
+
+  useEffect(() => {
+    AsyncStorage.getItem('bm-co-name').then(v => { if (v) setCompanyName(v); });
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
       const todayJobs = await fetchTodayJobs();
       setJobs(todayJobs);
 
-      const [invRes, clientRes] = await Promise.all([
+      const [invRes, clientRes, reqRes, quoteRes, jobRes, unpaidInvRes, approvedRes, needsInvRes] = await Promise.all([
         supabase.from('invoices').select('balance,status').neq('status', 'paid'),
         supabase.from('clients').select('id', { count: 'exact', head: true }),
+        supabase.from('requests').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+        supabase.from('quotes').select('id', { count: 'exact', head: true }).in('status', ['sent', 'awaiting']),
+        supabase.from('jobs').select('id', { count: 'exact', head: true }).in('status', ['scheduled', 'in_progress']),
+        supabase.from('invoices').select('id,client_name,balance,due_date,status').neq('status', 'paid'),
+        supabase.from('quotes').select('id,client_name,total,quote_number').eq('status', 'approved').limit(5),
+        supabase.from('jobs').select('id,client_name,total,job_number').eq('status', 'completed').is('invoice_id', null).limit(5),
       ]);
       const unpaid = (invRes.data || []).filter((i: any) => parseFloat(i.balance) > 0).length;
       const todayValue = todayJobs.reduce((s, j) => s + (j.total || 0), 0);
       setStats({ unpaid, todayValue, clients: clientRes.count || 0 });
+
+      // Workflow counts
+      setWorkflow({
+        requests: reqRes.count || 0,
+        quotes: quoteRes.count || 0,
+        jobs: jobRes.count || 0,
+        invoices: unpaid,
+      });
+
+      // Receivables
+      const now = new Date();
+      const recv = (unpaidInvRes.data || [])
+        .filter((i: any) => parseFloat(i.balance) > 0)
+        .map((i: any) => {
+          const due = new Date(i.due_date);
+          const daysLate = Math.max(0, Math.floor((now.getTime() - due.getTime()) / 86400000));
+          return { id: i.id, client_name: i.client_name || 'Unknown', balance: parseFloat(i.balance), due_date: i.due_date, days_late: daysLate };
+        })
+        .sort((a: any, b: any) => b.days_late - a.days_late)
+        .slice(0, 10);
+      setReceivables(recv);
+
+      // Conversion cards
+      setApprovedQuotes((approvedRes.data || []).map((q: any) => ({ id: q.id, client_name: q.client_name, total: parseFloat(q.total || 0), quote_number: q.quote_number })));
+      setNeedsInvoicing((needsInvRes.data || []).map((j: any) => ({ id: j.id, client_name: j.client_name, total: parseFloat(j.total || 0), job_number: j.job_number })));
     } catch (e) {
       console.warn('Home load error:', e);
     }
@@ -71,7 +115,7 @@ export function HomeScreen({ navigation }: any) {
       console.warn('Clock in error:', e);
       // Offline fallback
       const { enqueue } = await import('../utils/offline');
-      await enqueue({ table: 'time_entries', type: 'insert', data: { user_name: 'Doug Brown', date: new Date().toISOString().split('T')[0], clock_in: new Date().toISOString(), hours: 0 } });
+      await enqueue({ table: 'time_entries', type: 'insert', data: { user_name: user?.name || 'Unknown', date: new Date().toISOString().split('T')[0], clock_in: new Date().toISOString(), hours: 0 } });
       setClockedIn(true);
       setClockInTime(new Date().toISOString());
     }
@@ -92,21 +136,24 @@ export function HomeScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header */}
+      {/* Header — clean like Jobber */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Branch Manager</Text>
-          <Text style={styles.headerSub}>Second Nature Tree Service</Text>
+          <Text style={styles.headerSub}>{companyName}</Text>
         </View>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <TouchableOpacity onPress={() => navigation.navigate('Assistant')} style={{ opacity: 0.9 }}>
-            <Text style={{ fontSize: 24 }}>🤖</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <TouchableOpacity onPress={() => navigation.navigate('CreateRequest')} style={{ backgroundColor: colors.greenLight, borderRadius: 8, width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="add" size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.avatarBtn}>
-            <Avatar name="Doug Brown" size={36} color={colors.white + '30'} />
+          <TouchableOpacity onPress={() => navigation.navigate('Assistant')}>
+            <Ionicons name="sparkles" size={22} color={colors.white} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+            <Ionicons name="ellipsis-horizontal" size={22} color={colors.white} />
           </TouchableOpacity>
         </View>
       </View>
@@ -119,7 +166,7 @@ export function HomeScreen({ navigation }: any) {
         {/* Clock In/Out Card */}
         <Card style={styles.clockCard}>
           <View style={styles.clockHeader}>
-            <Text style={styles.clockEmoji}>⏰</Text>
+            <Text style={styles.clockEmoji}>Clock</Text>
             <View style={{ flex: 1 }}>
               <Text style={styles.clockTitle}>
                 {clockedIn ? 'Clocked In' : 'Ready to Work'}
@@ -141,6 +188,61 @@ export function HomeScreen({ navigation }: any) {
             </Text>
           </TouchableOpacity>
         </Card>
+
+        {/* Workflow Cards */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Workflow</Text>
+        </View>
+        <View style={styles.workflowGrid}>
+          {([
+            { label: 'Requests', count: workflow.requests, screen: 'RequestsList', bg: colors.blueBg, fg: colors.blue },
+            { label: 'Quotes', count: workflow.quotes, screen: 'QuotesList', bg: colors.orangeBg, fg: colors.orange },
+            { label: 'Jobs', count: workflow.jobs, screen: 'JobsList', bg: colors.greenBg, fg: colors.greenDark },
+            { label: 'Invoices', count: workflow.invoices, screen: 'InvoicesList', bg: colors.redBg, fg: colors.red },
+          ] as const).map(item => (
+            <TouchableOpacity
+              key={item.label}
+              style={[styles.workflowCard, { backgroundColor: item.bg }]}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate(item.screen)}
+            >
+              <Text style={[styles.workflowCount, { color: item.fg }]}>{item.count}</Text>
+              <Text style={[styles.workflowLabel, { color: item.fg }]}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Conversion Cards */}
+        {(approvedQuotes.length > 0 || needsInvoicing.length > 0) && (
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: spacing.md }}>
+            {approvedQuotes.length > 0 && (
+              <Card style={{ flex: 1, borderLeftWidth: 3, borderLeftColor: colors.greenDark }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.greenDark, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                  Ready to Convert ({approvedQuotes.length})
+                </Text>
+                {approvedQuotes.slice(0, 3).map(q => (
+                  <TouchableOpacity key={q.id} onPress={() => navigation.navigate('QuoteDetail', { id: q.id })} style={{ paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                    <Text style={{ fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{q.client_name}</Text>
+                    <Text style={{ fontSize: 12, color: colors.textLight }}>{currency(q.total)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </Card>
+            )}
+            {needsInvoicing.length > 0 && (
+              <Card style={{ flex: 1, borderLeftWidth: 3, borderLeftColor: colors.orange }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.orange, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                  Ready to Invoice ({needsInvoicing.length})
+                </Text>
+                {needsInvoicing.slice(0, 3).map(j => (
+                  <TouchableOpacity key={j.id} onPress={() => navigation.navigate('JobDetail', { id: j.id })} style={{ paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                    <Text style={{ fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{j.client_name}</Text>
+                    <Text style={{ fontSize: 12, color: colors.textLight }}>{currency(j.total)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </Card>
+            )}
+          </View>
+        )}
 
         {/* Today's Jobs */}
         <View style={styles.sectionHeader}>
@@ -185,28 +287,38 @@ export function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
         ))}
 
-        {/* Quick Stats */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Quick Stats</Text>
-        </View>
-        <View style={styles.statsGrid}>
-          <Card style={styles.statCard}>
-            <Text style={styles.statValue}>{jobs.length}</Text>
-            <Text style={styles.statLabel}>Jobs Today</Text>
-          </Card>
-          <Card style={styles.statCard}>
-            <Text style={styles.statValue}>{currency(stats.todayValue)}</Text>
-            <Text style={styles.statLabel}>Today's Value</Text>
-          </Card>
-          <Card style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.clients}</Text>
-            <Text style={styles.statLabel}>Clients</Text>
-          </Card>
-          <Card style={styles.statCard}>
-            <Text style={[styles.statValue, stats.unpaid > 0 ? { color: colors.red } : {}]}>{stats.unpaid}</Text>
-            <Text style={styles.statLabel}>Unpaid Invoices</Text>
-          </Card>
-        </View>
+        {/* Receivables */}
+        {receivables.length > 0 && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Receivables</Text>
+              <Text style={styles.sectionCount}>{receivables.length}</Text>
+            </View>
+            {receivables.map(inv => (
+              <TouchableOpacity
+                key={inv.id}
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('InvoiceDetail', { id: inv.id })}
+              >
+                <Card style={styles.receivableCard}>
+                  <View style={styles.receivableRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.receivableName}>{inv.client_name}</Text>
+                      {inv.days_late > 0 ? (
+                        <Text style={styles.receivableLate}>{inv.days_late} day{inv.days_late !== 1 ? 's' : ''} overdue</Text>
+                      ) : (
+                        <Text style={styles.receivableDue}>Due {inv.due_date}</Text>
+                      )}
+                    </View>
+                    <Text style={[styles.receivableAmount, inv.days_late > 0 ? { color: colors.red } : {}]}>
+                      {currency(inv.balance)}
+                    </Text>
+                  </View>
+                </Card>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -364,25 +476,55 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.greenDark,
   },
-  statsGrid: {
+  workflowGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
+    marginBottom: spacing.lg,
   },
-  statCard: {
+  workflowCard: {
     width: '48%',
     flexGrow: 1,
-    alignItems: 'center',
+    borderRadius: radius.lg,
     paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
   },
-  statValue: {
-    fontSize: fontSize.xxl,
+  workflowCount: {
+    fontSize: fontSize.xxxl,
     fontWeight: '800',
+  },
+  workflowLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  receivableCard: {
+    marginBottom: spacing.xs,
+  },
+  receivableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  receivableName: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
     color: colors.text,
   },
-  statLabel: {
-    fontSize: fontSize.xs,
-    color: colors.textLight,
-    marginTop: 4,
+  receivableLate: {
+    fontSize: fontSize.sm,
+    color: colors.red,
+    marginTop: 2,
+  },
+  receivableDue: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  receivableAmount: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.text,
   },
 });

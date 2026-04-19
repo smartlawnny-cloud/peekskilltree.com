@@ -7,10 +7,10 @@ var ReviewTools = {
 
   _co: function() {
     return {
-      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
-      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
-      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
-      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com'
+      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
+      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
+      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
+      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website
     };
   },
 

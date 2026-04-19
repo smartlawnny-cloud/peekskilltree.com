@@ -6,13 +6,13 @@
 var PDFGen = {
   get COMPANY() {
     return {
-      name: localStorage.getItem('bm-co-name') || 'Second Nature Tree Service',
-      phone: localStorage.getItem('bm-co-phone') || '(914) 391-5233',
-      email: localStorage.getItem('bm-co-email') || 'info@peekskilltree.com',
+      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
+      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
+      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
       address: localStorage.getItem('bm-co-address') || '1 Highland Industrial Park, Peekskill, NY 10566',
       licenseWC: (localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644').split(',')[0].trim(),
       licensePutnam: (localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644').split(',')[1] ? (localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644').split(',')[1].trim() : 'PC-50644',
-      website: localStorage.getItem('bm-co-website') || 'peekskilltree.com',
+      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
       color: '#2e7d32'
     };
   },
@@ -1063,3 +1063,7 @@ var PDFGen = {
   // Alias for backwards compatibility
   generateJobSheet: function(jobId) { return PDFGen.generateJobSummary(jobId); }
 };
+
+// Route all PDF.* onclick calls (invoices/quotes/jobs/workflow) to the newer PDFGen module
+// (overrides the older var PDF from src/pdf.js which loads before this file).
+window.PDF = PDFGen;

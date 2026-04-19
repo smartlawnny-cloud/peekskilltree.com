@@ -1,6 +1,6 @@
 // Branch Manager — Service Worker v9
 // Full offline support + push notifications
-var CACHE_NAME = 'branch-manager-v140';
+var CACHE_NAME = 'branch-manager-v164';
 
 // Allow the page to trigger immediate activation
 self.addEventListener('message', function(e) {
@@ -60,6 +60,7 @@ var ASSETS = [
   './src/pages/backup.js',
   './src/pages/search.js',
   './src/pages/estimator.js',
+  './src/pages/cardone.js',
   './src/pages/aitreeid.js',
   './src/pages/treemeasure.js',
   './src/pages/propertymap.js',
@@ -136,6 +137,14 @@ self.addEventListener('activate', function(e) {
 self.addEventListener('fetch', function(e) {
   if (e.request.method !== 'GET') return;
   if (!e.request.url.startsWith(self.location.origin)) return;
+
+  // Never cache version.json — must always hit network so stale clients can self-heal.
+  if (e.request.url.indexOf('/version.json') !== -1) {
+    e.respondWith(fetch(e.request, { cache: 'no-store' }).catch(function() {
+      return new Response('{"version":0}', { headers: { 'Content-Type': 'application/json' } });
+    }));
+    return;
+  }
 
   e.respondWith(
     fetch(e.request).then(function(response) {

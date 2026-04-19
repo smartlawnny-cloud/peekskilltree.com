@@ -496,43 +496,10 @@ var SettingsPage = {
       + '<strong>Photo Storage</strong> — Uses Supabase Storage bucket <code style="background:#d6eaf8;padding:1px 5px;border-radius:4px;">job-photos</code>. Run the RLS SQL below (Database Connection section) to create the bucket and enable photo uploads on jobs.'
       + '</div></div>';
 
-    // Stripe Payments
-    if (typeof Stripe !== 'undefined' && Stripe.renderSettings) {
-      html += Stripe.renderSettings();
-    } else {
-      html += '<div style="padding:12px;color:var(--text-light);font-size:13px;">Stripe integration not loaded.</div>';
-    }
-
-    // Dialpad Calling & SMS
-    if (typeof Dialpad !== 'undefined' && Dialpad.renderSettings) {
-      html += Dialpad.renderSettings();
-    } else {
-      html += '<div style="padding:12px;color:var(--text-light);font-size:13px;">Dialpad integration not loaded.</div>';
-    }
-
-    // SendJim Direct Mail
-    if (typeof SendJim !== 'undefined' && SendJim.renderSettings) {
-      html += SendJim.renderSettings();
-    } else {
-      html += '<div style="padding:12px;color:var(--text-light);font-size:13px;">SendJim integration not loaded.</div>';
-    }
-
-    // Custom Fields
-    if (typeof CustomFields !== 'undefined') {
-      html += CustomFields.renderSettings();
-    }
-
-    // Checklist Templates
-    if (typeof Checklists !== 'undefined') {
-      html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-        + Checklists.renderTemplateManager()
-        + '</div>';
-    }
-
-    // Email Templates
-    if (typeof EmailTemplates !== 'undefined') {
-      html += EmailTemplates.renderSettings();
-    }
+    // Stripe / Dialpad / SendJim cards removed from Database & Storage —
+    // already live in the 🔌 API Keys & Integrations collapsible at top of Settings.
+    // CustomFields / Checklists / EmailTemplates also removed — redundant with
+    // the Templates & Automation collapsible further down.
 
     // Crew Performance link
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'

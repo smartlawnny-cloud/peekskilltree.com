@@ -1,5 +1,5 @@
 {
-  "version": 226,
+  "version": 227,
   "released": "2026-04-19",
   "notes": "PWA nav-mode toggle — Top (default) or Bottom tab bar. Opt-in bottom 5-tab bar (Home/Today/Clients/Quotes/More) when app is installed as standalone PWA."
 }

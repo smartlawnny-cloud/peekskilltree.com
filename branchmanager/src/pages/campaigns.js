@@ -27,7 +27,7 @@ var Campaigns = {
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
     html += '<h3 style="margin:0;font-size:15px;font-weight:700;">Campaign Templates</h3>';
-    html += '<button class="btn btn-primary" onclick="Campaigns.newCampaign()">+ New Campaign</button>';
+    // + New Campaign button removed — universal + in topbar handles create
     html += '</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">';
 

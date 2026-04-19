@@ -340,8 +340,11 @@ var QuotesPage = {
     }
 
     // Client section as a collapsible box (collapsed by default if client already selected, expanded if new)
-    var clientExpanded = !client; // if no client yet, start open
-    var clientSummaryName = client ? UI.esc(client.name) : 'Pick a client';
+    // For EXISTING quotes: use q.clientName as fallback when DB.clients.getById couldn't find the record
+    // (client may have been removed locally but the quote still has the name/id).
+    var hasResolvedClient = !!(client || q.clientId || q.clientName);
+    var clientExpanded = !hasResolvedClient; // if no client info, start open
+    var clientSummaryName = client ? UI.esc(client.name) : (q.clientName ? UI.esc(q.clientName) : 'Pick a client');
     var clientSummaryAddr = _qProperty ? ' · 📍 ' + UI.esc(_qProperty) : '';
     html += '<div class="q-client-box" style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       // Summary header (always visible)
@@ -355,10 +358,16 @@ var QuotesPage = {
       // Body (collapsible)
       + '<div class="q-client-body" style="padding:0 14px 14px 14px;' + (clientExpanded ? '' : 'display:none;') + '">';
 
-    if (client) {
-      html += '<input type="hidden" id="q-clientId" value="' + client.id + '">'
+    // Treat as "resolved" if we have EITHER a fresh client obj OR stored clientId/clientName on the quote.
+    // Keeps the Line Items section visible on existing quotes even when the local client was never seeded.
+    if (client || q.clientName || q.clientId) {
+      var _cid = (client && client.id) || q.clientId || '';
+      var _cname = (client && client.name) || q.clientName || '';
+      html += '<input type="hidden" id="q-clientId" value="' + _cid + '">'
         + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">'
-        +   '<a onclick="UI.closeModal();ClientsPage.showDetail(\'' + client.id + '\')" style="font-size:15px;font-weight:700;color:var(--text);cursor:pointer;text-decoration:none;border-bottom:1px dashed var(--text-light);">' + UI.esc(client.name) + ' →</a>'
+        +   (_cid
+            ? '<a onclick="ClientsPage.showDetail(\'' + _cid + '\')" style="font-size:15px;font-weight:700;color:var(--text);cursor:pointer;text-decoration:none;border-bottom:1px dashed var(--text-light);">' + UI.esc(_cname) + ' →</a>'
+            : '<span style="font-size:15px;font-weight:700;color:var(--text);">' + UI.esc(_cname) + '</span>')
         + '</div>'
         + (_qProperty ? '<div style="margin-top:6px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(_qProperty) + '" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(_qProperty) + ' →</a></div>' : '')
         + '<input type="hidden" id="q-property" value="' + UI.esc(_qProperty) + '">';

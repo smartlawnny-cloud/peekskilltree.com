@@ -83,8 +83,7 @@ var TaskReminders = {
     });
     html += '</div>';
 
-    // New task button
-    html += '<button onclick="TaskReminders._showForm()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">+ New Task</button>';
+    // + New Task button removed — universal + in topbar handles create
     html += '</div>';
 
     // Task form (hidden by default, shown on + New Task or edit)

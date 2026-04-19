@@ -1,5 +1,5 @@
 {
-  "version": 215,
+  "version": 216,
   "released": "2026-04-19",
   "notes": "App-wide UI consistency polish — standardized card border-radius (12px) and added subtle box-shadow across Dashboard, Settings, Insights, Reports, P&L, Budget, Crew Performance, Employee Center, Payments, Notifications, and Media Center."
 }

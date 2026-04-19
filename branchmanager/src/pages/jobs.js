@@ -728,14 +728,10 @@ var JobsPage = {
       notes: document.getElementById('j-notes').value.trim()
     };
 
-    if (jobId) {
-      DB.jobs.update(jobId, data);
-      UI.toast('Job updated');
-    } else {
-      DB.jobs.create(data);
-      UI.toast('Job created');
-    }
-    if (document.querySelector('.modal-overlay')) UI.closeModal();
+    // Optimistic — toast first, write locally, one navigation, Supabase sync in bg
+    UI.toast(jobId ? 'Job updated ✓' : 'Job created ✓');
+    if (jobId) DB.jobs.update(jobId, data);
+    else DB.jobs.create(data);
     loadPage('jobs');
   },
 

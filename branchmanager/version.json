@@ -1,5 +1,5 @@
 {
-  "version": 241,
+  "version": 242,
   "released": "2026-04-19",
-  "notes": "PWA topbar — bg fills status-bar area; buttons hug bottom (flex-end) below the iOS reserved zone for guaranteed tappability"
+  "notes": "PWA topbar — fixed-position pinned BELOW the iOS safe-area inset; cosmetic white strip fills status-bar area. Bar can no longer extend off-screen."
 }

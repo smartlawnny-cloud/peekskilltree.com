@@ -63,11 +63,7 @@ var PropertyMap = {
     { id: 'crane',     label: 'Crane',        color: '#ff9800', w: 50, h: 12, icon: '🏗' },
     { id: 'truck',     label: 'Chip Truck',   color: '#607d8b', w: 28, h: 9,  icon: '🚚' },
     { id: 'ram',       label: 'Ram 2500',     color: '#9c27b0', w: 20, h: 7,  icon: '🛻' },
-    { id: 'loader',    label: 'Loader',       color: '#e91e63', w: 18, h: 8,  icon: '🚜' },
     { id: 'trailer',   label: 'Trailer',      color: '#78909c', w: 22, h: 8,  icon: '🚗' },
-    { id: 'climber',   label: 'Climber',      color: '#f44336', w: 4,  h: 4,  icon: '🧗' },
-    { id: 'ground',    label: 'Ground Crew',  color: '#00bcd4', w: 4,  h: 4,  icon: '👷' },
-    { id: 'dropzone',  label: 'Drop Zone',    color: '#ff5722', w: 30, h: 30, icon: '⛔' },
     { id: 'hazard',    label: 'Hazard',       color: '#f44336', w: 6,  h: 6,  icon: '⚠️' },
     { id: 'powerline', label: 'Power Lines',  color: '#ffc107', w: 4,  h: 40, icon: '⚡' }
   ],

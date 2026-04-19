@@ -1,5 +1,5 @@
 {
-  "version": 263,
+  "version": 264,
   "released": "2026-04-19",
-  "notes": "PropertyMap: equipment markers now show emoji icons (🚛 🏗 🚜 🪵 🚚 🛻 etc.) on top of a colored footprint rectangle. Sidebar buttons also show the icon."
+  "notes": "PropertyMap: removed Drop Zone, Ground Crew, Loader, Climber from equipment pickers (not used). 8 items remain: bucket truck, chipper, crane, chip truck, Ram, trailer, hazard, power lines."
 }

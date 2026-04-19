@@ -599,6 +599,22 @@ var SettingsPage = {
     }
     html += '</div>';
 
+    // === AI ASSISTANT TOGGLE ===
+    // Turn off auto-AI tree ID (for poor service or preference). When off, photo upload still
+    // works but the 🤖 Run AI button on each tree is the only way to fire the call.
+    var _aiOn = localStorage.getItem('bm-ai-enabled') !== '0';
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:700;color:var(--text);">🤖 AI Tree Identification</div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Auto-fill species, DBH, condition when you upload a tree photo. Turn off if offline or if you\'d rather enter manually. You can still tap 🤖 Run AI on any tree to fire it on-demand.</div>'
+      +   '</div>'
+      +   '<label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;flex-shrink:0;">'
+      +     '<input type="checkbox" onchange="localStorage.setItem(\'bm-ai-enabled\',this.checked?\'1\':\'0\');UI.toast(this.checked?\'AI ON\':\'AI OFF\');loadPage(\'settings\')"' + (_aiOn ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'
+      +     '<span style="position:absolute;inset:0;background:' + (_aiOn ? 'var(--green-dark)' : '#cbd5e1') + ';border-radius:26px;transition:.2s;"></span>'
+      +     '<span style="position:absolute;top:3px;left:' + (_aiOn ? '25px' : '3px') + ';width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
+      +   '</label>'
+      + '</div>';
+
     // === T&M PRICING RATES (editable) ===
     var _tmRates = (typeof QuotesPage !== 'undefined' && QuotesPage.getTMRates) ? QuotesPage.getTMRates() : {};
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'

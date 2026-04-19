@@ -843,10 +843,12 @@ var QuotesPage = {
       +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Amount</label><div class="q-item-amount" style="font-size:14px;font-weight:700;color:var(--green-dark);padding:8px 0;">' + UI.money(lineTotal) + '</div></div>'
       +   '<button type="button" style="background:none;border:none;font-size:20px;color:var(--red);cursor:pointer;padding-bottom:8px;opacity:.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" onclick="this.closest(\'.q-item-wrap\').remove();QuotesPage.calcTotal();">✕</button>'
       + '</div>'
-      + '<div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">'
-      +   '<button type="button" onclick="QuotesPage._plantNetSecondOpinion(this)" style="padding:8px 14px;background:#fff;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" title="Verify species with PlantNet (second AI opinion)">🌿 2nd Opinion</button>'
-      +   '<button type="button" onclick="QuotesPage._openMeasureModal(this)" style="padding:8px 14px;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📏 Measure DBH</button>'
-      +   '<button type="button" onclick="QuotesPage._collapseRow(this)" style="padding:8px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✓ Done with this tree</button>'
+      + '<div style="margin-top:10px;display:flex;gap:6px;justify-content:flex-start;flex-wrap:wrap;">'
+      +   '<button type="button" onclick="QuotesPage._addMorePhotos(this)" style="padding:8px 12px;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📷 Add Photos</button>'
+      +   '<button type="button" onclick="QuotesPage._runAIOnRow(this)" style="padding:8px 12px;background:#fff;color:#7c3aed;border:1px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" title="Let Claude fill species, DBH, condition, rate">🤖 Run AI</button>'
+      +   '<button type="button" onclick="QuotesPage._plantNetSecondOpinion(this)" style="padding:8px 12px;background:#fff;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" title="Verify species with PlantNet (second opinion)">🌿 2nd</button>'
+      +   '<button type="button" onclick="QuotesPage._openMeasureModal(this)" style="padding:8px 12px;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📏 Measure</button>'
+      +   '<button type="button" onclick="QuotesPage._collapseRow(this)" style="padding:8px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto;">✓ Done</button>'
       + '</div>'
       + '</div>';
 
@@ -937,6 +939,63 @@ var QuotesPage = {
       var c = document.getElementById('lb-count'); if (c) c.textContent = (idx+1) + ' / ' + photos.length;
     });
     document.body.appendChild(overlay);
+  },
+
+  // Manually trigger AI on an already-uploaded tree row (works even when auto-AI is off,
+  // useful after a failed attempt or when service is bad)
+  _runAIOnRow: function(btn) {
+    var wrap = btn.closest('.q-item-wrap');
+    if (!wrap) return;
+    var row = wrap.querySelector('.quote-item-row');
+    var photos = [];
+    if (row && row.dataset.photos) { try { photos = JSON.parse(row.dataset.photos); } catch(e){} }
+    else if (row && row.dataset.photo) { photos = [row.dataset.photo]; }
+    if (!photos.length) { UI.toast('Upload a photo first, then tap 🤖 Run AI', 'error'); return; }
+    var rows = document.querySelectorAll('.quote-item-row');
+    var idx = Array.prototype.indexOf.call(rows, row);
+    QuotesPage._identifyTree(photos, idx);
+  },
+
+  // Add more photos to an existing line item (appends to dataset.photos array)
+  _addMorePhotos: function(btn) {
+    var wrap = btn.closest('.q-item-wrap');
+    if (!wrap) return;
+    var row = wrap.querySelector('.quote-item-row');
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.onchange = function(e) {
+      var files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      Promise.all(files.map(function(f) {
+        return new Promise(function(resolve) {
+          var r = new FileReader();
+          r.onload = function(ev) { resolve(ev.target.result); };
+          r.readAsDataURL(f);
+        });
+      })).then(function(newUrls) {
+        var existing = [];
+        if (row.dataset.photos) { try { existing = JSON.parse(row.dataset.photos); } catch(e){} }
+        else if (row.dataset.photo) { existing = [row.dataset.photo]; }
+        var all = existing.concat(newUrls).slice(0, 5); // cap at 5
+        row.dataset.photos = JSON.stringify(all);
+        row.dataset.photo = all[0];
+        // Re-render the photo grid in the body
+        var body = wrap.querySelector('.q-item-body');
+        var existingGrid = body ? body.querySelector('.q-photo-grid') : null;
+        if (existingGrid) existingGrid.remove();
+        var grid = document.createElement('div');
+        grid.className = 'q-photo-grid';
+        grid.style.cssText = 'display:grid;grid-template-columns:repeat(' + Math.min(all.length, 3) + ',1fr);gap:4px;margin-bottom:10px;';
+        grid.innerHTML = all.map(function(u, pi) {
+          return '<img src="' + u + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(all).replace(/"/g,'&quot;') + ',' + pi + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
+        }).join('') + (all.length > 1 ? '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;">' + all.length + ' photos</div>' : '');
+        if (body) body.insertBefore(grid, body.firstChild);
+        UI.toast('📷 ' + newUrls.length + ' more photo(s) added — tap 🤖 Run AI to analyze');
+      });
+    };
+    input.click();
   },
 
   // Open Property Map in equipment-planning mode; on close, sync placed equipment
@@ -1758,7 +1817,14 @@ var QuotesPage = {
             headerThumb.replaceWith(newThumb);
           }
         }
-        QuotesPage._identifyTree(dataUrls, document.querySelectorAll('.quote-item-row').length - 1);
+        // Respect global AI toggle — if user turned off AI, skip the call entirely.
+        // They can manually trigger it later via the 🤖 Run AI button on the row.
+        var aiOn = localStorage.getItem('bm-ai-enabled') !== '0';
+        if (aiOn) {
+          QuotesPage._identifyTree(dataUrls, document.querySelectorAll('.quote-item-row').length - 1);
+        } else {
+          UI.toast('Photo added — AI off, fill details manually or tap 🤖 Run AI');
+        }
       });
     };
     input.click();

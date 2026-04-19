@@ -83,20 +83,32 @@ var TeamPage = {
   },
 
   saveMember: function(member) {
-    // Use DB.team so it also syncs to Supabase team_members (not just localStorage).
-    // Previously went straight to localStorage — team data vanished across devices.
-    if (typeof DB !== 'undefined' && DB.team) {
-      var existing = DB.team.getById(member.id);
-      if (existing) DB.team.update(member.id, member);
-      else DB.team.create(member);
-    } else {
-      // Fallback (shouldn't happen — DB is always loaded)
-      var members = TeamPage.getMembers();
-      var idx = members.findIndex(function(m) { return m.id === member.id; });
-      if (idx >= 0) members[idx] = member;
-      else { member.id = member.id || Date.now().toString(36); members.push(member); }
-      localStorage.setItem('bm-team', JSON.stringify(members));
-    }
+    // Write to localStorage + kick Supabase sync via DB.team.
+    // Defensive: the seed members (ryan, anthony, catherine, owner) were historically
+    // written straight to localStorage without going through DB.create — so
+    // DB.team.update(id, …) might return null even though they're listed by getMembers().
+    // Fall back to localStorage merge in that case so edits stick.
+    try {
+      if (typeof DB !== 'undefined' && DB.team) {
+        var existing = DB.team.getById(member.id);
+        if (existing) {
+          var res = DB.team.update(member.id, member);
+          if (res) return res;
+        } else {
+          var created = DB.team.create(member);
+          if (created) return created;
+        }
+      }
+    } catch(e) { console.warn('DB.team write failed, falling back to localStorage:', e); }
+
+    // Fallback / legacy path
+    var members = [];
+    try { members = JSON.parse(localStorage.getItem('bm-team') || '[]'); } catch(e){}
+    var idx = members.findIndex(function(m) { return m.id === member.id; });
+    if (idx >= 0) members[idx] = Object.assign({}, members[idx], member);
+    else { member.id = member.id || Date.now().toString(36); members.push(member); }
+    localStorage.setItem('bm-team', JSON.stringify(members));
+    return member;
   },
 
   removeMember: function(id) {
@@ -201,34 +213,41 @@ var TeamPage = {
 
   save: function(e, id) {
     e.preventDefault();
+    // Safely pull form values — some fields (cert*) are no longer rendered
+    function v(el) { var n = document.getElementById(el); return n ? (n.value || '').trim() : ''; }
     var data = {
       id: id || Date.now().toString(36),
-      name: document.getElementById('tm-name').value.trim(),
-      phone: document.getElementById('tm-phone').value.trim(),
-      email: document.getElementById('tm-email').value.trim(),
-      role: document.getElementById('tm-role').value,
-      isaCertType: document.getElementById('tm-cert-type').value,
-      isaCertNumber: document.getElementById('tm-cert-number').value.trim(),
-      isaCertExpiry: document.getElementById('tm-cert-expiry').value,
+      name: v('tm-name'),
+      phone: v('tm-phone'),
+      email: v('tm-email'),
+      role: v('tm-role') || 'crew_member',
       active: true
     };
     if (!data.name) { UI.toast('Name is required', 'error'); return; }
-    // Preserve existing active state if editing
     if (id) {
       var existing = TeamPage.getMembers().find(function(m) { return m.id === id; });
-      if (existing) data.active = existing.active;
+      if (existing) {
+        data.active = existing.active;
+        // Preserve any cert data that's still on the record, just not surfaced
+        if (existing.isaCertType)   data.isaCertType = existing.isaCertType;
+        if (existing.isaCertNumber) data.isaCertNumber = existing.isaCertNumber;
+        if (existing.isaCertExpiry) data.isaCertExpiry = existing.isaCertExpiry;
+      }
     }
+    // ── Optimistic UI ──
+    // 1. Toast instantly so the user feels confirmation
+    UI.toast(id ? 'Member updated ✓' : 'Member added ✓');
+    // 2. localStorage write + kick async Supabase sync (runs in background)
     TeamPage.saveMember(data);
-    UI.toast(id ? 'Member updated' : 'Member added');
-    UI.closeModal();
+    // 3. Jump straight to the Team list. closeModal no longer needed — loadPage
+    //    replaces pageContent outright, killing the form page.
     loadPage('team');
   },
 
   remove: function(id) {
     UI.confirm('Remove this team member?', function() {
+      UI.toast('Member removed ✓');
       TeamPage.removeMember(id);
-      UI.toast('Member removed');
-      UI.closeModal();
       loadPage('team');
     });
   },

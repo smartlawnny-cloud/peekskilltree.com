@@ -460,9 +460,8 @@ var RequestsPage = {
       var phone = (document.getElementById('r-phone')||{}).value.trim();
       var email = (document.getElementById('r-email')||{}).value.trim();
       var name  = (document.getElementById('r-name')||{}).value.trim();
+      UI.toast('Request updated ✓'); // optimistic first
       DB.requests.update(editId, { clientName: name, phone: phone, email: email, property: property, service: service, source: source, notes: notes });
-      UI.toast('Request updated');
-      UI.closeModal();
       RequestsPage.showDetail(editId);
       return;
     }
@@ -507,8 +506,7 @@ var RequestsPage = {
       status: 'new'
     });
 
-    UI.toast('Request created ✅');
-    UI.closeModal();
+    UI.toast('Request created ✓');
     loadPage('requests');
   },
 

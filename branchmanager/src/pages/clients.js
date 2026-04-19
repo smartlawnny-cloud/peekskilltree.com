@@ -594,14 +594,10 @@ var ClientsPage = {
     };
     if (!data.name) { UI.toast('Name is required', 'error'); return; }
 
-    if (id) {
-      DB.clients.update(id, data);
-      UI.toast('Client updated');
-    } else {
-      DB.clients.create(data);
-      UI.toast('Client created');
-    }
-    UI.closeModal();
+    // Optimistic UI — toast first, one page render, Supabase sync in background
+    UI.toast(id ? 'Client updated ✓' : 'Client created ✓');
+    if (id) DB.clients.update(id, data);
+    else DB.clients.create(data);
     loadPage('clients');
   },
 

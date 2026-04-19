@@ -600,13 +600,12 @@ var SettingsPage = {
     html += '</div>';
 
     // === APPEARANCE (placed right under Database Connection per user) ===
-    var _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     var _dark = (document.documentElement.getAttribute('data-theme') === 'dark') || localStorage.getItem('bm-dark-mode') === 'dark';
-    if (!_isStandalone) {
+    if (true) {
       html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
         +   '<div>'
         +     '<div style="font-size:14px;font-weight:700;color:var(--text);">🌓 Dark Mode</div>'
-        +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Desktop only — PWA stays light.</div>'
+        +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Toggle dark theme app-wide.</div>'
         +   '</div>'
         +   '<label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;flex-shrink:0;">'
         +     '<input type="checkbox" onchange="toggleDarkMode()"' + (_dark ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'

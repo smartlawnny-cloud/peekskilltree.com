@@ -124,6 +124,7 @@ var Photos = {
       + '<h4 style="font-size:14px;">📸 Photos (' + photos.length + ')</h4>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       + (photos.length ? '<button onclick="Photos.shareGallery(\'' + recordType + '\', \'' + recordId + '\')" style="background:var(--white);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">🔗 Share</button>' : '')
+      + (photos.length >= 2 ? '<button onclick="Photos.shareSlider(\'' + recordType + '\', \'' + recordId + '\')" style="background:var(--white);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">✨ B/A Slider</button>' : '')
       + (photos.length ? '<button onclick="Photos.generateReport(\'' + recordType + '\', \'' + recordId + '\', \'' + recordType + '\')" style="background:var(--white);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📄 Report</button>' : '')
       + '<label style="background:var(--green-dark);color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">'
       + '+ Add Photo<input type="file" accept="image/*" multiple onchange="Photos.upload(event, \'' + recordType + '\', \'' + recordId + '\')" style="display:none;">'
@@ -561,6 +562,17 @@ var Photos = {
     });
     UI.toast('Request created ✓');
     if (typeof loadPage === 'function') loadPage('requests');
+  },
+
+  // ============ BEFORE/AFTER SLIDER SHARE ============
+  shareSlider: function(recordType, recordId) {
+    var url = location.origin + location.pathname.replace(/[^/]*$/, '') + 'share-slider.html?type=' + encodeURIComponent(recordType) + '&id=' + encodeURIComponent(recordId);
+    if (navigator.share) {
+      navigator.share({ title: 'Before & After', text: 'See the transformation', url: url }).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(url).then(function() { UI.toast('Slider link copied!'); }, function() { prompt('Copy this link:', url); });
+    }
+    return url;
   },
 
   // ============ SHARE LINK ============

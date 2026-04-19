@@ -303,6 +303,24 @@ var TeamPage = {
     }
     html += '</div>';
 
+    // ── App Login section (Create / Reset) ──
+    if (m.email) {
+      var _hashes = {};
+      try { _hashes = JSON.parse(localStorage.getItem('bm-auth-hashes') || '{}'); } catch(e){}
+      var _hasLogin = !!_hashes[m.email.toLowerCase()];
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:16px;margin-bottom:16px;">'
+        + '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light);margin-bottom:8px;">🔐 App Login</div>'
+        + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;">'
+        +   (_hasLogin ? '✅ <strong style="color:var(--green-dark);">' + UI.esc(m.email) + '</strong> has a login. Reset to generate a new temp password.' : '⚠️ No login yet. Create one so ' + UI.esc((m.name||'').split(' ')[0] || 'they') + ' can sign in.')
+        + '</div>'
+        + '<button type="button" class="btn btn-primary" style="width:100%;padding:12px;font-weight:700;" onclick="TeamPage._createLogin(\'' + id + '\')">' + (_hasLogin ? '🔄 Reset Password + Re-send' : '✨ Create Login + Send to ' + UI.esc((m.name||'').split(' ')[0] || 'Them')) + '</button>'
+        + '</div>';
+    } else {
+      html += '<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:14px;margin-top:16px;margin-bottom:16px;font-size:13px;color:#92400e;">'
+        + '⚠️ Add an email address (click Edit below) to enable login creation.'
+        + '</div>';
+    }
+
     // Recent time entries
     var entries = DB.timeEntries.getAll().filter(function(t) { return t.user === m.name || t.userId === m.name; }).slice(0, 10);
     if (entries.length > 0) {

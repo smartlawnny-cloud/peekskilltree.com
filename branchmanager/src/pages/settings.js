@@ -688,10 +688,14 @@ var SettingsPage = {
       +   '</label>'
       + '</div>';
 
-    // === T&M PRICING RATES (editable) ===
+    // === T&M PRICING RATES (editable, collapsible) ===
     var _tmRates = (typeof QuotesPage !== 'undefined' && QuotesPage.getTMRates) ? QuotesPage.getTMRates() : {};
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<h3 style="margin-bottom:6px;">🛠 T&M Pricing Rates</h3>'
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>🛠 T&M Pricing Rates</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">'
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Used by the Price Check (Mode 2) calculation on every quote. Override defaults per your crew + equipment costs.</p>'
       + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Crew (hourly)</div>'
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;">'
@@ -721,7 +725,8 @@ var SettingsPage = {
       +   '<button onclick="SettingsPage._saveTMRates()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Rates</button>'
       +   '<button onclick="if(confirm(\'Reset all T&amp;M rates to defaults?\')){localStorage.removeItem(\'bm-tm-rates\');loadPage(\'settings\');UI.toast(\'Rates reset to defaults\');}" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 18px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">Reset to Defaults</button>'
       + '</div>'
-      + '</div>';
+      + '</div>'
+      + '</details>';
 
     // PlantNet card moved inside the API Keys & Integrations collapsible above.
 
@@ -753,6 +758,22 @@ var SettingsPage = {
         +   '</label>'
         + '</div>';
     }
+
+    // === PWA NAVIGATION STYLE (Top vs Bottom tab bar) ===
+    var _pwaNav = localStorage.getItem('bm-pwa-nav') || 'top';
+    var _pillBase = 'flex:1;padding:10px 0;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;';
+    var _pillOn = 'background:var(--green-dark);color:#fff;';
+    var _pillOff = 'background:transparent;color:var(--text-light);';
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">'
+      +   '<div style="flex:1;min-width:200px;">'
+      +     '<div style="font-size:14px;font-weight:700;color:var(--text);">📱 PWA Navigation Style</div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">On your installed home-screen app. Bottom tab bar feels like a native iOS app.</div>'
+      +   '</div>'
+      +   '<div style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:160px;">'
+      +     '<button onclick="SettingsPage._setPwaNav(\'top\')" style="' + _pillBase + (_pwaNav === 'top' ? _pillOn : _pillOff) + '">Top</button>'
+      +     '<button onclick="SettingsPage._setPwaNav(\'bottom\')" style="' + _pillBase + (_pwaNav === 'bottom' ? _pillOn : _pillOff) + '">Bottom</button>'
+      +   '</div>'
+      + '</div>';
 
     // ═══ GROUP: Data Import / Export / Backup (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
@@ -1217,6 +1238,16 @@ var SettingsPage = {
     if (mk) rates.markup = parseFloat(mk.value) || 1.5;
     localStorage.setItem('bm-tm-rates', JSON.stringify(rates));
     UI.toast('T&M rates saved ✓');
+  },
+
+  _setPwaNav: function(mode) {
+    if (mode !== 'top' && mode !== 'bottom') return;
+    var current = localStorage.getItem('bm-pwa-nav') || 'top';
+    if (current === mode) return;
+    localStorage.setItem('bm-pwa-nav', mode);
+    UI.toast('Nav style: ' + (mode === 'bottom' ? 'Bottom tab bar' : 'Top sidebar') + ' ✓');
+    // Reload so the layout recalculates (sidebar vs bottom-nav).
+    setTimeout(function() { location.reload(); }, 400);
   },
 
   _removeKey: function(storageKey, label) {

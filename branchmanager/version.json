@@ -1,5 +1,5 @@
 {
-  "version": 225,
+  "version": 226,
   "released": "2026-04-19",
-  "notes": "Nav consolidation — 4 tabbed hubs (Reports, Marketing, Tools, Team). 12 individual nav items collapsed into tabs."
+  "notes": "PWA nav-mode toggle — Top (default) or Bottom tab bar. Opt-in bottom 5-tab bar (Home/Today/Clients/Quotes/More) when app is installed as standalone PWA."
 }

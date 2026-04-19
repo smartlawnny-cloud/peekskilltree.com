@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 225; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 226; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -42,6 +42,19 @@
       }
     })
     .catch(function(){ /* offline is fine — skip check */ });
+})();
+
+// PWA navigation style — Top (default) or Bottom tab bar.
+// Only applies when user chose 'bottom' AND the app is running as an
+// installed standalone PWA. Desktop + browser tabs keep the sidebar.
+(function() {
+  try {
+    var mode = localStorage.getItem('bm-pwa-nav') || 'top';
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (mode === 'bottom' && isStandalone) {
+      document.documentElement.classList.add('bm-bottom-nav');
+    }
+  } catch(e) {}
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -290,6 +303,41 @@
     #dark-mode-btn { display:none !important; }
     html[data-theme="dark"] { /* un-applies dark vars by not matching */ }
   }
+
+  /* Bottom nav bar — only when user has picked bottom + PWA standalone */
+  #bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: none;
+    grid-template-columns: repeat(5, 1fr);
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: 4px 0 max(4px, env(safe-area-inset-bottom));
+    z-index: 150;
+    box-shadow: 0 -2px 12px rgba(0,0,0,.08);
+  }
+  #bottom-nav button {
+    background: none;
+    border: none;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+  }
+  #bottom-nav button.active { color: var(--green-dark); }
+  #bottom-nav i { width: 22px; height: 22px; }
+
+  html.bm-bottom-nav #bottom-nav { display: grid; }
+  html.bm-bottom-nav .sidebar { display: none !important; }
+  html.bm-bottom-nav .content { padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
+  html.bm-bottom-nav .topbar { display: none !important; }
 
   /* Quotes / Jobs / Invoices / Requests list — same card-on-mobile pattern */
   @media (hover: hover) {
@@ -798,7 +846,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v225</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v226</span>
       </div>
     </div>
 
@@ -854,7 +902,7 @@
 <script defer src="src/pages/import.js?v=140"></script>
 <script src="src/stripe.js?v=140"></script>
 <script defer src="src/sendjim.js"></script>
-<script defer src="src/pages/settings.js?v=223"></script>
+<script defer src="src/pages/settings.js?v=226"></script>
 <script defer src="src/pages/propertymap.js?v=140"></script>
 <script defer src="src/pages/estimator.js"></script>
 <script defer src="src/pages/cardone.js?v=161"></script>
@@ -1745,6 +1793,9 @@ var _loadPageWrapped = function(page) {
   document.querySelectorAll('.nav-item').forEach(function(btn) {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
+  document.querySelectorAll('#bottom-nav button[data-bottom-page]').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.bottomPage === page);
+  });
 };
 // Override only if loadPage exists
 if (typeof origLoadPage === 'function') {
@@ -2149,5 +2200,12 @@ if (window.location.hash && window.location.hash.length > 1) {
   }
 }
 </script>
+<nav id="bottom-nav" style="display:none;">
+  <button data-bottom-page="dashboard" onclick="loadPage('dashboard')"><i data-lucide="home"></i><span>Home</span></button>
+  <button data-bottom-page="schedule" onclick="loadPage('schedule')"><i data-lucide="calendar"></i><span>Today</span></button>
+  <button data-bottom-page="clients" onclick="loadPage('clients')"><i data-lucide="users"></i><span>Clients</span></button>
+  <button data-bottom-page="quotes" onclick="loadPage('quotes')"><i data-lucide="file-text"></i><span>Quotes</span></button>
+  <button data-bottom-page="_more" onclick="document.getElementById('sidebar').classList.toggle('open');var ov=document.querySelector('.sidebar-overlay');if(ov)ov.classList.toggle('open');"><i data-lucide="menu"></i><span>More</span></button>
+</nav>
 </body>
 </html>

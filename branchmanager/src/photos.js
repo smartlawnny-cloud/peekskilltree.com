@@ -43,13 +43,37 @@ var Photos = {
       UI.toast('Uploading ' + file.name + '...');
 
       if (SupabaseDB && SupabaseDB.ready) {
-        // Upload to Supabase Storage
+        // Upload to Supabase Storage + write metadata row to `photos` table
         try {
-          var path = recordType + '/' + recordId + '/' + Date.now() + '_' + file.name;
-          var { data, error } = await SupabaseDB.client.storage.from(Photos.BUCKET).upload(path, file);
+          var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          var path = recordType + '/' + recordId + '/' + Date.now() + '_' + safeName;
+          var { error } = await SupabaseDB.client.storage.from(Photos.BUCKET).upload(path, file);
           if (error) throw error;
           var { data: urlData } = SupabaseDB.client.storage.from(Photos.BUCKET).getPublicUrl(path);
-          Photos._savePhoto(recordType, recordId, { url: urlData.publicUrl, name: file.name, date: new Date().toISOString(), label: '' });
+
+          var meta = {
+            record_type: recordType,
+            record_id: recordId,
+            url: urlData.publicUrl,
+            storage_path: path,
+            name: file.name,
+            label: '',
+            taken_at: new Date().toISOString()
+          };
+          var tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+          if (tid) meta.tenant_id = tid;
+
+          var ins = await SupabaseDB.client.from('photos').insert(meta).select().single();
+          if (ins.error) console.warn('Photos: meta insert failed:', ins.error.message);
+
+          Photos._savePhoto(recordType, recordId, {
+            id: (ins.data && ins.data.id) || null,
+            url: urlData.publicUrl,
+            storage_path: path,
+            name: file.name,
+            date: meta.taken_at,
+            label: ''
+          });
         } catch (e) {
           console.warn('Supabase upload failed, falling back to local:', e);
           Photos._uploadLocal(file, recordType, recordId);
@@ -64,6 +88,40 @@ var Photos = {
     if (typeof loadPage === 'function') {
       var currentPage = document.querySelector('.nav-item.active');
       if (currentPage) currentPage.click();
+    }
+  },
+
+  // Pull all photo metadata for this tenant into local cache (call on app boot)
+  syncFromCloud: async function() {
+    if (!SupabaseDB || !SupabaseDB.ready) return;
+    try {
+      var tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+      var q = SupabaseDB.client.from('photos').select('*').order('taken_at', { ascending: false });
+      if (tid) q = q.eq('tenant_id', tid);
+      var { data, error } = await q;
+      if (error) { console.warn('Photos.syncFromCloud:', error.message); return; }
+      if (!data) return;
+
+      // Group by record_type + record_id and write to bm-photos-* keys
+      var groups = {};
+      data.forEach(function(row) {
+        var key = 'bm-photos-' + row.record_type + '-' + row.record_id;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push({
+          id: row.id,
+          url: row.url,
+          storage_path: row.storage_path,
+          name: row.name,
+          label: row.label || '',
+          date: row.taken_at || row.created_at
+        });
+      });
+      Object.keys(groups).forEach(function(k) {
+        localStorage.setItem(k, JSON.stringify(groups[k]));
+      });
+      if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('Photos.syncFromCloud: cached ' + data.length + ' photos across ' + Object.keys(groups).length + ' records');
+    } catch (e) {
+      console.warn('Photos.syncFromCloud failed:', e);
     }
   },
 
@@ -144,6 +202,12 @@ var Photos = {
     if (photos[index]) {
       photos[index].label = label;
       localStorage.setItem(key, JSON.stringify(photos));
+      // Sync to cloud
+      if (photos[index].id && SupabaseDB && SupabaseDB.ready) {
+        SupabaseDB.client.from('photos').update({ label: label }).eq('id', photos[index].id).then(function(res) {
+          if (res.error) console.warn('Photos label sync failed:', res.error.message);
+        });
+      }
       document.getElementById('photo-viewer').remove();
       UI.toast('Photo labeled: ' + label);
     }
@@ -154,8 +218,21 @@ var Photos = {
     var key = 'bm-photos-' + recordType + '-' + recordId;
     var photos = [];
     try { photos = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
-    photos.splice(index, 1);
+    var removed = photos.splice(index, 1)[0];
     localStorage.setItem(key, JSON.stringify(photos));
+    // Sync delete to cloud (storage object + metadata row)
+    if (removed && SupabaseDB && SupabaseDB.ready) {
+      if (removed.storage_path) {
+        SupabaseDB.client.storage.from(Photos.BUCKET).remove([removed.storage_path]).then(function(res) {
+          if (res.error) console.warn('Photo storage delete failed:', res.error.message);
+        });
+      }
+      if (removed.id) {
+        SupabaseDB.client.from('photos').delete().eq('id', removed.id).then(function(res) {
+          if (res.error) console.warn('Photo meta delete failed:', res.error.message);
+        });
+      }
+    }
     document.getElementById('photo-viewer').remove();
     UI.toast('Photo deleted');
   }

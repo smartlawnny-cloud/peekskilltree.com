@@ -1,5 +1,5 @@
 {
-  "version": 228,
+  "version": 229,
   "released": "2026-04-19",
-  "notes": "Multi-tenant security: payments now scoped by tenant_id (was leaking across tenants). expenses + time_entries enforce tenant filter on cloud sync. Requires SQL migration to backfill tenant_id on those tables."
+  "notes": "Photos now sync across devices via Supabase Storage + photos metadata table. Upload writes to job-photos bucket, metadata row carries tenant_id. App boot pulls all tenant photos into local cache. Label/delete also sync."
 }

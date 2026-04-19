@@ -205,9 +205,13 @@ var CloudSync = {
     var localClients = localStorage.getItem('bm-clients');
     var hasLocal = localClients && JSON.parse(localClients).length > 0;
     if (!hasLocal || (Date.now() - CloudSync.lastSync > 3600000)) {
-      CloudSync.init().then(function() { CloudSync.wrapWrites(); });
+      CloudSync.init().then(function() {
+        CloudSync.wrapWrites();
+        if (typeof Photos !== 'undefined' && Photos.syncFromCloud) Photos.syncFromCloud();
+      });
     } else {
       CloudSync.wrapWrites();
+      if (typeof Photos !== 'undefined' && Photos.syncFromCloud) Photos.syncFromCloud();
       if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: using cached data (' + JSON.parse(localClients).length + ' clients)');
     }
   } else if (attempts > 0) {

@@ -235,6 +235,32 @@ var PropertyMap = {
       var mapContainer = document.getElementById('prop-map');
       if (mapContainer && mapContainer.parentElement) mapContainer.parentElement.appendChild(toggleBtn);
 
+      // Elevation readout — tap map → show elevation in feet (USGS free service)
+      var elevReadout = document.createElement('div');
+      elevReadout.id = 'elev-readout';
+      elevReadout.style.cssText = 'position:absolute;bottom:14px;left:14px;z-index:10;background:rgba(0,0,0,.78);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3);display:none;';
+      elevReadout.textContent = 'Tap map for elevation';
+      if (mapContainer && mapContainer.parentElement) mapContainer.parentElement.appendChild(elevReadout);
+
+      self.map.on('click', function(e) {
+        // Ignore clicks on markers (they have their own handlers)
+        if (e.originalEvent && e.originalEvent.target && e.originalEvent.target.closest && e.originalEvent.target.closest('.maplibregl-marker')) return;
+        var lat = e.lngLat.lat, lng = e.lngLat.lng;
+        elevReadout.style.display = 'block';
+        elevReadout.textContent = '⏳ Querying elevation…';
+        fetch('https://epqs.nationalmap.gov/v1/json?x=' + lng + '&y=' + lat + '&units=Feet&wkid=4326')
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            var ft = data && (data.value !== undefined ? data.value : (data.USGS_Elevation_Point_Query_Service && data.USGS_Elevation_Point_Query_Service.Elevation_Query && data.USGS_Elevation_Point_Query_Service.Elevation_Query.Elevation));
+            if (ft === undefined || ft === null || ft === -1000000) {
+              elevReadout.textContent = '⛰ No data (US coverage only)';
+            } else {
+              elevReadout.textContent = '⛰ ' + Math.round(ft) + ' ft · ' + lat.toFixed(5) + '°, ' + lng.toFixed(5) + '°';
+            }
+          })
+          .catch(function() { elevReadout.textContent = '⛰ Elevation service unreachable'; });
+      });
+
       self.markers = [];
 
       // If address provided, geocode immediately

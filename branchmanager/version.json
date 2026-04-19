@@ -1,5 +1,5 @@
 {
-  "version": 260,
+  "version": 261,
   "released": "2026-04-19",
-  "notes": "PropertyMap 2D/3D: pitch visualizer on compass; explicit 2D/3D toggle button; drag-rotate + touch-pitch enabled for mobile two-finger gestures"
+  "notes": "PropertyMap: tap any point → elevation in feet via free USGS Elevation Point Query Service (US coverage)"
 }

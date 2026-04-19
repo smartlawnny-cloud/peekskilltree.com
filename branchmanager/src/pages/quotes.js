@@ -339,20 +339,32 @@ var QuotesPage = {
       if (!_qDesc && recentReqs.length > 0 && recentReqs[0].service) _qDesc = recentReqs[0].service;
     }
 
+    // Client section as a collapsible box (collapsed by default if client already selected, expanded if new)
+    var clientExpanded = !client; // if no client yet, start open
+    var clientSummaryName = client ? UI.esc(client.name) : 'Pick a client';
+    var clientSummaryAddr = _qProperty ? ' · 📍 ' + UI.esc(_qProperty) : '';
+    html += '<div class="q-client-box" style="background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;">'
+      // Summary header (always visible)
+      + '<div onclick="QuotesPage._toggleClientBox(this)" style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;">'
+      +   '<div style="width:36px;height:36px;border-radius:50%;background:' + (client ? 'var(--green-bg)' : 'var(--bg)') + ';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:var(--green-dark);">👤</div>'
+      +   '<div style="flex:1;min-width:0;">'
+      +     '<div style="font-size:14px;font-weight:600;color:' + (client ? 'var(--text)' : 'var(--text-light)') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" class="q-client-summary-name">' + clientSummaryName + '</div>'
+      +     (client ? '<div class="q-client-summary-addr" style="font-size:12px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (_qProperty ? '📍 ' + UI.esc(_qProperty) : '') + '</div>' : '')
+      +   '</div>'
+      +   '<div class="q-client-chevron" style="font-size:16px;color:var(--text-light);transition:transform .2s;' + (clientExpanded ? '' : 'transform:rotate(-90deg);') + '">▾</div>'
+      + '</div>'
+      // Body (collapsible)
+      + '<div class="q-client-body" style="padding:0 14px 14px 14px;' + (clientExpanded ? '' : 'display:none;') + '">';
+
     if (client) {
       html += '<input type="hidden" id="q-clientId" value="' + client.id + '">'
-        + '<div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:16px;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
-        + '<div>'
-        + '<a onclick="UI.closeModal();ClientsPage.showDetail(\'' + client.id + '\')" style="font-size:16px;font-weight:700;color:var(--text);cursor:pointer;text-decoration:none;border-bottom:1px dashed var(--text-light);">' + UI.esc(client.name) + '</a>'
-        + (_qProperty ? '<div style="margin-top:4px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(_qProperty) + '" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(_qProperty) + ' →</a></div>' : '')
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">'
+        +   '<a onclick="UI.closeModal();ClientsPage.showDetail(\'' + client.id + '\')" style="font-size:15px;font-weight:700;color:var(--text);cursor:pointer;text-decoration:none;border-bottom:1px dashed var(--text-light);">' + UI.esc(client.name) + ' →</a>'
         + '</div>'
-        + '</div>'
-        + '</div>'
+        + (_qProperty ? '<div style="margin-top:6px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(_qProperty) + '" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(_qProperty) + ' →</a></div>' : '')
         + '<input type="hidden" id="q-property" value="' + UI.esc(_qProperty) + '">';
     } else {
-      // Search-as-you-type client selector
-      html += '<div class="form-group"><label>Client *</label>'
+      html += '<div class="form-group" style="margin:0;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Client *</label>'
         + '<input type="hidden" id="q-clientId" value="">'
         + '<input type="text" id="q-client-search" placeholder="Type client name..." autocomplete="off" '
         + 'oninput="QuotesPage._searchClient(this.value)" '
@@ -362,12 +374,14 @@ var QuotesPage = {
         + '<input type="hidden" id="q-property" value="">';
     }
 
-    // Description — show as editable text, auto-filled from request notes
-    html += '<div class="form-group" style="margin-bottom:12px;">'
-      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Description</label>'
-      + '<textarea id="q-description" rows="2" placeholder="e.g., Tree removal - 2 oaks" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;resize:vertical;">' + UI.esc(_qDesc) + '</textarea>'
+    // Description lives inside the client box
+    html += '<div class="form-group" style="margin-top:12px;margin-bottom:0;">'
+      + '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Description (for client-facing quote)</label>'
+      + '<textarea id="q-description" rows="2" placeholder="e.g., Tree removal - 2 oaks" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;">' + UI.esc(_qDesc) + '</textarea>'
       + (_qDesc ? '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">Auto-filled from request</div>' : '')
-      + '</div>';
+      + '</div>'
+    + '</div>' // close q-client-body
+    + '</div>'; // close q-client-box
 
     // ═══ STEP 1: Per Tree/Task ═══
     var tmData = q.timeMaterial || {};
@@ -665,16 +679,14 @@ var QuotesPage = {
       photoHtml += '</div>';
     }
 
-    // Summary strip (always visible — compact header)
-    var summaryThumb = photos.length ? '<img src="' + photos[0] + '" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;">' : '<div style="width:44px;height:44px;background:var(--bg);border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:18px;flex-shrink:0;">🌳</div>';
-    var summary = '<div class="q-item-header" onclick="QuotesPage._toggleItem(this)" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:0;">'
+    // Summary strip (always visible — compact header: photo + title + price + chevron)
+    var summaryThumb = photos.length ? '<img src="' + photos[0] + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0;">' : '<div style="width:40px;height:40px;background:var(--bg);border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:16px;flex-shrink:0;">🌳</div>';
+    var titleText = hasContent ? UI.esc(item.service || item.description || 'Tree') : 'New tree — fill below';
+    var summary = '<div class="q-item-header" onclick="QuotesPage._toggleItem(this)" style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
       + summaryThumb
-      + '<div style="flex:1;min-width:0;">'
-      +   '<div class="q-item-summary-title" style="font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (hasContent ? UI.esc((item.service || 'Untitled') + (item.description ? ' · ' + item.description : '')) : '<span style="color:var(--text-light);font-weight:500;">New tree — fill details below</span>') + '</div>'
-      +   '<div class="q-item-summary-meta" style="font-size:12px;color:var(--text-light);margin-top:2px;">' + (item.qty || 1) + ' × ' + UI.money(item.rate || 0) + '</div>'
-      + '</div>'
-      + '<div class="q-item-summary-total" style="font-size:16px;font-weight:800;color:var(--green-dark);flex-shrink:0;">' + UI.money(lineTotal) + '</div>'
-      + '<div class="q-item-chevron" style="font-size:18px;color:var(--text-light);transition:transform .2s;' + (expanded ? '' : 'transform:rotate(-90deg);') + '">▾</div>'
+      + '<div class="q-item-summary-title" style="flex:1;min-width:0;font-size:14px;font-weight:600;color:' + (hasContent ? 'var(--text)' : 'var(--text-light)') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + titleText + '</div>'
+      + '<div class="q-item-summary-total" style="font-size:15px;font-weight:700;color:var(--green-dark);flex-shrink:0;">' + UI.money(lineTotal) + '</div>'
+      + '<div class="q-item-chevron" style="font-size:16px;color:var(--text-light);transition:transform .2s;' + (expanded ? '' : 'transform:rotate(-90deg);') + '">▾</div>'
       + '</div>';
 
     // Pricing formula hint — shows under rate if the service has a known formula
@@ -738,10 +750,11 @@ var QuotesPage = {
     var qty = parseFloat((wrap.querySelector('.q-item-qty') || {}).value) || 1;
     var rate = parseFloat((wrap.querySelector('.q-item-rate') || {}).value) || 0;
     var title = wrap.querySelector('.q-item-summary-title');
-    var meta = wrap.querySelector('.q-item-summary-meta');
     var total = wrap.querySelector('.q-item-summary-total');
-    if (title) title.textContent = (svc || 'Untitled') + (desc ? ' · ' + desc : '');
-    if (meta) meta.textContent = qty + ' × ' + UI.money(rate);
+    if (title) {
+      title.textContent = svc || desc || 'Tree';
+      title.style.color = 'var(--text)';
+    }
     if (total) total.textContent = UI.money(qty * rate);
   },
 
@@ -1845,21 +1858,49 @@ var QuotesPage = {
     document.getElementById('q-clientId').value = id;
     document.getElementById('q-client-search').value = name;
     document.getElementById('q-client-results').style.display = 'none';
-    // Auto-fill property from client
     var client = DB.clients.getById(id);
     if (client && client.address) {
       var prop = document.getElementById('q-property');
       if (prop && !prop.value) prop.value = client.address;
     }
-    // Progressive disclosure: reveal the Line Items section now that client is picked
+    // Update the collapsible client box summary
+    var box = document.querySelector('.q-client-box');
+    if (box) {
+      var nameEl = box.querySelector('.q-client-summary-name');
+      var addrEl = box.querySelector('.q-client-summary-addr');
+      if (nameEl) { nameEl.textContent = name; nameEl.style.color = 'var(--text)'; }
+      if (addrEl && client && client.address) addrEl.textContent = '📍 ' + client.address;
+    }
+    // Progressive disclosure: reveal line items
     var gate = document.getElementById('q-pick-client-first');
     var section = document.getElementById('q-items-section');
     if (gate) gate.style.display = 'none';
     if (section) {
       section.style.display = 'block';
-      // Smooth scroll so user sees where to go next
       setTimeout(function() { section.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
     }
+    // Auto-collapse the client box now that it's picked
+    QuotesPage._collapseClientBox();
+  },
+
+  // Toggle collapse/expand on the Client section
+  _toggleClientBox: function(headerEl) {
+    var box = headerEl.closest('.q-client-box');
+    if (!box) return;
+    var body = box.querySelector('.q-client-body');
+    var chev = box.querySelector('.q-client-chevron');
+    if (!body) return;
+    var collapsed = body.style.display === 'none';
+    body.style.display = collapsed ? 'block' : 'none';
+    if (chev) chev.style.transform = collapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+  },
+  _collapseClientBox: function() {
+    var box = document.querySelector('.q-client-box');
+    if (!box) return;
+    var body = box.querySelector('.q-client-body');
+    var chev = box.querySelector('.q-client-chevron');
+    if (body) body.style.display = 'none';
+    if (chev) chev.style.transform = 'rotate(-90deg)';
   },
 
   _newClientInline: function() {

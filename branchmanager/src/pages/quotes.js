@@ -696,7 +696,8 @@ var QuotesPage = {
     });
     try {
       localStorage.setItem(QuotesPage._autoSaveKey, JSON.stringify(data));
-    } catch(e) {}
+      console.log('[autoSave] ' + data.lineItems.length + ' line items saved, key=' + QuotesPage._autoSaveKey);
+    } catch(e) { console.warn('[autoSave] failed:', e); }
   },
 
   _restoreAutoSave: function() {
@@ -704,8 +705,13 @@ var QuotesPage = {
     var banner = document.getElementById('q-recovery-banner');
     if (banner) banner.remove();
     try {
-      var data = JSON.parse(localStorage.getItem(QuotesPage._autoSaveKey));
+      var rawData = localStorage.getItem(QuotesPage._autoSaveKey);
+      console.log('[restore] key=' + QuotesPage._autoSaveKey + ' raw length=' + (rawData ? rawData.length : 0));
+      var data = JSON.parse(rawData);
       if (!data) { UI.toast('Nothing to restore', 'error'); return; }
+      var liCount = (data.lineItems && data.lineItems.length) || 0;
+      console.log('[restore] saved data has ' + liCount + ' line items', data.lineItems);
+      UI.toast('Restoring ' + liCount + ' line item(s)...');
 
       // If a client was previously picked, trigger the full _selectClient flow so
       // the gate lifts and the Line Items section appears. Otherwise just fill the

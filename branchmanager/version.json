@@ -1,5 +1,5 @@
 {
-  "version": 268,
+  "version": 269,
   "released": "2026-04-19",
-  "notes": "PropertyMap: drop ↻ rotate handle. Equipment direction is now set by tapping a target point on the map — angle computed from marker to tap. Tap a placed marker to re-direct it."
+  "notes": "Quote autosave + restore: loud diagnostic toasts + console logs to pinpoint where line items are getting lost. Toast on Restore shows saved item count."
 }

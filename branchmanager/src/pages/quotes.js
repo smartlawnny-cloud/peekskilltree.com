@@ -1036,23 +1036,51 @@ var QuotesPage = {
   },
 
   _syncEquipmentFromMap: function(markers) {
-    var present = {};
+    // Count pins per equipment TYPE (so 4 chippers = 4 units)
+    var counts = {};
     (markers || []).forEach(function(m) {
       var equipKey = QuotesPage._mapMarkerToEquip[m.type || m.id];
-      if (equipKey) present[equipKey] = true;
+      if (equipKey) counts[equipKey] = (counts[equipKey] || 0) + 1;
     });
-    // Tick the corresponding hidden checkboxes (T&M reads them next _calcTM)
-    ['bucket','chipper','crane','stumpGrinder','miniSkid','dumpTruck','liftLadder','trailer'].forEach(function(k) {
+    // Stash counts globally so _calcTM can scale cost by pin count
+    window._bmEquipCounts = counts;
+
+    var rates = QuotesPage.getTMRates();
+    var labels = {
+      bucket: 'Bucket truck', chipper: 'Chipper', crane: 'Crane',
+      stumpGrinder: 'Stump grinder', miniSkid: 'Mini-skid / loader',
+      dumpTruck: 'Dump truck', liftLadder: 'Man lift / ladder', trailer: 'Trailer'
+    };
+
+    // Tick checkboxes for types present (T&M reads them)
+    Object.keys(labels).forEach(function(k) {
       var cb = document.getElementById('q-tm-' + k.toLowerCase());
-      if (cb) cb.checked = !!present[k];
+      if (cb) cb.checked = (counts[k] || 0) > 0;
     });
-    // Update the summary line
-    var count = Object.keys(present).length;
+
+    // Build a nice summary: one line per equipment with count × rate = hourly cost
     var summary = document.getElementById('q-equip-summary');
+    var types = Object.keys(counts).filter(function(k){ return counts[k] > 0; });
     if (summary) {
-      summary.textContent = count
-        ? '✓ ' + count + ' piece(s) planned on the map'
-        : 'No equipment planned yet. Open the map to drag what you\'ll bring.';
+      if (!types.length) {
+        summary.innerHTML = 'No equipment planned yet. Open the map to drag what you\'ll bring.';
+      } else {
+        var totalHourly = 0;
+        var lines = types.map(function(k) {
+          var cnt = counts[k] || 0;
+          var rate = rates[k] || 0;
+          var hourly = cnt * rate;
+          totalHourly += hourly;
+          return '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;">'
+            + '<span>' + (labels[k] || k) + ' <strong>×' + cnt + '</strong> <span style="color:var(--text-light);">@ $' + rate + '/hr</span></span>'
+            + '<span style="font-weight:700;color:var(--green-dark);">$' + hourly + '/hr</span>'
+            + '</div>';
+        });
+        summary.innerHTML = lines.join('')
+          + '<div style="display:flex;justify-content:space-between;padding:6px 0 2px;border-top:1px solid var(--border);margin-top:4px;font-size:13px;font-weight:700;">'
+          +   '<span>Equipment hourly</span><span style="color:var(--green-dark);">$' + totalHourly + '/hr</span>'
+          + '</div>';
+      }
     }
     QuotesPage._calcTM();
   },
@@ -2112,12 +2140,14 @@ var QuotesPage = {
       { key:'trailer',      id:'q-tm-trailer',      label:'Trailer',            rate:r.trailer }
     ];
     var activeEquip = EQUIP.filter(function(e){ return chk(e.id); });
+    var pinCounts = window._bmEquipCounts || {};
 
     var climberCost = climberCount * totalHrs * r.climber;
     var groundLaborCost = groundCount * totalHrs * r.ground;
     var foremanCost = foremanCount * totalHrs * r.foreman;
     var laborCost = climberCost + groundLaborCost + foremanCost;
-    var equipCost = activeEquip.reduce(function(s,e){ return s + (totalHrs * e.rate); }, 0);
+    // Equipment cost scales by pin count if placed on map, else 1 unit
+    var equipCost = activeEquip.reduce(function(s,e){ var cnt = pinCounts[e.key] || 1; return s + (cnt * totalHrs * e.rate); }, 0);
     var insuranceCost = laborCost * r.insurance;
     var subtotalCost = laborCost + equipCost + insuranceCost + disposal;
     var tmTotal = Math.round(subtotalCost * r.markup);
@@ -2132,7 +2162,11 @@ var QuotesPage = {
       if (groundCount > 0 && totalHrs > 0)  rows += line(groundCount + ' × Groundsman — ' + totalHrs + 'hr × $' + r.ground + '/hr', groundLaborCost);
       if (foremanCount > 0 && totalHrs > 0) rows += line(foremanCount + ' × Foreman — ' + totalHrs + 'hr × $' + r.foreman + '/hr', foremanCost);
       activeEquip.forEach(function(e) {
-        if (totalHrs > 0) rows += line(e.label + ' — ' + totalHrs + 'hr × $' + e.rate + '/hr', totalHrs * e.rate);
+        if (totalHrs > 0) {
+          var cnt = pinCounts[e.key] || 1;
+          var label = (cnt > 1 ? cnt + ' × ' : '') + e.label + ' — ' + totalHrs + 'hr × $' + e.rate + '/hr';
+          rows += line(label, cnt * totalHrs * e.rate);
+        }
       });
       if (!rows) rows = '<div style="font-size:12px;color:var(--text-light);padding:4px 0;">Enter crew counts + hours + pick equipment to see breakdown.</div>';
 

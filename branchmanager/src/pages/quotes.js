@@ -348,8 +348,7 @@ var QuotesPage = {
       + '<div onclick="QuotesPage._toggleClientBox(this)" style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;">'
       +   '<div style="width:36px;height:36px;border-radius:50%;background:' + (client ? 'var(--green-bg)' : 'var(--bg)') + ';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:var(--green-dark);">👤</div>'
       +   '<div style="flex:1;min-width:0;">'
-      +     '<div style="font-size:14px;font-weight:600;color:' + (client ? 'var(--text)' : 'var(--text-light)') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" class="q-client-summary-name">' + clientSummaryName + '</div>'
-      +     (client ? '<div class="q-client-summary-addr" style="font-size:12px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (_qProperty ? '📍 ' + UI.esc(_qProperty) : '') + '</div>' : '')
+      +     '<div style="font-size:15px;font-weight:700;color:' + (client ? 'var(--text)' : 'var(--text-light)') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" class="q-client-summary-name">' + clientSummaryName + '</div>'
       +   '</div>'
       +   '<div class="q-client-chevron" style="font-size:16px;color:var(--text-light);transition:transform .2s;' + (clientExpanded ? '' : 'transform:rotate(-90deg);') + '">▾</div>'
       + '</div>'
@@ -364,14 +363,53 @@ var QuotesPage = {
         + (_qProperty ? '<div style="margin-top:6px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(_qProperty) + '" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(_qProperty) + ' →</a></div>' : '')
         + '<input type="hidden" id="q-property" value="' + UI.esc(_qProperty) + '">';
     } else {
-      html += '<div class="form-group" style="margin:0;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Client *</label>'
-        + '<input type="hidden" id="q-clientId" value="">'
-        + '<input type="text" id="q-client-search" placeholder="Type client name..." autocomplete="off" '
-        + 'oninput="QuotesPage._searchClient(this.value)" '
-        + 'style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;">'
-        + '<div id="q-client-results" style="display:none;position:relative;z-index:10;"></div>'
+      // Build list of up-to-5 most-recently-quoted clients for quick-pick
+      var _recentClients = [];
+      try {
+        var _allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]');
+        var _byId = {};
+        _allClients.forEach(function(c){ _byId[c.id] = c; });
+        var _allQuotes = DB.quotes.getAll().slice().sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+        var _seen = {};
+        for (var _q = 0; _q < _allQuotes.length && _recentClients.length < 5; _q++) {
+          var _cid = _allQuotes[_q].clientId;
+          if (!_cid || _seen[_cid]) continue;
+          var _cl = _byId[_cid]; if (!_cl) continue;
+          _seen[_cid] = true;
+          _recentClients.push(_cl);
+        }
+      } catch(e) {}
+
+      html += '<input type="hidden" id="q-clientId" value="">'
+        + '<input type="hidden" id="q-property" value="">'
+        // Big label
+        + '<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">Who is this quote for?</div>'
+        + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Search existing clients, tap a recent one, or create a new one.</div>'
+        // Big search field with leading icon
+        + '<div style="position:relative;margin-bottom:10px;">'
+        +   '<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text-light);pointer-events:none;">🔍</span>'
+        +   '<input type="text" id="q-client-search" placeholder="Type a name, address, or phone…" autocomplete="off" '
+        +     'oninput="QuotesPage._searchClient(this.value)" onfocus="QuotesPage._showRecentClients()" '
+        +     'style="width:100%;padding:14px 14px 14px 40px;border:2px solid var(--green-dark);border-radius:10px;font-size:15px;box-sizing:border-box;box-shadow:0 0 0 4px rgba(0,131,108,0.08);">'
         + '</div>'
-        + '<input type="hidden" id="q-property" value="">';
+        + '<div id="q-client-results" style="display:none;position:relative;z-index:10;margin-bottom:10px;"></div>';
+
+      // Recent client pills (quick-pick)
+      if (_recentClients.length > 0) {
+        html += '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Recent</div>'
+          + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
+        _recentClients.forEach(function(c) {
+          var initials = (c.name || '?').split(/\s+/).slice(0,2).map(function(w){return w.charAt(0).toUpperCase();}).join('');
+          html += '<button type="button" onclick="QuotesPage._selectClient(\'' + c.id + '\',\'' + UI.esc(c.name).replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;font-weight:500;">'
+            + '<span style="width:22px;height:22px;border-radius:50%;background:var(--green-bg);color:var(--green-dark);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">' + initials + '</span>'
+            + UI.esc(c.name)
+            + '</button>';
+        });
+        html += '</div>';
+      }
+
+      // New client CTA
+      html += '<button type="button" onclick="QuotesPage._promptNewClient()" style="width:100%;padding:12px;background:#fff;color:var(--green-dark);border:2px dashed var(--green-light);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Create New Client</button>';
     }
 
     // Description lives inside the client box
@@ -1822,6 +1860,43 @@ var QuotesPage = {
     profitEl.style.color = profit >= 0 ? 'var(--green-dark)' : 'var(--red)';
     pctEl.textContent = '(' + margin + '%)';
     pctEl.style.color = margin >= 40 ? 'var(--green-dark)' : margin >= 20 ? '#e07c24' : 'var(--red)';
+  },
+
+  // Prompt for a new client inline without losing the quote form state
+  _promptNewClient: function() {
+    var name = prompt('New client name:');
+    if (!name || !name.trim()) return;
+    var newClient = DB.clients.create({
+      name: name.trim(),
+      status: 'lead',
+      createdAt: new Date().toISOString()
+    });
+    QuotesPage._selectClient(newClient.id, newClient.name);
+  },
+
+  // Show the 8 most recent clients when the search field is focused but empty.
+  // (Different from the "Recent" pill row, which is the 5 most recently-quoted.)
+  _showRecentClients: function() {
+    var input = document.getElementById('q-client-search');
+    if (!input || input.value.length >= 2) return;
+    var results = document.getElementById('q-client-results');
+    if (!results) return;
+    var allClients = [];
+    try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
+    var recent = allClients.slice().sort(function(a,b){
+      return (b.createdAt||'').localeCompare(a.createdAt||'');
+    }).slice(0, 8);
+    if (!recent.length) return;
+    var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;max-height:260px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);">';
+    recent.forEach(function(c) {
+      html += '<div onclick="QuotesPage._selectClient(\'' + c.id + '\',\'' + UI.esc(c.name).replace(/'/g,"\\'") + '\')" style="padding:12px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;font-size:14px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
+        + '<strong>' + UI.esc(c.name) + '</strong>'
+        + (c.address ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + UI.esc(c.address) + '</div>' : '')
+        + '</div>';
+    });
+    html += '</div>';
+    results.innerHTML = html;
+    results.style.display = 'block';
   },
 
   _clientSearchTimeout: null,

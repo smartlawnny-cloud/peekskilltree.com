@@ -1,5 +1,5 @@
 {
-  "version": 223,
+  "version": 224,
   "released": "2026-04-19",
-  "notes": "Nav cleanup — 9 items removed from sidebar More, 6 config pages moved into Settings → Templates & Automation. Per-equipment pre-use safety checklists added with type-specific default items."
+  "notes": "Nav consolidation — 4 tabbed hubs (Reports, Marketing, Tools, Team). 12 individual nav items collapsed into tabs."
 }

@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 223; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 224; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -709,22 +709,13 @@
       <div class="nav-section" style="cursor:pointer;margin-top:4px;" onclick="var el=document.getElementById('more-nav');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.more-arrow').textContent=el.style.display==='none'?'&#9656;':'&#9662;';">More <span class="more-arrow" style="float:right;">&#9656;</span></div>
       <div id="more-nav" style="display:none;">
         <div class="nav-section">Reports</div>
-        <button class="nav-item" data-page="insights"><span class="icon"><i data-lucide="pie-chart" class="li"></i></span> Overview</button>
-        <button class="nav-item" data-page="profitloss"><span class="icon"><i data-lucide="line-chart" class="li"></i></span> Profit & Loss</button>
-        <button class="nav-item" data-page="expenses"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> Expenses</button>
-        <button class="nav-item" data-page="jobcosting"><span class="icon"><i data-lucide="dollar-sign" class="li"></i></span> Job Costing</button>
-        <button class="nav-item" data-page="budget"><span class="icon"><i data-lucide="piggy-bank" class="li"></i></span> Budget</button>
-        <button class="nav-item" data-page="weeklysummary"><span class="icon"><i data-lucide="clipboard-list" class="li"></i></span> Weekly Summary</button>
-        <button class="nav-item" data-page="reports"><span class="icon"><i data-lucide="download" class="li"></i></span> Export</button>
+        <button class="nav-item" data-page="reports"><span class="icon"><i data-lucide="pie-chart" class="li"></i></span> Reports</button>
 
         <div class="nav-section">Marketing</div>
-        <button class="nav-item" data-page="marketing"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Marketing Dashboard</button>
-        <button class="nav-item" data-page="reviews"><span class="icon"><i data-lucide="star" class="li"></i></span> Reviews</button>
-        <button class="nav-item" data-page="campaigns"><span class="icon"><i data-lucide="mail" class="li"></i></span> Campaigns</button>
+        <button class="nav-item" data-page="marketing"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Marketing</button>
         <button class="nav-item" onclick="window.open('https://peekskilltree.com','_blank')" style="opacity:.85;"><span class="icon"><i data-lucide="external-link" class="li"></i></span> Website</button>
 
         <div class="nav-section">People</div>
-        <button class="nav-item" data-page="timesheet"><span class="icon"><i data-lucide="clock" class="li"></i></span> Timesheets</button>
         <button class="nav-item" data-page="payroll"><span class="icon"><i data-lucide="wallet" class="li"></i></span> Payroll</button>
         <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="banknote" class="li"></i></span> My Pay</button>
         <button class="nav-item" onclick="window.open('onboarding/','_blank')" style="opacity:.85;"><span class="icon"><i data-lucide="graduation-cap" class="li"></i></span> Onboarding</button>
@@ -746,9 +737,7 @@
 
         <div class="nav-section">Tools</div>
         <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> AI Assistant</button>
-        <button class="nav-item" data-page="calculators"><span class="icon"><i data-lucide="calculator" class="li"></i></span> Calculators</button>
-        <button class="nav-item" data-page="cardone"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> 10X Tools</button>
-        <button class="nav-item" data-page="videoquote"><span class="icon"><i data-lucide="video" class="li"></i></span> Video Quote <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
+        <button class="nav-item" data-page="tools"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Tools</button>
       </div>
     </div>
 
@@ -811,7 +800,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v223</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v224</span>
       </div>
     </div>
 
@@ -833,36 +822,36 @@
 <script defer src="src/pages/jobs.js?v=195"></script>
 <script defer src="src/pages/invoices.js?v=195"></script>
 <script defer src="src/pages/schedule.js?v=140"></script>
-<script defer src="src/pages/insights.js?v=140"></script>
+<script defer src="src/pages/insights.js?v=160"></script>
 <script src="src/geofence.js"></script>
 <script src="src/weather.js"></script>
 <script defer src="src/pages/comms.js?v=140"></script>
 <script defer src="src/pages/messaging.js?v=140"></script>
-<script defer src="src/pages/profitloss.js?v=140"></script>
+<script defer src="src/pages/profitloss.js?v=160"></script>
 <script src="src/photos.js"></script>
 <script src="src/dailyinspection.js"></script>
 <script defer src="src/pages/clientmap.js"></script>
 <script defer src="src/pages/photomap.js"></script>
 <script defer src="src/pages/crewview.js?v=140"></script>
 <script defer src="src/pages/employeecenter.js?v=140"></script>
-<script defer src="src/pages/budget.js?v=140"></script>
+<script defer src="src/pages/budget.js?v=160"></script>
 <script defer src="src/pages/equipment.js?v=223"></script>
-<script defer src="src/pages/jobcosting.js?v=140"></script>
+<script defer src="src/pages/jobcosting.js?v=160"></script>
 <script defer src="src/pages/dispatch.js?v=201"></script>
 <script defer src="src/pages/recurring.js?v=140"></script>
 <script defer src="src/pages/notifications.js?v=140"></script>
-<script defer src="src/pages/expenses.js?v=140"></script>
+<script defer src="src/pages/expenses.js?v=160"></script>
 <script src="src/dialpad.js?v=140"></script>
 <script src="src/email.js?v=140"></script>
-<script defer src="src/pages/reports.js?v=140"></script>
+<script defer src="src/pages/reports.js?v=160"></script>
 <script defer src="src/pages/reviewtools.js?v=140"></script>
-<script defer src="src/pages/weeklysummary.js?v=140"></script>
+<script defer src="src/pages/weeklysummary.js?v=160"></script>
 <script defer src="src/pages/backup.js?v=145"></script>
 <script defer src="src/pages/onlinebooking.js?v=140"></script>
 <script defer src="src/pages/formbuilder.js?v=140"></script>
 <script defer src="src/pages/receptionist.js?v=140"></script>
-<script defer src="src/pages/campaigns.js?v=140"></script>
-<script defer src="src/pages/marketing.js?v=194"></script>
+<script defer src="src/pages/campaigns.js?v=160"></script>
+<script defer src="src/pages/marketing.js?v=195"></script>
 <script defer src="src/pages/referrals.js?v=140"></script>
 <script defer src="src/pages/import.js?v=140"></script>
 <script src="src/stripe.js?v=140"></script>
@@ -870,13 +859,13 @@
 <script defer src="src/pages/settings.js?v=223"></script>
 <script defer src="src/pages/propertymap.js?v=140"></script>
 <script defer src="src/pages/estimator.js"></script>
-<script defer src="src/pages/cardone.js?v=160"></script>
+<script defer src="src/pages/cardone.js?v=161"></script>
 <script defer src="src/pages/aitreeid.js?v=140"></script>
-<script defer src="src/pages/videoquote.js?v=140"></script>
+<script defer src="src/pages/videoquote.js?v=160"></script>
 <script defer src="src/pages/treemeasure.js"></script>
 <script defer src="src/pages/search.js?v=140"></script>
 <script defer src="src/pages/clienthub.js?v=140"></script>
-<script defer src="src/pages/team.js?v=149"></script>
+<script defer src="src/pages/team.js?v=160"></script>
 <script defer src="src/pages/automations.js?v=140"></script>
 <script defer src="src/pages/pipeline.js?v=146"></script>
 <script src="src/supabase.js?v=222"></script>
@@ -894,8 +883,8 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script src="src/supacloud.js?v=222"></script>
 <script defer src="src/pages/payments.js?v=149"></script>
 <script defer src="src/pages/workflow.js?v=140"></script>
-<script defer src="src/pages/reviews.js?v=140"></script>
-<script defer src="src/pages/timetrack.js?v=140"></script>
+<script defer src="src/pages/reviews.js?v=160"></script>
+<script defer src="src/pages/timetrack.js?v=160"></script>
 <script defer src="src/pages/checklists.js?v=140"></script>
 <script defer src="src/pages/visits.js?v=140"></script>
 <script defer src="src/pages/customfields.js?v=140"></script>
@@ -985,7 +974,8 @@ var pageConfigs = {
   profitloss: { title: 'Profit & Loss', action: null },
   weeklysummary: { title: 'Weekly Summary', action: null },
   reviewtools: { title: 'Review Tools', action: null },
-  reports: { title: 'Reports & Exports', action: null },
+  reports: { title: 'Reports', action: null },
+  tools: { title: 'Tools', action: null },
   onlinebooking: { title: 'Online Booking', action: null },
   formbuilder: { title: 'Form Builder', action: null },
   receptionist: { title: 'Receptionist', action: null },
@@ -1019,6 +1009,104 @@ var pageConfigs = {
   search: { title: 'Search', action: null }
 };
 
+// ── Hub tab helper ──
+function _renderHubTabs(stateKey, tabs, activeFallback) {
+  var tab = window[stateKey] || activeFallback;
+  var valid = false;
+  for (var i = 0; i < tabs.length; i++) { if (tabs[i][0] === tab) { valid = true; break; } }
+  if (!valid) tab = activeFallback;
+  var html = '<div style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;">';
+  for (var j = 0; j < tabs.length; j++) {
+    var t = tabs[j];
+    var active = tab === t[0];
+    html += '<button onclick="window.' + stateKey + '=\'' + t[0] + '\';loadPage(window._currentPage)" style="background:' + (active?'var(--white)':'transparent') + ';color:' + (active?'var(--green-dark)':'var(--text-light)') + ';border:none;border-bottom:3px solid ' + (active?'var(--green-dark)':'transparent') + ';padding:10px 14px;font-size:13px;font-weight:' + (active?'700':'500') + ';cursor:pointer;white-space:nowrap;">' + t[1] + '</button>';
+  }
+  html += '</div>';
+  return { tab: tab, html: html };
+}
+
+// ── Reports Hub ──
+var ReportsHub = {
+  render: function() {
+    var tabs = [
+      ['insights', 'Overview'],
+      ['profitloss', 'Profit & Loss'],
+      ['expenses', 'Expenses'],
+      ['jobcosting', 'Job Costing'],
+      ['budget', 'Budget'],
+      ['weeklysummary', 'Weekly Summary'],
+      ['export', 'Export']
+    ];
+    var r = _renderHubTabs('_reportsTab', tabs, 'insights');
+    var body = '';
+    try {
+      if (r.tab === 'insights') body = InsightsPage.render();
+      else if (r.tab === 'profitloss') body = ProfitLossPage.render();
+      else if (r.tab === 'expenses') body = ExpensesPage.render();
+      else if (r.tab === 'jobcosting') body = JobCosting.render();
+      else if (r.tab === 'budget') body = BudgetPage.render();
+      else if (r.tab === 'weeklysummary') body = WeeklySummary.render();
+      else if (r.tab === 'export') body = ReportsPage.render();
+    } catch (e) { body = '<div style="padding:16px;color:var(--red);">Error loading tab: ' + e.message + '</div>'; }
+    return r.html + body;
+  }
+};
+
+// ── Marketing Hub ──
+var MarketingHub = {
+  render: function() {
+    var tabs = [
+      ['dashboard', 'Dashboard'],
+      ['reviews', 'Reviews'],
+      ['campaigns', 'Campaigns']
+    ];
+    var r = _renderHubTabs('_marketingTab', tabs, 'dashboard');
+    var body = '';
+    try {
+      if (r.tab === 'dashboard') body = MarketingPage.render();
+      else if (r.tab === 'reviews') body = ReviewsPage.render();
+      else if (r.tab === 'campaigns') body = Campaigns.render();
+    } catch (e) { body = '<div style="padding:16px;color:var(--red);">Error loading tab: ' + e.message + '</div>'; }
+    return r.html + body;
+  }
+};
+
+// ── Tools Hub ──
+var ToolsHub = {
+  render: function() {
+    var tabs = [
+      ['calculators', 'Calculators'],
+      ['cardone', '10X Tools'],
+      ['videoquote', 'Video Quote']
+    ];
+    var r = _renderHubTabs('_toolsTab', tabs, 'calculators');
+    var body = '';
+    try {
+      if (r.tab === 'calculators') body = pageRenderers.calculators();
+      else if (r.tab === 'cardone') body = CardoneTools.render();
+      else if (r.tab === 'videoquote') body = VideoQuote.render();
+    } catch (e) { body = '<div style="padding:16px;color:var(--red);">Error loading tab: ' + e.message + '</div>'; }
+    return r.html + body;
+  }
+};
+
+// ── Team Hub ──
+var TeamHub = {
+  render: function() {
+    var tabs = [
+      ['members', 'Members'],
+      ['timesheets', 'Timesheets']
+    ];
+    var r = _renderHubTabs('_teamTab', tabs, 'members');
+    var body = '';
+    try {
+      if (r.tab === 'members') body = TeamPage.render();
+      else if (r.tab === 'timesheets') body = TimeTrackPage.render();
+    } catch (e) { body = '<div style="padding:16px;color:var(--red);">Error loading tab: ' + e.message + '</div>'; }
+    return r.html + body;
+  }
+};
+
 var pageRenderers = {
   dashboard: function() { return DashboardPage.render(); },
   pipeline: function() { return PipelinePage.render(); },
@@ -1030,7 +1118,7 @@ var pageRenderers = {
   invoices: function() { return InvoicesPage.render(); },
   insights: function() { return InsightsPage.render(); },
   reviews: function() { return ReviewsPage.render(); },
-  team: function() { return TeamPage.render(); },
+  team: function() { return TeamHub.render(); },
   timesheet: function() { return TimeTrackPage.render(); },
   timetrack: function() { return TimeTrackPage.render(); },
   automations: function() { return AutomationsPage.render(); },
@@ -1049,12 +1137,13 @@ var pageRenderers = {
   profitloss: function() { return ProfitLossPage.render(); },
   weeklysummary: function() { return WeeklySummary.render(); },
   reviewtools: function() { return ReviewTools.render(); },
-  reports: function() { return ReportsPage.render(); },
+  reports: function() { return ReportsHub.render(); },
+  tools: function() { return ToolsHub.render(); },
   onlinebooking: function() { return OnlineBooking.render(); },
   formbuilder: function() { return FormBuilderPage.render(); },
   receptionist: function() { return Receptionist.render(); },
   campaigns: function() { return Campaigns.render(); },
-  marketing: function() { return MarketingPage.render(); },
+  marketing: function() { return MarketingHub.render(); },
   referrals: function() { return Referrals.render(); },
   import: function() { return ImportPage.render(); },
   backup: function() { return BackupPage.render(); },

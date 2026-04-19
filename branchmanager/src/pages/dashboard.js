@@ -61,6 +61,9 @@ var DashboardPage = {
       + '<h2 style="font-size:28px;font-weight:700;margin-top:2px;">' + greeting + ', ' + userName.split(' ')[0] + '</h2>'
       + '</div>';
 
+    // === BRANCH CAM WIDGET ===
+    html += DashboardPage._branchCamWidget();
+
     // Money-on-the-Table widget was permanently removed Apr 19, 2026 — same signals
     // are surfaced in the Smart Daily Briefing + Ready-to-Invoice cards below.
 
@@ -557,5 +560,69 @@ var DashboardPage = {
     UI.toast('Vehicle inspection complete — ' + (record.pass ? 'all clear' : done + '/' + checks.length + ' passed'));
     var el = document.getElementById('daily-inspection');
     if (el) el.remove();
+  },
+
+  _branchCamWidget: function() {
+    // Aggregate every Branch Cam photo + bucket by day in last 7 days
+    var photos = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('bm-photos-') !== 0) continue;
+      try {
+        var arr = JSON.parse(localStorage.getItem(k)) || [];
+        photos = photos.concat(arr);
+      } catch(e) {}
+    }
+    if (!photos.length) {
+      return '<div style="background:linear-gradient(135deg,#1a3c12,#2e7d32);color:#fff;border-radius:14px;padding:18px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="loadPage(\'tools\')">'
+        + '<div><div style="font-size:11px;opacity:0.8;letter-spacing:0.1em;text-transform:uppercase;">📸 Branch Cam</div>'
+        + '<div style="font-size:16px;font-weight:700;margin-top:4px;">No photos yet — start documenting jobs</div></div>'
+        + '<div style="font-size:24px;opacity:0.6;">→</div></div>';
+    }
+
+    var now = Date.now();
+    var weekAgo = now - 7 * 86400000;
+    var thisWeek = photos.filter(function(p) { return p.date && new Date(p.date).getTime() >= weekAgo; });
+    var today0 = new Date(); today0.setHours(0,0,0,0);
+    var todayCount = photos.filter(function(p) { return p.date && new Date(p.date) >= today0; }).length;
+
+    // Tag tally
+    var tagCounts = {};
+    photos.forEach(function(p) {
+      var tags = Array.isArray(p.tags) ? p.tags : (p.label ? p.label.split(',').map(function(s){return s.trim();}).filter(Boolean) : []);
+      tags.forEach(function(t) { tagCounts[t] = (tagCounts[t] || 0) + 1; });
+    });
+    var topTags = Object.keys(tagCounts).sort(function(a,b){ return tagCounts[b] - tagCounts[a]; }).slice(0, 3);
+
+    // Last 4 thumbnail strip
+    var recent = photos.filter(function(p){ return p.url; }).sort(function(a,b){ return (b.date || '').localeCompare(a.date || ''); }).slice(0, 4);
+
+    var html = '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+      + '<div><div style="font-size:11px;color:#2e7d32;letter-spacing:0.1em;text-transform:uppercase;font-weight:700;">📸 Branch Cam</div>'
+      + '<div style="font-size:18px;font-weight:700;margin-top:2px;">' + photos.length + ' photos · ' + todayCount + ' today · ' + thisWeek.length + ' this week</div></div>'
+      + '<button class="btn btn-outline" onclick="loadPage(\'branchcam\')" style="font-size:12px;padding:6px 12px;">Library →</button>'
+      + '</div>';
+
+    // Recent thumb strip
+    if (recent.length) {
+      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">';
+      recent.forEach(function(p) {
+        html += '<div style="aspect-ratio:1;background-image:url(\'' + p.url + '\');background-size:cover;background-position:center;border-radius:6px;"></div>';
+      });
+      html += '</div>';
+    }
+
+    // Top tags
+    if (topTags.length) {
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+      topTags.forEach(function(t) {
+        html += '<span style="background:#e8f5e9;color:#1a3c12;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;">' + t + ' (' + tagCounts[t] + ')</span>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+    return html;
   }
 };

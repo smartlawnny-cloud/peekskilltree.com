@@ -1,5 +1,5 @@
 {
-  "version": 235,
+  "version": 236,
   "released": "2026-04-19",
-  "notes": "Branch Cam ✨ Before/After Slider — interactive draggable slider as a public share URL. Auto-detects 'Before' + 'After' tagged photos (or falls back to first + last). Auto-demo on load. Native share sheet. New share-slider.html page."
+  "notes": "Branch Cam dashboard widget — total/today/this-week counts, last 4 photo thumbnails, top 3 tag chips, Library shortcut. Empty state nudges to start documenting."
 }

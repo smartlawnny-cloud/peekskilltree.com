@@ -652,6 +652,8 @@ var ClientsPage = {
 
     // previous system-style client detail
     var html = ''
+      // Center the whole page so it doesn't drift right on wide PWAs
+      + '<div style="max-width:960px;margin:0 auto;width:100%;">'
       // Breadcrumb
       + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;">'
       + '<a onclick="loadPage(\'clients\')" style="color:var(--text-light);cursor:pointer;text-decoration:none;">' + BM_CONFIG.companyName + '</a>'
@@ -1041,6 +1043,8 @@ var ClientsPage = {
     html += '</div>';
 
     html += '</div></div>';
+    // Close the max-width:960px;margin:0 auto wrapper opened at the top
+    html += '</div>';
 
     // Render as full page
     document.getElementById('pageTitle').textContent = c.name;

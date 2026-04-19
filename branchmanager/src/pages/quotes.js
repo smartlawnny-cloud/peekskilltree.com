@@ -297,7 +297,8 @@ var QuotesPage = {
   showForm: function(quoteId, clientId, requestId) {
     var q = quoteId ? DB.quotes.getById(quoteId) : {};
     var client = clientId ? DB.clients.getById(clientId) : (q.clientId ? DB.clients.getById(q.clientId) : null);
-    var items = q.lineItems || [{ service: '', description: '', qty: 1, rate: 0 }];
+    // Start empty — no auto-populated blank row. User explicitly taps "Add Tree" to begin.
+    var items = q.lineItems || [];
     // Stash requestId so save() captures it as origin
     QuotesPage._originRequestId = requestId || q.requestId || null;
 
@@ -395,8 +396,9 @@ var QuotesPage = {
 
     // Line items (with photo thumbnails)
     html += '<div id="q-items">';
+    // Render all items COLLAPSED by default (user opens one as needed)
     items.forEach(function(item, i) {
-      html += QuotesPage._itemRow(i, item, services);
+      html += QuotesPage._itemRow(i, item, services, /*expanded=*/ false);
     });
     html += '</div>'
       + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">'
@@ -639,9 +641,10 @@ var QuotesPage = {
     'Firewood Cord': 400, 'Firewood Bundle': 10, 'Free Woodchips': 0, 'Free Estimate': 0
   },
 
-  _itemRow: function(index, item, services) {
+  _itemRow: function(index, item, services, expanded) {
     QuotesPage._dataListOnce(services);
     var lineTotal = ((item.qty || 1) * (item.rate || 0));
+    if (typeof expanded === 'undefined') expanded = true;
     var photos = Array.isArray(item.photos) ? item.photos : (item.photo ? [item.photo] : []);
     var photoStr = photos.length ? ' data-photos=\'' + JSON.stringify(photos).replace(/'/g,'&#39;') + '\'' : '';
     var hasContent = !!(item.service || item.description || item.rate);
@@ -666,7 +669,7 @@ var QuotesPage = {
       +   '<div class="q-item-summary-meta" style="font-size:12px;color:var(--text-light);margin-top:2px;">' + (item.qty || 1) + ' × ' + UI.money(item.rate || 0) + '</div>'
       + '</div>'
       + '<div class="q-item-summary-total" style="font-size:16px;font-weight:800;color:var(--green-dark);flex-shrink:0;">' + UI.money(lineTotal) + '</div>'
-      + '<div class="q-item-chevron" style="font-size:18px;color:var(--text-light);transition:transform .2s;">▾</div>'
+      + '<div class="q-item-chevron" style="font-size:18px;color:var(--text-light);transition:transform .2s;' + (expanded ? '' : 'transform:rotate(-90deg);') + '">▾</div>'
       + '</div>';
 
     // Pricing formula hint — shows under rate if the service has a known formula
@@ -674,7 +677,7 @@ var QuotesPage = {
     var formulaHint = '<div class="q-item-formula" style="font-size:11px;color:var(--text-light);margin-top:4px;"></div>';
 
     // Expanded form body (hidden when collapsed)
-    var body = '<div class="q-item-body" style="margin-top:12px;">'
+    var body = '<div class="q-item-body" style="margin-top:12px;' + (expanded ? '' : 'display:none;') + '">'
       + photoHtml
       + '<div class="quote-item-row" style="display:grid;grid-template-columns:2fr 2fr 60px 90px 80px 36px;gap:8px;align-items:end;"' + photoStr + '>'
       +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label>'
@@ -1605,6 +1608,20 @@ var QuotesPage = {
 
           QuotesPage.calcTotal();
           UI.toast('🌳 ' + tree.species + ' · ' + tree.dbh + '" DBH' + (tree.heightFt ? ' · ' + tree.heightFt + 'ft' : '') + ' · $' + suggestedPrice);
+          // Update the collapsed summary header so it reflects AI-filled data even when body hidden
+          if (descEl) {
+            QuotesPage._syncSummary(descEl);
+            QuotesPage._updateFormula(descEl);
+          }
+          // Make sure the just-filled row is visible to the user
+          var wrap = row.closest('.q-item-wrap');
+          if (wrap) {
+            var wb = wrap.querySelector('.q-item-body');
+            if (wb) wb.style.display = 'block';
+            var wc = wrap.querySelector('.q-item-chevron');
+            if (wc) wc.style.transform = 'rotate(0deg)';
+            wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
           // NO auto-addItem — user taps "Add Another Tree" explicitly when ready.
         }
       } catch(e) {

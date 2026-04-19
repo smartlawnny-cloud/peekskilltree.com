@@ -381,11 +381,13 @@ var InvoicesPage = {
   _doGenerate: function() {
     var checks = document.querySelectorAll('.gen-inv-check:checked');
     var count = 0;
+    // Cache invoice count ONCE outside the loop (was doing a full getAll() per checkbox)
+    var _baseInvCount = DB.invoices.getAll().length;
     checks.forEach(function(cb) {
       var jobId = cb.getAttribute('data-id');
       var j = DB.jobs.getById(jobId);
       if (!j) return;
-      var invNum = DB.invoices.getAll().length + count + 1;
+      var invNum = _baseInvCount + count + 1;
       DB.invoices.create({
         invoiceNumber: invNum,
         clientId: j.clientId,

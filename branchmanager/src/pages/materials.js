@@ -545,8 +545,11 @@ var Materials = {
         + '<table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr style="border-bottom:1px solid var(--border);">'
         + '<th style="text-align:left;padding:4px;">Date</th><th style="text-align:left;padding:4px;">Job</th>'
         + '<th style="text-align:right;padding:4px;">Qty</th><th style="text-align:right;padding:4px;">Cost</th></tr></thead><tbody>';
+      // Build a jobId → job lookup once (was doing a full getAll().find() per row — N² over all jobs)
+      var _jobMap = {};
+      if (DB.jobs) { DB.jobs.getAll().forEach(function(j) { _jobMap[j.id] = j; }); }
       recent.forEach(function(u) {
-        var job = DB.jobs ? DB.jobs.getAll().find(function(j) { return j.id === u.jobId; }) : null;
+        var job = _jobMap[u.jobId] || null;
         html += '<tr style="border-bottom:1px solid #f5f5f5;">'
           + '<td style="padding:4px;">' + UI.dateShort(u.date) + '</td>'
           + '<td style="padding:4px;">' + (job ? (job.clientName || '') : '') + '</td>'

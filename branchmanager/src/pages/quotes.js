@@ -298,7 +298,10 @@ var QuotesPage = {
     var q = quoteId ? DB.quotes.getById(quoteId) : {};
     var client = clientId ? DB.clients.getById(clientId) : (q.clientId ? DB.clients.getById(q.clientId) : null);
     // Start empty — no auto-populated blank row. User explicitly taps "Add Tree" to begin.
-    var items = q.lineItems || [];
+    // Also filter out any ghost/empty items that might have crept in from old saves.
+    var items = (q.lineItems || []).filter(function(it) {
+      return it && (it.service || it.description || it.rate || (it.photos && it.photos.length) || it.photo);
+    });
     // Stash requestId so save() captures it as origin
     QuotesPage._originRequestId = requestId || q.requestId || null;
 
@@ -383,14 +386,16 @@ var QuotesPage = {
       + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Line Items</div>'
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Take or upload a photo — AI identifies species, DBH, condition, and suggests service + price.</p>';
 
-    // Photo-first: AI auto-detects service, species, DBH, condition, price.
-    // Tree Measure button: opens the measuring tool in a modal if user needs to verify DBH/height.
-    html += '<div style="display:flex;gap:8px;margin-bottom:12px;">'
-      + '<button type="button" onclick="QuotesPage._addPhotoFirst()" style="flex:1;padding:14px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">'
-      +   '<i data-lucide="camera" style="width:20px;height:20px;"></i> Add Tree — Photo + AI'
+    // Three-button action row: Add Tree (photo+AI) | Measure | Manual
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">'
+      + '<button type="button" onclick="QuotesPage._addPhotoFirst()" style="padding:14px 8px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">'
+      +   '📷 Add Tree Photo'
       + '</button>'
-      + '<button type="button" onclick="QuotesPage._openTreeMeasure()" style="padding:14px 16px;background:#fff;color:var(--text);border:2px solid var(--border);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;" title="Measure DBH or height with your phone">'
+      + '<button type="button" onclick="QuotesPage._openTreeMeasure()" style="padding:14px 8px;background:#fff;color:var(--text);border:2px solid var(--border);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;" title="Measure DBH or height">'
       +   '📏 Measure'
+      + '</button>'
+      + '<button type="button" onclick="QuotesPage.addItem()" style="padding:14px 8px;background:#fff;color:var(--text);border:2px solid var(--border);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;" title="Enter manually without photo">'
+      +   '✍️ Manual'
       + '</button>'
       + '</div>';
 
@@ -1399,7 +1404,6 @@ var QuotesPage = {
 
   // ── Photo-first flow — focused one-tree-at-a-time with MULTIPLE photos for AI ──
   _addPhotoFirst: function() {
-    QuotesPage.addItem();
     QuotesPage._pendingService = ''; // let AI choose the service itself
     var input = document.createElement('input');
     input.type = 'file';
@@ -1408,6 +1412,8 @@ var QuotesPage = {
     input.onchange = function(e) {
       var files = Array.from(e.target.files || []);
       if (!files.length) return;
+      // Only create the line item AFTER photos are picked (avoids empty rows if user cancels)
+      QuotesPage.addItem();
       // Hard cap at 5 to keep payload reasonable
       if (files.length > 5) { UI.toast('Max 5 photos per tree — using first 5'); files = files.slice(0, 5); }
       Promise.all(files.map(function(f) {

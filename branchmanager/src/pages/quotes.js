@@ -629,13 +629,16 @@ var QuotesPage = {
       var photos = [];
       if (row.dataset.photos) { try { photos = JSON.parse(row.dataset.photos); } catch(e){} }
       else if (row.dataset.photo) { photos = [row.dataset.photo]; }
+      var wrap = row.closest('.q-item-wrap');
       data.lineItems.push({
+        species: (wrap && wrap.querySelector('.q-item-species') || {}).value || '',
+        location: (wrap && wrap.querySelector('.q-item-location') || {}).value || '',
         service: (row.querySelector('.q-item-service') || {}).value || '',
         description: (row.querySelector('.q-item-desc') || {}).value || '',
         qty: (row.querySelector('.q-item-qty') || {}).value || '1',
         rate: (row.querySelector('.q-item-rate') || {}).value || '',
         photos: photos,
-        photo: photos[0] || '' // back-compat
+        photo: photos[0] || ''
       });
     });
     try {
@@ -717,9 +720,20 @@ var QuotesPage = {
       photoHtml += '</div>';
     }
 
-    // Summary strip (always visible — compact header: photo + title + price + chevron)
+    // Summary strip: photo + species (AI-filled, extracted from description) + price + chevron
+    // Species = the part of description BEFORE the first " — " (e.g. "White Oak" from
+    // "White Oak — 22\" DBH — 45' tall — Good — healthy form")
     var summaryThumb = photos.length ? '<img src="' + photos[0] + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0;">' : '<div style="width:40px;height:40px;background:var(--bg);border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:16px;flex-shrink:0;">🌳</div>';
-    var titleText = hasContent ? UI.esc(item.service || item.description || 'Tree') : 'New tree — fill below';
+    var titleText;
+    if (!hasContent) {
+      titleText = 'New tree — fill below';
+    } else if (item.species) {
+      titleText = UI.esc(item.species);
+    } else if (item.description && item.description.indexOf(' — ') > 0) {
+      titleText = UI.esc(item.description.split(' — ')[0]);
+    } else {
+      titleText = UI.esc(item.service || item.description || 'Tree');
+    }
     var summary = '<div class="q-item-header" onclick="QuotesPage._toggleItem(this)" style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
       + summaryThumb
       + '<div class="q-item-summary-title" style="flex:1;min-width:0;font-size:14px;font-weight:600;color:' + (hasContent ? 'var(--text)' : 'var(--text-light)') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + titleText + '</div>'
@@ -734,6 +748,11 @@ var QuotesPage = {
     // Expanded form body (hidden when collapsed)
     var body = '<div class="q-item-body" style="margin-top:12px;' + (expanded ? '' : 'display:none;') + '">'
       + photoHtml
+      // Species + Location row (displayed prominently at top so user can tag where tree is)
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'
+      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Species (AI-filled)</label><input class="q-item-species" value="' + UI.esc(item.species || '') + '" placeholder="e.g. White Oak" oninput="QuotesPage._syncSummary(this)" style="font-size:13px;"></div>'
+      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Location on property</label><input class="q-item-location" value="' + UI.esc(item.location || '') + '" placeholder="e.g. back yard near pool" oninput="QuotesPage._syncSummary(this)" style="font-size:13px;"></div>'
+      + '</div>'
       + '<div class="quote-item-row" style="display:grid;grid-template-columns:2fr 2fr 60px 90px 80px 36px;gap:8px;align-items:end;"' + photoStr + '>'
       +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label>'
       +     '<input class="q-item-service" list="q-svc-datalist" value="' + UI.esc(item.service || '') + '" placeholder="Type or pick…" onchange="QuotesPage._onServiceChange(this)" oninput="QuotesPage._syncSummary(this)" style="font-size:13px;">'
@@ -783,6 +802,8 @@ var QuotesPage = {
   // Sync the compact summary text when inputs change (live feedback)
   _syncSummary: function(input) {
     var wrap = input.closest('.q-item-wrap'); if (!wrap) return;
+    var species = (wrap.querySelector('.q-item-species') || {}).value || '';
+    var location = (wrap.querySelector('.q-item-location') || {}).value || '';
     var svc = (wrap.querySelector('.q-item-service') || {}).value || '';
     var desc = (wrap.querySelector('.q-item-desc') || {}).value || '';
     var qty = parseFloat((wrap.querySelector('.q-item-qty') || {}).value) || 1;
@@ -790,7 +811,9 @@ var QuotesPage = {
     var title = wrap.querySelector('.q-item-summary-title');
     var total = wrap.querySelector('.q-item-summary-total');
     if (title) {
-      title.textContent = svc || desc || 'Tree';
+      // Species · location  (fall back to service/description if species not set yet)
+      var left = species || (desc && desc.indexOf(' — ') > 0 ? desc.split(' — ')[0] : '') || svc || 'Tree';
+      title.innerHTML = '<span>' + UI.esc(left) + '</span>' + (location ? '<span style="color:var(--text-light);font-weight:500;"> · ' + UI.esc(location) + '</span>' : '');
       title.style.color = 'var(--text)';
     }
     if (total) total.textContent = UI.money(qty * rate);
@@ -1035,7 +1058,10 @@ var QuotesPage = {
         var photos = [];
         if (row.dataset.photos) { try { photos = JSON.parse(row.dataset.photos); } catch(e){} }
         else if (row.dataset.photo) { photos = [row.dataset.photo]; }
-        items.push({ service: service, description: desc, qty: qty, rate: rate, amount: qty * rate, photos: photos, photo: photos[0] || '' });
+        var wrap = row.closest('.q-item-wrap');
+        var species = (wrap && wrap.querySelector('.q-item-species') || {}).value || '';
+        var location = (wrap && wrap.querySelector('.q-item-location') || {}).value || '';
+        items.push({ species: species, location: location, service: service, description: desc, qty: qty, rate: rate, amount: qty * rate, photos: photos, photo: photos[0] || '' });
         subtotal += qty * rate;
       }
     });
@@ -1654,8 +1680,13 @@ var QuotesPage = {
           var qtyEl = row.querySelector('.q-item-qty');
 
           if (serviceEl) serviceEl.value = tree.suggestedService || 'Tree Removal';
+          // Store species separately so the summary header shows it cleanly
+          var wrapEl = row.closest('.q-item-wrap');
+          var speciesEl = wrapEl ? wrapEl.querySelector('.q-item-species') : null;
+          if (speciesEl) speciesEl.value = tree.species || '';
           var heightStr = tree.heightFt ? ' — ' + tree.heightFt + '\' tall' : '';
-          if (descEl) descEl.value = tree.species + ' — ' + (tree.dbh || '?') + '" DBH' + heightStr + ' — ' + (tree.condition || '') + (tree.notes ? ' — ' + tree.notes : '');
+          // Description now holds just the details (no species up front — species is its own field above)
+          if (descEl) descEl.value = (tree.dbh || '?') + '" DBH' + heightStr + ' — ' + (tree.condition || '') + (tree.notes ? ' — ' + tree.notes : '');
           if (qtyEl) qtyEl.value = '1';
 
           // Price suggestion: $100 per inch of DBH

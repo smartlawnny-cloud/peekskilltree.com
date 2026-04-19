@@ -121,15 +121,16 @@ var PropertyMap = {
         // Placed count badge
         + '<div id="placed-count" style="position:absolute;top:10px;right:10px;background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;display:none;">0 placed</div>'
         + '</div>'
-        // Equipment drawer (bottom, scrollable horizontal)
-        + '<div style="background:var(--bg);border-top:1px solid var(--border);padding:10px 12px;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
-        + '<span style="font-size:12px;font-weight:700;">Tap to place equipment</span>'
-        + '<button class="btn btn-outline" style="font-size:11px;padding:4px 8px;" onclick="PropertyMap.clearMarkers()">Clear</button>'
-        + '</div>'
-        + '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;">'
-        + eqButtons
-        + '</div>'
+        // Equipment drawer — collapsed by default (tap pill to expand)
+        + '<div id="eq-drawer" style="background:var(--bg);border-top:1px solid var(--border);">'
+        +   '<button id="eq-drawer-toggle" type="button" onclick="PropertyMap._toggleDrawer()" style="width:100%;background:transparent;border:none;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--text);">'
+        +     '<span>🛠 Equipment <span style="color:var(--text-light);font-weight:500;margin-left:6px;">· tap to pick</span></span>'
+        +     '<span id="eq-drawer-chev" style="font-size:14px;color:var(--text-light);transform:rotate(0deg);transition:transform .2s;">▴</span>'
+        +   '</button>'
+        +   '<div id="eq-drawer-body" style="display:none;padding:0 12px 10px;">'
+        +     '<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button class="btn btn-outline" style="font-size:11px;padding:4px 8px;" onclick="PropertyMap.clearMarkers()">Clear all</button></div>'
+        +     '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;">' + eqButtons + '</div>'
+        +   '</div>'
         + '</div>'
         // Bottom action bar
         + '<div style="padding:10px 12px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;">'
@@ -230,39 +231,51 @@ var PropertyMap = {
       if (self.map.touchPitch) self.map.touchPitch.enable();
       if (self.map.dragRotate) self.map.dragRotate.enable();
 
-      // Add a 2D / 3D toggle button
+      // Unified tool panel — vertical stack in top-right under the compass
+      var mapContainer = document.getElementById('prop-map');
+      var toolPanel = document.createElement('div');
+      toolPanel.style.cssText = 'position:absolute;top:136px;right:10px;z-index:10;display:flex;flex-direction:column;gap:4px;background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:3px;box-shadow:0 1px 3px rgba(0,0,0,.2);';
+
+      var btnStyle = 'background:transparent;border:none;border-radius:4px;padding:6px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;min-width:30px;min-height:30px;display:flex;align-items:center;justify-content:center;';
+
+      // 3D / 2D toggle
       var toggleBtn = document.createElement('button');
       toggleBtn.type = 'button';
       toggleBtn.textContent = '3D';
       toggleBtn.title = 'Toggle 2D / 3D tilt';
-      toggleBtn.style.cssText = 'position:absolute;top:10px;right:54px;z-index:10;background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);min-width:38px;min-height:34px;';
+      toggleBtn.style.cssText = btnStyle;
       toggleBtn.onclick = function() {
         var cur = self.map.getPitch();
         if (cur > 5) {
           self.map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
           toggleBtn.textContent = '3D';
+          toggleBtn.style.background = 'transparent';
+          toggleBtn.style.color = 'var(--text)';
         } else {
           self.map.easeTo({ pitch: 60, duration: 400 });
           toggleBtn.textContent = '2D';
+          toggleBtn.style.background = '#1a3c12';
+          toggleBtn.style.color = '#fff';
         }
       };
-      var mapContainer = document.getElementById('prop-map');
-      if (mapContainer && mapContainer.parentElement) mapContainer.parentElement.appendChild(toggleBtn);
+      toolPanel.appendChild(toggleBtn);
 
-      // Terrain shading toggle — turns the hillshade layer on/off
+      if (mapContainer && mapContainer.parentElement) mapContainer.parentElement.appendChild(toolPanel);
+
+      // Terrain toggle — goes into the same panel
       var terrainBtn = document.createElement('button');
       terrainBtn.type = 'button';
       terrainBtn.textContent = '⛰';
       terrainBtn.title = 'Toggle elevation shading';
-      terrainBtn.style.cssText = 'position:absolute;top:10px;right:98px;z-index:10;background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:6px 10px;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);min-width:38px;min-height:34px;';
+      terrainBtn.style.cssText = btnStyle + 'font-size:15px;';
       terrainBtn.onclick = function() {
         var vis = self.map.getLayoutProperty('hillshade-layer', 'visibility');
         var on = vis === 'visible';
         self.map.setLayoutProperty('hillshade-layer', 'visibility', on ? 'none' : 'visible');
-        terrainBtn.style.background = on ? 'rgba(255,255,255,.95)' : '#1a3c12';
+        terrainBtn.style.background = on ? 'transparent' : '#1a3c12';
         terrainBtn.style.color = on ? 'var(--text)' : '#fff';
       };
-      if (mapContainer && mapContainer.parentElement) mapContainer.parentElement.appendChild(terrainBtn);
+      toolPanel.appendChild(terrainBtn);
 
       // Elevation readout — tap map → show elevation in feet (USGS free service)
       var elevReadout = document.createElement('div');
@@ -355,20 +368,17 @@ var PropertyMap = {
     el.style.cssText = 'width:' + minW + 'px;height:' + minH + 'px;background:' + eq.color + 'cc;'
       + 'border-radius:4px;display:flex;align-items:center;justify-content:center;'
       + 'border:2px solid rgba(255,255,255,.9);box-shadow:0 3px 10px rgba(0,0,0,.55);cursor:grab;'
-      + 'transition:transform 0.2s ease;position:relative;backdrop-filter:blur(2px);';
-    // Emoji icon + tiny label below
-    var iconSize = Math.max(Math.min(minH * 0.8, 28), 14);
-    el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;line-height:1;pointer-events:none;">'
-      + '<span style="font-size:' + iconSize + 'px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));">' + (eq.icon || '📍') + '</span>'
-      + (minH > 26 ? '<span style="font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);text-transform:uppercase;letter-spacing:.03em;margin-top:2px;">' + eq.label + '</span>' : '')
-      + '</div>';
-    el.title = eq.label + ' — tap ↻ to rotate, drag to move';
+      + 'transition:transform 0.2s ease,box-shadow .15s;position:relative;backdrop-filter:blur(2px);';
+    // Emoji only — label hidden, shown as tooltip only
+    var iconSize = Math.max(Math.min(minH * 0.85, 28), 16);
+    el.innerHTML = '<span style="font-size:' + iconSize + 'px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));pointer-events:none;line-height:1;">' + (eq.icon || '📍') + '</span>';
+    el.title = eq.label + ' — tap to select, drag to move';
 
-    // Rotate handle — bigger + clearer on touch
+    // Rotation handle — hidden by default, revealed when marker is selected
     var handle = document.createElement('div');
     handle.style.cssText = 'position:absolute;top:-12px;right:-12px;width:26px;height:26px;'
       + 'background:#fff;border:2px solid ' + eq.color + ';border-radius:50%;cursor:pointer;'
-      + 'display:flex;align-items:center;justify-content:center;font-size:14px;color:' + eq.color + ';'
+      + 'display:none;align-items:center;justify-content:center;font-size:14px;color:' + eq.color + ';'
       + 'box-shadow:0 2px 6px rgba(0,0,0,.4);z-index:5;font-weight:900;';
     handle.textContent = '↻';
     handle.title = 'Tap to rotate 45°';
@@ -380,6 +390,30 @@ var PropertyMap = {
       markerData.rotation = rotation;
       if (typeof window._bmEquipmentMapHook === 'function') window._bmEquipmentMapHook(self.markers);
     }
+
+    // Select/deselect on tap — shows handle + selection ring
+    function setSelected(on) {
+      if (on) {
+        el.style.boxShadow = '0 0 0 3px ' + eq.color + ', 0 3px 14px rgba(0,0,0,.55)';
+        handle.style.display = 'flex';
+      } else {
+        el.style.boxShadow = '0 3px 10px rgba(0,0,0,.55)';
+        handle.style.display = 'none';
+      }
+    }
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      // Deselect siblings
+      self.markers.forEach(function(m) {
+        if (m.marker && m.marker.getElement && m.marker.getElement() !== el) {
+          var other = m.marker.getElement();
+          var otherHandle = other.querySelector('div');
+          if (otherHandle) otherHandle.style.display = 'none';
+          other.style.boxShadow = '0 3px 10px rgba(0,0,0,.55)';
+        }
+      });
+      setSelected(handle.style.display !== 'flex');
+    });
 
     handle.addEventListener('click', function(e) { e.stopPropagation(); bumpRotation(); });
     handle.addEventListener('touchend', function(e) { e.stopPropagation(); e.preventDefault(); bumpRotation(); });
@@ -480,6 +514,15 @@ var PropertyMap = {
     PropertyMap._savedData = data;
     UI.toast(data.length + ' equipment positions saved');
     UI.closeModal();
+  },
+
+  _toggleDrawer: function() {
+    var body = document.getElementById('eq-drawer-body');
+    var chev = document.getElementById('eq-drawer-chev');
+    if (!body) return;
+    var open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
   },
 
   closeMobile: function() {

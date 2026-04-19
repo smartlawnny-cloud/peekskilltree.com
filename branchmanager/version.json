@@ -1,5 +1,5 @@
 {
-  "version": 265,
+  "version": 266,
   "released": "2026-04-19",
-  "notes": "Quote form: Equipment map section moved to after Internal Notes (was right below line items)"
+  "notes": "PropertyMap UI cleanup: emoji-only markers, rotation handle on-select only, collapsible mobile equipment drawer, unified right-side tool panel (2D/3D + terrain stacked)"
 }

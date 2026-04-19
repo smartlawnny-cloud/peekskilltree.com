@@ -24,5 +24,16 @@ var BM_CONFIG = {
   timezone:        'America/New_York',
   tagline:         'Licensed & Insured',
   reviewStars:     '5.0',
-  reviewCount:     '100+'
+  reviewCount:     '100+',
+
+  // ── Fleet specs (for truck-route sharing with crew) ──
+  // Users can override per-vehicle in Equipment page once that supports it.
+  truckSpecs: {
+    heightFt:   11,
+    heightIn:   6,
+    lengthFt:   24,
+    weightLbs:  26000,   // GVWR
+    hasCDL:     false,   // whether the driver needs a CDL
+    notes:      'Watch low bridges on Rt 9 (Taconic clearance 11\'3"). Avoid narrow roads in Garrison.'
+  }
 };

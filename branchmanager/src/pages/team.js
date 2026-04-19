@@ -188,11 +188,56 @@ var TeamPage = {
       + '</div>'
       + '</form>';
 
+    // If editing an existing member w/ email — show "Create / Reset Login" option
+    if (id && m.email) {
+      var hashes = {};
+      try { hashes = JSON.parse(localStorage.getItem('bm-auth-hashes') || '{}'); } catch(e){}
+      var hasLogin = !!hashes[m.email.toLowerCase()];
+      html += '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">🔐 App Login</div>'
+        + '<div style="font-size:12px;color:var(--text-light);margin-bottom:10px;">'
+        +   (hasLogin ? '✅ ' + UI.esc(m.email) + ' has a login. Reset to generate a new temp password.' : '⚠️ No login yet. Create one to let this person sign in.')
+        + '</div>'
+        + '<button type="button" class="btn btn-outline" style="font-size:13px;" onclick="TeamPage._createLogin(\'' + id + '\')">' + (hasLogin ? 'Reset Password' : 'Create Login') + '</button>'
+        + '</div>';
+    }
+
     UI.showModal(title, html, {
       footer: (id && id !== 'owner' ? '<button class="btn" style="background:var(--red);color:#fff;margin-right:auto;" onclick="TeamPage.remove(\'' + id + '\')">Remove</button>' : '')
         + '<button class="btn btn-outline" onclick="UI.closeModal()">Cancel</button>'
         + ' <button class="btn btn-primary" onclick="document.getElementById(\'team-form\').requestSubmit()">Save</button>'
     });
+  },
+
+  _createLogin: function(id) {
+    var m = TeamPage.getMembers().find(function(x){ return x.id === id; });
+    if (!m || !m.email) { UI.toast('Save the member with an email first', 'error'); return; }
+    // Generate a readable 10-char temp password: 3 letter words + 2 digits
+    var words = ['tree','oak','pine','leaf','bark','climb','sap','limb','trunk','grove'];
+    var pass = words[Math.floor(Math.random()*words.length)] + words[Math.floor(Math.random()*words.length)] + Math.floor(10 + Math.random()*89);
+    var hashes = {};
+    try { hashes = JSON.parse(localStorage.getItem('bm-auth-hashes') || '{}'); } catch(e){}
+    hashes[m.email.toLowerCase()] = Auth._hash(pass);
+    localStorage.setItem('bm-auth-hashes', JSON.stringify(hashes));
+
+    var loginUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+    var shareText = 'You have access to Branch Manager.\n\n'
+      + 'URL: ' + loginUrl + '\n'
+      + 'Email: ' + m.email + '\n'
+      + 'Temporary password: ' + pass + '\n\n'
+      + 'Please change your password after first login (Settings → Change Password).';
+
+    var msgHtml = '<div>'
+      + '<h3 style="margin-bottom:6px;">🔐 Login Ready for ' + UI.esc(m.name || m.email) + '</h3>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Send this to them. They can change the password after first login.</p>'
+      + '<textarea id="bm-login-text" readonly style="width:100%;height:170px;font-family:monospace;font-size:12px;padding:10px;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;">' + shareText.replace(/</g,'&lt;') + '</textarea>'
+      + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">'
+      +   '<button class="btn btn-primary" style="flex:1;min-width:140px;" onclick="(function(){var t=document.getElementById(\'bm-login-text\');t.select();document.execCommand(\'copy\');UI.toast(\'Copied ✓\');})()">📋 Copy</button>'
+      +   '<button class="btn btn-outline" style="flex:1;min-width:140px;" onclick="window.open(\'sms:' + (m.phone || '').replace(/\D/g,'') + '?&body=\' + encodeURIComponent(document.getElementById(\'bm-login-text\').value))">💬 SMS ' + UI.esc((m.name||'').split(' ')[0]) + '</button>'
+      +   '<button class="btn btn-outline" style="flex:1;min-width:140px;" onclick="window.location.href=\'mailto:' + encodeURIComponent(m.email) + '?subject=\' + encodeURIComponent(\'Branch Manager login\') + \'&body=\' + encodeURIComponent(document.getElementById(\'bm-login-text\').value)">✉️ Email</button>'
+      + '</div>'
+      + '</div>';
+    UI.showModal('Login Created', msgHtml, { size: 'md' });
   },
 
   save: function(e, id) {

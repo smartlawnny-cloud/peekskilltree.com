@@ -122,6 +122,24 @@ var Auth = {
     };
 
     var user = users[emailLower];
+
+    // ALSO accept any team member from the Team page whose email has a password hash set.
+    // (Owner creates logins via Team → member → "Create Login" — generates a random password,
+    //  stores its hash in bm-auth-hashes keyed by email.)
+    if (!user) {
+      try {
+        var team = JSON.parse(localStorage.getItem('bm-team') || '[]');
+        var teamMatch = team.find(function(m) { return (m.email || '').toLowerCase() === emailLower; });
+        if (teamMatch && customHashes[emailLower]) {
+          user = {
+            hash: customHashes[emailLower],
+            role: teamMatch.role || 'crew_member',
+            name: teamMatch.name || emailLower.split('@')[0]
+          };
+        }
+      } catch(e) {}
+    }
+
     if (user && Auth._hash(password) === user.hash) {
       Auth.user = { email: email, role: user.role, name: user.name };
       Auth.role = user.role;

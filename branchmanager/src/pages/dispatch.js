@@ -204,6 +204,7 @@ var DispatchPage = {
       + '<div style="display:flex;gap:8px;">'
       + '<button onclick="DispatchPage.optimizeRoute()" style="background:#1565c0;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;">\uD83D\uDD04 Optimize Route</button>'
       + '<button onclick="DispatchPage.openRoute()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;">\uD83D\uDDFA Open in Maps</button>'
+      + '<button onclick="DispatchPage.shareRoute()" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;margin-left:6px;">\uD83D\uDE9B Share Truck Route</button>'
       + '</div></div>';
 
     // Route Summary Card
@@ -339,10 +340,77 @@ var DispatchPage = {
     });
 
     // Build Google Maps multi-stop URL
-    var origin = '1+Highland+Industrial+Park+Peekskill+NY';
+    var origin = encodeURIComponent(BM_CONFIG.address || '1 Highland Industrial Park, Peekskill, NY 10566');
     var waypoints = jobs.map(function(j) { return encodeURIComponent(j.property || j.address || ''); }).join('/');
     var url = 'https://www.google.com/maps/dir/' + origin + '/' + waypoints + '/' + origin;
     window.open(url, '_blank');
+  },
+
+  // Build a crew-ready route message: truck specs + ordered stops + locked Google Maps URL.
+  // Locking via explicit /waypoints/ path prevents Google from reordering into shortcuts
+  // (which is how crews end up under low bridges on the Taconic).
+  _buildRouteMessage: function(jobs) {
+    var specs = (typeof BM_CONFIG !== 'undefined' && BM_CONFIG.truckSpecs) || {};
+    var origin = BM_CONFIG.address || '';
+    var originEnc = encodeURIComponent(origin);
+    var waypoints = jobs.map(function(j) { return encodeURIComponent(j.property || j.address || ''); }).join('/');
+    var url = 'https://www.google.com/maps/dir/' + originEnc + '/' + waypoints + '/' + originEnc;
+
+    var lines = [];
+    lines.push('🚛 LOCKED TRUCK ROUTE — ' + new Date().toLocaleDateString());
+    lines.push('');
+    if (specs.heightFt || specs.heightIn) {
+      lines.push('⚠️ Truck height: ' + (specs.heightFt || 0) + '\'' + (specs.heightIn || 0) + '"');
+    }
+    if (specs.weightLbs) {
+      lines.push('⚠️ GVWR: ' + specs.weightLbs.toLocaleString() + ' lbs');
+    }
+    if (specs.notes) {
+      lines.push('⚠️ ' + specs.notes);
+    }
+    lines.push('');
+    lines.push('Follow stops IN ORDER. Do not let GPS reorder:');
+    jobs.forEach(function(j, i) {
+      var label = (i + 1) + '. ' + (j.clientName || 'Job') + ' — ' + (j.property || j.address || 'no address');
+      if (j.scheduledTime) label += ' @ ' + j.scheduledTime;
+      lines.push(label);
+    });
+    lines.push('');
+    lines.push('Open route: ' + url);
+    return { text: lines.join('\n'), url: url };
+  },
+
+  shareRoute: function() {
+    var jobs = DB.jobs.getAll().filter(function(j) {
+      if (!j.scheduledDate) return false;
+      return j.scheduledDate.split('T')[0] === new Date().toISOString().split('T')[0];
+    });
+    if (!jobs.length) { UI.toast('No jobs today', 'error'); return; }
+    jobs.sort(function(a, b) { return (a.routeOrder || 999) - (b.routeOrder || 999); });
+
+    var msg = DispatchPage._buildRouteMessage(jobs);
+
+    // Try the native share sheet first (iOS / Android / Safari desktop)
+    if (navigator.share) {
+      navigator.share({
+        title: 'Truck Route — ' + new Date().toLocaleDateString(),
+        text: msg.text
+      }).catch(function(){ /* user cancelled */ });
+      return;
+    }
+
+    // Fallback — show a modal with the message + copy button
+    var safeText = (msg.text || '').replace(/</g, '&lt;');
+    var html = '<div style="padding:4px 0;">'
+      + '<h3 style="margin-bottom:6px;">🚛 Share Truck Route</h3>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Copy + paste into text message to crew. Waypoints are locked in order — Google Maps won\'t reroute them.</p>'
+      + '<textarea id="bm-route-text" readonly style="width:100%;height:260px;font-family:monospace;font-size:12px;padding:10px;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;">' + safeText + '</textarea>'
+      + '<div style="display:flex;gap:8px;margin-top:12px;">'
+      +   '<button class="btn btn-primary" style="flex:1;" onclick="(function(){var t=document.getElementById(\'bm-route-text\');t.select();document.execCommand(\'copy\');UI.toast(\'Copied ✓\');})()">📋 Copy to clipboard</button>'
+      +   '<button class="btn btn-outline" onclick="window.open(\'sms:?&body=\' + encodeURIComponent(document.getElementById(\'bm-route-text\').value))">💬 Send via SMS</button>'
+      + '</div>'
+      + '</div>';
+    UI.showModal(html);
   },
 
   startJob: function(jobId) {

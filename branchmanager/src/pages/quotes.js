@@ -620,6 +620,7 @@ var QuotesPage = {
         var rd = JSON.parse(recovered);
         if (rd.clientName || (rd.lineItems && rd.lineItems.length > 0 && rd.lineItems[0].service)) {
           var banner = document.createElement('div');
+          banner.id = 'q-recovery-banner';
           banner.style.cssText = 'background:#fff3e0;border:1px solid #ffe0b2;border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;';
           banner.innerHTML = '<div><strong style="color:#e65100;">📋 Recovered draft</strong><span style="font-size:13px;color:var(--text-light);margin-left:8px;">' + (rd.clientName || 'Unsaved quote') + ' — ' + new Date(rd.savedAt).toLocaleTimeString() + '</span></div>'
             + '<div style="display:flex;gap:6px;">'
@@ -723,9 +724,14 @@ var QuotesPage = {
         QuotesPage.calcTotal();
       }
 
-      // Remove recovery banner (try any matching selector — color may vary)
-      var banners = document.querySelectorAll('[style*="fff3e0"], [style*="fef3c7"]');
-      banners.forEach(function(b) { if (b.textContent && b.textContent.indexOf('Recovered') >= 0) b.remove(); });
+      // Remove recovery banner — try class first, then text fallback
+      var banner = document.getElementById('q-recovery-banner');
+      if (banner) banner.remove();
+      document.querySelectorAll('div').forEach(function(b) {
+        if (b.textContent && b.textContent.indexOf('Recovered draft') >= 0 && b.querySelector('button[onclick*="_restoreAutoSave"]')) {
+          b.remove();
+        }
+      });
       UI.toast('Draft restored ✅');
     } catch(e) {
       console.error('restore error', e);

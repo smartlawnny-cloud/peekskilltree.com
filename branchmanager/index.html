@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 224; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 225; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -725,11 +725,9 @@
         <button class="nav-item" data-page="taskreminders"><span class="icon"><i data-lucide="check-circle" class="li"></i></span> Tasks & Reminders</button>
 
         <div class="nav-section">Operations</div>
-        <button class="nav-item" data-page="dispatch"><span class="icon"><i data-lucide="truck" class="li"></i></span> Dispatch</button>
-        <button class="nav-item" data-page="equipment"><span class="icon"><i data-lucide="cog" class="li"></i></span> Equipment</button>
+        <button class="nav-item" data-page="operations"><span class="icon"><i data-lucide="truck" class="li"></i></span> Operations</button>
 
         <div class="nav-section">Client Hub</div>
-        <button class="nav-item" data-page="clienthub"><span class="icon"><i data-lucide="user-check" class="li"></i></span> Client Portal</button>
         <button class="nav-item" data-page="messaging"><span class="icon"><i data-lucide="message-square" class="li"></i></span> Messages</button>
 
         <div class="nav-section">Media</div>
@@ -800,7 +798,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v224</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v225</span>
       </div>
     </div>
 
@@ -951,6 +949,7 @@ var pageConfigs = {
   insights: { title: 'Insights', action: null },
   reviews: { title: 'Reviews', action: null },
   team: { title: 'Team', action: '+ Add Member', actionFn: 'TeamPage.showForm()' },
+  operations: { title: 'Operations', action: null },
   timesheet: { title: 'Timesheet', action: null },
   automations: { title: 'Automations', action: null },
   calculators: { title: 'Calculators', action: null },
@@ -1107,6 +1106,22 @@ var TeamHub = {
   }
 };
 
+var OperationsHub = {
+  render: function() {
+    var tabs = [
+      ['dispatch', 'Dispatch'],
+      ['equipment', 'Equipment']
+    ];
+    var r = _renderHubTabs('_opsTab', tabs, 'dispatch');
+    var body = '';
+    try {
+      if (r.tab === 'dispatch') body = DispatchPage.render();
+      else if (r.tab === 'equipment') body = EquipmentPage.render();
+    } catch (e) { body = '<div style="padding:16px;color:var(--red);">Error loading tab: ' + e.message + '</div>'; }
+    return r.html + body;
+  }
+};
+
 var pageRenderers = {
   dashboard: function() { return DashboardPage.render(); },
   pipeline: function() { return PipelinePage.render(); },
@@ -1119,6 +1134,7 @@ var pageRenderers = {
   insights: function() { return InsightsPage.render(); },
   reviews: function() { return ReviewsPage.render(); },
   team: function() { return TeamHub.render(); },
+  operations: function() { return OperationsHub.render(); },
   timesheet: function() { return TimeTrackPage.render(); },
   timetrack: function() { return TimeTrackPage.render(); },
   automations: function() { return AutomationsPage.render(); },

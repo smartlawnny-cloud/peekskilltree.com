@@ -562,14 +562,18 @@ var QuotesPage = {
       // Equipment section removed here — now lives above the Totals card, outside T&M.
       // T&M reads the same #q-tm-* checkboxes to compute cost.
 
-      // ═══ STEP 2 — Job hours ═══
+      // ═══ STEP 2 — Hours (on-site + yard + drive, all at same full crew+equip rate) ═══
       + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
-      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px;">Step 2 — Job hours</label>'
-      +   '<div style="display:flex;align-items:center;gap:10px;">'
-      +     '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:8px;font-size:22px;font-weight:700;text-align:center;">'
-      +     '<span style="font-size:14px;color:var(--text-light);font-weight:600;">hrs on site</span>'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 2 — Hours</label>'
+      +   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'
+      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;">On-site hrs</label>'
+      +       '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:6px;font-size:16px;font-weight:700;text-align:center;"></div>'
+      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;">Yard hrs <span style="color:#94a3b8;">(prep)</span></label>'
+      +       '<input type="number" id="q-tm-yard-hrs" value="' + (tmData.yardHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:15px;text-align:center;"></div>'
+      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;">Drive hrs <span style="color:#94a3b8;">(round trip)</span></label>'
+      +       '<input type="number" id="q-tm-drive-hrs" value="' + (tmData.driveHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:15px;text-align:center;"></div>'
       +   '</div>'
-      +   '<div style="font-size:11px;color:var(--text-light);margin-top:6px;">Each crew member + equipment piece multiplies by these hours.</div>'
+      +   '<div style="font-size:11px;color:var(--text-light);margin-top:6px;">All hours bill at the same crew + equipment rate. Yard + drive time add to total billable.</div>'
       + '</div>'
 
       // ═══ STEP 3 — Disposal (optional) ═══
@@ -1420,19 +1424,25 @@ var QuotesPage = {
       expiresAt: expiresAt,
       options: null,
       timeMaterial: (function() {
-        var climberHrs = parseFloat((document.getElementById('q-tm-climber-hrs') || {}).value) || 0;
-        var groundCount = parseFloat((document.getElementById('q-tm-ground-count') || {}).value) || 0;
-        var groundHrs = parseFloat((document.getElementById('q-tm-ground-hrs') || {}).value) || 0;
-        var totalHrs = parseFloat((document.getElementById('q-tm-total-hrs') || {}).value) || 0;
-        var disposal = parseFloat((document.getElementById('q-tm-disposal') || {}).value) || 0;
-        if (!climberHrs && !groundHrs && !totalHrs) return null;
+        function n(id) { var e = document.getElementById(id); return e ? (parseFloat(e.value) || 0) : 0; }
+        function c(id) { var e = document.getElementById(id); return !!(e && e.checked); }
+        var climberCount = n('q-tm-climber-count');
+        var groundCount  = n('q-tm-ground-count');
+        var foremanCount = n('q-tm-foreman-count');
+        var onSite       = n('q-tm-total-hrs');
+        var yardHrs      = n('q-tm-yard-hrs');
+        var driveHrs     = n('q-tm-drive-hrs');
+        var disposal     = n('q-tm-disposal');
+        if (!onSite && !climberCount && !groundCount && !foremanCount) return null;
         return {
-          climberHrs: climberHrs, groundCount: groundCount, groundHrs: groundHrs,
-          totalHrs: totalHrs, disposal: disposal,
-          bucket: !!(document.getElementById('q-tm-bucket') || {}).checked,
-          chipper: !!(document.getElementById('q-tm-chipper') || {}).checked,
-          crane: !!(document.getElementById('q-tm-crane') || {}).checked,
-          stumpGrinder: !!(document.getElementById('q-tm-stumpgrinder') || {}).checked,
+          climberCount: climberCount, groundCount: groundCount, foremanCount: foremanCount,
+          totalHrs: onSite, yardHrs: yardHrs, driveHrs: driveHrs,
+          disposal: disposal,
+          bucket: c('q-tm-bucket'), chipper: c('q-tm-chipper'), crane: c('q-tm-crane'),
+          stumpGrinder: c('q-tm-stumpgrinder'), miniSkid: c('q-tm-miniskid'),
+          dumpTruck: c('q-tm-dumptruck'), liftLadder: c('q-tm-liftladder'),
+          trailer: c('q-tm-trailer'),
+          equipCounts: window._bmEquipCounts || {},
           tmTotal: QuotesPage._calcTM()
         };
       })()
@@ -2124,9 +2134,12 @@ var QuotesPage = {
     var climberCount = num('q-tm-climber-count');
     var groundCount  = num('q-tm-ground-count');
     var foremanCount = num('q-tm-foreman-count');
-    // Job hours
-    var totalHrs = num('q-tm-total-hrs');
-    var disposal = num('q-tm-disposal');
+    // Hours — billable time = on-site + yard prep + drive time (all at full rate)
+    var onSiteHrs = num('q-tm-total-hrs');
+    var yardHrs   = num('q-tm-yard-hrs');
+    var driveHrs  = num('q-tm-drive-hrs');
+    var totalHrs  = onSiteHrs + yardHrs + driveHrs;
+    var disposal  = num('q-tm-disposal');
 
     // Equipment picks (ids match _tmEquipPill key.toLowerCase())
     var EQUIP = [

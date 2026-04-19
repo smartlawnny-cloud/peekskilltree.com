@@ -1,5 +1,5 @@
 {
-  "version": 193,
+  "version": 194,
   "released": "2026-04-19",
-  "notes": "4 new 10X tools, 31 missing Jobber records inserted, multi-tenant migration SQL + rollout plan"
+  "notes": "Marketing dashboard — lead sources, conversion funnel, response time, SocialPilot+GBP stubs"
 }

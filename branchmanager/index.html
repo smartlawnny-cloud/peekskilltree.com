@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 193; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 194; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -724,6 +724,7 @@
         <i data-lucide="chevron-right" id="marketing-chevron" style="width:14px;height:14px;stroke:currentColor;margin-left:auto;transition:transform .2s;"></i>
       </button>
       <div id="marketing-sub" style="display:none;padding-left:14px;">
+        <button class="nav-item" data-page="marketing"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Marketing Dashboard</button>
         <button class="nav-item" data-page="reviews"><span class="icon"><i data-lucide="star" class="li"></i></span> Reviews</button>
         <button class="nav-item" data-page="reviewtools"><span class="icon"><i data-lucide="thumbs-up" class="li"></i></span> Review Tools</button>
         <button class="nav-item" data-page="campaigns"><span class="icon"><i data-lucide="mail" class="li"></i></span> Campaigns</button>
@@ -839,7 +840,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v193</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v194</span>
       </div>
     </div>
 
@@ -890,6 +891,7 @@
 <script defer src="src/pages/formbuilder.js?v=140"></script>
 <script defer src="src/pages/receptionist.js?v=140"></script>
 <script defer src="src/pages/campaigns.js?v=140"></script>
+<script defer src="src/pages/marketing.js?v=194"></script>
 <script defer src="src/pages/referrals.js?v=140"></script>
 <script defer src="src/pages/import.js?v=140"></script>
 <script src="src/stripe.js?v=140"></script>
@@ -978,71 +980,72 @@ function toggleSidebar() {
 
 // ── Page Config ──
 var pageConfigs = {
-  dashboard: { title: '🏠 Dashboard', action: null },
-  pipeline: { title: '🚀 Pipeline', action: '+ Add Deal', actionFn: 'PipelinePage.addDeal("new_lead")' },
-  schedule: { title: '📅 Schedule', action: null },
-  clients: { title: '👥 Clients', action: '+ New Client', actionFn: 'ClientsPage.showForm()' },
-  requests: { title: '📥 Requests', action: '+ New Request', actionFn: 'RequestsPage.showForm()' },
-  quotes: { title: '📋 Quotes', action: '+ New Quote', actionFn: 'QuotesPage.showForm()' },
-  jobs: { title: '🔧 Jobs', action: null },
-  invoices: { title: '💰 Invoices', action: '+ New Invoice', actionFn: 'InvoicesPage.showForm()' },
-  insights: { title: '📊 Insights', action: null },
-  reviews: { title: '⭐ Reviews', action: null },
-  team: { title: '👷 Team', action: '+ Add Member', actionFn: 'TeamPage.showForm()' },
-  timesheet: { title: '⏱ Timesheet', action: null },
-  automations: { title: '⚡ Automations', action: null },
-  calculators: { title: '🧮 Calculators', action: null },
-  cardone: { title: '🚀 10X Tools', action: null },
-  estimator: { title: '🌳 Job Estimator', action: null },
-  aitreeid: { title: '🔍 AI Tree ID', action: null },
-  videoquote: { title: '🎥 Video Quote', action: null },
-  treemeasure: { title: '📏 Tree Measure', action: null },
-  crewview: { title: '🚜 Crew View', action: null },
-  employeecenter: { title: '💵 My Pay & Hours', action: null },
-  budget: { title: '💼 Budget Planner', action: null },
-  dispatch: { title: '🗺 Dispatch', action: 'Open Route', actionFn: 'DispatchPage.openRoute()' },
-  clientmap: { title: '📍 Client Map', action: null },
-  photomap: { title: '📷 Photo Map', action: null },
-  messaging: { title: '💬 Messages', action: null },
-  equipment: { title: '🚛 Equipment', action: '+ Add', actionFn: 'EquipmentPage.showForm()' },
-  jobcosting: { title: '📈 Job Costing', action: null },
-  recurring: { title: '🔁 Recurring Jobs', action: null },
-  notifications: { title: '🔔 Activity', action: null },
-  expenses: { title: '💳 Expenses', action: '+ Add Expense', actionFn: 'loadPage("expenses")' },
-  profitloss: { title: '📑 Profit & Loss', action: null },
-  weeklysummary: { title: '🗓 Weekly Summary', action: null },
-  reviewtools: { title: '🌟 Review Tools', action: null },
-  reports: { title: '📤 Reports & Exports', action: null },
-  onlinebooking: { title: '🌐 Online Booking', action: null },
-  formbuilder: { title: '📝 Form Builder', action: null },
-  receptionist: { title: '📞 Receptionist', action: null },
-  campaigns: { title: '📣 Campaigns', action: '+ New Campaign', actionFn: 'loadPage("campaigns")' },
-  referrals: { title: '🤝 Referrals', action: null },
-  import: { title: '📦 Import Data', action: null },
-  backup: { title: '💾 Backup & Restore', action: null },
-  settings: { title: '⚙️ Settings', action: null },
-  crewperformance: { title: '🏆 Crew Performance', action: null },
-  materials: { title: '📦 Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
-  beforeafter: { title: '🖼 Before & After', action: null },
-  modeselector: { title: '🌲 Branch Manager', action: null },
-  taskreminders: { title: '✅ Tasks & Reminders', action: '+ New Task', actionFn: 'TaskReminders._showForm()' },
-  teamchat: { title: '💬 Team Chat', action: null },
-  mediacenter: { title: '📸 Media Center', action: '+ Upload Photos', actionFn: 'MediaCenter.showUploadForm()' },
-  reminders: { title: '🛡 Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' },
-  comms: { title: '📨 Communication Log', action: null },
-  satisfaction: { title: '😊 Client Satisfaction', action: null },
-  emailtemplates: { title: '✉️ Email Templates', action: '+ New Template', actionFn: 'EmailTemplates._showNewTemplateForm()' },
-  customfields: { title: '🔧 Custom Fields', action: null },
-  checklists: { title: '☑️ Checklists', action: null },
-  payments: { title: '💵 Payment History', action: null },
-  ai: { title: '🤖 AI Assistant', action: null },
-  clienthub: { title: '🏡 Client Portal', action: null },
-  visits: { title: '📅 Visits', action: null },
-  workflow: { title: '🔀 Workflow', action: null },
-  propertymap: { title: '🗺 Property Map', action: null },
-  payroll: { title: '💸 Payroll', action: 'Summary', actionFn: 'PayrollPage.showPayrollSummary(PayrollPage._getWeekDates(PayrollPage._weekOffset)[0])' },
-  permissions: { title: '🔐 Permissions & Roles', action: null },
-  search: { title: '🔎 Search', action: null }
+  dashboard: { title: 'Dashboard', action: null },
+  pipeline: { title: 'Pipeline', action: '+ Add Deal', actionFn: 'PipelinePage.addDeal("new_lead")' },
+  schedule: { title: 'Schedule', action: null },
+  clients: { title: 'Clients', action: '+ New Client', actionFn: 'ClientsPage.showForm()' },
+  requests: { title: 'Requests', action: '+ New Request', actionFn: 'RequestsPage.showForm()' },
+  quotes: { title: 'Quotes', action: '+ New Quote', actionFn: 'QuotesPage.showForm()' },
+  jobs: { title: 'Jobs', action: null },
+  invoices: { title: 'Invoices', action: '+ New Invoice', actionFn: 'InvoicesPage.showForm()' },
+  insights: { title: 'Insights', action: null },
+  reviews: { title: 'Reviews', action: null },
+  team: { title: 'Team', action: '+ Add Member', actionFn: 'TeamPage.showForm()' },
+  timesheet: { title: 'Timesheet', action: null },
+  automations: { title: 'Automations', action: null },
+  calculators: { title: 'Calculators', action: null },
+  cardone: { title: 'X Tools', action: null },
+  estimator: { title: 'Job Estimator', action: null },
+  aitreeid: { title: 'AI Tree ID', action: null },
+  videoquote: { title: 'Video Quote', action: null },
+  treemeasure: { title: 'Tree Measure', action: null },
+  crewview: { title: 'Crew View', action: null },
+  employeecenter: { title: 'My Pay & Hours', action: null },
+  budget: { title: 'Budget Planner', action: null },
+  dispatch: { title: 'Dispatch', action: 'Open Route', actionFn: 'DispatchPage.openRoute()' },
+  clientmap: { title: 'Client Map', action: null },
+  photomap: { title: 'Photo Map', action: null },
+  messaging: { title: 'Messages', action: null },
+  equipment: { title: 'Equipment', action: '+ Add', actionFn: 'EquipmentPage.showForm()' },
+  jobcosting: { title: 'Job Costing', action: null },
+  recurring: { title: 'Recurring Jobs', action: null },
+  notifications: { title: 'Activity', action: null },
+  expenses: { title: 'Expenses', action: '+ Add Expense', actionFn: 'loadPage("expenses")' },
+  profitloss: { title: 'Profit & Loss', action: null },
+  weeklysummary: { title: 'Weekly Summary', action: null },
+  reviewtools: { title: 'Review Tools', action: null },
+  reports: { title: 'Reports & Exports', action: null },
+  onlinebooking: { title: 'Online Booking', action: null },
+  formbuilder: { title: 'Form Builder', action: null },
+  receptionist: { title: 'Receptionist', action: null },
+  campaigns: { title: 'Campaigns', action: '+ New Campaign', actionFn: 'loadPage("campaigns")' },
+  marketing: { title: 'Marketing Dashboard', action: null },
+  referrals: { title: 'Referrals', action: null },
+  import: { title: 'Import Data', action: null },
+  backup: { title: 'Backup & Restore', action: null },
+  settings: { title: 'Settings', action: null },
+  crewperformance: { title: 'Crew Performance', action: null },
+  materials: { title: 'Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
+  beforeafter: { title: 'Before & After', action: null },
+  modeselector: { title: 'Branch Manager', action: null },
+  taskreminders: { title: 'Tasks & Reminders', action: '+ New Task', actionFn: 'TaskReminders._showForm()' },
+  teamchat: { title: 'Team Chat', action: null },
+  mediacenter: { title: 'Media Center', action: '+ Upload Photos', actionFn: 'MediaCenter.showUploadForm()' },
+  reminders: { title: 'Compliance & Reminders', action: '+ Add Reminder', actionFn: 'Reminders.showForm("other")' },
+  comms: { title: 'Communication Log', action: null },
+  satisfaction: { title: 'Client Satisfaction', action: null },
+  emailtemplates: { title: 'Email Templates', action: '+ New Template', actionFn: 'EmailTemplates._showNewTemplateForm()' },
+  customfields: { title: 'Custom Fields', action: null },
+  checklists: { title: 'Checklists', action: null },
+  payments: { title: 'Payment History', action: null },
+  ai: { title: 'AI Assistant', action: null },
+  clienthub: { title: 'Client Portal', action: null },
+  visits: { title: 'Visits', action: null },
+  workflow: { title: 'Workflow', action: null },
+  propertymap: { title: 'Property Map', action: null },
+  payroll: { title: 'Payroll', action: 'Summary', actionFn: 'PayrollPage.showPayrollSummary(PayrollPage._getWeekDates(PayrollPage._weekOffset)[0])' },
+  permissions: { title: 'Permissions & Roles', action: null },
+  search: { title: 'Search', action: null }
 };
 
 var pageRenderers = {
@@ -1080,6 +1083,7 @@ var pageRenderers = {
   formbuilder: function() { return FormBuilderPage.render(); },
   receptionist: function() { return Receptionist.render(); },
   campaigns: function() { return Campaigns.render(); },
+  marketing: function() { return MarketingPage.render(); },
   referrals: function() { return Referrals.render(); },
   import: function() { return ImportPage.render(); },
   backup: function() { return BackupPage.render(); },

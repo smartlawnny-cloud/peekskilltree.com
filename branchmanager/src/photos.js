@@ -564,6 +564,59 @@ var Photos = {
     if (typeof loadPage === 'function') loadPage('requests');
   },
 
+  // ============ PROJECT DIARY (chronological grouped by day) ============
+  renderDiary: function(recordType, recordId) {
+    var photos = Photos.getPhotos(recordType, recordId);
+    if (!photos.length) return '';
+
+    // Group by day (YYYY-MM-DD)
+    var groups = {};
+    photos.forEach(function(p, i) {
+      var key = p.date ? p.date.substring(0, 10) : 'unknown';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({ p: p, idx: i });
+    });
+    var days = Object.keys(groups).sort();
+    if (days.length < 2) return ''; // diary only useful with multiple days
+
+    var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+      + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin:0;">📖 Project Diary</h4>'
+      + '<span style="font-size:11px;color:var(--text-light);">' + days.length + ' days · ' + photos.length + ' photos</span>'
+      + '</div>';
+
+    days.forEach(function(day, di) {
+      var entries = groups[day];
+      var dateLabel = day === 'unknown' ? 'Undated' : new Date(day + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      var dayTags = {};
+      entries.forEach(function(e) { Photos._getTags(e.p).forEach(function(t) { dayTags[t] = (dayTags[t] || 0) + 1; }); });
+
+      html += '<div style="position:relative;padding-left:22px;padding-bottom:' + (di === days.length - 1 ? '0' : '16px') + ';' + (di === days.length - 1 ? '' : 'border-left:2px solid var(--border);margin-left:5px;') + '">'
+        + '<div style="position:absolute;left:-6px;top:2px;width:12px;height:12px;border-radius:50%;background:#2e7d32;border:3px solid var(--white);"></div>'
+        + '<div style="margin-bottom:6px;font-size:13px;font-weight:700;color:var(--text);">' + dateLabel + ' <span style="font-weight:500;color:var(--text-light);font-size:11px;">· ' + entries.length + ' shot' + (entries.length === 1 ? '' : 's') + '</span></div>';
+
+      // Tag chips for the day
+      if (Object.keys(dayTags).length) {
+        html += '<div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;">';
+        Object.keys(dayTags).forEach(function(t) {
+          html += '<span style="background:#e8f5e9;color:#1a3c12;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:600;">' + t + '</span>';
+        });
+        html += '</div>';
+      }
+
+      // Thumbnails
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:4px;">';
+      entries.forEach(function(e) {
+        html += '<div onclick="Photos.viewFull(\'' + recordType + '\', \'' + recordId + '\', ' + e.idx + ')" '
+          + 'style="aspect-ratio:1;background-image:url(\'' + e.p.url + '\');background-size:cover;background-position:center;border-radius:6px;cursor:pointer;"></div>';
+      });
+      html += '</div></div>';
+    });
+
+    html += '</div>';
+    return html;
+  },
+
   // ============ BEFORE/AFTER SLIDER SHARE ============
   shareSlider: function(recordType, recordId) {
     var url = location.origin + location.pathname.replace(/[^/]*$/, '') + 'share-slider.html?type=' + encodeURIComponent(recordType) + '&id=' + encodeURIComponent(recordId);

@@ -896,7 +896,12 @@ var JobsPage = {
       html += BeforeAfter.renderForJob(id);
     }
 
-      // Photos
+      // Project Diary (chronological multi-day timeline)
+    if (typeof Photos !== 'undefined' && Photos.renderDiary) {
+      html += Photos.renderDiary('job', id);
+    }
+
+      // Photos gallery
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Photos</h4>';
     if (typeof Photos !== 'undefined') {

@@ -116,7 +116,7 @@ var AITreeID = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         apiKey: aiKey,
-        model: 'claude-sonnet-4-5',
+        model: 'claude-haiku-4-5',
         max_tokens: 500,
         messages: [{
           role: 'user',

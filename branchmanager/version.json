@@ -1,5 +1,5 @@
 {
-  "version": 254,
+  "version": 255,
   "released": "2026-04-19",
-  "notes": "Tree ID: Claude is now primary auto-ID (richer data — DBH, condition, price). PlantNet stays as optional 2nd Opinion button on each row."
+  "notes": "Tree ID models: Sonnet 4.5 → Haiku 4.5 (~10x cheaper, fine for species). AI chat + video quote stay on Sonnet for writing quality."
 }

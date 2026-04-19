@@ -1,5 +1,5 @@
 {
-  "version": 269,
+  "version": 270,
   "released": "2026-04-19",
-  "notes": "Quote autosave + restore: loud diagnostic toasts + console logs to pinpoint where line items are getting lost. Toast on Restore shows saved item count."
+  "notes": "Quote autosave: fire _autoSave() immediately after addItem, _addPhotoFirst, _addMorePhotos — button-driven actions don't trigger form input events so the 2s+15s saves would miss them"
 }

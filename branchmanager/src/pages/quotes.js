@@ -1074,6 +1074,7 @@ var QuotesPage = {
         }).join('') + (all.length > 1 ? '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;">' + all.length + ' photos</div>' : '');
         if (body) body.insertBefore(grid, body.firstChild);
         UI.toast('📷 ' + newUrls.length + ' more photo(s) added — tap 🤖 Run AI to analyze');
+        QuotesPage._autoSave();
       });
     };
     input.click();
@@ -1347,6 +1348,8 @@ var QuotesPage = {
       if (sel) setTimeout(function(){ sel.focus(); }, 50);
       newWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+    // Immediately persist — button-driven row adds don't fire form input events
+    QuotesPage._autoSave();
   },
 
   _toggleDeposit: function(checked) {
@@ -1948,6 +1951,8 @@ var QuotesPage = {
         } else {
           UI.toast('Photo added — AI off, fill details manually or tap 🤖 Run AI');
         }
+        // Persist the row with its photos immediately so restore doesn't miss them
+        QuotesPage._autoSave();
       });
     };
     input.click();

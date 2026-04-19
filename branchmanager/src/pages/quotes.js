@@ -553,11 +553,16 @@ var QuotesPage = {
       lineItems: []
     };
     document.querySelectorAll('.quote-item-row').forEach(function(row) {
+      var photos = [];
+      if (row.dataset.photos) { try { photos = JSON.parse(row.dataset.photos); } catch(e){} }
+      else if (row.dataset.photo) { photos = [row.dataset.photo]; }
       data.lineItems.push({
         service: (row.querySelector('.q-item-service') || {}).value || '',
         description: (row.querySelector('.q-item-desc') || {}).value || '',
         qty: (row.querySelector('.q-item-qty') || {}).value || '1',
-        rate: (row.querySelector('.q-item-rate') || {}).value || ''
+        rate: (row.querySelector('.q-item-rate') || {}).value || '',
+        photos: photos,
+        photo: photos[0] || '' // back-compat
       });
     });
     try {
@@ -621,20 +626,166 @@ var QuotesPage = {
   },
 
   _itemRow: function(index, item, services) {
-    // datalist is injected once at the form level (_dataListOnce) so we don't duplicate it per row
     QuotesPage._dataListOnce(services);
     var lineTotal = ((item.qty || 1) * (item.rate || 0));
+    var photos = Array.isArray(item.photos) ? item.photos : (item.photo ? [item.photo] : []);
+    var photoStr = photos.length ? ' data-photos=\'' + JSON.stringify(photos).replace(/'/g,'&#39;') + '\'' : '';
+    var hasContent = !!(item.service || item.description || item.rate);
 
-    return '<div class="quote-item-row" style="display:grid;grid-template-columns:2fr 2fr 60px 90px 80px 36px;gap:8px;align-items:end;margin-bottom:8px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label>'
-      +   '<input class="q-item-service" list="q-svc-datalist" value="' + UI.esc(item.service || '') + '" placeholder="Type or pick…" onchange="QuotesPage._onServiceChange(this)" style="font-size:13px;">'
+    // Photo grid (shown in both collapsed + expanded modes)
+    var photoHtml = '';
+    if (photos.length) {
+      photoHtml = '<div class="q-photo-grid" style="display:grid;grid-template-columns:repeat(' + Math.min(photos.length, 3) + ',1fr);gap:4px;margin-bottom:10px;">';
+      photos.forEach(function(p, pi) {
+        photoHtml += '<img src="' + p + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(photos).replace(/"/g, '&quot;') + ',' + pi + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
+      });
+      if (photos.length > 3) photoHtml += '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;">+' + (photos.length - 3) + ' more — tap any photo to view</div>';
+      photoHtml += '</div>';
+    }
+
+    // Summary strip (always visible — compact header)
+    var summaryThumb = photos.length ? '<img src="' + photos[0] + '" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;">' : '<div style="width:44px;height:44px;background:var(--bg);border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:18px;flex-shrink:0;">🌳</div>';
+    var summary = '<div class="q-item-header" onclick="QuotesPage._toggleItem(this)" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:0;">'
+      + summaryThumb
+      + '<div style="flex:1;min-width:0;">'
+      +   '<div class="q-item-summary-title" style="font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (hasContent ? UI.esc((item.service || 'Untitled') + (item.description ? ' · ' + item.description : '')) : '<span style="color:var(--text-light);font-weight:500;">New tree — fill details below</span>') + '</div>'
+      +   '<div class="q-item-summary-meta" style="font-size:12px;color:var(--text-light);margin-top:2px;">' + (item.qty || 1) + ' × ' + UI.money(item.rate || 0) + '</div>'
       + '</div>'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Description</label><input class="q-item-desc" value="' + UI.esc(item.description || '') + '" placeholder="Work details..." style="font-size:13px;"></div>'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Qty</label><input type="number" class="q-item-qty" value="' + (item.qty || 1) + '" min="1" oninput="QuotesPage.calcTotal()" style="font-size:13px;text-align:center;"></div>'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Rate ($)</label><input type="number" class="q-item-rate" value="' + (item.rate || '') + '" step="0.01" placeholder="0.00" oninput="QuotesPage.calcTotal()" style="font-size:13px;"></div>'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Amount</label><div class="q-item-amount" style="font-size:14px;font-weight:700;color:var(--green-dark);padding:8px 0;">' + UI.money(lineTotal) + '</div></div>'
-      + '<button type="button" style="background:none;border:none;font-size:20px;color:var(--red);cursor:pointer;padding-bottom:8px;opacity:.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" onclick="this.parentElement.remove();QuotesPage.calcTotal();">✕</button>'
+      + '<div class="q-item-summary-total" style="font-size:16px;font-weight:800;color:var(--green-dark);flex-shrink:0;">' + UI.money(lineTotal) + '</div>'
+      + '<div class="q-item-chevron" style="font-size:18px;color:var(--text-light);transition:transform .2s;">▾</div>'
       + '</div>';
+
+    // Pricing formula hint — shows under rate if the service has a known formula
+    // Computed client-side from description (DBH auto-extraction) when possible
+    var formulaHint = '<div class="q-item-formula" style="font-size:11px;color:var(--text-light);margin-top:4px;"></div>';
+
+    // Expanded form body (hidden when collapsed)
+    var body = '<div class="q-item-body" style="margin-top:12px;">'
+      + photoHtml
+      + '<div class="quote-item-row" style="display:grid;grid-template-columns:2fr 2fr 60px 90px 80px 36px;gap:8px;align-items:end;"' + photoStr + '>'
+      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label>'
+      +     '<input class="q-item-service" list="q-svc-datalist" value="' + UI.esc(item.service || '') + '" placeholder="Type or pick…" onchange="QuotesPage._onServiceChange(this)" oninput="QuotesPage._syncSummary(this)" style="font-size:13px;">'
+      +   '</div>'
+      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Description</label><input class="q-item-desc" value="' + UI.esc(item.description || '') + '" placeholder="Work details..." oninput="QuotesPage._syncSummary(this);QuotesPage._updateFormula(this)" style="font-size:13px;"></div>'
+      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Qty</label><input type="number" class="q-item-qty" value="' + (item.qty || 1) + '" min="1" oninput="QuotesPage.calcTotal();QuotesPage._syncSummary(this)" style="font-size:13px;text-align:center;"></div>'
+      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Rate ($)</label><input type="number" class="q-item-rate" value="' + (item.rate || '') + '" step="0.01" placeholder="0.00" oninput="QuotesPage.calcTotal();QuotesPage._syncSummary(this)" style="font-size:13px;">'
+      +     formulaHint + '</div>'
+      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Amount</label><div class="q-item-amount" style="font-size:14px;font-weight:700;color:var(--green-dark);padding:8px 0;">' + UI.money(lineTotal) + '</div></div>'
+      +   '<button type="button" style="background:none;border:none;font-size:20px;color:var(--red);cursor:pointer;padding-bottom:8px;opacity:.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" onclick="this.closest(\'.q-item-wrap\').remove();QuotesPage.calcTotal();">✕</button>'
+      + '</div>'
+      + '<div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">'
+      +   '<button type="button" onclick="QuotesPage._openMeasureModal(this)" style="padding:8px 14px;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📏 Measure DBH</button>'
+      +   '<button type="button" onclick="QuotesPage._collapseRow(this)" style="padding:8px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✓ Done with this tree</button>'
+      + '</div>'
+      + '</div>';
+
+    return '<div class="q-item-wrap" data-index="' + index + '" style="margin-bottom:10px;padding:12px 14px;background:var(--bg);border-radius:10px;border:1px solid var(--border);">'
+      + summary
+      + body
+      + '</div>';
+  },
+
+  // Toggle expand/collapse on a line item when user taps the summary header
+  _toggleItem: function(headerEl) {
+    var wrap = headerEl.closest('.q-item-wrap');
+    var body = wrap.querySelector('.q-item-body');
+    var chev = wrap.querySelector('.q-item-chevron');
+    if (!body) return;
+    var collapsed = body.style.display === 'none';
+    body.style.display = collapsed ? 'block' : 'none';
+    if (chev) chev.style.transform = collapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+  },
+
+  // Programmatically collapse the current row (called by "Done with this tree" button)
+  _collapseRow: function(btn) {
+    var wrap = btn.closest('.q-item-wrap');
+    var body = wrap.querySelector('.q-item-body');
+    var chev = wrap.querySelector('.q-item-chevron');
+    if (body) body.style.display = 'none';
+    if (chev) chev.style.transform = 'rotate(-90deg)';
+    // Flash confirmation
+    wrap.style.transition = 'background .25s'; wrap.style.background = '#dcfce7';
+    setTimeout(function() { wrap.style.background = 'var(--bg)'; }, 400);
+  },
+
+  // Sync the compact summary text when inputs change (live feedback)
+  _syncSummary: function(input) {
+    var wrap = input.closest('.q-item-wrap'); if (!wrap) return;
+    var svc = (wrap.querySelector('.q-item-service') || {}).value || '';
+    var desc = (wrap.querySelector('.q-item-desc') || {}).value || '';
+    var qty = parseFloat((wrap.querySelector('.q-item-qty') || {}).value) || 1;
+    var rate = parseFloat((wrap.querySelector('.q-item-rate') || {}).value) || 0;
+    var title = wrap.querySelector('.q-item-summary-title');
+    var meta = wrap.querySelector('.q-item-summary-meta');
+    var total = wrap.querySelector('.q-item-summary-total');
+    if (title) title.textContent = (svc || 'Untitled') + (desc ? ' · ' + desc : '');
+    if (meta) meta.textContent = qty + ' × ' + UI.money(rate);
+    if (total) total.textContent = UI.money(qty * rate);
+  },
+
+  // Show a formula hint under the rate input when description mentions DBH inches
+  _updateFormula: function(descInput) {
+    var wrap = descInput.closest('.q-item-wrap'); if (!wrap) return;
+    var hint = wrap.querySelector('.q-item-formula');
+    var svc = (wrap.querySelector('.q-item-service') || {}).value || '';
+    var desc = descInput.value || '';
+    var dbhMatch = desc.match(/(\d+(?:\.\d+)?)\s*["']?\s*DBH/i) || desc.match(/(\d+(?:\.\d+)?)\s*["']\s*/);
+    if (!hint) return;
+    if (dbhMatch && /removal/i.test(svc)) {
+      var dbh = parseFloat(dbhMatch[1]);
+      var suggested = Math.round(dbh * 100 / 50) * 50;
+      hint.innerHTML = '💡 ' + dbh + '" × $100 = <strong>$' + suggested + '</strong> — <a onclick="event.preventDefault();var r=this.closest(\'.quote-item-row\').querySelector(\'.q-item-rate\');r.value=' + suggested + ';QuotesPage.calcTotal();QuotesPage._syncSummary(r);" style="color:var(--accent);cursor:pointer;text-decoration:underline;" href="#">use</a>';
+    } else {
+      hint.innerHTML = '';
+    }
+  },
+
+  // Fullscreen photo lightbox with swipe between images
+  _openLightbox: function(photos, startIdx) {
+    var idx = startIdx || 0;
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;touch-action:pan-y;';
+    overlay.innerHTML = '<img id="lb-img" src="' + photos[idx] + '" style="max-width:96vw;max-height:90vh;object-fit:contain;border-radius:8px;">'
+      + '<div style="position:absolute;top:20px;right:20px;font-size:28px;color:#fff;cursor:pointer;" onclick="this.parentElement.remove()">×</div>'
+      + (photos.length > 1 ? '<div id="lb-count" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;background:rgba(0,0,0,.5);padding:6px 14px;border-radius:12px;">' + (idx+1) + ' / ' + photos.length + '</div>' : '');
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    // Swipe left/right
+    var startX = 0;
+    overlay.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; }, { passive: true });
+    overlay.addEventListener('touchend', function(e) {
+      var dx = (e.changedTouches[0].clientX - startX);
+      if (Math.abs(dx) < 40) return;
+      if (dx < 0 && idx < photos.length - 1) idx++;
+      else if (dx > 0 && idx > 0) idx--;
+      document.getElementById('lb-img').src = photos[idx];
+      var c = document.getElementById('lb-count'); if (c) c.textContent = (idx+1) + ' / ' + photos.length;
+    });
+    document.body.appendChild(overlay);
+  },
+
+  // Tree-measure modal: opens TreeMeasure in an iframe-less inline container + writes back to current row's DBH
+  _openMeasureModal: function(btn) {
+    var wrap = btn.closest('.q-item-wrap');
+    if (!wrap) return;
+    // Simple prompt fallback — TreeMeasure page is a full page; embedding it requires refactor
+    var current = (wrap.querySelector('.q-item-desc') || {}).value || '';
+    var dbh = prompt('DBH (diameter at breast height, inches):', (current.match(/(\d+)\s*["\']?\s*DBH/i) || [,''])[1]);
+    if (!dbh || isNaN(parseFloat(dbh))) return;
+    var descEl = wrap.querySelector('.q-item-desc');
+    var rateEl = wrap.querySelector('.q-item-rate');
+    var svc = (wrap.querySelector('.q-item-service') || {}).value || '';
+    if (descEl) {
+      if (/DBH/i.test(descEl.value)) descEl.value = descEl.value.replace(/\d+\s*["']?\s*DBH/i, dbh + '" DBH');
+      else descEl.value = dbh + '" DBH' + (descEl.value ? ' — ' + descEl.value : '');
+    }
+    // Auto-suggest rate for removal
+    if (/removal/i.test(svc) && rateEl && !rateEl.value) {
+      rateEl.value = Math.round(parseFloat(dbh) * 100 / 50) * 50;
+    }
+    QuotesPage.calcTotal();
+    QuotesPage._syncSummary(wrap.querySelector('.q-item-desc'));
+    QuotesPage._updateFormula(wrap.querySelector('.q-item-desc'));
+    UI.toast('DBH set to ' + dbh + '"');
   },
 
   // Service-specific measurement prompts → auto-price
@@ -681,12 +832,19 @@ var QuotesPage = {
     var container = document.getElementById('q-items');
     var index = container.children.length;
     var services = DB.services.getAll();
+    // Auto-collapse any previously-added trees so user can focus on the new one
+    container.querySelectorAll('.q-item-wrap .q-item-body').forEach(function(b) { b.style.display = 'none'; });
+    container.querySelectorAll('.q-item-wrap .q-item-chevron').forEach(function(c) { c.style.transform = 'rotate(-90deg)'; });
     var div = document.createElement('div');
     div.innerHTML = QuotesPage._itemRow(index, {}, services);
     container.appendChild(div.firstChild);
-    // Focus the new service dropdown
-    var newRow = container.lastElementChild;
-    if (newRow) { var sel = newRow.querySelector('.q-item-service'); if (sel) sel.focus(); }
+    // Focus the service input on the new (expanded) item
+    var newWrap = container.lastElementChild;
+    if (newWrap) {
+      var sel = newWrap.querySelector('.q-item-service');
+      if (sel) setTimeout(function(){ sel.focus(); }, 50);
+      newWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   },
 
   _toggleDeposit: function(checked) {
@@ -801,7 +959,10 @@ var QuotesPage = {
       var qty = parseFloat(row.querySelector('.q-item-qty').value) || 0;
       var rate = parseFloat(row.querySelector('.q-item-rate').value) || 0;
       if (service || desc || rate) {
-        items.push({ service: service, description: desc, qty: qty, rate: rate, amount: qty * rate });
+        var photos = [];
+        if (row.dataset.photos) { try { photos = JSON.parse(row.dataset.photos); } catch(e){} }
+        else if (row.dataset.photo) { photos = [row.dataset.photo]; }
+        items.push({ service: service, description: desc, qty: qty, rate: rate, amount: qty * rate, photos: photos, photo: photos[0] || '' });
         subtotal += qty * rate;
       }
     });
@@ -1239,20 +1400,34 @@ var QuotesPage = {
           r.readAsDataURL(f);
         });
       })).then(function(dataUrls) {
-        var rows = document.querySelectorAll('.quote-item-row');
-        var lastRow = rows[rows.length - 1];
-        if (lastRow) {
+        var wraps = document.querySelectorAll('.q-item-wrap');
+        var lastWrap = wraps[wraps.length - 1];
+        var lastRow = lastWrap ? lastWrap.querySelector('.quote-item-row') : null;
+        if (lastWrap && lastRow) {
+          // Store photos on both the row (for save()) and the wrap (for display persistence)
           lastRow.dataset.photos = JSON.stringify(dataUrls);
-          lastRow.dataset.photo = dataUrls[0]; // back-compat: first photo as primary
-          // Render a photo grid above the row content
-          var thumb = document.createElement('div');
-          thumb.style.cssText = 'margin-bottom:8px;display:grid;grid-template-columns:repeat(' + Math.min(dataUrls.length, 3) + ',1fr);gap:4px;';
-          thumb.innerHTML = dataUrls.map(function(u) {
-            return '<img src="' + u + '" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">';
-          }).join('') + (dataUrls.length > 1 ? '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;margin-top:2px;">' + dataUrls.length + ' photos — AI will analyze all</div>' : '');
-          lastRow.insertBefore(thumb, lastRow.firstChild);
+          lastRow.dataset.photo = dataUrls[0];
+          // Replace any existing photo grid, then prepend a fresh one inside q-item-body
+          var body = lastWrap.querySelector('.q-item-body');
+          var existingGrid = body ? body.querySelector('.q-photo-grid') : null;
+          if (existingGrid) existingGrid.remove();
+          var grid = document.createElement('div');
+          grid.className = 'q-photo-grid';
+          grid.style.cssText = 'display:grid;grid-template-columns:repeat(' + Math.min(dataUrls.length, 3) + ',1fr);gap:4px;margin-bottom:10px;';
+          grid.innerHTML = dataUrls.map(function(u, pi) {
+            return '<img src="' + u + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(dataUrls).replace(/"/g,'&quot;') + ',' + pi + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
+          }).join('') + (dataUrls.length > 1 ? '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;margin-top:2px;">' + dataUrls.length + ' photos — AI analyzing all</div>' : '');
+          body.insertBefore(grid, body.firstChild);
+          // Update header thumb
+          var headerThumb = lastWrap.querySelector('.q-item-header img, .q-item-header div[style*="dashed"]');
+          if (headerThumb) {
+            var newThumb = document.createElement('img');
+            newThumb.src = dataUrls[0];
+            newThumb.style.cssText = 'width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;';
+            headerThumb.replaceWith(newThumb);
+          }
         }
-        QuotesPage._identifyTree(dataUrls, rows.length - 1);
+        QuotesPage._identifyTree(dataUrls, document.querySelectorAll('.quote-item-row').length - 1);
       });
     };
     input.click();

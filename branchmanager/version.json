@@ -1,5 +1,5 @@
 {
-  "version": 257,
+  "version": 258,
   "released": "2026-04-19",
-  "notes": "Jobber photo migration: fetch ALL quotes (not filtered by tenant) to catch legacy imports with NULL tenant_id. Loud diagnostics so we never silently no-op again."
+  "notes": "Restore bug + XSS fix — line items restore deferred 250ms so q-items container is ready; client error UI no longer renders stack as HTML"
 }

@@ -723,28 +723,46 @@ var QuotesPage = {
       var notes = document.getElementById('q-notes');
       if (notes && data.notes) notes.value = data.notes;
 
-      // Line items — populate even if hidden, they render once section unhides
+      // Line items — defer slightly so _selectClient's DOM reveal finishes first.
+      // Without this the #q-items container was sometimes not yet visible/queryable
+      // on slow devices, and the restore silently no-op'd.
       if (data.lineItems && data.lineItems.length > 0) {
-        // Clear existing items container first
-        var container = document.getElementById('q-items');
-        if (container) container.innerHTML = '';
-        var services = (typeof DB !== 'undefined' && DB.services) ? DB.services.getAll() : [];
-        data.lineItems.forEach(function(li, i) {
-          // Render via _itemRow so species + location + photos all come back
-          var tmp = document.createElement('div');
-          tmp.innerHTML = QuotesPage._itemRow(i, li, services, /*expanded=*/ i === data.lineItems.length - 1);
-          var newWrap = tmp.firstChild;
-          if (newWrap && container) {
-            container.appendChild(newWrap);
-            // Rehydrate photos onto the row's dataset so they persist through save
-            var row = newWrap.querySelector('.quote-item-row');
-            if (row) {
-              if (li.photos && li.photos.length) row.dataset.photos = JSON.stringify(li.photos);
-              if (li.photo) row.dataset.photo = li.photo;
-            }
+        setTimeout(function() {
+          var container = document.getElementById('q-items');
+          if (!container) {
+            console.warn('[restore] #q-items container missing — items lost');
+            UI.toast('Could not find line items container', 'error');
+            return;
           }
-        });
-        QuotesPage.calcTotal();
+          container.innerHTML = '';
+          var services = (typeof DB !== 'undefined' && DB.services) ? DB.services.getAll() : [];
+          var appended = 0;
+          data.lineItems.forEach(function(li, i) {
+            var tmp = document.createElement('div');
+            tmp.innerHTML = QuotesPage._itemRow(i, li, services, /*expanded=*/ i === data.lineItems.length - 1);
+            // Find the wrap element (skip any whitespace text nodes)
+            var newWrap = null;
+            for (var c = 0; c < tmp.childNodes.length; c++) {
+              if (tmp.childNodes[c].nodeType === 1) { newWrap = tmp.childNodes[c]; break; }
+            }
+            if (newWrap) {
+              container.appendChild(newWrap);
+              appended++;
+              var row = newWrap.querySelector('.quote-item-row');
+              if (row) {
+                if (li.photos && li.photos.length) row.dataset.photos = JSON.stringify(li.photos);
+                if (li.photo) row.dataset.photo = li.photo;
+              }
+            }
+          });
+          QuotesPage.calcTotal();
+          console.log('[restore] appended ' + appended + ' / ' + data.lineItems.length + ' line items');
+          if (appended < data.lineItems.length) {
+            UI.toast('Only ' + appended + ' of ' + data.lineItems.length + ' line items restored', 'error');
+          }
+        }, 250);
+      } else {
+        console.log('[restore] no line items in saved data:', data.lineItems);
       }
 
       // Remove recovery banner — try class first, then text fallback

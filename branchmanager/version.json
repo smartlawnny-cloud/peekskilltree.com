@@ -1,5 +1,5 @@
 {
-  "version": 243,
+  "version": 244,
   "released": "2026-04-19",
-  "notes": "PWA topbar root fix — drop viewport-fit=cover so iOS reserves the status-bar area at the OS level. App now starts cleanly below status bar without any env(safe-area) math."
+  "notes": "PWA topbar — defensive 72px floor padding handles both cached-install (cover baked in) and fresh-install modes"
 }

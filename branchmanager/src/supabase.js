@@ -276,7 +276,9 @@ var SupabaseDB = {
           local[camel] = remote[k];
         });
         localReqs.unshift(local);
-        UI.toast('🆕 New request from ' + (remote.client_name || 'website') + '!', 'success');
+        var _cn = (remote.client_name || '').trim();
+        if (_cn.toLowerCase() === 'unknown') _cn = '';
+        UI.toast('🆕 New request from ' + (_cn || remote.phone || remote.email || 'website') + '!', 'success');
       });
       localStorage.setItem('bm-requests', JSON.stringify(localReqs));
 

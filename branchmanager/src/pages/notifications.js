@@ -143,7 +143,10 @@ var NotificationsPage = {
     requests.forEach(function(r) {
       allCount++;
       if (r.createdAt && r.createdAt < ninetyDaysAgo) return;
-      var reqWho = r.clientName || r.phone || r.email || 'New Contact';
+      // Treat literal string 'Unknown' as empty (legacy Jobber-imported requests stored that)
+      var cn = (r.clientName || '').trim();
+      if (cn.toLowerCase() === 'unknown') cn = '';
+      var reqWho = cn || r.phone || r.email || 'New Contact';
       feed.push({ type: 'request', refId: r.id, title: 'New request from ' + reqWho, description: r.property || r.notes || '', date: r.createdAt, unread: r.status === 'new' });
     });
 

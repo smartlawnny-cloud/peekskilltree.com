@@ -489,12 +489,35 @@ var SettingsPage = {
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
-    // Photo Storage info
-    html += '<div style="background:#f0f7ff;border-radius:12px;padding:14px 18px;border:1px solid #b3d4f5;margin-bottom:16px;display:flex;align-items:center;gap:12px;">'
+    // Photo Storage info + migration tool
+    var localPhotoStats = (function() {
+      var total = 0, base64 = 0;
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k || k.indexOf('bm-photos-') !== 0) continue;
+        try {
+          var arr = JSON.parse(localStorage.getItem(k)) || [];
+          arr.forEach(function(p) {
+            total++;
+            if (p.url && p.url.indexOf('data:') === 0) base64++;
+          });
+        } catch(e) {}
+      }
+      return { total: total, base64: base64 };
+    })();
+    html += '<div style="background:#f0f7ff;border-radius:12px;padding:14px 18px;border:1px solid #b3d4f5;margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">'
       + '<span style="font-size:22px;">📸</span>'
       + '<div style="font-size:13px;color:#1a5276;">'
-      + '<strong>Photo Storage</strong> — Uses Supabase Storage bucket <code style="background:#d6eaf8;padding:1px 5px;border-radius:4px;">job-photos</code>. Run the RLS SQL below (Database Connection section) to create the bucket and enable photo uploads on jobs.'
-      + '</div></div>';
+      + '<strong>Photo Storage</strong> — Bucket <code style="background:#d6eaf8;padding:1px 5px;border-radius:4px;">job-photos</code>. New photos sync across devices automatically.'
+      + '</div></div>'
+      + '<div style="font-size:12px;color:#1a5276;margin-bottom:10px;">'
+      + 'Local photos: <strong>' + localPhotoStats.total + '</strong> total, <strong>' + localPhotoStats.base64 + '</strong> still base64 (device-only).'
+      + '</div>'
+      + '<button class="btn btn-primary" onclick="SettingsPage._migratePhotos()" ' + (localPhotoStats.base64 === 0 ? 'disabled' : '') + ' style="font-size:13px;">'
+      + (localPhotoStats.base64 === 0 ? '✓ All photos synced' : '⬆ Upload ' + localPhotoStats.base64 + ' local photos to cloud')
+      + '</button>'
+      + '</div>';
 
     // Stripe / Dialpad / SendJim cards removed from Database & Storage —
     // already live in the 🔌 API Keys & Integrations collapsible at top of Settings.
@@ -1215,6 +1238,54 @@ var SettingsPage = {
     UI.toast('Nav style: ' + (mode === 'bottom' ? 'Bottom tab bar' : 'Top sidebar') + ' ✓');
     // Reload so the layout recalculates (sidebar vs bottom-nav).
     setTimeout(function() { location.reload(); }, 400);
+  },
+
+  _migratePhotos: async function() {
+    if (!SupabaseDB || !SupabaseDB.ready) { UI.toast('Supabase not connected', 'error'); return; }
+    if (!confirm('Upload all device-only photos to the cloud?\n\nThis may take a minute for large libraries.')) return;
+    var tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+    var uploaded = 0, failed = 0, scanned = 0;
+    UI.toast('Migrating photos...');
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('bm-photos-') === 0) keys.push(k);
+    }
+    for (var ki = 0; ki < keys.length; ki++) {
+      var key = keys[ki];
+      var parts = key.replace('bm-photos-', '').split('-');
+      // record_type is first segment, record_id is the rest joined back
+      var recordType = parts.shift();
+      var recordId = parts.join('-');
+      var arr = [];
+      try { arr = JSON.parse(localStorage.getItem(key)) || []; } catch(e) { continue; }
+      var changed = false;
+      for (var pi = 0; pi < arr.length; pi++) {
+        var p = arr[pi];
+        scanned++;
+        if (!p.url || p.url.indexOf('data:') !== 0) continue; // already a URL
+        try {
+          var blob = await (await fetch(p.url)).blob();
+          var ext = (blob.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+          var path = recordType + '/' + recordId + '/' + Date.now() + '_' + pi + '.' + ext;
+          var up = await SupabaseDB.client.storage.from('job-photos').upload(path, blob, { contentType: blob.type });
+          if (up.error) throw up.error;
+          var pub = SupabaseDB.client.storage.from('job-photos').getPublicUrl(path);
+          var meta = { record_type: recordType, record_id: recordId, url: pub.data.publicUrl, storage_path: path, name: p.name || 'photo.' + ext, label: p.label || '', taken_at: p.date || new Date().toISOString() };
+          if (tid) meta.tenant_id = tid;
+          var ins = await SupabaseDB.client.from('photos').insert(meta).select().single();
+          arr[pi] = { id: (ins.data && ins.data.id) || null, url: pub.data.publicUrl, storage_path: path, name: meta.name, label: meta.label, date: meta.taken_at };
+          changed = true;
+          uploaded++;
+        } catch (e) {
+          console.warn('Migrate photo failed:', e);
+          failed++;
+        }
+      }
+      if (changed) localStorage.setItem(key, JSON.stringify(arr));
+    }
+    UI.toast('Migrated ' + uploaded + ' / ' + scanned + ' photos' + (failed ? ' (' + failed + ' failed)' : ' ✓'));
+    loadPage('settings');
   },
 
   _removeKey: function(storageKey, label) {

@@ -1,5 +1,5 @@
 {
-  "version": 229,
+  "version": 230,
   "released": "2026-04-19",
-  "notes": "Photos now sync across devices via Supabase Storage + photos metadata table. Upload writes to job-photos bucket, metadata row carries tenant_id. App boot pulls all tenant photos into local cache. Label/delete also sync."
+  "notes": "One-time photo migration tool in Settings → Database & Storage. Counts device-only base64 photos and uploads them to Supabase Storage + photos metadata table so they sync across devices."
 }

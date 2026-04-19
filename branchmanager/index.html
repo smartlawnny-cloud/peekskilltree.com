@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 244; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 245; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -58,7 +58,7 @@
   } catch(e) {}
 })();
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Branch Manager</title>
 <meta name="description" content="Second Nature Tree Service — Job Management">
 <meta name="theme-color" content="#1a8a5c">
@@ -418,22 +418,11 @@
     .topbar { padding:6px 16px !important; padding-top:max(6px,env(safe-area-inset-top)) !important; min-height:44px !important; }
     .topbar h2 { font-size:16px !important; }
 
-    /* PWA standalone: defensive — handles both old cached installs (with
-       viewport-fit=cover baked in, env() ~50px) AND fresh installs (env() 0).
-       Push contents at least 72px from top so they clear status bar / Dynamic
-       Island in either mode. align-items:flex-end keeps buttons hugging the
-       bottom of the bar (closest to thumb). */
+    /* PWA standalone: force a floor of 50px top-padding so the topbar never
+       overlaps the iPhone status bar. Reverted to v227-era behavior — the
+       'fixes' in v240-244 made things worse. */
     @media (display-mode: standalone) {
-      .topbar {
-        padding-top: max(calc(env(safe-area-inset-top, 0px) + 12px), 72px) !important;
-        padding-bottom: 12px !important;
-        padding-left: 14px !important;
-        padding-right: 14px !important;
-        min-height: auto !important;
-        align-items: flex-end !important;
-      }
-      .topbar h2 { line-height: 1.2; }
-      .topbar-icon, .topbar-icon-create { min-height: 40px !important; min-width: 40px !important; }
+      .topbar { padding-top:max(env(safe-area-inset-top),50px) !important; min-height:38px !important; }
     }
     .search-box { min-width:auto; flex:1; }
     /* bottom-nav removed */
@@ -857,7 +846,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v244</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v245</span>
 <script>(function(){try{var b=document.getElementById('bmVersionBadge');if(b&&typeof BUNDLED_VERSION!=='undefined')b.textContent='v'+BUNDLED_VERSION;}catch(e){}})();</script>
       </div>
     </div>

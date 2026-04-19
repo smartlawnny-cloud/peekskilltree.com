@@ -30,7 +30,23 @@ var DashboardPage = {
     var monthFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var hour = now.getHours();
     var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    var userName = (typeof Auth !== 'undefined' && Auth.user) ? Auth.user.name || 'there' : 'there';
+    // Prefer Auth.user.name; fall back to email local-part; then saved company ownerName; final 'there'
+    var userName = 'there';
+    if (typeof Auth !== 'undefined' && Auth.user) {
+      if (Auth.user.name) userName = Auth.user.name;
+      else if (Auth.user.email) {
+        var lp = Auth.user.email.split('@')[0].replace(/[._-]+/g, ' ').trim();
+        userName = lp.charAt(0).toUpperCase() + lp.slice(1);
+      }
+    }
+    if (userName === 'there' && typeof BM_CONFIG !== 'undefined' && BM_CONFIG.ownerName) {
+      userName = BM_CONFIG.ownerName;
+    }
+    // Also backfill Auth.user.name so future loads show it without refreshing the session
+    if (typeof Auth !== 'undefined' && Auth.user && !Auth.user.name && userName !== 'there') {
+      Auth.user.name = userName;
+      try { localStorage.setItem('bm-session', JSON.stringify(Auth.user)); } catch(e){}
+    }
     // Greeting + monthly goal progress inline
     var allInvoicesEarly = DB.invoices.getAll();
     var _goalData = JSON.parse(localStorage.getItem('bm-revenue-goals') || '{"annual":300000,"monthly":25000}');

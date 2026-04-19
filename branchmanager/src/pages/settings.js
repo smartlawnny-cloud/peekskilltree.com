@@ -858,6 +858,35 @@ var SettingsPage = {
     // ═══ /GROUP: Security + Admin ═══
     html += '</div></details>';
 
+    // ═══ GROUP: Templates & Automation (collapsible) ═══
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>📝 Templates &amp; Automation</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
+
+    var _taRows = [
+      { page: 'onlinebooking',   icon: '🌐', title: 'Online Booking',    desc: 'Configure your public booking form and widget' },
+      { page: 'automations',     icon: '⚡', title: 'Automations',       desc: 'Rules for quote/invoice follow-ups and reminders' },
+      { page: 'checklists',      icon: '✅', title: 'Job Checklists',    desc: 'Reusable checklist templates for crews' },
+      { page: 'formbuilder',     icon: '🧩', title: 'Forms Builder',     desc: 'Build custom intake and inspection forms' },
+      { page: 'emailtemplates',  icon: '📧', title: 'Email Templates',   desc: 'Edit templates for quote / invoice / follow-up emails' },
+      { page: 'receptionist',    icon: '📞', title: 'AI Receptionist',   desc: 'Configure after-hours call answering and routing' }
+    ];
+    _taRows.forEach(function(r) {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fafafa;">'
+        + '<div>'
+        +   '<div style="font-size:13px;font-weight:600;">' + r.icon + ' ' + r.title + '</div>'
+        +   '<div style="font-size:11px;color:var(--text-light);">' + r.desc + '</div>'
+        + '</div>'
+        + '<button class="btn btn-outline" onclick="loadPage(\'' + r.page + '\')" style="font-size:12px;">Open →</button>'
+        + '</div>';
+    });
+
+    // ═══ /GROUP: Templates & Automation ═══
+    html += '</div></details>';
+
     // About
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:12px;">About Branch Manager</h3>'

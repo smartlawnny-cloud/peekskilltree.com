@@ -1,5 +1,5 @@
 {
-  "version": 222,
+  "version": 223,
   "released": "2026-04-19",
-  "notes": "Multi-tenant Phase 2 — app resolves current tenant_id (via Supabase auth or email fallback), stamps it on every create/update, and filters every Supabase pull by tenant. Ready for Phase 3 strict RLS."
+  "notes": "Nav cleanup — 9 items removed from sidebar More, 6 config pages moved into Settings → Templates & Automation. Per-equipment pre-use safety checklists added with type-specific default items."
 }

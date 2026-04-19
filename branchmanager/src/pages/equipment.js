@@ -79,17 +79,31 @@ var EquipmentPage = {
         + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:4px;">' + cat + '</h4>';
       categories[cat].forEach(function(e) {
         var statusColor = e.status === 'active' ? '#4caf50' : e.status === 'repair' ? '#f44336' : '#999';
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f5;">'
+        var lastInsp = EquipmentPage._lastInspection(e.id);
+        var inspLabel = lastInsp
+          ? 'Last checked: ' + UI.dateShort(lastInsp.date) + (lastInsp.checkedBy ? ' · ' + UI.esc(lastInsp.checkedBy) : '')
+          : '⚠️ Not inspected yet';
+        var inspColor = lastInsp ? 'var(--text-light)' : '#c0392b';
+        html += '<div style="padding:8px 0;border-bottom:1px solid #f5f5f5;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;">'
           + '<div style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;" onclick="EquipmentPage.showDetail(\'' + e.id + '\')">'
           + '<span style="width:8px;height:8px;border-radius:50%;background:' + statusColor + ';flex-shrink:0;"></span>'
           + '<div><strong style="font-size:14px;">' + e.name + '</strong>'
-          + '<div style="font-size:12px;color:var(--text-light);">' + (e.make || '') + ' ' + (e.model || '') + (e.year ? ' · ' + e.year : '') + (e.serial ? ' · SN: ' + e.serial : '') + '</div></div></div>'
-          + '<div style="display:flex;align-items:center;gap:8px;">'
+          + '<div style="font-size:12px;color:var(--text-light);">' + (e.make || '') + ' ' + (e.model || '') + (e.year ? ' · ' + e.year : '') + (e.serial ? ' · SN: ' + e.serial : '') + '</div>'
+          + '<div style="font-size:11px;color:' + inspColor + ';margin-top:2px;">' + inspLabel + '</div>'
+          + '</div></div>'
+          + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
           + '<div style="text-align:right;font-size:12px;min-width:60px;">'
           + '<div style="font-weight:600;">' + (e.hours ? e.hours + ' hrs' : '') + '</div>'
           + '<div style="color:var(--text-light);">' + (e.value ? UI.money(e.value) : '') + '</div></div>'
+          + '<button onclick="event.stopPropagation();EquipmentPage.toggleChecklist(\'' + e.id + '\')" style="background:#fffbe6;color:#8a6d00;border:1px solid #f0d874;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">📋 Checklist</button>'
           + '<button onclick="event.stopPropagation();EquipmentPage.logHours(\'' + e.id + '\')" style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Hrs</button>'
-          + '</div></div>';
+          + '</div></div>'
+          // Collapsible checklist panel (hidden by default)
+          + '<div id="eq-checklist-' + e.id + '" style="display:none;margin-top:10px;padding:12px;background:#fafafa;border:1px solid var(--border);border-radius:8px;">'
+          +   EquipmentPage._renderChecklistPanel(e)
+          + '</div>'
+          + '</div>';
       });
       html += '</div>';
     });
@@ -391,5 +405,107 @@ var EquipmentPage = {
       UI.toast(co.equipmentName + ' returned by ' + co.crewMember);
       loadPage('equipment');
     }
+  },
+
+  // ═══ Pre-use Safety Checklists ═══
+  // Default checklists keyed by a normalized "kind" string derived from name/category/model.
+  _checklistDefaults: {
+    'bucket-truck': ['Boom extends/retracts smoothly','Outriggers deploy + lock','Hydraulic fluid level OK','Emergency descent works','Upper controls responsive','Lower controls responsive','Safety harness anchor points','Insulator bucket clean + dry','Horn + backup alarm','Tires (pressure, tread)','Lights (head/brake/turn)','Insurance + registration in cab'],
+    'chipper': ['Blades sharp + bolts tight','Safety bar engages + kills blade','Feed wheel rotates freely','Discharge chute clear + rotates','Fuel level + oil','PTO shield in place','Kill switch accessible','Hose + clamps intact','Hitch secure'],
+    'crane': ['Outriggers level + locked','Boom extends full range','Load line + hook inspected for wear','Anti-two-block working','Hydraulic system (no leaks)','Radio remote paired + charged','Load chart posted','Operator cert valid + in cab','Fire extinguisher + first aid'],
+    'stump-grinder': ['Teeth sharp + bolts tight','Guard in place','Kill switch accessible','Fuel + oil','Tires/tracks OK','Trailer lights + safety chains (if towed)','PPE: face shield + chaps on rig'],
+    'mini-skid': ['Tracks or tires OK','Hydraulic fluid level','Seatbelt functional','Horn + backup alarm','Bucket/attachment secure','Quick-attach pins engaged','Lights + mirrors','Fuel level'],
+    'dump-truck': ['Body raises + locks','Tailgate latches + releases','Brakes firm','Tires (pressure + tread)','Lights + turn signals','Load cover/tarp','Registration + insurance','Pre-trip DOT walkaround complete'],
+    'chainsaw': ['Chain sharp + tension correct','Bar oil full','Fuel mix correct','Chain brake engages','Throttle trigger interlock works','Muffler + heat shield intact','PPE: chaps + helmet + ears + eyes'],
+    'trailer': ['Hitch secure + pin + clip','Safety chains crossed','Breakaway cable attached','Lights (running, brake, turn)','Tires (pressure + tread)','Load secured + strapped','License plate + registration'],
+    'generic': ['Fluid levels OK','Tires / tracks OK','Controls functional','Safety features (brakes, kill switches) tested','Fuel level','Visual inspection — no damage/leaks','Documentation in vehicle']
+  },
+
+  _detectKind: function(e) {
+    var hay = ((e.name || '') + ' ' + (e.make || '') + ' ' + (e.model || '') + ' ' + (e.category || '')).toLowerCase();
+    if (/bucket/.test(hay)) return 'bucket-truck';
+    if (/dump/.test(hay)) return 'dump-truck';
+    if (/chipper/.test(hay)) return 'chipper';
+    if (/crane/.test(hay)) return 'crane';
+    if (/stump/.test(hay)) return 'stump-grinder';
+    if (/(mini[- ]?skid|loader|skid.?steer)/.test(hay)) return 'mini-skid';
+    if (/(chainsaw|stihl|husq|saw)/.test(hay)) return 'chainsaw';
+    if (/trailer/.test(hay)) return 'trailer';
+    return 'generic';
+  },
+
+  _checklistItemsFor: function(e) {
+    var kind = EquipmentPage._detectKind(e);
+    return EquipmentPage._checklistDefaults[kind] || EquipmentPage._checklistDefaults.generic;
+  },
+
+  _allInspections: function() {
+    try { return JSON.parse(localStorage.getItem('bm-equipment-inspections') || '[]'); } catch(e) { return []; }
+  },
+
+  _lastInspection: function(equipmentId) {
+    var all = EquipmentPage._allInspections().filter(function(r) { return r.equipmentId === equipmentId; });
+    if (!all.length) return null;
+    all.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+    return all[0];
+  },
+
+  _renderChecklistPanel: function(e) {
+    var items = EquipmentPage._checklistItemsFor(e);
+    var kind = EquipmentPage._detectKind(e);
+    var cbHtml = '';
+    items.forEach(function(item, i) {
+      var cid = 'chk-' + e.id + '-' + i;
+      cbHtml += '<label for="' + cid + '" style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:13px;cursor:pointer;">'
+        + '<input type="checkbox" id="' + cid + '" data-item="' + UI.esc(item) + '" style="margin-top:3px;flex-shrink:0;">'
+        + '<span>' + UI.esc(item) + '</span>'
+        + '</label>';
+    });
+    return '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Pre-use safety check <span style="background:#eef;color:#334;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;">' + kind + '</span></div>'
+      + '<div id="eq-checklist-items-' + e.id + '">' + cbHtml + '</div>'
+      + '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+      +   '<input type="text" id="eq-chk-who-' + e.id + '" placeholder="Checked by (name)" style="flex:1;min-width:140px;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+      +   '<button onclick="EquipmentPage.markInspected(\'' + e.id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">Mark Inspected</button>'
+      + '</div>';
+  },
+
+  toggleChecklist: function(id) {
+    var el = document.getElementById('eq-checklist-' + id);
+    if (!el) return;
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  },
+
+  markInspected: function(id) {
+    var eq = EquipmentPage.getAll().find(function(e) { return e.id === id; });
+    if (!eq) return;
+    var wrap = document.getElementById('eq-checklist-items-' + id);
+    if (!wrap) return;
+    var boxes = wrap.querySelectorAll('input[type="checkbox"]');
+    var items = EquipmentPage._checklistItemsFor(eq);
+    var checked = [];
+    var unchecked = [];
+    boxes.forEach(function(b) {
+      if (b.checked) checked.push(b.getAttribute('data-item'));
+      else unchecked.push(b.getAttribute('data-item'));
+    });
+    if (checked.length !== items.length) {
+      if (!confirm('Some items are unchecked (' + unchecked.length + '). Record anyway?')) return;
+    }
+    var whoEl = document.getElementById('eq-chk-who-' + id);
+    var who = whoEl ? whoEl.value.trim() : '';
+    var rec = {
+      id: Date.now().toString(36),
+      equipmentId: id,
+      equipmentName: eq.name,
+      date: new Date().toISOString(),
+      checkedBy: who || 'Unknown',
+      allItems: checked,
+      skipped: unchecked
+    };
+    var all = EquipmentPage._allInspections();
+    all.unshift(rec);
+    localStorage.setItem('bm-equipment-inspections', JSON.stringify(all));
+    UI.toast('✅ ' + eq.name + ' inspected (' + checked.length + '/' + items.length + ' items)');
+    loadPage('equipment');
   }
 };

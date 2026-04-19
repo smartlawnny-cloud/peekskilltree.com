@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 222; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 223; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -720,16 +720,12 @@
         <div class="nav-section">Marketing</div>
         <button class="nav-item" data-page="marketing"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Marketing Dashboard</button>
         <button class="nav-item" data-page="reviews"><span class="icon"><i data-lucide="star" class="li"></i></span> Reviews</button>
-        <button class="nav-item" data-page="reviewtools"><span class="icon"><i data-lucide="thumbs-up" class="li"></i></span> Review Tools</button>
         <button class="nav-item" data-page="campaigns"><span class="icon"><i data-lucide="mail" class="li"></i></span> Campaigns</button>
-        <button class="nav-item" data-page="referrals"><span class="icon"><i data-lucide="share-2" class="li"></i></span> Referrals</button>
-        <button class="nav-item" data-page="onlinebooking"><span class="icon"><i data-lucide="globe" class="li"></i></span> Online Booking</button>
         <button class="nav-item" onclick="window.open('https://peekskilltree.com','_blank')" style="opacity:.85;"><span class="icon"><i data-lucide="external-link" class="li"></i></span> Website</button>
 
         <div class="nav-section">People</div>
         <button class="nav-item" data-page="timesheet"><span class="icon"><i data-lucide="clock" class="li"></i></span> Timesheets</button>
         <button class="nav-item" data-page="payroll"><span class="icon"><i data-lucide="wallet" class="li"></i></span> Payroll</button>
-        <button class="nav-item" data-page="crewperformance"><span class="icon"><i data-lucide="trophy" class="li"></i></span> Performance</button>
         <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="banknote" class="li"></i></span> My Pay</button>
         <button class="nav-item" onclick="window.open('onboarding/','_blank')" style="opacity:.85;"><span class="icon"><i data-lucide="graduation-cap" class="li"></i></span> Onboarding</button>
 
@@ -739,31 +735,20 @@
 
         <div class="nav-section">Operations</div>
         <button class="nav-item" data-page="dispatch"><span class="icon"><i data-lucide="truck" class="li"></i></span> Dispatch</button>
-        <button class="nav-item" data-page="pipeline"><span class="icon"><i data-lucide="kanban" class="li"></i></span> Pipeline</button>
-        <button class="nav-item" data-page="recurring"><span class="icon"><i data-lucide="repeat" class="li"></i></span> Recurring</button>
-        <button class="nav-item" data-page="automations"><span class="icon"><i data-lucide="zap" class="li"></i></span> Automations</button>
-        <button class="nav-item" data-page="checklists"><span class="icon"><i data-lucide="check-square" class="li"></i></span> Checklists</button>
         <button class="nav-item" data-page="equipment"><span class="icon"><i data-lucide="cog" class="li"></i></span> Equipment</button>
 
         <div class="nav-section">Client Hub</div>
         <button class="nav-item" data-page="clienthub"><span class="icon"><i data-lucide="user-check" class="li"></i></span> Client Portal</button>
         <button class="nav-item" data-page="messaging"><span class="icon"><i data-lucide="message-square" class="li"></i></span> Messages</button>
-        <button class="nav-item" data-page="satisfaction"><span class="icon"><i data-lucide="smile" class="li"></i></span> Satisfaction</button>
-        <button class="nav-item" data-page="formbuilder"><span class="icon"><i data-lucide="layout" class="li"></i></span> Forms</button>
-        <button class="nav-item" data-page="emailtemplates"><span class="icon"><i data-lucide="file-edit" class="li"></i></span> Email Templates</button>
-        <button class="nav-item" data-page="receptionist"><span class="icon"><i data-lucide="phone" class="li"></i></span> Receptionist</button>
 
         <div class="nav-section">Media</div>
         <button class="nav-item" data-page="mediacenter"><span class="icon"><i data-lucide="camera" class="li"></i></span> Media Center <span class="badge" id="badge-mediacenter"></span></button>
-        <button class="nav-item" data-page="beforeafter"><span class="icon"><i data-lucide="image" class="li"></i></span> Before/After</button>
 
         <div class="nav-section">Tools</div>
         <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> AI Assistant</button>
         <button class="nav-item" data-page="calculators"><span class="icon"><i data-lucide="calculator" class="li"></i></span> Calculators</button>
         <button class="nav-item" data-page="cardone"><span class="icon"><i data-lucide="trending-up" class="li"></i></span> 10X Tools</button>
-        <button class="nav-item" data-page="aitreeid"><span class="icon"><i data-lucide="scan-eye" class="li"></i></span> AI Tree ID <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
         <button class="nav-item" data-page="videoquote"><span class="icon"><i data-lucide="video" class="li"></i></span> Video Quote <span style="background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;margin-left:4px;">BETA</span></button>
-        <button class="nav-item" data-page="treemeasure"><span class="icon"><i data-lucide="ruler" class="li"></i></span> Tree Measure</button>
       </div>
     </div>
 
@@ -826,7 +811,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v222</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v223</span>
       </div>
     </div>
 
@@ -861,7 +846,7 @@
 <script defer src="src/pages/crewview.js?v=140"></script>
 <script defer src="src/pages/employeecenter.js?v=140"></script>
 <script defer src="src/pages/budget.js?v=140"></script>
-<script defer src="src/pages/equipment.js?v=140"></script>
+<script defer src="src/pages/equipment.js?v=223"></script>
 <script defer src="src/pages/jobcosting.js?v=140"></script>
 <script defer src="src/pages/dispatch.js?v=201"></script>
 <script defer src="src/pages/recurring.js?v=140"></script>
@@ -882,7 +867,7 @@
 <script defer src="src/pages/import.js?v=140"></script>
 <script src="src/stripe.js?v=140"></script>
 <script defer src="src/sendjim.js"></script>
-<script defer src="src/pages/settings.js?v=152"></script>
+<script defer src="src/pages/settings.js?v=223"></script>
 <script defer src="src/pages/propertymap.js?v=140"></script>
 <script defer src="src/pages/estimator.js"></script>
 <script defer src="src/pages/cardone.js?v=160"></script>

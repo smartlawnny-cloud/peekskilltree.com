@@ -458,10 +458,7 @@ var QuotesPage = {
       html += QuotesPage._itemRow(i, item, services, /*expanded=*/ false);
     });
     html += '</div>'
-      + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">'
-      +   '<button type="button" onclick="QuotesPage._addPhotoFirst()" style="flex:1;min-width:160px;padding:12px;background:#fff;color:var(--green-dark);border:2px dashed var(--green-light);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Add Another Tree (Photo + AI)</button>'
-      +   '<button type="button" onclick="QuotesPage.addItem()" style="padding:12px 16px;background:#fff;color:var(--text-light);border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">+ Manual</button>'
-      + '</div>'
+      // Duplicate 'Add Another Tree' + 'Manual' row removed — top 3 buttons cover it
       + '<div id="q-pertree-total" style="margin-top:12px;text-align:right;font-size:15px;font-weight:700;color:var(--green-dark);"></div>'
       + '</div>';
 

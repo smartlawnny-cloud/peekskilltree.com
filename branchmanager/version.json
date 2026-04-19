@@ -1,5 +1,5 @@
 {
-  "version": 205,
+  "version": 206,
   "released": "2026-04-19",
   "notes": "No more popups — UI.showModal renders as full-page by default (confirmations and shortcut reference still modal)"
 }

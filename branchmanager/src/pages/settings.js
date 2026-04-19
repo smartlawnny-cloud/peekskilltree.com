@@ -1303,12 +1303,23 @@ var SettingsPage = {
     if (!confirm('Move all base64 photos out of quote line_items into the storage bucket?\n\nThis can take several minutes for hundreds of photos. Safe to interrupt and re-run — already-migrated photos are skipped.')) return;
 
     var tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
-    UI.toast('Scanning quotes...');
-    var q = SupabaseDB.client.from('quotes').select('id, tenant_id, line_items');
-    if (tid) q = q.eq('tenant_id', tid);
-    var { data: quotes, error } = await q;
+    UI.toast('Scanning all quotes (ignoring tenant to catch legacy Jobber imports)...');
+    // IMPORTANT: fetch ALL quotes, not filtered by tenant. Jobber imports
+    // often have tenant_id=NULL which .eq('tenant_id', tid) would skip.
+    var { data: quotes, error } = await SupabaseDB.client.from('quotes').select('id, tenant_id, line_items');
     if (error) { UI.toast('Fetch failed: ' + error.message, 'error'); return; }
-    if (!quotes) { UI.toast('No quotes found'); return; }
+    if (!quotes || !quotes.length) { UI.toast('No quotes returned from Supabase — check RLS', 'error'); return; }
+    console.log('[MigrateJobber] Fetched ' + quotes.length + ' quotes');
+    var withPhotos = quotes.filter(function(q) {
+      if (!q.line_items || !q.line_items.length) return false;
+      return q.line_items.some(function(it) {
+        var ps = (it && it.photos) || (it && it.photo ? [it.photo] : []);
+        return ps.some(function(p) { return typeof p === 'string' && p.indexOf('data:') === 0; });
+      });
+    });
+    UI.toast('Found ' + withPhotos.length + ' quote(s) with base64 photos to migrate');
+    console.log('[MigrateJobber] ' + withPhotos.length + ' quotes have base64 photos');
+    if (!withPhotos.length) { UI.toast('Nothing to migrate — all photos already URLs ✓'); return; }
 
     var quotesTouched = 0, photosMigrated = 0, photosFailed = 0;
 

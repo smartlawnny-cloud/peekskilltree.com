@@ -1,5 +1,5 @@
 {
-  "version": 256,
+  "version": 257,
   "released": "2026-04-19",
-  "notes": "Equipment map: layout persists per property address across open/close/return. Rotation handle bigger (26px) + works on mobile touch. Hook fires on add/move/rotate/remove/clear."
+  "notes": "Jobber photo migration: fetch ALL quotes (not filtered by tenant) to catch legacy imports with NULL tenant_id. Loud diagnostics so we never silently no-op again."
 }

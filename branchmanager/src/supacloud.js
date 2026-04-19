@@ -20,7 +20,8 @@ var CloudSync = {
     // Multi-tenant: scope pulls to the resolved tenant if available.
     var tenantId = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
     // Tables without tenant_id column — don't apply the filter
-    var NO_TENANT = { payments: true };
+    // (payments DOES have tenant_id — removed from this list as of v228)
+    var NO_TENANT = {};
 
     for (var i = 0; i < CloudSync.tables.length; i++) {
       var table = CloudSync.tables[i];
@@ -106,7 +107,7 @@ var CloudSync = {
         // Multi-tenant: make sure tenant_id is on the cloud row (some tables skip)
         if (!cloudRecord.tenant_id && typeof DB !== 'undefined' && DB.getTenantId) {
           var _tid = DB.getTenantId();
-          if (_tid && !({ payments: 1 })[table]) cloudRecord.tenant_id = _tid;
+          if (_tid) cloudRecord.tenant_id = _tid;
         }
         // ID is already a UUID — no need to overwrite
         sb.from(table).insert(cloudRecord).then(function(res) {

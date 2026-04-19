@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unstick Branch Manager</title>
+<style>
+  body { font-family: -apple-system, sans-serif; background: #1a3c12; color: #fff; padding: 30px 20px; max-width: 500px; margin: 0 auto; line-height: 1.5; }
+  h1 { font-size: 24px; margin-bottom: 14px; }
+  button { background: #fff; color: #1a3c12; border: none; padding: 16px 24px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; width: 100%; }
+  #log { background: rgba(0,0,0,0.3); padding: 14px; border-radius: 8px; margin-top: 20px; font-family: monospace; font-size: 12px; min-height: 80px; }
+  a { color: #a5d6a7; }
+</style>
+</head>
+<body>
+<h1>🔧 Unstick Branch Manager</h1>
+<p>This page lives <strong>outside</strong> the PWA's service-worker scope, so it can clean up the wedged cache that the app itself can't reach.</p>
+<p>Tap the button below. It will:</p>
+<ol style="margin: 12px 0 12px 20px;">
+  <li>Unregister every service worker on this domain</li>
+  <li>Delete every cache entry</li>
+  <li>Clear localStorage flags that might keep loops alive</li>
+  <li>Send you back to the app fresh</li>
+</ol>
+<button onclick="nuke()">💥 Nuke everything and reopen the app</button>
+<div id="log"></div>
+
+<script>
+function log(msg) {
+  var el = document.getElementById('log');
+  el.innerHTML += msg + '<br>';
+}
+async function nuke() {
+  try {
+    log('Looking for service workers…');
+    if ('serviceWorker' in navigator) {
+      var regs = await navigator.serviceWorker.getRegistrations();
+      log('Found ' + regs.length + ' SW registration(s).');
+      for (var i = 0; i < regs.length; i++) {
+        try { await regs[i].unregister(); log('  ✓ unregistered ' + (regs[i].scope || '?')); }
+        catch(e) { log('  ✗ ' + e.message); }
+      }
+    } else { log('No SW API available.'); }
+
+    log('Clearing caches…');
+    if (window.caches) {
+      var keys = await caches.keys();
+      log('Found ' + keys.length + ' cache(s).');
+      for (var j = 0; j < keys.length; j++) {
+        try { await caches.delete(keys[j]); log('  ✓ ' + keys[j]); }
+        catch(e) { log('  ✗ ' + e.message); }
+      }
+    }
+
+    log('Clearing version flags…');
+    try {
+      localStorage.removeItem('bm-last-bundled-version');
+      localStorage.removeItem('bm-pwa-nav');
+    } catch(e) {}
+
+    log('Done. Sending you to v236 in 2 seconds…');
+    setTimeout(function() {
+      // Cache-bust the redirect itself
+      location.href = '/branchmanager/?fresh=' + Date.now();
+    }, 2000);
+  } catch (e) {
+    log('Error: ' + e.message);
+    alert('Reset hit an error: ' + e.message + '\n\nLast resort: delete the PWA from your home screen and re-add it from Safari.');
+  }
+}
+</script>
+</body>
+</html>

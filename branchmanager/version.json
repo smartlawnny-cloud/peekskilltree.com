@@ -1,5 +1,5 @@
 {
-  "version": 242,
+  "version": 243,
   "released": "2026-04-19",
-  "notes": "PWA topbar — fixed-position pinned BELOW the iOS safe-area inset; cosmetic white strip fills status-bar area. Bar can no longer extend off-screen."
+  "notes": "PWA topbar root fix — drop viewport-fit=cover so iOS reserves the status-bar area at the OS level. App now starts cleanly below status bar without any env(safe-area) math."
 }

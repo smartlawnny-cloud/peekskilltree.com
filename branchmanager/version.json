@@ -1,5 +1,5 @@
 {
-  "version": 239,
+  "version": 240,
   "released": "2026-04-19",
-  "notes": "Cloud Settings Sync — API keys and prefs auto-sync per tenant via new tenant_settings table. Set on one device, every device gets it on next login. Requires SQL migration."
+  "notes": "Topbar PWA fix — add 8px breathing room below iOS safe-area so buttons aren't intercepted as Control Center pull near the top edge"
 }

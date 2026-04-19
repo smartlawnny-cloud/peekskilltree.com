@@ -514,9 +514,13 @@ var SettingsPage = {
       + '<div style="font-size:12px;color:#1a5276;margin-bottom:10px;">'
       + 'Local photos: <strong>' + localPhotoStats.total + '</strong> total, <strong>' + localPhotoStats.base64 + '</strong> still base64 (device-only).'
       + '</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:8px;">'
       + '<button class="btn btn-primary" onclick="SettingsPage._migratePhotos()" ' + (localPhotoStats.base64 === 0 ? 'disabled' : '') + ' style="font-size:13px;">'
-      + (localPhotoStats.base64 === 0 ? '✓ All photos synced' : '⬆ Upload ' + localPhotoStats.base64 + ' local photos to cloud')
+      + (localPhotoStats.base64 === 0 ? '✓ All local photos synced' : '⬆ Upload ' + localPhotoStats.base64 + ' local photos')
       + '</button>'
+      + '<button class="btn btn-outline" onclick="SettingsPage._migrateJobberPhotos()" style="font-size:13px;">⬆ Move Jobber quote photos to bucket</button>'
+      + '</div>'
+      + '<div style="font-size:11px;color:#1a5276;margin-top:8px;font-style:italic;">Jobber import stored ~612 photos as base64 inside quote line items. Moving them to the bucket shrinks the DB and speeds up quote loads.</div>'
       + '</div>';
 
     // Stripe / Dialpad / SendJim cards removed from Database & Storage —
@@ -1286,6 +1290,79 @@ var SettingsPage = {
     }
     UI.toast('Migrated ' + uploaded + ' / ' + scanned + ' photos' + (failed ? ' (' + failed + ' failed)' : ' ✓'));
     loadPage('settings');
+  },
+
+  _migrateJobberPhotos: async function() {
+    if (!SupabaseDB || !SupabaseDB.ready) { UI.toast('Supabase not connected', 'error'); return; }
+    if (!confirm('Move all base64 photos out of quote line_items into the storage bucket?\n\nThis can take several minutes for hundreds of photos. Safe to interrupt and re-run — already-migrated photos are skipped.')) return;
+
+    var tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+    UI.toast('Scanning quotes...');
+    var q = SupabaseDB.client.from('quotes').select('id, tenant_id, line_items');
+    if (tid) q = q.eq('tenant_id', tid);
+    var { data: quotes, error } = await q;
+    if (error) { UI.toast('Fetch failed: ' + error.message, 'error'); return; }
+    if (!quotes) { UI.toast('No quotes found'); return; }
+
+    var quotesTouched = 0, photosMigrated = 0, photosFailed = 0;
+
+    for (var qi = 0; qi < quotes.length; qi++) {
+      var quote = quotes[qi];
+      var items = quote.line_items;
+      if (!items || !items.length) continue;
+      var changed = false;
+
+      for (var li = 0; li < items.length; li++) {
+        var item = items[li];
+        if (!item) continue;
+        var photos = item.photos || (item.photo ? [item.photo] : []);
+        if (!photos.length) continue;
+        var newPhotos = [];
+
+        for (var pi = 0; pi < photos.length; pi++) {
+          var p = photos[pi];
+          if (!p || typeof p !== 'string') continue;
+          if (p.indexOf('data:') !== 0) { newPhotos.push(p); continue; } // already URL
+
+          try {
+            var blob = await (await fetch(p)).blob();
+            var ext = (blob.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+            var path = 'quote/' + quote.id + '/' + Date.now() + '_' + li + '_' + pi + '.' + ext;
+            var up = await SupabaseDB.client.storage.from('job-photos').upload(path, blob, { contentType: blob.type });
+            if (up.error) throw up.error;
+            var pub = SupabaseDB.client.storage.from('job-photos').getPublicUrl(path);
+            newPhotos.push(pub.data.publicUrl);
+
+            // Also write a metadata row so it shows up in galleries
+            var meta = { record_type: 'quote', record_id: quote.id, url: pub.data.publicUrl, storage_path: path, name: 'jobber_' + li + '_' + pi + '.' + ext, label: item.species || item.service || '', taken_at: new Date().toISOString() };
+            if (quote.tenant_id) meta.tenant_id = quote.tenant_id;
+            else if (tid) meta.tenant_id = tid;
+            await SupabaseDB.client.from('photos').insert(meta);
+
+            photosMigrated++;
+            if (photosMigrated % 10 === 0) UI.toast('Migrated ' + photosMigrated + ' photos...');
+          } catch (e) {
+            console.warn('Quote photo migrate fail (quote ' + quote.id + ', li ' + li + ', pi ' + pi + '):', e);
+            newPhotos.push(p); // keep original on failure
+            photosFailed++;
+          }
+        }
+
+        if (JSON.stringify(newPhotos) !== JSON.stringify(photos)) {
+          item.photos = newPhotos;
+          item.photo = newPhotos[0] || '';
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        var upd = await SupabaseDB.client.from('quotes').update({ line_items: items }).eq('id', quote.id);
+        if (upd.error) console.warn('Quote update fail:', upd.error.message);
+        else quotesTouched++;
+      }
+    }
+
+    UI.toast('Done — ' + photosMigrated + ' photos moved across ' + quotesTouched + ' quotes' + (photosFailed ? ' (' + photosFailed + ' failed)' : ' ✓'));
   },
 
   _removeKey: function(storageKey, label) {

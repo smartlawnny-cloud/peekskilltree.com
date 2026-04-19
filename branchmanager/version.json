@@ -1,5 +1,5 @@
 {
-  "version": 230,
+  "version": 231,
   "released": "2026-04-19",
-  "notes": "One-time photo migration tool in Settings → Database & Storage. Counts device-only base64 photos and uploads them to Supabase Storage + photos metadata table so they sync across devices."
+  "notes": "Jobber quote-photo migration tool. Settings → Database & Storage now has a button to move base64 photos out of quote line_items into the job-photos bucket + creates photos metadata rows. Re-runnable, skips already-URL'd entries."
 }

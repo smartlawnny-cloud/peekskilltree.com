@@ -275,8 +275,12 @@
   .data-table td:first-child { font-weight:500; }
 
   /* Card-style list (Airbnb/Jobber look) */
-  .client-card:hover, .client-card:active { box-shadow:0 4px 14px rgba(0,0,0,0.08) !important; transform:translateY(-1px); }
-  .client-card:active { transform:scale(0.99); background:var(--green-bg) !important; }
+  /* Only mouse-hover devices get the lift. Touch devices previously jumped on every scroll
+     because :active fires during scroll-touch. Now we use shadow-only feedback on tap. */
+  @media (hover: hover) {
+    .client-card:hover { box-shadow:0 4px 14px rgba(0,0,0,0.08) !important; transform:translateY(-1px); }
+  }
+  .client-card:active { box-shadow:0 2px 6px rgba(0,0,0,0.06) !important; background:var(--green-bg) !important; }
   [data-theme="dark"] .client-card { background:var(--white) !important; border-color:var(--border) !important; }
 
   /* ── Status Badges (App colors) ── */

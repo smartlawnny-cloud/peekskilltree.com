@@ -287,6 +287,11 @@ var PropertyMap = {
       self.map.on('click', function(e) {
         // Ignore clicks on markers (they have their own handlers)
         if (e.originalEvent && e.originalEvent.target && e.originalEvent.target.closest && e.originalEvent.target.closest('.maplibregl-marker')) return;
+        // If a marker is waiting for a direction tap, consume this click for that
+        if (self._directingMarker) {
+          var did = self._applyDirection(e.lngLat);
+          if (did) { UI.toast('Direction set ✓'); return; }
+        }
         var lat = e.lngLat.lat, lng = e.lngLat.lng;
         elevReadout.style.display = 'block';
         elevReadout.textContent = '⏳ Querying elevation…';
@@ -341,9 +346,42 @@ var PropertyMap = {
     var self = PropertyMap;
     if (!self.map) return;
     var center = self.map.getCenter();
-    // Offset slightly so multiple items don't stack
     var offset = self.markers.length * 0.00003;
     self._placeMarker(eqId, center.lng + offset, center.lat + offset, '');
+    // Enter direction-setting mode: next map tap sets the marker's rotation
+    var justPlaced = self.markers[self.markers.length - 1];
+    self._setDirectingMarker(justPlaced);
+    UI.toast('📍 Placed. Tap a point on the map to set direction.');
+  },
+
+  // Angle helper — MapLibre lng/lat → rotation degrees so equipment "points" toward a target
+  _bearingDeg: function(fromLng, fromLat, toLng, toLat) {
+    var dx = toLng - fromLng;
+    var dy = toLat - fromLat;
+    // Marker at 0° points up in screen space. Web y-axis is inverted → negate dy.
+    var rad = Math.atan2(dx, dy); // 0 = north/up, clockwise
+    var deg = rad * 180 / Math.PI;
+    // We want 0° to mean "pointing RIGHT" like a truck (long axis horizontal) — add 90°
+    return (deg + 90) % 360;
+  },
+
+  _setDirectingMarker: function(md) {
+    PropertyMap._directingMarker = md || null;
+  },
+
+  _applyDirection: function(lngLat) {
+    var self = PropertyMap;
+    var md = self._directingMarker;
+    if (!md) return false;
+    var deg = self._bearingDeg(md.lng, md.lat, lngLat.lng, lngLat.lat);
+    md.rotation = deg;
+    // Find the marker's inner element and rotate it
+    var el = md.marker.getElement();
+    var inner = el.querySelector('.equip-inner');
+    if (inner) inner.style.transform = 'rotate(' + deg + 'deg)';
+    self._directingMarker = null;
+    if (typeof window._bmEquipmentMapHook === 'function') window._bmEquipmentMapHook(self.markers);
+    return true;
   },
 
   // Convert feet to pixels at current zoom level
@@ -382,51 +420,18 @@ var PropertyMap = {
     inner.innerHTML = '<span style="font-size:' + iconSize + 'px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));pointer-events:none;line-height:1;">' + (eq.icon || '📍') + '</span>';
     el.appendChild(inner);
 
-    // Rotation handle — hidden by default, revealed when marker is selected
-    var handle = document.createElement('div');
-    handle.style.cssText = 'position:absolute;top:-12px;right:-12px;width:26px;height:26px;'
-      + 'background:#fff;border:2px solid ' + eq.color + ';border-radius:50%;cursor:pointer;'
-      + 'display:none;align-items:center;justify-content:center;font-size:14px;color:' + eq.color + ';'
-      + 'box-shadow:0 2px 6px rgba(0,0,0,.4);z-index:5;font-weight:900;';
-    handle.textContent = '↻';
-    handle.title = 'Tap to rotate 45°';
-    el.appendChild(handle);
-
-    function bumpRotation() {
-      rotation = (rotation + 45) % 360;
-      inner.style.transform = 'rotate(' + rotation + 'deg)';
-      markerData.rotation = rotation;
-      if (typeof window._bmEquipmentMapHook === 'function') window._bmEquipmentMapHook(self.markers);
-    }
-
-    // Select/deselect on tap — shows handle + selection ring (on INNER div)
-    function setSelected(on) {
-      if (on) {
-        inner.style.boxShadow = '0 0 0 3px ' + eq.color + ', 0 3px 14px rgba(0,0,0,.55)';
-        handle.style.display = 'flex';
-      } else {
-        inner.style.boxShadow = '0 3px 10px rgba(0,0,0,.55)';
-        handle.style.display = 'none';
-      }
-    }
+    // Tap the marker → enter "directing" mode. Next map tap sets its rotation.
     el.addEventListener('click', function(e) {
       e.stopPropagation();
-      // Deselect other markers' inner elements + hide their handles
+      // Visual feedback: selection ring on this, clear others
       self.markers.forEach(function(m) {
-        if (m.marker && m.marker.getElement && m.marker.getElement() !== el) {
-          var other = m.marker.getElement();
-          var otherInner = other.querySelector('.equip-inner');
-          if (otherInner) otherInner.style.boxShadow = '0 3px 10px rgba(0,0,0,.55)';
-          var otherHandle = other.querySelector('div[title^="Tap to rotate"]');
-          if (otherHandle) otherHandle.style.display = 'none';
-        }
+        var otherInner = m.marker && m.marker.getElement && m.marker.getElement().querySelector('.equip-inner');
+        if (otherInner) otherInner.style.boxShadow = '0 3px 10px rgba(0,0,0,.55)';
       });
-      setSelected(handle.style.display !== 'flex');
+      inner.style.boxShadow = '0 0 0 3px ' + eq.color + ', 0 3px 14px rgba(0,0,0,.55)';
+      self._setDirectingMarker(markerData);
+      UI.toast('🧭 Tap a point on the map to set direction.');
     });
-
-    handle.addEventListener('click', function(e) { e.stopPropagation(); bumpRotation(); });
-    handle.addEventListener('touchend', function(e) { e.stopPropagation(); e.preventDefault(); bumpRotation(); });
-    el.addEventListener('contextmenu', function(e) { e.preventDefault(); e.stopPropagation(); bumpRotation(); });
 
     // Update size on zoom — touch OUTER size + INNER rotation only (never outer transform)
     var updateSize = function() {

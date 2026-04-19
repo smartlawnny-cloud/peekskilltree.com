@@ -1,5 +1,5 @@
 {
-  "version": 267,
+  "version": 268,
   "released": "2026-04-19",
-  "notes": "Fix equipment marker drift on rotation — rotate INNER div now, outer left for MapLibre's positioning transform"
+  "notes": "PropertyMap: drop ↻ rotate handle. Equipment direction is now set by tapping a target point on the map — angle computed from marker to tap. Tap a placed marker to re-direct it."
 }

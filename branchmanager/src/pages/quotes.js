@@ -680,6 +680,9 @@ var QuotesPage = {
   },
 
   _restoreAutoSave: function() {
+    // Remove the banner FIRST so it's gone no matter what happens below
+    var banner = document.getElementById('q-recovery-banner');
+    if (banner) banner.remove();
     try {
       var data = JSON.parse(localStorage.getItem(QuotesPage._autoSaveKey));
       if (!data) { UI.toast('Nothing to restore', 'error'); return; }

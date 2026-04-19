@@ -1,5 +1,5 @@
 {
-  "version": 249,
+  "version": 250,
   "released": "2026-04-19",
-  "notes": "Fix nav allowlist — Operations + other hub pages were missing from Auth.getVisiblePages so canAccess() returned false and hid them from sidebar"
+  "notes": "Remove unused sidebar section headers (Reports/Marketing/People/Team Chat/Operations/Client Hub/Media/Tools) — they were plain grey text labels, not links"
 }

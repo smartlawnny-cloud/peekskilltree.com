@@ -368,7 +368,17 @@ var QuotesPage = {
     // ═══ STEP 1: Per Tree/Task ═══
     var tmData = q.timeMaterial || {};
 
-    html += '<div style="margin:16px 0;">'
+    // Progressive disclosure: for NEW quotes, hide line items until client is picked.
+    // Existing quotes skip the gate (they already have a client).
+    var hasClient = !!(q && q.id) || (client && client.id);
+    var gateDisplay = hasClient ? 'block' : 'none';
+    if (!hasClient) {
+      html += '<div id="q-pick-client-first" style="margin:16px 0;padding:16px;background:#fef9c3;border:1px dashed #eab308;border-radius:10px;text-align:center;font-size:13px;color:#854d0e;">'
+        +   '👆 Pick or create a client above to start adding trees.'
+        + '</div>';
+    }
+
+    html += '<div id="q-items-section" style="margin:16px 0;display:' + gateDisplay + ';">'
       + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Line Items</div>'
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Take or upload a photo — AI identifies species, DBH, condition, and suggests service + price.</p>';
 
@@ -1817,6 +1827,15 @@ var QuotesPage = {
     if (client && client.address) {
       var prop = document.getElementById('q-property');
       if (prop && !prop.value) prop.value = client.address;
+    }
+    // Progressive disclosure: reveal the Line Items section now that client is picked
+    var gate = document.getElementById('q-pick-client-first');
+    var section = document.getElementById('q-items-section');
+    if (gate) gate.style.display = 'none';
+    if (section) {
+      section.style.display = 'block';
+      // Smooth scroll so user sees where to go next
+      setTimeout(function() { section.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
     }
   },
 

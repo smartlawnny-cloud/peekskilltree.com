@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 174; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 175; // bump with every deploy (must match version.json)
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
   if (/[?&]reset=/.test(location.search)) return;
@@ -283,6 +283,13 @@
   .client-card:active { box-shadow:0 2px 6px rgba(0,0,0,0.06) !important; background:var(--green-bg) !important; }
   [data-theme="dark"] .client-card { background:var(--white) !important; border-color:var(--border) !important; }
 
+  /* PWA standalone mode — hide dark-mode toggle + force light theme.
+     User specifically wanted dark mode gone on the installed app. */
+  @media (display-mode: standalone) {
+    #dark-mode-btn { display:none !important; }
+    html[data-theme="dark"] { /* un-applies dark vars by not matching */ }
+  }
+
   /* Quotes list — same card-on-mobile pattern */
   @media (hover: hover) {
     .quote-card:hover { box-shadow:0 4px 14px rgba(0,0,0,0.08) !important; transform:translateY(-1px); }
@@ -448,9 +455,9 @@
     button#dark-mode-btn { display:flex !important; }
     button[onclick*="AI.toggle"] { display:flex !important; }
 
-    /* + button — mobile: make it bigger + add label so it's findable */
-    .topbar-icon-create { width:auto !important; min-width:60px !important; height:36px !important; padding:0 14px !important; display:flex !important; align-items:center !important; gap:4px !important; font-weight:700 !important; color:#fff !important; }
-    .topbar-icon-create::after { content:'New'; font-size:13px; color:#fff; }
+    /* + button — mobile: just a clean + circle, no "New" label */
+    .topbar-icon-create { width:40px !important; min-width:40px !important; height:40px !important; padding:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; font-weight:700 !important; color:#fff !important; border-radius:50% !important; }
+    .topbar-icon-create::after { content:none !important; }
 
     /* Topbar compact padding */
     .topbar { padding:8px 12px !important; gap:8px; }
@@ -823,7 +830,7 @@
           </div>
         </div>
         <button class="btn btn-primary" id="pageAction" style="display:none;">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v174</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v175</span>
       </div>
     </div>
 
@@ -1663,8 +1670,12 @@ function toggleDarkMode() {
   if (icon) icon.setAttribute('data-lucide', isDark ? 'moon' : 'sun');
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
-// Restore on load
-if (localStorage.getItem('bm-dark-mode') === 'dark') {
+// Restore on load — EXCEPT in PWA standalone mode where dark is disabled.
+var _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+if (_isStandalone) {
+  document.documentElement.removeAttribute('data-theme');
+  localStorage.removeItem('bm-dark-mode');
+} else if (localStorage.getItem('bm-dark-mode') === 'dark') {
   document.documentElement.setAttribute('data-theme', 'dark');
   setTimeout(function() { var icon = document.getElementById('dark-mode-icon'); if (icon) icon.setAttribute('data-lucide', 'sun'); if (typeof lucide !== 'undefined') lucide.createIcons(); }, 100);
 }

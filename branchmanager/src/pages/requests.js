@@ -60,7 +60,9 @@ var RequestsPage = {
   _autoSync: function() {
     var SUPABASE_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
     var SUPABASE_KEY = (typeof SupabaseDB !== 'undefined' && SupabaseDB.ANON_KEY) || '';
-    fetch(SUPABASE_URL + '/rest/v1/requests?select=*&order=created_at.desc&limit=50', {
+    var _tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+    var _tfilter = _tid ? '&tenant_id=eq.' + encodeURIComponent(_tid) : '';
+    fetch(SUPABASE_URL + '/rest/v1/requests?select=*&order=created_at.desc&limit=50' + _tfilter, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
     })
     .then(function(r) { return r.json(); })
@@ -105,7 +107,9 @@ var RequestsPage = {
     var SUPABASE_KEY = (typeof SupabaseDB !== 'undefined' && SupabaseDB.ANON_KEY) || '';
     var btn = document.getElementById('req-sync-btn');
     if (btn) { btn.textContent = '⏳ Syncing...'; btn.disabled = true; }
-    fetch(SUPABASE_URL + '/rest/v1/requests?select=*&order=created_at.desc&limit=50', {
+    var _tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+    var _tfilter = _tid ? '&tenant_id=eq.' + encodeURIComponent(_tid) : '';
+    fetch(SUPABASE_URL + '/rest/v1/requests?select=*&order=created_at.desc&limit=50' + _tfilter, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
     })
     .then(function(r) { return r.json(); })

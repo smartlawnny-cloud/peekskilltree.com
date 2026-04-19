@@ -1,7 +1,5 @@
 {
-  "version": 221,
+  "version": 222,
   "released": "2026-04-19",
-  "notes": "Settings page — grouped remaining cards into 6 collapsible sections (Business Info, Quote & Invoice Defaults, Services & Products, Database & Storage, Data Import/Export/Backup, Security + Admin) to reduce visual clutter."
+  "notes": "Multi-tenant Phase 2 — app resolves current tenant_id (via Supabase auth or email fallback), stamps it on every create/update, and filters every Supabase pull by tenant. Ready for Phase 3 strict RLS."
 }
-</content>
-</invoke>

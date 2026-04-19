@@ -461,7 +461,9 @@ var DashboardPage = {
           return;
         }
         var t = tables[idx++];
-        fetch(url + '/rest/v1/' + t.remote + '?select=*&limit=5000&order=created_at.desc', {
+        var _tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+        var _tfilter = _tid ? '&tenant_id=eq.' + encodeURIComponent(_tid) : '';
+        fetch(url + '/rest/v1/' + t.remote + '?select=*&limit=5000&order=created_at.desc' + _tfilter, {
           headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
         }).then(function(resp) {
           return resp.json();

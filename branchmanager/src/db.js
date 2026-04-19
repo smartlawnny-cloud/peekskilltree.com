@@ -34,6 +34,92 @@ var DB = (function() {
   function _id() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
   function _now() { return new Date().toISOString(); }
 
+  // ── Multi-tenant context ──
+  // Caches the current user's tenant_id in memory + localStorage.
+  // Two resolution strategies (tried in order):
+  //   1. Supabase Auth session → user_tenants lookup
+  //   2. Fallback: match by email (Auth.user.email or BM_CONFIG.email) against tenants.owner_email
+  // If neither works, records created without tenant_id (graceful degrade).
+  var _tenantIdCache = null;
+  var _tenantResolving = null;
+
+  function _tenantSupabaseUrl() {
+    return localStorage.getItem('bm-supabase-url') || 'https://ltpivkqahvplapyagljt.supabase.co';
+  }
+  function _tenantSupabaseKey() {
+    return localStorage.getItem('bm-supabase-key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
+  }
+
+  function getTenantId() {
+    if (_tenantIdCache) return _tenantIdCache;
+    try {
+      var cached = localStorage.getItem('bm-tenant-id');
+      if (cached) { _tenantIdCache = cached; return cached; }
+    } catch(e) {}
+    return null;
+  }
+
+  function _setTenantId(tid) {
+    if (!tid) return;
+    _tenantIdCache = tid;
+    try { localStorage.setItem('bm-tenant-id', tid); } catch(e) {}
+  }
+
+  function resolveTenantId() {
+    if (_tenantIdCache) return Promise.resolve(_tenantIdCache);
+    if (_tenantResolving) return _tenantResolving;
+
+    var url = _tenantSupabaseUrl();
+    var key = _tenantSupabaseKey();
+    if (!url || !key) return Promise.resolve(null);
+
+    _tenantResolving = (async function() {
+      // Strategy 1: Supabase Auth session + user_tenants
+      try {
+        if (typeof SupabaseDB !== 'undefined' && SupabaseDB.client && SupabaseDB.client.auth) {
+          var sess = await SupabaseDB.client.auth.getSession();
+          var uid = sess && sess.data && sess.data.session && sess.data.session.user && sess.data.session.user.id;
+          var token = sess && sess.data && sess.data.session && sess.data.session.access_token;
+          if (uid) {
+            var headers = { 'apikey': key, 'Authorization': 'Bearer ' + (token || key) };
+            var resp = await fetch(url + '/rest/v1/user_tenants?user_id=eq.' + encodeURIComponent(uid) + '&select=tenant_id&limit=1', { headers: headers });
+            if (resp.ok) {
+              var rows = await resp.json();
+              if (rows && rows.length && rows[0].tenant_id) {
+                _setTenantId(rows[0].tenant_id);
+                return _tenantIdCache;
+              }
+            }
+          }
+        }
+      } catch(e) { console.warn('[Tenant] Strategy 1 failed:', e); }
+
+      // Strategy 2: match email → tenants.owner_email
+      try {
+        var email = '';
+        if (typeof Auth !== 'undefined' && Auth.user && Auth.user.email) email = Auth.user.email;
+        if (!email && typeof BM_CONFIG !== 'undefined' && BM_CONFIG.email) email = BM_CONFIG.email;
+        if (!email) email = 'info@peekskilltree.com'; // last-resort seed fallback
+        if (email) {
+          var h2 = { 'apikey': key, 'Authorization': 'Bearer ' + key };
+          var r2 = await fetch(url + '/rest/v1/tenants?owner_email=eq.' + encodeURIComponent(email) + '&select=id&limit=1', { headers: h2 });
+          if (r2.ok) {
+            var rs = await r2.json();
+            if (rs && rs.length && rs[0].id) {
+              _setTenantId(rs[0].id);
+              return _tenantIdCache;
+            }
+          }
+        }
+      } catch(e) { console.warn('[Tenant] Strategy 2 failed:', e); }
+
+      return null;
+    })();
+
+    _tenantResolving.then(function() { _tenantResolving = null; }, function() { _tenantResolving = null; });
+    return _tenantResolving;
+  }
+
   // ── Audit Log ──
   var AUDIT_KEY = 'bm-audit-log';
   var AUDIT_MAX = 500;
@@ -107,6 +193,11 @@ var DB = (function() {
     record.id = record.id || _id();
     record.createdAt = record.createdAt || _now();
     record.updatedAt = _now();
+    // Multi-tenant: stamp tenant_id if we have one (graceful degrade if not)
+    if (!record.tenant_id && !record.tenantId) {
+      var tid = getTenantId();
+      if (tid) record.tenant_id = tid;
+    }
     all.unshift(record);
     _set(key, all);
     _audit('create', key, record.id, record.name || record.clientName || '');
@@ -118,6 +209,11 @@ var DB = (function() {
     var idx = all.findIndex(function(r) { return r.id === id; });
     if (idx < 0) return null;
     Object.assign(all[idx], changes, { updatedAt: _now() });
+    // Backfill tenant_id on existing records that predate multi-tenancy
+    if (!all[idx].tenant_id && !all[idx].tenantId) {
+      var tid = getTenantId();
+      if (tid) all[idx].tenant_id = tid;
+    }
     _set(key, all);
     _audit('update', key, id, Object.keys(changes).join(','));
     _pushToCloud(key, all[idx], 'update');
@@ -511,9 +607,24 @@ var DB = (function() {
     getById: getById,
     create: create,
     update: update,
-    remove: remove
+    remove: remove,
+    getTenantId: getTenantId,
+    resolveTenantId: resolveTenantId
   };
 })();
 
 // Auto-seed demo data on first load
 DB.seedDemo();
+
+// Kick off tenant resolution — idempotent, safe to call every page load.
+// Runs async; writes cache to localStorage once resolved. Retries later if
+// Supabase client isn't ready yet.
+(function initTenant() {
+  function attempt(retries) {
+    DB.resolveTenantId().then(function(tid) {
+      if (!tid && retries > 0) setTimeout(function(){ attempt(retries - 1); }, 1500);
+    });
+  }
+  // Delay a tick so SupabaseDB.init has a chance to attach the client
+  setTimeout(function(){ attempt(8); }, 500);
+})();

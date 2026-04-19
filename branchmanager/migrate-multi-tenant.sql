@@ -1,6 +1,11 @@
 -- ══════════════════════════════════════════════════════════════════════════
 -- Multi-tenant migration for Branch Manager
 -- ══════════════════════════════════════════════════════════════════════════
+-- PHASE 3 is now live. After Phase 2 code ships in v222, paste this entire file
+-- into the Supabase SQL editor: https://supabase.com/dashboard/project/ltpivkqahvplapyagljt/sql/new
+-- It re-runs Parts A + C (idempotent — safe) and applies Part B strict RLS.
+-- If anything breaks, run the disable-RLS rollback block at the bottom.
+-- ══════════════════════════════════════════════════════════════════════════
 --
 -- Goal: let multiple tree-service businesses each sign up, see only THEIR
 --       data, without any code changes in the app beyond scoped queries.
@@ -97,34 +102,35 @@ $$;
 -- ─────────────────────────────────────────────────────────────────────────
 -- PART B — STRICT RLS (run ONLY after app code is updated — Phase 3)
 -- ─────────────────────────────────────────────────────────────────────────
--- Uncomment the block below when ready.  Test thoroughly in a staging
--- environment first — turning this on will BLOCK any INSERT that doesn't
--- include a valid tenant_id, and hide every row from other tenants.
---
--- DO $$
--- DECLARE
---   t text;
---   tables text[] := ARRAY[
---     'clients','requests','quotes','jobs','invoices','payments',
---     'services','team_members','communications','crew_locations'
---   ];
--- BEGIN
---   FOREACH t IN ARRAY tables LOOP
---     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = t) THEN
---       EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', t);
---       EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_select ON %I;', t);
---       EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_write ON %I;', t);
---       EXECUTE format('CREATE POLICY tenant_isolation_select ON %I FOR SELECT USING (tenant_id = current_tenant_id());', t);
---       EXECUTE format('CREATE POLICY tenant_isolation_write ON %I FOR ALL USING (tenant_id = current_tenant_id()) WITH CHECK (tenant_id = current_tenant_id());', t);
---     END IF;
---   END LOOP;
--- END $$;
---
--- -- Tenants + user_tenants RLS
--- ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY tenants_read ON tenants FOR SELECT USING (id = current_tenant_id());
--- ALTER TABLE user_tenants ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY user_tenants_read ON user_tenants FOR SELECT USING (user_id = auth.uid());
+-- Phase 3: strict RLS is ENABLED below.  Turning this on will BLOCK any INSERT
+-- that doesn't include a valid tenant_id, and hide every row from other tenants.
+
+DO $$
+DECLARE
+  t text;
+  tables text[] := ARRAY[
+    'clients','requests','quotes','jobs','invoices','payments',
+    'services','team_members','communications','crew_locations'
+  ];
+BEGIN
+  FOREACH t IN ARRAY tables LOOP
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = t) THEN
+      EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', t);
+      EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_select ON %I;', t);
+      EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_write ON %I;', t);
+      EXECUTE format('CREATE POLICY tenant_isolation_select ON %I FOR SELECT USING (tenant_id = current_tenant_id());', t);
+      EXECUTE format('CREATE POLICY tenant_isolation_write ON %I FOR ALL USING (tenant_id = current_tenant_id()) WITH CHECK (tenant_id = current_tenant_id());', t);
+    END IF;
+  END LOOP;
+END $$;
+
+-- Tenants + user_tenants RLS
+ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenants_read ON tenants;
+CREATE POLICY tenants_read ON tenants FOR SELECT USING (id = current_tenant_id());
+ALTER TABLE user_tenants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS user_tenants_read ON user_tenants;
+CREATE POLICY user_tenants_read ON user_tenants FOR SELECT USING (user_id = auth.uid());
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- PART C — Tenant provisioning trigger (auto-create tenant on signup)
@@ -169,3 +175,12 @@ BEGIN
     ON CONFLICT DO NOTHING;
   END IF;
 END $$;
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- ROLLBACK (paste this if Phase 3 breaks the app):
+-- ─────────────────────────────────────────────────────────────────────────
+-- DO $$ DECLARE t text; tables text[] := ARRAY['clients','requests','quotes','jobs','invoices','payments','services','team_members','communications','crew_locations'];
+-- BEGIN FOREACH t IN ARRAY tables LOOP
+--   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = t) THEN
+--     EXECUTE format('ALTER TABLE %I DISABLE ROW LEVEL SECURITY;', t);
+--   END IF; END LOOP; END $$;

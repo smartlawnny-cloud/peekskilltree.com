@@ -17,6 +17,10 @@ var CloudSync = {
 
     var sb = SupabaseDB.client;
     var totalRows = 0;
+    // Multi-tenant: scope pulls to the resolved tenant if available.
+    var tenantId = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+    // Tables without tenant_id column — don't apply the filter
+    var NO_TENANT = { payments: true };
 
     for (var i = 0; i < CloudSync.tables.length; i++) {
       var table = CloudSync.tables[i];
@@ -29,7 +33,9 @@ var CloudSync = {
         var page = 0;
         var hasMore = true;
         while (hasMore && page < 5) {
-          var { data: batch, error } = await sb.from(table).select('*').order('created_at', { ascending: false }).range(page * 1000, (page + 1) * 1000 - 1);
+          var _q = sb.from(table).select('*').order('created_at', { ascending: false }).range(page * 1000, (page + 1) * 1000 - 1);
+          if (tenantId && !NO_TENANT[table]) _q = _q.eq('tenant_id', tenantId);
+          var { data: batch, error } = await _q;
           if (error) break;
           if (batch && batch.length > 0) { allData = allData.concat(batch); page++; }
           if (!batch || batch.length < 1000) hasMore = false;
@@ -97,6 +103,11 @@ var CloudSync = {
         }
         var result = origCreate.call(dbSection, record);
         var cloudRecord = CloudSync._toSnake(result);
+        // Multi-tenant: make sure tenant_id is on the cloud row (some tables skip)
+        if (!cloudRecord.tenant_id && typeof DB !== 'undefined' && DB.getTenantId) {
+          var _tid = DB.getTenantId();
+          if (_tid && !({ payments: 1 })[table]) cloudRecord.tenant_id = _tid;
+        }
         // ID is already a UUID — no need to overwrite
         sb.from(table).insert(cloudRecord).then(function(res) {
           if (res.error) {

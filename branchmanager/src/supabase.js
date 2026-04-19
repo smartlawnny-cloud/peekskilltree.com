@@ -90,8 +90,11 @@ var SupabaseDB = {
     if (!SupabaseDB.ready) return;
     var sb = SupabaseDB.client;
 
-    // Check if Supabase already has data
-    var { count } = await sb.from('clients').select('*', { count: 'exact', head: true });
+    // Check if Supabase already has data (scoped to tenant if resolved)
+    var _initTid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+    var _countQ = sb.from('clients').select('*', { count: 'exact', head: true });
+    if (_initTid) _countQ = _countQ.eq('tenant_id', _initTid);
+    var { count } = await _countQ;
     if (count > 0) {
       if (SupabaseDB._debug) console.log('Supabase has ' + count + ' clients — pulling cloud data to local');
       await SupabaseDB._pullFromCloud();
@@ -180,11 +183,17 @@ var SupabaseDB = {
       { local: 'bm-team', remote: 'team_members' }
     ];
 
+    // Multi-tenant: filter every pull by resolved tenant_id.
+    // If no tenant resolved yet, pull everything (pre-Phase-3 graceful fallback).
+    var tenantId = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+
     var totalPulled = 0;
     for (var i = 0; i < tables.length; i++) {
       var t = tables[i];
       try {
-        var { data, error } = await sb.from(t.remote).select('*').order('created_at', { ascending: false }).limit(5000);
+        var q = sb.from(t.remote).select('*').order('created_at', { ascending: false }).limit(5000);
+        if (tenantId) q = q.eq('tenant_id', tenantId);
+        var { data, error } = await q;
         if (error) {
           console.warn('Pull error for ' + t.remote + ':', error.message);
           continue;
@@ -253,11 +262,14 @@ var SupabaseDB = {
     if (!SupabaseDB.ready || !SupabaseDB.client) return;
     try {
       var since = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-      var { data, error } = await SupabaseDB.client
+      var rq = SupabaseDB.client
         .from('requests')
-        .select('id, client_name, client_phone, source, status, created_at')
+        .select('id, client_name, client_phone, source, status, created_at, tenant_id')
         .eq('status', 'new')
         .gte('created_at', since);
+      var tid = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+      if (tid) rq = rq.eq('tenant_id', tid);
+      var { data, error } = await rq;
       if (error || !data || !data.length) return;
 
       var localReqs = [];
@@ -311,12 +323,15 @@ var SupabaseDB = {
     try {
       // Look for invoices paid in the last 10 minutes
       var since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      var { data, error } = await SupabaseDB.client
+      var iq = SupabaseDB.client
         .from('invoices')
         .select('id, invoice_number, client_name, amount_paid, paid_date, status, payment_method, stripe_payment_id')
         .eq('status', 'paid')
         .gte('updated_at', since)
         .eq('payment_method', 'stripe');
+      var tid2 = (typeof DB !== 'undefined' && DB.getTenantId) ? DB.getTenantId() : null;
+      if (tid2) iq = iq.eq('tenant_id', tid2);
+      var { data, error } = await iq;
 
       if (error || !data || data.length === 0) return;
 

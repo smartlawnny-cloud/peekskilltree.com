@@ -427,18 +427,22 @@ var QuotesPage = {
 
     html += UI.formField('Internal Notes', 'textarea', 'q-notes', q.notes, { placeholder: 'Notes (not shown to client)' });
 
-      // Expiry
-      + '<div style="margin-bottom:16px;">'
+    // Expiry
+    html += '<div style="margin-bottom:16px;">'
       + '<input type="hidden" id="q-expires" value="' + (q.expiresAt ? q.expiresAt.substring(0,10) : new Date(Date.now() + 30*86400000).toISOString().substring(0,10)) + '">'
       + '<div style="font-size:11px;color:var(--text-light);">Quote valid for 30 days.</div>'
-      + '</div>'
+      + '</div>';
 
-      // ═══ TIME & EQUIPMENT (at the bottom, after all line items) ═══
-      + '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin:16px 0 12px;' + (tmData.totalHrs ? 'display:none;' : '') + '">✅ Finished Line Items — Time & Equipment</button>'
+    // ═══ MODE 2: Time & Materials sanity check (hidden until user clicks "Price-check this quote") ═══
+    html += '<div style="margin:20px 0 12px;padding:14px;background:#f5f3ff;border:1px dashed #c4b5fd;border-radius:10px;">'
+      +   '<div style="font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:4px;">💡 Price Check (Mode 2 — Time & Materials)</div>'
+      +   '<div style="font-size:12px;color:#6d28d9;margin-bottom:10px;">Sanity-check your line-item quote against what the job would cost billed hourly. <strong>Your line-item total should be HIGHER than T&M</strong> — that\'s your profit margin.</div>'
+      +   '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';document.getElementById(\'q-mode-tm\').scrollIntoView({behavior:\'smooth\'});" style="width:100%;padding:12px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;' + (tmData.totalHrs ? 'display:none;' : '') + '">📊 Run T&M Price Check</button>'
+      + '</div>';
 
-      + '<div id="q-mode-tm" style="display:' + (tmData.totalHrs ? 'block' : 'none') + ';border:2px solid var(--accent);border-radius:10px;padding:16px;margin-bottom:12px;">'
-      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Production Estimate</div>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Map the job site, estimate crew + equipment to verify pricing.</p>'
+    html += '<div id="q-mode-tm" style="display:' + (tmData.totalHrs ? 'block' : 'none') + ';border:2px solid #7c3aed;border-radius:10px;padding:16px;margin-bottom:12px;">'
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Production Estimate (T&M)</div>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Estimate crew hours + equipment to verify your pricing.</p>'
 
       // Property Map
       + '<div style="margin-bottom:16px;"><button type="button" class="btn btn-outline" style="width:100%;" onclick="PropertyMap.show(document.getElementById(\'q-property\').value)">🗺️ Open Property Map — Place Equipment</button></div>'

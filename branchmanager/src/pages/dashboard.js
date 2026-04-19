@@ -343,7 +343,8 @@ var DashboardPage = {
           || (!j.scheduledDate && (j.createdAt || '') > cutoff7dash);
     });
     if (dashApproved.length > 0 || dashNeedsInv.length > 0) {
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
+      // auto-fit so a single card stretches full-width instead of hugging the left
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:16px;">';
       if (dashApproved.length > 0) {
         html += '<div style="background:var(--white);border-radius:10px;padding:16px;border:1px solid #c8e6c9;">'
           + '<div style="font-size:12px;font-weight:700;color:var(--green-dark);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Ready to Convert (' + dashApproved.length + ')</div>';

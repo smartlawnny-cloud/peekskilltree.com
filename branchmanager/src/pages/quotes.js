@@ -370,21 +370,17 @@ var QuotesPage = {
 
     html += '<div style="margin:16px 0;">'
       + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Line Items</div>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Select service → take photo → AI identifies & prices.</p>';
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Take or upload a photo — AI identifies species, DBH, condition, and suggests service + price.</p>';
 
-    // Service selector + photo button
+    // Photo-first: AI auto-detects service, species, DBH, condition, price.
+    // Tree Measure button: opens the measuring tool in a modal if user needs to verify DBH/height.
     html += '<div style="display:flex;gap:8px;margin-bottom:12px;">'
-      + '<select id="q-add-service" style="flex:1;padding:12px;border:2px solid var(--border);border-radius:10px;font-size:15px;font-weight:600;">'
-      + '<option value="">— Select Service —</option>'
-      + '<option value="Tree Removal">Tree Removal</option>'
-      + '<option value="Tree Pruning">Tree Pruning</option>'
-      + '<option value="Stump Removal">Stump Grinding</option>'
-      + '<option value="Cabling">Cabling</option>'
-      + '<option value="Clean Up">Clean Up</option>'
-      + '<option value="Other">Other</option>'
-      + '</select>'
-      + '<button type="button" onclick="QuotesPage._addWithServiceAndPhoto()" style="padding:12px 20px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;">'
-      + '<i data-lucide="camera" style="width:18px;height:18px;"></i> Add</button>'
+      + '<button type="button" onclick="QuotesPage._addPhotoFirst()" style="flex:1;padding:14px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">'
+      +   '<i data-lucide="camera" style="width:20px;height:20px;"></i> Add Tree — Photo + AI'
+      + '</button>'
+      + '<button type="button" onclick="QuotesPage._openTreeMeasure()" style="padding:14px 16px;background:#fff;color:var(--text);border:2px solid var(--border);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;" title="Measure DBH or height with your phone">'
+      +   '📏 Measure'
+      + '</button>'
       + '</div>';
 
     // Line items (with photo thumbnails)
@@ -622,14 +618,14 @@ var QuotesPage = {
   },
 
   _itemRow: function(index, item, services) {
-    var svcOptions = services.map(function(s) {
-      return '<option value="' + s.name + '"' + (item.service === s.name ? ' selected' : '') + '>' + s.name + (s.type === 'product' ? ' (product)' : '') + '</option>';
-    }).join('');
-
+    // datalist is injected once at the form level (_dataListOnce) so we don't duplicate it per row
+    QuotesPage._dataListOnce(services);
     var lineTotal = ((item.qty || 1) * (item.rate || 0));
 
     return '<div class="quote-item-row" style="display:grid;grid-template-columns:2fr 2fr 60px 90px 80px 36px;gap:8px;align-items:end;margin-bottom:8px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">'
-      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label><select class="q-item-service" onchange="QuotesPage._onServiceChange(this)" style="font-size:13px;"><option value="">— Select or type custom —</option>' + svcOptions + '</select></div>'
+      + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label>'
+      +   '<input class="q-item-service" list="q-svc-datalist" value="' + UI.esc(item.service || '') + '" placeholder="Type or pick…" onchange="QuotesPage._onServiceChange(this)" style="font-size:13px;">'
+      + '</div>'
       + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Description</label><input class="q-item-desc" value="' + UI.esc(item.description || '') + '" placeholder="Work details..." style="font-size:13px;"></div>'
       + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Qty</label><input type="number" class="q-item-qty" value="' + (item.qty || 1) + '" min="1" oninput="QuotesPage.calcTotal()" style="font-size:13px;text-align:center;"></div>'
       + '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Rate ($)</label><input type="number" class="q-item-rate" value="' + (item.rate || '') + '" step="0.01" placeholder="0.00" oninput="QuotesPage.calcTotal()" style="font-size:13px;"></div>'
@@ -1198,7 +1194,67 @@ var QuotesPage = {
     QuotesPage.showDetail(id);
   },
 
-  // ── Service-first then photo ──
+  // Injects a shared <datalist> with all service suggestions. The line-item
+  // service input is an <input list="q-svc-datalist"> so users can type or pick.
+  _dataListOnce: function(services) {
+    if (document.getElementById('q-svc-datalist')) return;
+    setTimeout(function() {
+      if (document.getElementById('q-svc-datalist')) return;
+      var dl = document.createElement('datalist');
+      dl.id = 'q-svc-datalist';
+      (services || []).forEach(function(s) {
+        var opt = document.createElement('option');
+        opt.value = s.name;
+        dl.appendChild(opt);
+      });
+      // Fallback defaults if services list is empty
+      if (!services || !services.length) {
+        ['Tree Removal','Tree Pruning','Stump Grinding','Cabling','Clean Up','Arborist Letter','Other']
+          .forEach(function(n) { var o = document.createElement('option'); o.value = n; dl.appendChild(o); });
+      }
+      document.body.appendChild(dl);
+    }, 0);
+  },
+
+  // ── Photo-first flow (AI picks service + fills all fields) ──
+  _addPhotoFirst: function() {
+    // Add an empty line item now so _identifyTree can fill it in place.
+    QuotesPage.addItem();
+    QuotesPage._pendingService = ''; // let AI choose the service itself
+    // Open picker (no capture attr — native Take/Library sheet)
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var dataUrl = ev.target.result;
+        var rows = document.querySelectorAll('.quote-item-row');
+        var lastRow = rows[rows.length - 1];
+        if (lastRow) {
+          lastRow.dataset.photo = dataUrl;
+          var thumb = document.createElement('div');
+          thumb.style.cssText = 'margin-bottom:8px;';
+          thumb.innerHTML = '<img src="' + dataUrl + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">';
+          lastRow.insertBefore(thumb, lastRow.firstChild);
+        }
+        QuotesPage._identifyTree(dataUrl, rows.length - 1);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  },
+
+  _openTreeMeasure: function() {
+    // Open the standalone Tree Measure page in a new tab so user can use the camera-ruler tool.
+    // (Keeping the quote form state intact — tab-out is safer than modal injection.)
+    if (typeof loadPage !== 'function') { UI.toast('Tree Measure page not loaded'); return; }
+    window.open(window.location.pathname + '#treemeasure', '_blank');
+  },
+
+  // ── Service-first then photo (legacy path, kept for backwards compat) ──
   _addWithServiceAndPhoto: function() {
     var sel = document.getElementById('q-add-service');
     var svc = sel ? sel.value : '';
@@ -1310,7 +1366,7 @@ var QuotesPage = {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: 'You are a certified arborist in ZIP ' + (localStorage.getItem('bm-zip') || '10566') + '. The selected service is: ' + (QuotesPage._pendingService || 'Tree Service') + '. Identify this tree and assess for that service. Respond in ONLY this JSON format: {"species":"Common Name","dbh":"estimated diameter in inches","condition":"good/fair/poor/dead","notes":"1 sentence assessment for the selected service","suggestedService":"' + (QuotesPage._pendingService || 'Tree Removal or Tree Pruning or Stump Grinding') + '","diseases":"top disease risk for this species"}' }
+            { type: 'text', text: 'You are a certified arborist in ZIP ' + (localStorage.getItem('bm-zip') || '10566') + '. ' + (QuotesPage._pendingService ? 'The user selected service: ' + QuotesPage._pendingService + '. Use that for suggestedService.' : 'Pick the MOST LIKELY service this tree needs based on its condition (Tree Removal if dead/hazardous, Tree Pruning if healthy with overgrowth, Stump Grinding if only stump, Cabling if split/weak fork, Clean Up if debris).') + ' Identify this tree and respond in ONLY this JSON format: {"species":"Common Name","dbh":"estimated diameter in inches as a number","heightFt":"estimated height in feet as a number","condition":"good/fair/poor/dead","notes":"1 sentence assessment","suggestedService":"Tree Removal OR Tree Pruning OR Stump Grinding OR Cabling OR Clean Up","diseases":"top disease risk for this species"}' }
           ]
         }]
       })
@@ -1334,7 +1390,8 @@ var QuotesPage = {
           var qtyEl = row.querySelector('.q-item-qty');
 
           if (serviceEl) serviceEl.value = tree.suggestedService || 'Tree Removal';
-          if (descEl) descEl.value = tree.species + ' — ' + (tree.dbh || '?') + '" DBH — ' + (tree.condition || '') + (tree.notes ? ' — ' + tree.notes : '');
+          var heightStr = tree.heightFt ? ' — ' + tree.heightFt + '\' tall' : '';
+          if (descEl) descEl.value = tree.species + ' — ' + (tree.dbh || '?') + '" DBH' + heightStr + ' — ' + (tree.condition || '') + (tree.notes ? ' — ' + tree.notes : '');
           if (qtyEl) qtyEl.value = '1';
 
           // Price suggestion: $100 per inch of DBH
@@ -1343,7 +1400,7 @@ var QuotesPage = {
           if (rateEl) rateEl.value = suggestedPrice;
 
           QuotesPage.calcTotal();
-          UI.toast('🌳 ' + tree.species + ' — ' + tree.dbh + '" DBH — $' + suggestedPrice + ' suggested');
+          UI.toast('🌳 ' + tree.species + ' · ' + tree.dbh + '" DBH' + (tree.heightFt ? ' · ' + tree.heightFt + 'ft' : '') + ' · $' + suggestedPrice);
           QuotesPage.addItem();
         }
       } catch(e) {

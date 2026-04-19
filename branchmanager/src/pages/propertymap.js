@@ -318,8 +318,9 @@ var PropertyMap = {
       .setLngLat([lng, lat])
       .addTo(self.map);
 
-    var markerData = { id: eqId, label: eq.label, lng: lng, lat: lat, rotation: rotation, notes: notes || '', marker: marker, cleanup: function() { self.map.off('zoom', updateSize); } };
+    var markerData = { id: eqId, type: eqId, label: eq.label, lng: lng, lat: lat, rotation: rotation, notes: notes || '', marker: marker, cleanup: function() { self.map.off('zoom', updateSize); } };
     self.markers.push(markerData);
+    if (typeof window._bmEquipmentMapHook === 'function') window._bmEquipmentMapHook(self.markers);
 
     marker.on('dragend', function() {
       var pos = marker.getLngLat();

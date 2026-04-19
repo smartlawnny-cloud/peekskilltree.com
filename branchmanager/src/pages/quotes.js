@@ -462,21 +462,35 @@ var QuotesPage = {
       + '<div id="q-pertree-total" style="margin-top:12px;text-align:right;font-size:15px;font-weight:700;color:var(--green-dark);"></div>'
       + '</div>';
 
-    // ═══ EQUIPMENT ON THIS JOB (between Line Items and Totals) ═══
-    // Lives outside the T&M collapsible so it's visible upfront.
-    // T&M reads from these same checkboxes to compute its price check.
+    // ═══ EQUIPMENT ON THIS JOB — open Property Map to place equipment; ticked auto-sync ═══
+    // Hidden checkboxes below track which pieces are "on the job" (T&M reads them).
+    // User interacts via PropertyMap — dropping a pin auto-ticks the matching checkbox.
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="font-size:14px;font-weight:800;margin-bottom:4px;">🛠 Equipment on this job</div>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Pick what you\'ll bring. Used by the T&M price check below.</div>'
-      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;">'
-      +   QuotesPage._tmEquipPill('bucket', '🚛 Bucket truck', 75, tmData)
-      +   QuotesPage._tmEquipPill('chipper', '🪵 Chipper', 44, tmData)
-      +   QuotesPage._tmEquipPill('crane', '🏗 Crane', 200, tmData)
-      +   QuotesPage._tmEquipPill('stumpGrinder', '🪓 Stump grinder', 50, tmData)
-      +   QuotesPage._tmEquipPill('miniSkid', '🚜 Mini-skid / loader', 60, tmData)
-      +   QuotesPage._tmEquipPill('dumpTruck', '🛻 Dump truck', 40, tmData)
-      +   QuotesPage._tmEquipPill('liftLadder', '🪜 Man lift / ladder', 60, tmData)
-      +   QuotesPage._tmEquipPill('trailer', '🚚 Trailer / haul rig', 25, tmData)
+      + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:800;">🛠 Equipment on this job</div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Plan your job site on the satellite map — placed equipment auto-counts into the T&M total.</div>'
+      +   '</div>'
+      +   '<button type="button" onclick="QuotesPage._openEquipmentMap()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">🗺 Open Equipment Map →</button>'
+      + '</div>'
+      + '<div id="q-equip-summary" style="font-size:13px;color:var(--text-light);padding:10px 12px;background:var(--bg);border-radius:8px;">'
+      +   (function() {
+          var picked = ['bucket','chipper','crane','stumpGrinder','miniSkid','dumpTruck','liftLadder','trailer'].filter(function(k){return tmData[k];});
+          return picked.length
+            ? '✓ ' + picked.length + ' piece(s) planned'
+            : 'No equipment planned yet. Open the map to drag what you\'ll bring.';
+        })()
+      + '</div>'
+      // Hidden checkboxes — still wired as the source of truth for T&M cost
+      + '<div style="display:none;">'
+      +   QuotesPage._tmEquipPill('bucket', 'Bucket truck', 75, tmData)
+      +   QuotesPage._tmEquipPill('chipper', 'Chipper', 44, tmData)
+      +   QuotesPage._tmEquipPill('crane', 'Crane', 200, tmData)
+      +   QuotesPage._tmEquipPill('stumpGrinder', 'Stump grinder', 50, tmData)
+      +   QuotesPage._tmEquipPill('miniSkid', 'Mini-skid', 60, tmData)
+      +   QuotesPage._tmEquipPill('dumpTruck', 'Dump truck', 40, tmData)
+      +   QuotesPage._tmEquipPill('liftLadder', 'Man lift', 60, tmData)
+      +   QuotesPage._tmEquipPill('trailer', 'Trailer', 25, tmData)
       + '</div>'
       + '</div>';
 
@@ -914,6 +928,65 @@ var QuotesPage = {
       var c = document.getElementById('lb-count'); if (c) c.textContent = (idx+1) + ' / ' + photos.length;
     });
     document.body.appendChild(overlay);
+  },
+
+  // Open Property Map in equipment-planning mode; on close, sync placed equipment
+  // to the hidden T&M checkboxes so the T&M cost picks up whatever was dropped.
+  _openEquipmentMap: function() {
+    var address = (document.getElementById('q-property') || {}).value || '';
+    if (!address) {
+      var clientId = (document.getElementById('q-clientId') || {}).value;
+      var c = clientId ? DB.clients.getById(clientId) : null;
+      if (c && c.address) address = c.address;
+    }
+    if (!address) { UI.toast('Add a client + property first so the map knows where to show', 'error'); return; }
+
+    // Register a hook so PropertyMap calls us when its markers array changes/closes.
+    window._bmEquipmentMapHook = function(markers) {
+      QuotesPage._syncEquipmentFromMap(markers || []);
+    };
+
+    if (typeof PropertyMap !== 'undefined' && PropertyMap.show) {
+      PropertyMap.show(address, null);
+    } else {
+      UI.toast('Property map unavailable', 'error');
+    }
+  },
+
+  // Map the PropertyMap pin IDs onto our T&M equipment checkbox IDs.
+  // PropertyMap uses: bucket, chipper, crane, truck, ram, loader, trailer, climber, ground, dropzone, hazard, powerline
+  // Our T&M uses:     bucket, chipper, crane, stumpGrinder, miniSkid, dumpTruck, liftLadder, trailer
+  _mapMarkerToEquip: {
+    'bucket':       'bucket',
+    'chipper':      'chipper',
+    'crane':        'crane',
+    'truck':        'dumpTruck',
+    'loader':       'miniSkid',
+    'ram':          'dumpTruck',
+    'trailer':      'trailer'
+    // climber/ground = crew; dropzone/hazard/powerline = markers, no equipment cost
+  },
+
+  _syncEquipmentFromMap: function(markers) {
+    var present = {};
+    (markers || []).forEach(function(m) {
+      var equipKey = QuotesPage._mapMarkerToEquip[m.type || m.id];
+      if (equipKey) present[equipKey] = true;
+    });
+    // Tick the corresponding hidden checkboxes (T&M reads them next _calcTM)
+    ['bucket','chipper','crane','stumpGrinder','miniSkid','dumpTruck','liftLadder','trailer'].forEach(function(k) {
+      var cb = document.getElementById('q-tm-' + k.toLowerCase());
+      if (cb) cb.checked = !!present[k];
+    });
+    // Update the summary line
+    var count = Object.keys(present).length;
+    var summary = document.getElementById('q-equip-summary');
+    if (summary) {
+      summary.textContent = count
+        ? '✓ ' + count + ' piece(s) planned on the map'
+        : 'No equipment planned yet. Open the map to drag what you\'ll bring.';
+    }
+    QuotesPage._calcTM();
   },
 
   // PlantNet second-opinion — sends the line item's photos to PlantNet API

@@ -83,20 +83,29 @@ var TeamPage = {
   },
 
   saveMember: function(member) {
-    var members = TeamPage.getMembers();
-    var idx = members.findIndex(function(m) { return m.id === member.id; });
-    if (idx >= 0) {
-      members[idx] = member;
+    // Use DB.team so it also syncs to Supabase team_members (not just localStorage).
+    // Previously went straight to localStorage — team data vanished across devices.
+    if (typeof DB !== 'undefined' && DB.team) {
+      var existing = DB.team.getById(member.id);
+      if (existing) DB.team.update(member.id, member);
+      else DB.team.create(member);
     } else {
-      member.id = member.id || Date.now().toString(36);
-      members.push(member);
+      // Fallback (shouldn't happen — DB is always loaded)
+      var members = TeamPage.getMembers();
+      var idx = members.findIndex(function(m) { return m.id === member.id; });
+      if (idx >= 0) members[idx] = member;
+      else { member.id = member.id || Date.now().toString(36); members.push(member); }
+      localStorage.setItem('bm-team', JSON.stringify(members));
     }
-    localStorage.setItem('bm-team', JSON.stringify(members));
   },
 
   removeMember: function(id) {
-    var members = TeamPage.getMembers().filter(function(m) { return m.id !== id; });
-    localStorage.setItem('bm-team', JSON.stringify(members));
+    if (typeof DB !== 'undefined' && DB.team) {
+      DB.team.remove(id);
+    } else {
+      var members = TeamPage.getMembers().filter(function(m) { return m.id !== id; });
+      localStorage.setItem('bm-team', JSON.stringify(members));
+    }
   },
 
   weekHours: function() {

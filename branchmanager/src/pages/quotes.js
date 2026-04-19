@@ -486,10 +486,7 @@ var QuotesPage = {
       + '<span style="font-weight:600;">Total</span>'
       + '<span id="q-total-display" style="font-size:1.5rem;font-weight:800;">' + UI.money(_qGrandTotal) + '</span>'
       + '</div>'
-      + '<div style="padding:8px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px;background:#f0fdf4;border-top:1px solid #c8e6c9;">'
-      + '<span style="color:var(--text-light);">Est. Profit Margin <span id="q-margin-pct" style="font-weight:700;color:var(--green-dark);"></span></span>'
-      + '<span style="color:var(--text-light);">Cost: <input type="number" id="q-est-cost" value="' + (q.estimatedCost || '') + '" placeholder="0" oninput="QuotesPage._updateMargin()" style="width:70px;font-size:12px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;text-align:center;"> → Profit: <span id="q-profit-display" style="font-weight:700;color:var(--green-dark);">—</span></span>'
-      + '</div>'
+      // Est. Profit Margin row removed — T&M price check already shows cost vs line-item spread
       + '</div>';
 
     // Property Map moved to Step 2

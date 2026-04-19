@@ -479,6 +479,15 @@ var DB = (function() {
     requests.create({ clientId: clientList[2].id, clientName: 'Cynthia Ferral', property: '11 Piping Brook Lane, Bedford, NY 10506', phone: '(347) 776-1419', email: 'cynthiaferral@gmail.com', status: 'new', source: 'Facebook', notes: '' });
   }
 
+  // Team members — uses the generic create/update/remove so bm-team → Supabase team_members syncs automatically
+  var team = {
+    getAll: function() { return getAll(KEYS.team || 'bm-team'); },
+    getById: function(id) { return getAll(KEYS.team || 'bm-team').find(function(m){ return m.id === id; }) || null; },
+    create: function(data) { return create(KEYS.team || 'bm-team', data); },
+    update: function(id, data) { return update(KEYS.team || 'bm-team', id, data); },
+    remove: function(id) { remove(KEYS.team || 'bm-team', id); }
+  };
+
   return {
     clients: clients,
     requests: requests,
@@ -488,6 +497,7 @@ var DB = (function() {
     services: services,
     expenses: expenses,
     timeEntries: timeEntries,
+    team: team,
     dashboard: dashboard,
     importCSV: importCSV,
     seedDemo: seedDemo,

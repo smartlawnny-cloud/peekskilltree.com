@@ -131,9 +131,9 @@ var InvoicesPage = {
         + (self._search ? '<div style="color:var(--text-light);">No invoices match "' + self._search + '"</div>' : UI.emptyState('💰', 'No invoices yet', 'Complete a job and create an invoice.'))
         + '</div>';
     } else {
-      html += '<div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;">';
+      // ── DESKTOP list (denser rows) ──
+      html += '<div class="q-desktop-only" style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;">';
       page.forEach(function(inv) {
-        var statusColor = inv.status === 'paid' ? '#2e7d32' : inv.status === 'overdue' ? '#dc3545' : inv.status === 'draft' ? '#6c757d' : '#1565c0';
         html += '<div onclick="InvoicesPage.showDetail(\'' + inv.id + '\')" style="background:var(--white);padding:16px 20px;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'var(--white)\'">'
           + '<div style="flex:1;min-width:0;">'
           + '<div style="font-size:16px;font-weight:700;">' + UI.esc(inv.clientName || '—') + '</div>'
@@ -149,6 +149,49 @@ var InvoicesPage = {
           + '</div></div>';
       });
       html += '</div>';
+
+      // ── MOBILE cards ──
+      html += '<div class="q-mobile-only" style="display:none;">';
+      page.forEach(function(inv) {
+        var dueLabel = inv.dueDate ? ('Due ' + UI.dateShort(inv.dueDate)) : UI.dateShort(inv.createdAt || inv.date);
+        var bal = (inv.balance || 0) > 0;
+        html += '<div data-iid="' + inv.id + '" class="invoice-card" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'
+          +   '<div style="flex:1;min-width:0;">'
+          +     '<div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(inv.clientName || '—') + '</div>'
+          +     (inv.subject ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(inv.subject) + '</div>' : '')
+          +   '</div>'
+          +   '<div style="text-align:right;flex-shrink:0;">'
+          +     '<div style="font-size:17px;font-weight:800;color:var(--text);">' + UI.money(inv.total) + '</div>'
+          +     (bal ? '<div style="font-size:11px;color:' + ((inv.status === 'overdue' || inv.status === 'past_due') ? '#dc3545' : 'var(--text-light)') + ';margin-top:2px;">Bal ' + UI.money(inv.balance) + '</div>' : '')
+          +   '</div>'
+          + '</div>'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;flex-wrap:wrap;">'
+          +   '<div>' + UI.statusBadge(inv.status) + '</div>'
+          +   '<div style="font-size:11px;color:var(--text-light);">' + dueLabel + ' · #' + (inv.invoiceNumber || '') + '</div>'
+          + '</div>'
+          + '</div>';
+      });
+      html += '</div>';
+
+      // Mobile tap handlers
+      setTimeout(function() {
+        document.querySelectorAll('.invoice-card').forEach(function(card) {
+          var startX, startY, moved;
+          card.addEventListener('touchstart', function(e) {
+            var t = e.touches[0]; startX = t.clientX; startY = t.clientY; moved = false;
+          }, { passive: true });
+          card.addEventListener('touchmove', function(e) {
+            var t = e.touches[0];
+            if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) moved = true;
+          }, { passive: true });
+          card.addEventListener('click', function() {
+            if (moved) return;
+            var iid = this.getAttribute('data-iid');
+            if (iid) InvoicesPage.showDetail(iid);
+          });
+        });
+      }, 0);
     }
 
     // Pagination

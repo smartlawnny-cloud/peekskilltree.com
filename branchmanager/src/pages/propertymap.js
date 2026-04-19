@@ -58,18 +58,18 @@ var PropertyMap = {
   markers: [],
   // Equipment with relative dimensions (w x h in feet) for scaled rectangles on map
   equipmentList: [
-    { id: 'bucket', label: 'Bucket Truck', color: '#2196f3', w: 35, h: 10 },
-    { id: 'chipper', label: 'Chipper', color: '#4caf50', w: 14, h: 6 },
-    { id: 'crane', label: 'Crane', color: '#ff9800', w: 50, h: 12 },
-    { id: 'truck', label: 'Chip Truck', color: '#607d8b', w: 28, h: 9 },
-    { id: 'ram', label: 'Ram 2500', color: '#9c27b0', w: 20, h: 7 },
-    { id: 'loader', label: 'Loader', color: '#e91e63', w: 18, h: 8 },
-    { id: 'trailer', label: 'Trailer', color: '#78909c', w: 22, h: 8 },
-    { id: 'climber', label: 'Climber', color: '#f44336', w: 4, h: 4 },
-    { id: 'ground', label: 'Ground Crew', color: '#00bcd4', w: 4, h: 4 },
-    { id: 'dropzone', label: 'Drop Zone', color: '#ff5722', w: 30, h: 30 },
-    { id: 'hazard', label: 'Hazard', color: '#f44336', w: 6, h: 6 },
-    { id: 'powerline', label: 'Power Lines', color: '#ffc107', w: 4, h: 40 }
+    { id: 'bucket',    label: 'Bucket Truck', color: '#2196f3', w: 35, h: 10, icon: '🚛' },
+    { id: 'chipper',   label: 'Chipper',      color: '#4caf50', w: 14, h: 6,  icon: '🪵' },
+    { id: 'crane',     label: 'Crane',        color: '#ff9800', w: 50, h: 12, icon: '🏗' },
+    { id: 'truck',     label: 'Chip Truck',   color: '#607d8b', w: 28, h: 9,  icon: '🚚' },
+    { id: 'ram',       label: 'Ram 2500',     color: '#9c27b0', w: 20, h: 7,  icon: '🛻' },
+    { id: 'loader',    label: 'Loader',       color: '#e91e63', w: 18, h: 8,  icon: '🚜' },
+    { id: 'trailer',   label: 'Trailer',      color: '#78909c', w: 22, h: 8,  icon: '🚗' },
+    { id: 'climber',   label: 'Climber',      color: '#f44336', w: 4,  h: 4,  icon: '🧗' },
+    { id: 'ground',    label: 'Ground Crew',  color: '#00bcd4', w: 4,  h: 4,  icon: '👷' },
+    { id: 'dropzone',  label: 'Drop Zone',    color: '#ff5722', w: 30, h: 30, icon: '⛔' },
+    { id: 'hazard',    label: 'Hazard',       color: '#f44336', w: 6,  h: 6,  icon: '⚠️' },
+    { id: 'powerline', label: 'Power Lines',  color: '#ffc107', w: 4,  h: 40, icon: '⚡' }
   ],
 
   show: function(address, existingMarkers) {
@@ -97,18 +97,15 @@ var PropertyMap = {
     self.equipmentList.forEach(function(eq) {
       var pw = Math.max(Math.round(eq.w * 0.8), 8);
       var ph = Math.max(Math.round(eq.h * 0.8), 6);
+      var iconStr = '<span style="font-size:16px;line-height:1;">' + (eq.icon || '📍') + '</span>';
       if (isMobile) {
-        // Mobile: compact grid buttons
         eqButtons += '<button type="button" style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--white);border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;" '
           + 'onclick="PropertyMap.addEquipment(\'' + eq.id + '\')">'
-          + '<span style="display:inline-block;width:' + pw + 'px;height:' + ph + 'px;background:' + eq.color + ';border-radius:2px;flex-shrink:0;"></span>'
-          + eq.label + '</button>';
+          + iconStr + eq.label + '</button>';
       } else {
-        // Desktop: vertical list
         eqButtons += '<button class="btn btn-outline" style="width:100%;margin-bottom:6px;font-size:11px;padding:6px 8px;display:flex;align-items:center;gap:8px;" '
           + 'onclick="PropertyMap.addEquipment(\'' + eq.id + '\')">'
-          + '<span style="display:inline-block;width:' + pw + 'px;height:' + ph + 'px;background:' + eq.color + ';border-radius:2px;flex-shrink:0;opacity:.85;"></span>'
-          + eq.label + '</button>';
+          + iconStr + eq.label + '</button>';
       }
     });
 
@@ -354,19 +351,22 @@ var PropertyMap = {
     var eq = self.equipmentList.find(function(e) { return e.id === eqId; });
     if (!eq) return;
 
-    // Create scaled rectangle element with rotation support
+    // Marker: footprint rectangle (shows real equipment size) + big emoji on top
     var el = document.createElement('div');
     var rotation = savedRotation || 0;
-    var minW = Math.max(eq.w * 1.5, 30);
-    var minH = Math.max(eq.h * 1.5, 16);
-    el.style.cssText = 'width:' + minW + 'px;height:' + minH + 'px;background:' + eq.color + ';'
-      + 'border-radius:3px;display:flex;align-items:center;justify-content:center;'
-      + 'font-size:9px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.03em;'
-      + 'border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:grab;'
-      + 'text-shadow:0 1px 2px rgba(0,0,0,.5);line-height:1.1;text-align:center;padding:1px 3px;'
-      + 'opacity:.85;transition:transform 0.2s ease;position:relative;';
-    el.textContent = eq.label;
-    el.title = eq.label + ' — tap to rotate, drag to move';
+    var minW = Math.max(eq.w * 1.5, 34);
+    var minH = Math.max(eq.h * 1.5, 20);
+    el.style.cssText = 'width:' + minW + 'px;height:' + minH + 'px;background:' + eq.color + 'cc;'
+      + 'border-radius:4px;display:flex;align-items:center;justify-content:center;'
+      + 'border:2px solid rgba(255,255,255,.9);box-shadow:0 3px 10px rgba(0,0,0,.55);cursor:grab;'
+      + 'transition:transform 0.2s ease;position:relative;backdrop-filter:blur(2px);';
+    // Emoji icon + tiny label below
+    var iconSize = Math.max(Math.min(minH * 0.8, 28), 14);
+    el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;line-height:1;pointer-events:none;">'
+      + '<span style="font-size:' + iconSize + 'px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));">' + (eq.icon || '📍') + '</span>'
+      + (minH > 26 ? '<span style="font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);text-transform:uppercase;letter-spacing:.03em;margin-top:2px;">' + eq.label + '</span>' : '')
+      + '</div>';
+    el.title = eq.label + ' — tap ↻ to rotate, drag to move';
 
     // Rotate handle — bigger + clearer on touch
     var handle = document.createElement('div');
@@ -389,14 +389,18 @@ var PropertyMap = {
     handle.addEventListener('touchend', function(e) { e.stopPropagation(); e.preventDefault(); bumpRotation(); });
     el.addEventListener('contextmenu', function(e) { e.preventDefault(); e.stopPropagation(); bumpRotation(); });
 
-    // Update size on zoom (preserve rotation)
+    // Update size on zoom (preserve rotation). Emoji + label scale too.
     var updateSize = function() {
       var scale = Math.pow(2, (self.map.getZoom() - 18)) * 1.5;
       scale = Math.max(scale, 0.5);
       scale = Math.min(scale, 4);
-      el.style.width = Math.max(eq.w * scale, 28) + 'px';
-      el.style.height = Math.max(eq.h * scale, 14) + 'px';
-      el.style.fontSize = Math.max(7 * scale, 7) + 'px';
+      var w = Math.max(eq.w * scale, 34);
+      var h = Math.max(eq.h * scale, 20);
+      el.style.width = w + 'px';
+      el.style.height = h + 'px';
+      // Scale the emoji inside proportionally
+      var iconSpan = el.querySelector('span');
+      if (iconSpan) iconSpan.style.fontSize = Math.max(Math.min(h * 0.8, 28), 14) + 'px';
       el.style.transform = 'rotate(' + rotation + 'deg)';
     };
     self.map.on('zoom', updateSize);

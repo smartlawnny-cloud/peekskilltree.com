@@ -1,5 +1,5 @@
 {
-  "version": 262,
+  "version": 263,
   "released": "2026-04-19",
-  "notes": "PropertyMap terrain shading: free AWS Terrarium DEM + MapLibre hillshade layer with green/orange/cream color ramp. ⛰ button toggles overlay."
+  "notes": "PropertyMap: equipment markers now show emoji icons (🚛 🏗 🚜 🪵 🚚 🛻 etc.) on top of a colored footprint rectangle. Sidebar buttons also show the icon."
 }

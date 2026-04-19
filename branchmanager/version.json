@@ -1,5 +1,5 @@
 {
-  "version": 252,
+  "version": 253,
   "released": "2026-04-19",
-  "notes": "Tree ID smart fallback — PlantNet (free) first, Claude if PlantNet misses or not keyed; cloudkeys.js added to SW cache; extra pages in nav allowlist"
+  "notes": "Quote line-item photos: tap-to-delete via lightbox Delete button"
 }

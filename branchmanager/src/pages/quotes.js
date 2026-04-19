@@ -797,7 +797,7 @@ var QuotesPage = {
     if (photos.length) {
       photoHtml = '<div class="q-photo-grid" style="display:grid;grid-template-columns:repeat(' + Math.min(photos.length, 3) + ',1fr);gap:4px;margin-bottom:10px;">';
       photos.forEach(function(p, pi) {
-        photoHtml += '<img src="' + p + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(photos).replace(/"/g, '&quot;') + ',' + pi + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
+        photoHtml += '<img src="' + p + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(photos).replace(/"/g, '&quot;') + ',' + pi + ',' + index + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
       });
       if (photos.length > 3) photoHtml += '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;">+' + (photos.length - 3) + ' more — tap any photo to view</div>';
       photoHtml += '</div>';
@@ -923,14 +923,25 @@ var QuotesPage = {
   },
 
   // Fullscreen photo lightbox with swipe between images
-  _openLightbox: function(photos, startIdx) {
+  _openLightbox: function(photos, startIdx, wrapIndex) {
     var idx = startIdx || 0;
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;touch-action:pan-y;';
-    overlay.innerHTML = '<img id="lb-img" src="' + photos[idx] + '" style="max-width:96vw;max-height:90vh;object-fit:contain;border-radius:8px;">'
-      + '<div style="position:absolute;top:20px;right:20px;font-size:28px;color:#fff;cursor:pointer;" onclick="this.parentElement.remove()">×</div>'
+    overlay.innerHTML = '<img id="lb-img" src="' + photos[idx] + '" style="max-width:96vw;max-height:80vh;object-fit:contain;border-radius:8px;">'
+      + '<div style="position:absolute;top:20px;right:20px;font-size:28px;color:#fff;cursor:pointer;padding:6px 14px;" onclick="this.parentElement.remove()">×</div>'
+      + (typeof wrapIndex === 'number' ? '<button id="lb-del" style="position:absolute;bottom:70px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🗑 Delete this photo</button>' : '')
       + (photos.length > 1 ? '<div id="lb-count" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;background:rgba(0,0,0,.5);padding:6px 14px;border-radius:12px;">' + (idx+1) + ' / ' + photos.length + '</div>' : '');
     overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    // Wire delete
+    setTimeout(function() {
+      var del = document.getElementById('lb-del');
+      if (del) del.onclick = function(e) {
+        e.stopPropagation();
+        if (!confirm('Delete this photo?')) return;
+        QuotesPage._deleteQuotePhoto(wrapIndex, idx);
+        overlay.remove();
+      };
+    }, 0);
     // Swipe left/right
     var startX = 0;
     overlay.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; }, { passive: true });
@@ -943,6 +954,46 @@ var QuotesPage = {
       var c = document.getElementById('lb-count'); if (c) c.textContent = (idx+1) + ' / ' + photos.length;
     });
     document.body.appendChild(overlay);
+  },
+
+  // Remove a single photo from a quote line item (by wrap index + photo index)
+  _deleteQuotePhoto: function(wrapIndex, photoIndex) {
+    var wraps = document.querySelectorAll('.q-item-wrap');
+    var wrap = wraps[wrapIndex];
+    if (!wrap) return;
+    var row = wrap.querySelector('.quote-item-row');
+    if (!row) return;
+    var photos = [];
+    try { photos = JSON.parse(row.dataset.photos || '[]'); } catch(e) {}
+    if (!photos.length && row.dataset.photo) photos = [row.dataset.photo];
+    photos.splice(photoIndex, 1);
+    row.dataset.photos = JSON.stringify(photos);
+    row.dataset.photo = photos[0] || '';
+    // Re-render the grid
+    var body = wrap.querySelector('.q-item-body');
+    var existingGrid = body ? body.querySelector('.q-photo-grid') : null;
+    if (existingGrid) existingGrid.remove();
+    if (photos.length && body) {
+      var grid = document.createElement('div');
+      grid.className = 'q-photo-grid';
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(' + Math.min(photos.length, 3) + ',1fr);gap:4px;margin-bottom:10px;';
+      grid.innerHTML = photos.map(function(u, pi) {
+        return '<img src="' + u + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(photos).replace(/"/g,'&quot;') + ',' + pi + ',' + wrapIndex + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
+      }).join('');
+      body.insertBefore(grid, body.firstChild);
+    }
+    // Update header thumb
+    var headerThumb = wrap.querySelector('.q-item-header img');
+    if (headerThumb) {
+      if (photos[0]) headerThumb.src = photos[0];
+      else {
+        var placeholder = document.createElement('div');
+        placeholder.style.cssText = 'width:44px;height:44px;border:1px dashed var(--border);border-radius:6px;flex-shrink:0;';
+        headerThumb.replaceWith(placeholder);
+      }
+    }
+    UI.toast('Photo deleted');
+    QuotesPage._autoSave();
   },
 
   // Manually trigger AI on an already-uploaded tree row (works even when auto-AI is off,
@@ -964,6 +1015,8 @@ var QuotesPage = {
   _addMorePhotos: function(btn) {
     var wrap = btn.closest('.q-item-wrap');
     if (!wrap) return;
+    var allWraps = document.querySelectorAll('.q-item-wrap');
+    var wrapIdx = Array.prototype.indexOf.call(allWraps, wrap);
     var row = wrap.querySelector('.quote-item-row');
     var input = document.createElement('input');
     input.type = 'file';
@@ -993,7 +1046,7 @@ var QuotesPage = {
         grid.className = 'q-photo-grid';
         grid.style.cssText = 'display:grid;grid-template-columns:repeat(' + Math.min(all.length, 3) + ',1fr);gap:4px;margin-bottom:10px;';
         grid.innerHTML = all.map(function(u, pi) {
-          return '<img src="' + u + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(all).replace(/"/g,'&quot;') + ',' + pi + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
+          return '<img src="' + u + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(all).replace(/"/g,'&quot;') + ',' + pi + ',' + wrapIdx + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
         }).join('') + (all.length > 1 ? '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;">' + all.length + ' photos</div>' : '');
         if (body) body.insertBefore(grid, body.firstChild);
         UI.toast('📷 ' + newUrls.length + ' more photo(s) added — tap 🤖 Run AI to analyze');
@@ -1842,8 +1895,9 @@ var QuotesPage = {
           var grid = document.createElement('div');
           grid.className = 'q-photo-grid';
           grid.style.cssText = 'display:grid;grid-template-columns:repeat(' + Math.min(dataUrls.length, 3) + ',1fr);gap:4px;margin-bottom:10px;';
+          var lastIdx = wraps.length - 1;
           grid.innerHTML = dataUrls.map(function(u, pi) {
-            return '<img src="' + u + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(dataUrls).replace(/"/g,'&quot;') + ',' + pi + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
+            return '<img src="' + u + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(dataUrls).replace(/"/g,'&quot;') + ',' + pi + ',' + lastIdx + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
           }).join('') + (dataUrls.length > 1 ? '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;margin-top:2px;">' + dataUrls.length + ' photos — AI analyzing all</div>' : '');
           body.insertBefore(grid, body.firstChild);
           // Update header thumb

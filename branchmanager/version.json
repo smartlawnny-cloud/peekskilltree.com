@@ -1,5 +1,5 @@
 {
-  "version": 271,
+  "version": 272,
   "released": "2026-04-19",
-  "notes": "Recovery banner now shows 'N line items' in the subtitle AND exposes a 'Show data' button that alerts the raw saved JSON — so we can see ground truth without console access"
+  "notes": "CRITICAL: bump-version.sh now bumps every ?v= cache-buster on script/link tags. Previously my autosave + restore + diagnostic fixes never reached the browser because quotes.js was stuck at ?v=246. Also manually bumped quotes.js + propertymap.js this ship."
 }

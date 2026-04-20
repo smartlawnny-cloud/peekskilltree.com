@@ -53,6 +53,10 @@ sed -i.bak -E "s/>v[0-9]+<\/span>/>v$NEW<\/span>/" "$INDEX" && rm -f "$INDEX.bak
 # 3. sw.js — CACHE_NAME
 sed -i.bak -E "s/branch-manager-v[0-9]+/branch-manager-v$NEW/" "$SW" && rm -f "$SW.bak"
 
+# 4. index.html — bump EVERY per-file ?v= cache-buster on script/link tags
+# This makes each deploy pull fresh JS/CSS regardless of browser/SW cache.
+sed -i.bak -E "s/(\.(js|css))\?v=[0-9]+/\1?v=$NEW/g" "$INDEX" && rm -f "$INDEX.bak"
+
 # Verify all three agree
 V_JSON=$(grep -o '"version": *[0-9]*' "$VERSION_FILE" | grep -o '[0-9]*')
 V_HTML=$(grep -o 'BUNDLED_VERSION = [0-9]*' "$INDEX" | grep -o '[0-9]*' | head -1)

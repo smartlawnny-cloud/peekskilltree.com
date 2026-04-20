@@ -1,5 +1,5 @@
 {
-  "version": 278,
+  "version": 279,
   "released": "2026-04-19",
-  "notes": "Fix Schedule page crash: add Photos.getAll(type, id) alias for Photos.getPhotos — schedule.js still calls the old name from pre-Branch Cam"
+  "notes": "Equipment section: larger 'Open Equipment Map' button restored; checkbox list with 5 items (Bucket/Chipper/Dump/Mini-skid/Trailer — removed Crane/Stump Grinder/Man Lift per user). Running $/hr total still works."
 }

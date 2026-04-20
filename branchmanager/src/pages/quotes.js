@@ -472,57 +472,52 @@ var QuotesPage = {
       + '</div>';
 
     // Equipment block rendered below (after Internal Notes) — build string now, inject later
-    // Equipment card: visible pill picker + map button. Pills sync the hidden
-    // T&M checkboxes so you can tick equipment without opening the map.
+    // Equipment card: large Map button on top, checkbox list below.
+    // Removed crane / stump grinder / man lift per user (not used by Second Nature).
     var _equipCatalog = [
-      { key: 'bucket',       label: 'Bucket Truck', rate: 75,  icon: '🚛' },
-      { key: 'chipper',      label: 'Chipper',      rate: 44,  icon: '🪵' },
-      { key: 'crane',        label: 'Crane',        rate: 200, icon: '🏗' },
-      { key: 'dumpTruck',    label: 'Dump Truck',   rate: 40,  icon: '🚚' },
-      { key: 'miniSkid',     label: 'Mini-skid',    rate: 60,  icon: '🚜' },
-      { key: 'stumpGrinder', label: 'Stump Grinder',rate: 50,  icon: '⚙️' },
-      { key: 'liftLadder',   label: 'Man Lift',     rate: 60,  icon: '🪜' },
-      { key: 'trailer',      label: 'Trailer',      rate: 25,  icon: '🚗' }
+      { key: 'bucket',    label: 'Bucket Truck', rate: 75, icon: '🚛' },
+      { key: 'chipper',   label: 'Chipper',      rate: 44, icon: '🪵' },
+      { key: 'dumpTruck', label: 'Dump Truck',   rate: 40, icon: '🚚' },
+      { key: 'miniSkid',  label: 'Mini-skid',    rate: 60, icon: '🚜' },
+      { key: 'trailer',   label: 'Trailer',      rate: 25, icon: '🚗' }
     ];
     var _rates = QuotesPage.getTMRates();
     var _pickedKeys = _equipCatalog.filter(function(e){ return tmData[e.key]; });
     var _totalRate = _pickedKeys.reduce(function(s,e){ return s + (_rates[e.key] || e.rate); }, 0);
 
-    var _equipPills = _equipCatalog.map(function(e) {
+    var _equipChecks = _equipCatalog.map(function(e) {
       var on = !!tmData[e.key];
       var r = _rates[e.key] || e.rate;
-      return '<button type="button" onclick="QuotesPage._toggleEquip(\'' + e.key + '\', this)" '
-        + 'data-key="' + e.key + '" data-rate="' + r + '" '
-        + 'style="background:' + (on ? '#1a3c12' : 'var(--white)') + ';color:' + (on ? '#fff' : 'var(--text)') + ';'
-        + 'border:1px solid ' + (on ? '#1a3c12' : 'var(--border)') + ';padding:8px 12px;border-radius:999px;'
-        + 'font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">'
-        + '<span>' + e.icon + '</span> ' + e.label + ' <span style="opacity:.75;font-weight:500;">$' + r + '/hr</span></button>';
-    }).join(' ');
+      return '<label style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid ' + (on ? '#1a3c12' : 'var(--border)') + ';background:' + (on ? '#f0f5ed' : 'var(--white)') + ';border-radius:8px;cursor:pointer;font-size:14px;">'
+        + '<input type="checkbox"' + (on ? ' checked' : '') + ' data-key="' + e.key + '" data-rate="' + r + '" '
+        +   'onchange="QuotesPage._toggleEquipCheckbox(this)" style="width:20px;height:20px;cursor:pointer;accent-color:#1a3c12;">'
+        + '<span style="font-size:20px;">' + e.icon + '</span>'
+        + '<span style="flex:1;font-weight:600;">' + e.label + '</span>'
+        + '<span style="color:var(--text-light);font-size:12px;font-weight:500;">$' + r + '/hr</span>'
+        + '</label>';
+    }).join('');
 
     var _equipHtml = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;">'
       +   '<div>'
       +     '<div style="font-size:14px;font-weight:800;">🛠 Equipment on this job</div>'
-      +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Tap to pick — or use the map to place with direction.</div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Plan your job site on the satellite map — placed equipment auto-counts into the T&M total.</div>'
       +   '</div>'
-      +   '<button type="button" onclick="QuotesPage._openEquipmentMap()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;">🗺 Map</button>'
+      +   '<button type="button" onclick="QuotesPage._openEquipmentMap()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">🗺 Open Equipment Map →</button>'
       + '</div>'
-      // Visible pill picker
-      + '<div id="q-equip-pills" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">' + _equipPills + '</div>'
+      // Equipment checklist (5 items)
+      + '<div id="q-equip-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;margin-bottom:10px;">' + _equipChecks + '</div>'
       // Summary line with running total
       + '<div id="q-equip-summary" style="font-size:13px;color:var(--text);padding:10px 12px;background:var(--bg);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span id="q-equip-count-text">' + (_pickedKeys.length ? '✓ ' + _pickedKeys.length + ' piece(s) planned' : 'No equipment yet — tap a pill above.') + '</span>'
+      +   '<span id="q-equip-count-text">' + (_pickedKeys.length ? '✓ ' + _pickedKeys.length + ' piece(s) planned' : 'No equipment yet — check any above.') + '</span>'
       +   '<span id="q-equip-total-text" style="font-weight:700;color:var(--green-dark);">' + (_totalRate > 0 ? '$' + _totalRate + '/hr' : '') + '</span>'
       + '</div>'
-      // Hidden T&M checkboxes — source of truth for _calcTM
+      // Hidden T&M checkboxes — source of truth for _calcTM (kept for all possible keys)
       + '<div style="display:none;">'
       +   QuotesPage._tmEquipPill('bucket', 'Bucket truck', 75, tmData)
       +   QuotesPage._tmEquipPill('chipper', 'Chipper', 44, tmData)
-      +   QuotesPage._tmEquipPill('crane', 'Crane', 200, tmData)
-      +   QuotesPage._tmEquipPill('stumpGrinder', 'Stump grinder', 50, tmData)
-      +   QuotesPage._tmEquipPill('miniSkid', 'Mini-skid', 60, tmData)
       +   QuotesPage._tmEquipPill('dumpTruck', 'Dump truck', 40, tmData)
-      +   QuotesPage._tmEquipPill('liftLadder', 'Man lift', 60, tmData)
+      +   QuotesPage._tmEquipPill('miniSkid', 'Mini-skid', 60, tmData)
       +   QuotesPage._tmEquipPill('trailer', 'Trailer', 25, tmData)
       + '</div>'
       + '</div>';
@@ -1139,7 +1134,34 @@ var QuotesPage = {
 
   // Open Property Map in equipment-planning mode; on close, sync placed equipment
   // to the hidden T&M checkboxes so the T&M cost picks up whatever was dropped.
-  // Toggle an equipment pill → flips the hidden T&M checkbox + recomputes
+  // New checkbox-list handler (v279+)
+  _toggleEquipCheckbox: function(cb) {
+    var key = cb.dataset.key;
+    var on = cb.checked;
+    // Mirror to hidden T&M checkbox
+    var hidden = document.getElementById('q-tm-' + key.toLowerCase());
+    if (hidden) hidden.checked = on;
+    // Restyle the label parent
+    var label = cb.closest('label');
+    if (label) {
+      label.style.borderColor = on ? '#1a3c12' : 'var(--border)';
+      label.style.background = on ? '#f0f5ed' : 'var(--white)';
+    }
+    // Recompute count + total
+    var checks = document.querySelectorAll('#q-equip-list input[type=checkbox]');
+    var count = 0, total = 0;
+    checks.forEach(function(c) {
+      if (c.checked) { count++; total += parseFloat(c.dataset.rate) || 0; }
+    });
+    var cntEl = document.getElementById('q-equip-count-text');
+    var totEl = document.getElementById('q-equip-total-text');
+    if (cntEl) cntEl.textContent = count ? '✓ ' + count + ' piece(s) planned' : 'No equipment yet — check any above.';
+    if (totEl) totEl.textContent = total > 0 ? '$' + total + '/hr' : '';
+    if (QuotesPage._calcTM) QuotesPage._calcTM();
+    QuotesPage._autoSave();
+  },
+
+  // Legacy pill handler — kept for back-compat with any stale DOM
   _toggleEquip: function(key, btn) {
     var cb = document.getElementById('q-tm-' + key.toLowerCase());
     if (!cb) return;

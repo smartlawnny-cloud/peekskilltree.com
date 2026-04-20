@@ -1,5 +1,5 @@
 {
-  "version": 284,
+  "version": 285,
   "released": "2026-04-19",
-  "notes": "Weather toggle: hourly temp+rain% on day view time labels; week view shows weather ABOVE the date header; month view stays to right of date (both now include precipitation %). Added hourly fetch from open-meteo."
+  "notes": "Jobs 'Unscheduled' filter: orange banner with bulk 'Mark all N as completed' button. Jobber-imported jobs often have status=scheduled but no scheduledDate — this lets you clean them out in one tap."
 }

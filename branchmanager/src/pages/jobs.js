@@ -148,6 +148,17 @@ var JobsPage = {
       + '<input type="text" placeholder="Search jobs..." value="' + UI.esc(self._search) + '" oninput="JobsPage._search=this.value;JobsPage._page=0;loadPage(\'jobs\')">'
       + '</div></div>';
 
+    // Bulk close-out banner for "unscheduled" filter — Jobber-imported jobs
+    // often have status='scheduled' but no scheduledDate (effectively orphaned)
+    if (self._filter === 'unscheduled' && filtered.length > 0) {
+      html += '<div style="background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'
+        + '<div style="font-size:13px;color:#e65100;">'
+        +   '<strong>' + filtered.length + ' orphaned jobs</strong> — no scheduled date set. If these are old/finished, close them all out in one tap.'
+        + '</div>'
+        + '<button class="btn btn-primary" style="font-size:12px;background:#e65100;border:none;" onclick="JobsPage._bulkCloseUnscheduled()">Mark all ' + filtered.length + ' as completed</button>'
+        + '</div>';
+    }
+
     // Floating batch action bar (fixed to bottom)
     html += '<div id="job-bulk-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);animation:batchSlideUp .25s ease-out;">'
       + '<span id="job-bulk-count" style="font-weight:700;font-size:14px;">0 selected</span>'
@@ -285,6 +296,18 @@ var JobsPage = {
     JobsPage._page = 0; loadPage('jobs');
   },
   _setFilter: function(f) { JobsPage._filter = f; JobsPage._page = 0; loadPage('jobs'); },
+
+  _bulkCloseUnscheduled: function() {
+    var all = DB.jobs.getAll().filter(function(j) { return !j.scheduledDate && j.status !== 'completed' && j.status !== 'cancelled'; });
+    if (!all.length) { UI.toast('Nothing to close', 'error'); return; }
+    if (!confirm('Mark ' + all.length + ' orphaned jobs as completed?\n\nThis cannot be undone individually (but you can reopen each job.)')) return;
+    var now = new Date().toISOString();
+    all.forEach(function(j) {
+      DB.jobs.update(j.id, { status: 'completed', completedAt: now });
+    });
+    UI.toast('✓ ' + all.length + ' jobs marked completed');
+    loadPage('jobs');
+  },
   _goPage: function(p) { var t = Math.ceil(JobsPage._getFiltered().length / JobsPage._perPage); JobsPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('jobs'); },
 
   // Batch actions

@@ -1,5 +1,5 @@
 {
-  "version": 280,
+  "version": 281,
   "released": "2026-04-19",
-  "notes": "Autosave: debounce 2s→500ms, immediate save on blur/visibilitychange/pagehide/nav-item-click. Typed data now flushes BEFORE navigation tears down the form. Root cause of 'fields empty after restore' — debounce never fired in time."
+  "notes": "Schedule: unscheduled panel now accepts DROP from calendar — drag a scheduled job onto it to clear its scheduled date. Panel always visible (even empty) so it's a drop target."
 }

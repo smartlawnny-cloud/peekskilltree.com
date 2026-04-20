@@ -286,6 +286,20 @@ var SchedulePage = {
     setTimeout(function() { loadPage('schedule'); }, 300);
   },
 
+  _dropOnUnscheduled: function(e) {
+    e.preventDefault();
+    var el = e.currentTarget;
+    if (el) { el.style.background = 'var(--white)'; el.style.boxShadow = 'none'; }
+    var jobId = SchedulePage._dragJobId;
+    if (!jobId) return;
+    SchedulePage._flashDrop(el);
+    // Clear both scheduledDate and any specific startTime
+    DB.jobs.update(jobId, { scheduledDate: null, startTime: null });
+    UI.toast('Job unscheduled ✓');
+    SchedulePage._dragJobId = null;
+    setTimeout(function() { loadPage('schedule'); }, 300);
+  },
+
   _dropOnSlot: function(e, dateStr, hour) {
     e.preventDefault();
     var el = e.currentTarget;
@@ -311,10 +325,15 @@ var SchedulePage = {
 
     // Unscheduled jobs panel
     var unscheduled = allJobs.filter(function(j) { return !j.scheduledDate && j.status !== 'completed' && j.status !== 'cancelled'; });
+    // Always render the unscheduled panel (even when empty) so it accepts drops
+    html += '<div id="sched-unscheduled" '
+      + 'ondragover="event.preventDefault();this.style.background=\'#fff3e0\';this.style.boxShadow=\'inset 0 0 0 2px #e07c24\'" '
+      + 'ondragleave="this.style.background=\'var(--white)\';this.style.boxShadow=\'none\'" '
+      + 'ondrop="SchedulePage._dropOnUnscheduled(event)" '
+      + 'style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;transition:background .15s;">'
+      + '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">📋 Unscheduled Jobs (' + unscheduled.length + ') — <span style="font-size:12px;font-weight:400;color:var(--text-light);">drag jobs here to unschedule, or to calendar to schedule</span></div>';
     if (unscheduled.length > 0) {
-      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;">'
-        + '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">📋 Unscheduled Jobs (' + unscheduled.length + ') — <span style="font-size:12px;font-weight:400;color:var(--text-light);">drag to calendar</span></div>'
-        + '<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">';
+      html += '<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">';
       unscheduled.slice(0, 10).forEach(function(j) {
         html += '<div draggable="true" ondragstart="SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" '
           + 'style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:8px 12px;cursor:grab;min-width:160px;flex-shrink:0;">'
@@ -322,8 +341,11 @@ var SchedulePage = {
           + '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '') + '</div>'
           + '<div style="font-weight:700;font-size:12px;color:var(--green-dark);margin-top:4px;">' + UI.moneyInt(j.total) + '</div></div>';
       });
-      html += '</div></div>';
+      html += '</div>';
+    } else {
+      html += '<div style="font-size:12px;color:var(--text-light);padding:6px 0;">None — drop a scheduled job here to unschedule it.</div>';
     }
+    html += '</div>';
 
     html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;border:1px solid var(--border);">';
 
@@ -399,12 +421,16 @@ var SchedulePage = {
 
     var html = '';
 
-    // Unscheduled jobs panel for month view
+    // Unscheduled jobs panel for month view — always rendered so it accepts drops
     var unscheduled = allJobs.filter(function(j) { return !j.scheduledDate && j.status !== 'completed' && j.status !== 'cancelled'; });
+    html += '<div id="sched-unscheduled-m" '
+      + 'ondragover="event.preventDefault();this.style.background=\'#fff3e0\';this.style.boxShadow=\'inset 0 0 0 2px #e07c24\'" '
+      + 'ondragleave="this.style.background=\'var(--white)\';this.style.boxShadow=\'none\'" '
+      + 'ondrop="SchedulePage._dropOnUnscheduled(event)" '
+      + 'style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;transition:background .15s;">'
+      + '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">' + String.fromCharCode(128203) + ' Unscheduled Jobs (' + unscheduled.length + ') — <span style="font-size:12px;font-weight:400;color:var(--text-light);">drag here to unschedule, or to a day to schedule</span></div>';
     if (unscheduled.length > 0) {
-      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;">'
-        + '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">' + String.fromCharCode(128203) + ' Unscheduled Jobs (' + unscheduled.length + ') — <span style="font-size:12px;font-weight:400;color:var(--text-light);">drag to a day</span></div>'
-        + '<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">';
+      html += '<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">';
       unscheduled.slice(0, 10).forEach(function(j) {
         html += '<div draggable="true" ondragstart="SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" '
           + 'style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:8px 12px;cursor:grab;min-width:160px;flex-shrink:0;">'
@@ -412,8 +438,11 @@ var SchedulePage = {
           + '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || '') + '</div>'
           + '<div style="font-weight:700;font-size:12px;color:var(--green-dark);margin-top:4px;">' + UI.moneyInt(j.total) + '</div></div>';
       });
-      html += '</div></div>';
+      html += '</div>';
+    } else {
+      html += '<div style="font-size:12px;color:var(--text-light);padding:6px 0;">None — drop a scheduled job here to unschedule it.</div>';
     }
+    html += '</div>';
 
     html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;border:1px solid var(--border);">';
 

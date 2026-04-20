@@ -667,10 +667,10 @@ var QuotesPage = {
       try {
         var rd = JSON.parse(recovered);
         if (rd.clientName || (rd.lineItems && rd.lineItems.length > 0)) {
-          // Snapshot the recovery data + SUSPEND autosave so the empty-form
-          // tick doesn't overwrite the saved draft before user taps Restore.
+          // Snapshot into memory AND into a dedicated recovery key so the
+          // live autosave can't overwrite it. Autosave stays running normally.
           QuotesPage._pendingRestore = rd;
-          QuotesPage._suspendAutoSave = true;
+          try { localStorage.setItem(QuotesPage._autoSaveKey + '-recovery', JSON.stringify(rd)); } catch(e) {}
           var liCount = (rd.lineItems && rd.lineItems.length) || 0;
           var banner = document.createElement('div');
           banner.id = 'q-recovery-banner';
@@ -679,7 +679,7 @@ var QuotesPage = {
             + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
             + '<button onclick="QuotesPage._restoreAutoSave()" class="btn btn-primary" style="font-size:12px;padding:4px 12px;">Restore</button>'
             + '<button onclick="alert(localStorage.getItem(\'' + QuotesPage._autoSaveKey + '\'))" class="btn btn-outline" style="font-size:12px;padding:4px 10px;">Show data</button>'
-            + '<button onclick="this.parentElement.parentElement.remove();localStorage.removeItem(\'' + QuotesPage._autoSaveKey + '\');QuotesPage._pendingRestore=null;QuotesPage._suspendAutoSave=false;" class="btn btn-outline" style="font-size:12px;padding:4px 12px;">Discard</button>'
+            + '<button onclick="this.parentElement.parentElement.remove();localStorage.removeItem(\'' + QuotesPage._autoSaveKey + '\');localStorage.removeItem(\'' + QuotesPage._autoSaveKey + '-recovery\');QuotesPage._pendingRestore=null;" class="btn btn-outline" style="font-size:12px;padding:4px 12px;">Discard</button>'
             + '</div>';
           var formEl = document.getElementById('quote-form');
           if (formEl) formEl.parentElement.insertBefore(banner, formEl);
@@ -689,7 +689,6 @@ var QuotesPage = {
   },
 
   _autoSave: function() {
-    if (QuotesPage._suspendAutoSave) return; // blocked while a recovery banner is live
     var form = document.getElementById('quote-form');
     if (!form) return;
     // Client name comes from the search box (while picking) OR the summary
@@ -750,14 +749,13 @@ var QuotesPage = {
     var banner = document.getElementById('q-recovery-banner');
     if (banner) banner.remove();
     try {
-      // Prefer the in-memory snapshot (taken when banner was shown) so the
-      // autosave tick can't clobber the data between show and tap.
+      // Prefer the in-memory snapshot or the dedicated recovery key.
+      // Never read from the live autosave key — it may be empty by now.
       var data = QuotesPage._pendingRestore || null;
       if (!data) {
-        var rawData = localStorage.getItem(QuotesPage._autoSaveKey);
-        data = rawData ? JSON.parse(rawData) : null;
+        var raw = localStorage.getItem(QuotesPage._autoSaveKey + '-recovery');
+        data = raw ? JSON.parse(raw) : null;
       }
-      QuotesPage._suspendAutoSave = false; // re-enable autosave after restore
       if (!data) { UI.toast('Nothing to restore', 'error'); return; }
       var liCount = (data.lineItems && data.lineItems.length) || 0;
       console.log('[restore] saved data has ' + liCount + ' line items', data.lineItems);
@@ -850,7 +848,11 @@ var QuotesPage = {
 
   _clearAutoSave: function() {
     if (QuotesPage._autoSaveTimer) clearInterval(QuotesPage._autoSaveTimer);
-    if (QuotesPage._autoSaveKey) localStorage.removeItem(QuotesPage._autoSaveKey);
+    if (QuotesPage._autoSaveKey) {
+      localStorage.removeItem(QuotesPage._autoSaveKey);
+      localStorage.removeItem(QuotesPage._autoSaveKey + '-recovery');
+    }
+    QuotesPage._pendingRestore = null;
     window._quoteFormDirty = false;
     window.removeEventListener('beforeunload', QuotesPage._beforeUnload);
   },

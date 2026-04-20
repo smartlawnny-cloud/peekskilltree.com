@@ -1,5 +1,5 @@
 {
-  "version": 276,
+  "version": 277,
   "released": "2026-04-19",
-  "notes": "Restore race fix: banner now SNAPSHOTS the recovered data + SUSPENDS autosave while visible. Empty-form autosave tick can no longer clobber the saved draft before you tap Restore."
+  "notes": "Restore FINAL FIX: drop _suspendAutoSave (was silently blocking all saves once banner appeared). Recovery data now snapshotted into a separate -recovery localStorage key so live autosave can't touch it."
 }

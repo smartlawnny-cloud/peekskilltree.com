@@ -1,5 +1,5 @@
 {
-  "version": 290,
+  "version": 291,
   "released": "2026-04-19",
-  "notes": "Equipment map: mobile layout is now side-by-side (map LEFT, equipment list RIGHT in a 140px sidebar) instead of bottom drawer. Quote form has a new checkbox 'Show the equipment layout to the client on their approval page' (defaults ON, stored as q.showEquipMapToClient)."
+  "notes": "Show All toggle on Jobs / Quotes / Invoices / Clients lists — tap 'Show all N' in the pagination row to render every item on one page so bulk-select works across the entire filtered set. Tap again to go back to paginated. Requests already unpaginated."
 }

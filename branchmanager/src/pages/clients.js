@@ -115,8 +115,8 @@ var ClientsPage = {
         + '</div>';
     }
 
-    // Paginated slice
-    var pageClients = clients.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
+    // Paginated slice — skipped when Show All is active
+    var pageClients = self._showAll ? clients : clients.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
     // Card-style list (iOS/Airbnb vibe) — each client is a rounded card with spacing
     if (pageClients.length === 0) {
@@ -168,18 +168,22 @@ var ClientsPage = {
 
     // Pagination
     var totalPages = Math.ceil(clients.length / self._perPage);
-    if (totalPages > 1) {
-      html += '<div style="display:flex;justify-content:center;gap:4px;margin-top:12px;">';
-      html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(0)" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>«</button>';
-      html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
-      // Show max 5 page buttons
-      var startP = Math.max(0, self._page - 2);
-      var endP = Math.min(totalPages - 1, startP + 4);
-      for (var p = startP; p <= endP; p++) {
-        html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="ClientsPage.goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+    if (totalPages > 1 || self._showAll) {
+      html += '<div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;">';
+      if (!self._showAll) {
+        html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(0)" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>«</button>';
+        html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
+        var startP = Math.max(0, self._page - 2);
+        var endP = Math.min(totalPages - 1, startP + 4);
+        for (var p = startP; p <= endP; p++) {
+          html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="ClientsPage.goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+        }
+        html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
+        html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(' + (totalPages - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>»</button>';
       }
-      html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
-      html += '<button class="btn btn-outline" onclick="ClientsPage.goPage(' + (totalPages - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>»</button>';
+      html += '<button class="btn btn-outline" onclick="ClientsPage._toggleShowAll()" style="font-size:12px;padding:5px 12px;margin-left:8px;">'
+        + (self._showAll ? 'Paginate (' + self._perPage + '/page)' : 'Show all ' + clients.length)
+        + '</button>';
       html += '</div>';
     }
 
@@ -239,6 +243,8 @@ var ClientsPage = {
     else { ClientsPage._sort = field; ClientsPage._sortDir = 1; }
     loadPage('clients');
   },
+  _toggleShowAll: function() { ClientsPage._showAll = !ClientsPage._showAll; ClientsPage._page = 0; loadPage('clients'); },
+
   goPage: function(p) {
     var total = Math.ceil(ClientsPage._getFiltered().length / ClientsPage._perPage);
     ClientsPage._page = Math.max(0, Math.min(p, total - 1));

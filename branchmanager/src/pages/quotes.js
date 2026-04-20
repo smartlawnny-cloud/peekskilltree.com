@@ -54,7 +54,7 @@ var QuotesPage = {
       + '</div>';
 
     var filtered = self._getFiltered();
-    var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
+    var page = self._showAll ? filtered : filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
     // ── Header: title + chip filters + search ──
     var chipDefs = [['all','All'],['draft','Draft'],['awaiting','Awaiting'],['stale','Stale 7d+'],['changes_requested','Changes Req.'],['approved','Approved'],['converted','Converted']];
@@ -152,13 +152,18 @@ var QuotesPage = {
 
     // Pagination
     var totalPages = Math.ceil(filtered.length / self._perPage);
-    if (totalPages > 1) {
-      html += '<div style="display:flex;justify-content:center;gap:4px;margin-top:12px;">';
-      html += '<button class="btn btn-outline" onclick="QuotesPage._goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
-      for (var p = Math.max(0, self._page - 2); p <= Math.min(totalPages - 1, self._page + 2); p++) {
-        html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage._goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+    if (totalPages > 1 || self._showAll) {
+      html += '<div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;">';
+      if (!self._showAll) {
+        html += '<button class="btn btn-outline" onclick="QuotesPage._goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
+        for (var p = Math.max(0, self._page - 2); p <= Math.min(totalPages - 1, self._page + 2); p++) {
+          html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="QuotesPage._goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+        }
+        html += '<button class="btn btn-outline" onclick="QuotesPage._goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
       }
-      html += '<button class="btn btn-outline" onclick="QuotesPage._goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
+      html += '<button class="btn btn-outline" onclick="QuotesPage._toggleShowAll()" style="font-size:12px;padding:5px 12px;margin-left:8px;">'
+        + (self._showAll ? 'Paginate (' + self._perPage + '/page)' : 'Show all ' + filtered.length)
+        + '</button>';
       html += '</div>';
     }
 
@@ -229,6 +234,7 @@ var QuotesPage = {
   },
   _setFilter: function(f) { QuotesPage._filter = f; QuotesPage._page = 0; loadPage('quotes'); },
   _goPage: function(p) { var t = Math.ceil(QuotesPage._getFiltered().length / QuotesPage._perPage); QuotesPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('quotes'); },
+  _toggleShowAll: function() { QuotesPage._showAll = !QuotesPage._showAll; QuotesPage._page = 0; loadPage('quotes'); },
 
   _selectAll: function(checked) {
     document.querySelectorAll('.q-check').forEach(function(cb) { cb.checked = checked; });

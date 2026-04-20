@@ -90,7 +90,7 @@ var InvoicesPage = {
       + '</div>';
 
     var filtered = self._getFiltered();
-    var page = filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
+    var page = self._showAll ? filtered : filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
     // Jobber-style header + filter chips + search
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
@@ -197,13 +197,18 @@ var InvoicesPage = {
 
     // Pagination
     var totalPages = Math.ceil(filtered.length / self._perPage);
-    if (totalPages > 1) {
-      html += '<div style="display:flex;justify-content:center;gap:4px;margin-top:12px;">';
-      html += '<button class="btn btn-outline" onclick="InvoicesPage._goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
-      for (var p = Math.max(0, self._page - 2); p <= Math.min(totalPages - 1, self._page + 2); p++) {
-        html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="InvoicesPage._goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+    if (totalPages > 1 || self._showAll) {
+      html += '<div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;">';
+      if (!self._showAll) {
+        html += '<button class="btn btn-outline" onclick="InvoicesPage._goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
+        for (var p = Math.max(0, self._page - 2); p <= Math.min(totalPages - 1, self._page + 2); p++) {
+          html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="InvoicesPage._goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+        }
+        html += '<button class="btn btn-outline" onclick="InvoicesPage._goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
       }
-      html += '<button class="btn btn-outline" onclick="InvoicesPage._goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
+      html += '<button class="btn btn-outline" onclick="InvoicesPage._toggleShowAll()" style="font-size:12px;padding:5px 12px;margin-left:8px;">'
+        + (self._showAll ? 'Paginate (' + self._perPage + '/page)' : 'Show all ' + filtered.length)
+        + '</button>';
       html += '</div>';
     }
     return html;
@@ -244,6 +249,7 @@ var InvoicesPage = {
   },
   _setFilter: function(f) { InvoicesPage._filter = f; InvoicesPage._page = 0; loadPage('invoices'); },
   _goPage: function(p) { var t = Math.ceil(InvoicesPage._getFiltered().length / InvoicesPage._perPage); InvoicesPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('invoices'); },
+  _toggleShowAll: function() { InvoicesPage._showAll = !InvoicesPage._showAll; InvoicesPage._page = 0; loadPage('invoices'); },
 
   _selectAll: function(checked) {
     document.querySelectorAll('.inv-check').forEach(function(cb) { cb.checked = checked; });

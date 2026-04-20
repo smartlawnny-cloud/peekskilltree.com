@@ -299,10 +299,21 @@ var RequestsPage = {
     if (filtered.length === 0) {
       html += UI.emptyState('&#128229;', 'No requests found', self._search ? 'Try a different search term.' : 'New requests from your website form will appear here.');
     } else {
+      // Floating bulk bar
+      html += '<div id="req-bulk-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);">'
+        + '<span id="req-bulk-count" style="font-weight:700;font-size:14px;">0 selected</span>'
+        + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+        +   '<button onclick="RequestsPage._bulkConvert()" style="background:#2e7d32;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">➜ Convert to Quote</button>'
+        +   '<button onclick="RequestsPage._bulkIgnore()" style="background:#455a64;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🙈 Ignore</button>'
+        +   '<button onclick="RequestsPage._bulkDelete()" style="background:#c62828;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🗑 Delete</button>'
+        +   '<button onclick="RequestsPage._bulkClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
+        + '</div></div>';
+
       // ── DESKTOP table ──
       html += '<div class="q-desktop-only" style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;">';
       html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
         + '<thead><tr style="background:var(--bg);border-bottom:1px solid var(--border);">'
+        + '<th style="width:32px;padding:10px 8px;"><input type="checkbox" onchange="document.querySelectorAll(\'.req-check\').forEach(function(cb){cb.checked=event.target.checked;});RequestsPage._updateBulk();"></th>'
         + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Client</th>'
         + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Description</th>'
         + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Property</th>'
@@ -320,6 +331,7 @@ var RequestsPage = {
 
         html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;" '
           + 'onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'transparent\'">'
+          + '<td onclick="event.stopPropagation()" style="padding:12px 8px;"><input type="checkbox" class="req-check" value="' + r.id + '" onchange="RequestsPage._updateBulk()" style="width:16px;height:16px;"></td>'
           + '<td style="padding:12px 14px;font-weight:600;">' + UI.esc(r.clientName || 'Unknown') + '</td>'
           + '<td style="padding:12px 14px;color:var(--text-light);">' + UI.esc(desc || '—') + '</td>'
           + '<td style="padding:12px 14px;color:var(--text-light);font-size:12px;">' + UI.esc(prop || '—') + '</td>'
@@ -338,7 +350,9 @@ var RequestsPage = {
         var desc = r.service || r.notes || '';
         if (desc.length > 60) desc = desc.substring(0, 60) + '...';
         var returning = r.clientId ? '<span style="display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;background:#e8f0fe;color:#2b6cb0;margin-left:6px;font-weight:600;">Returning</span>' : '';
-        html += '<div data-rid="' + r.id + '" class="request-card" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;">'
+        html += '<div data-rid="' + r.id + '" class="request-card" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;display:flex;align-items:flex-start;gap:10px;">'
+          + '<div onclick="event.stopPropagation()" style="flex-shrink:0;padding-top:2px;"><input type="checkbox" class="req-check" value="' + r.id + '" onchange="RequestsPage._updateBulk()" style="width:18px;height:18px;"></div>'
+          + '<div style="flex:1;min-width:0;">'
           + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'
           +   '<div style="flex:1;min-width:0;">'
           +     '<div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(r.clientName || 'Unknown') + returning + '</div>'
@@ -351,6 +365,7 @@ var RequestsPage = {
           +   '<div style="font-size:11px;color:var(--text-light);">' + UI.esc(r.source || 'website') + '</div>'
           +   '<div style="font-size:11px;color:var(--text-light);">' + UI.dateShort(r.createdAt) + '</div>'
           + '</div>'
+          + '</div>' // close request-card flex wrap
           + '</div>';
       });
       html += '</div>';
@@ -772,5 +787,56 @@ var RequestsPage = {
     UI.closeModal();
     UI.toast('Confirmation sent to ' + r.email + ' ✅');
     RequestsPage.showDetail(id);
+  },
+
+  _updateBulk: function() {
+    var bar = document.getElementById('req-bulk-bar');
+    var count = document.querySelectorAll('.req-check:checked').length;
+    if (!bar) return;
+    bar.style.display = count > 0 ? 'flex' : 'none';
+    var cntEl = document.getElementById('req-bulk-count');
+    if (cntEl) cntEl.textContent = count + ' selected';
+  },
+  _bulkIds: function() { return Array.from(document.querySelectorAll('.req-check:checked')).map(function(cb){ return cb.value; }); },
+  _bulkClear: function() { document.querySelectorAll('.req-check:checked').forEach(function(cb){ cb.checked = false; }); RequestsPage._updateBulk(); },
+  _bulkDelete: function() {
+    var ids = RequestsPage._bulkIds();
+    if (!ids.length) return;
+    if (!confirm('Delete ' + ids.length + ' request(s)?')) return;
+    ids.forEach(function(id){ DB.requests.remove(id); });
+    UI.toast(ids.length + ' request(s) deleted');
+    loadPage('requests');
+  },
+  _bulkIgnore: function() {
+    var ids = RequestsPage._bulkIds();
+    if (!ids.length) return;
+    ids.forEach(function(id){ DB.requests.update(id, { status: 'ignored' }); });
+    UI.toast(ids.length + ' request(s) marked ignored');
+    loadPage('requests');
+  },
+  _bulkConvert: function() {
+    var ids = RequestsPage._bulkIds();
+    if (!ids.length) return;
+    if (!confirm('Create quotes from ' + ids.length + ' request(s)?')) return;
+    var made = 0;
+    ids.forEach(function(id) {
+      var r = DB.requests.getById(id);
+      if (!r) return;
+      DB.quotes.create({
+        clientId: r.clientId || null,
+        clientName: r.clientName || '',
+        property: r.property || '',
+        description: r.description || r.title || '',
+        lineItems: [],
+        subtotal: 0, taxRate: 8.375, taxAmount: 0, total: 0,
+        status: 'draft',
+        requestId: r.id,
+        createdAt: new Date().toISOString()
+      });
+      DB.requests.update(r.id, { status: 'converted' });
+      made++;
+    });
+    UI.toast(made + ' quote(s) created');
+    loadPage('quotes');
   }
 };

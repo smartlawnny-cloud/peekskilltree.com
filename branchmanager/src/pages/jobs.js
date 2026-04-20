@@ -114,13 +114,7 @@ var JobsPage = {
         + '<button onclick="JobsPage._batchInvoiceAll()" style="background:#fff;color:#2e7d32;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);">Create Invoices</button>'
         + '</div>';
     }
-    // Legacy previous system jobs banner (dismissible)
-    if (legacyNeedsInvoicing.length > 0) {
-      html += '<div style="background:#f5f5f5;border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">'
-        + '<div style="font-size:13px;color:var(--text-light);">📦 <strong>' + legacyNeedsInvoicing.length + ' older previous system jobs</strong> were already invoiced before migration — click to dismiss.</div>'
-        + '<button onclick="JobsPage._markAllLegacyInvoiced()" style="background:var(--border);color:var(--text);border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Mark as Invoiced (previous system)</button>'
-        + '</div>';
-    }
+    // (Legacy previous system jobs banner removed — was cluttering the page)
 
     var filtered = self._getFiltered();
     var page = self._showAll ? filtered : filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);

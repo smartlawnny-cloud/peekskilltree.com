@@ -1,5 +1,5 @@
 {
-  "version": 294,
+  "version": 295,
   "released": "2026-04-19",
-  "notes": "Invoice + Quote tax: displayed normally as 'Tax (8.375%)' with a small inline '(edit)' link — tap → inline input appears, change rate → blur → re-hides. Invoice Save & Send now opens a preview/delivery-chooser modal with Email, SMS link, Copy link, Open pay page options."
+  "notes": "Bulk everywhere: Clients + Requests now have row checkboxes + floating action bar (Convert/Ignore/Delete for requests; Active/Lead/Archive/Export/Delete for clients). Removed legacy previous-system jobs banner from Jobs page."
 }

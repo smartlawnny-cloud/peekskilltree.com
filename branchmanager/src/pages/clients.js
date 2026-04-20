@@ -115,6 +115,18 @@ var ClientsPage = {
         + '</div>';
     }
 
+    // Floating bulk bar (hidden until ≥1 client checkbox ticked)
+    html += '<div id="client-bulk-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);">'
+      + '<span id="client-bulk-count" style="font-weight:700;font-size:14px;">0 selected</span>'
+      + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+      +   '<button onclick="ClientsPage._bulkSetStatus(\'active\')" style="background:#2e7d32;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✓ Active</button>'
+      +   '<button onclick="ClientsPage._bulkSetStatus(\'lead\')" style="background:#e6a817;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Lead</button>'
+      +   '<button onclick="ClientsPage._bulkSetStatus(\'archived\')" style="background:#455a64;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📦 Archive</button>'
+      +   '<button onclick="ClientsPage._bulkExport()" style="background:#455a64;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📥 Export</button>'
+      +   '<button onclick="ClientsPage._bulkDelete()" style="background:#c62828;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🗑 Delete</button>'
+      +   '<button onclick="ClientsPage._bulkClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
+      + '</div></div>';
+
     // Paginated slice — skipped when Show All is active
     var pageClients = self._showAll ? clients : clients.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
@@ -142,6 +154,7 @@ var ClientsPage = {
         html += '<div class="client-card" data-status="' + c.status + '" data-cid="' + c.id + '" '
           + 'style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;'
           + 'box-shadow:0 1px 3px rgba(0,0,0,0.04);transition:box-shadow .15s,transform .1s;display:flex;align-items:center;gap:14px;-webkit-tap-highlight-color:transparent;">'
+          + '<div onclick="event.stopPropagation()" style="flex-shrink:0;"><input type="checkbox" class="client-check" value="' + c.id + '" onchange="ClientsPage._updateBulk()" style="width:18px;height:18px;"></div>'
           // Avatar circle
           + '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,' + statusColor + '22,' + statusColor + '44);color:' + statusColor + ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">' + initials + '</div>'
           // Main content
@@ -1163,6 +1176,58 @@ var ClientsPage = {
       footer: '<button class="btn btn-outline" onclick="UI.closeModal()">Close</button>'
         + ' <button class="btn btn-primary" onclick="UI.closeModal();QuotesPage.showForm(null, \'' + id + '\')">Create Quote</button>'
     });
+  },
+
+  _updateBulk: function() {
+    var bar = document.getElementById('client-bulk-bar');
+    var count = document.querySelectorAll('.client-check:checked').length;
+    if (!bar) return;
+    bar.style.display = count > 0 ? 'flex' : 'none';
+    var cntEl = document.getElementById('client-bulk-count');
+    if (cntEl) cntEl.textContent = count + ' selected';
+  },
+
+  _bulkGetIds: function() {
+    return Array.from(document.querySelectorAll('.client-check:checked')).map(function(cb){ return cb.value; });
+  },
+
+  _bulkClear: function() {
+    document.querySelectorAll('.client-check:checked').forEach(function(cb){ cb.checked = false; });
+    ClientsPage._updateBulk();
+  },
+
+  _bulkDelete: function() {
+    var ids = ClientsPage._bulkGetIds();
+    if (!ids.length) return;
+    if (!confirm('Delete ' + ids.length + ' client(s)? This cannot be undone.')) return;
+    ids.forEach(function(id){ DB.clients.remove(id); });
+    UI.toast(ids.length + ' client(s) deleted');
+    loadPage('clients');
+  },
+
+  _bulkSetStatus: function(status) {
+    var ids = ClientsPage._bulkGetIds();
+    if (!ids.length) return;
+    ids.forEach(function(id){ DB.clients.update(id, { status: status }); });
+    UI.toast(ids.length + ' client(s) marked ' + status);
+    loadPage('clients');
+  },
+
+  _bulkExport: function() {
+    var ids = ClientsPage._bulkGetIds();
+    if (!ids.length) return;
+    var rows = ['Name,Email,Phone,Address,Status,Company'];
+    ids.forEach(function(id) {
+      var c = DB.clients.getById(id); if (!c) return;
+      function q(v){ return '"' + ((v||'')+'').replace(/"/g,'""') + '"'; }
+      rows.push([q(c.name), q(c.email), q(c.phone), q(c.address), q(c.status), q(c.company)].join(','));
+    });
+    var blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'clients-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    UI.toast('Exported ' + ids.length + ' client(s)');
   }
 };
 

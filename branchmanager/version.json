@@ -1,5 +1,5 @@
 {
-  "version": 297,
+  "version": 298,
   "released": "2026-04-20",
-  "notes": "Bottom nav fix: inline style=display:none was overriding the CSS rule. Removed inline, added !important on the show rule."
+  "notes": "Settings: API Keys & Integrations section now starts collapsed by default (was auto-open when 0 keys configured)"
 }

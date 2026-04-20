@@ -368,7 +368,7 @@ var SettingsPage = {
     // so the Settings page doesn't feel like a mile of cards.
     var _intCount = ['bm-sendgrid-key','bm-claude-key','bm-stripe-base-link','bm-dialpad-key','bm-gusto-api-key','bm-plantnet-key']
       .filter(function(k){ return (localStorage.getItem(k) || '').length > 5; }).length;
-    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);" ' + (_intCount === 0 ? 'open' : '') + '>'
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<summary style="padding:16px 20px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
       +   '<span>🔌 API Keys &amp; Integrations</span>'
       +   '<span style="font-size:12px;color:var(--text-light);font-weight:500;">' + _intCount + ' / 6 connected · tap to expand</span>'

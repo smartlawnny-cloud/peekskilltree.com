@@ -17,50 +17,80 @@ var Email = {
     return !!Email.apiKey;
   },
 
-  // Send email via SendGrid (through Supabase Edge Function or direct)
+  // Basic email validation
+  _isValidEmail: function(e) { return typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); },
+
+  _mailto: function(to, subject, body) {
+    window.open('mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body));
+  },
+
+  // Send email via Supabase Edge Function → SendGrid
+  // If the Edge Function has SENDGRID_API_KEY as a server env var,
+  // we can skip sending the key from the client.
   send: async function(to, subject, body, options) {
     options = options || {};
 
+    // Refresh key in case user updated it since module load
+    if (!Email.apiKey) Email.apiKey = localStorage.getItem('bm-sendgrid-key') || null;
+
     if (!Email.isConfigured()) {
-      // Fallback: open mailto
-      var mailtoUrl = 'mailto:' + encodeURIComponent(to)
-        + '?subject=' + encodeURIComponent(subject)
-        + '&body=' + encodeURIComponent(body);
-      window.open(mailtoUrl);
+      Email._mailto(to, subject, body);
       UI.toast('Opening email client (SendGrid not configured)');
       return { success: true, method: 'mailto' };
     }
 
-    try {
-      // Send via Supabase Edge Function (avoids CORS) → forwards to SendGrid
-      var SUPA_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
-      var response = await fetch(SUPA_URL + '/functions/v1/send-email', {
+    if (!Email._isValidEmail(to)) {
+      UI.toast('Invalid recipient: ' + to, 'error');
+      return { success: false, method: 'invalid', error: 'bad recipient' };
+    }
+
+    var SUPA_URL = 'https://ltpivkqahvplapyagljt.supabase.co';
+    var payload = {
+      to: to, subject: subject,
+      text: body,
+      html: options.htmlBody || Email.htmlWrap(body)
+    };
+    // Prefer server-side env var. Only include key if user explicitly set it AND
+    // chose "send via client key" (defaults: include, since env may be unset).
+    if (Email.apiKey && !options.useServerKey) payload.apiKey = Email.apiKey;
+    if (options.replyTo) payload.replyTo = options.replyTo;
+    if (options.from) payload.from = options.from;
+
+    // Retry once on 5xx/429
+    var attempt = async function() {
+      return fetch(SUPA_URL + '/functions/v1/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: to,
-          subject: subject,
-          text: body,
-          html: options.htmlBody || Email.htmlWrap(body),
-          apiKey: Email.apiKey
-        })
+        body: JSON.stringify(payload)
       });
+    };
+
+    try {
+      var response = await attempt();
+      if ((response.status >= 500 || response.status === 429)) {
+        await new Promise(function(r){ setTimeout(r, 700); });
+        response = await attempt();
+      }
 
       if (response.ok || response.status === 202) {
         UI.toast('Email sent to ' + to);
-        return { success: true, method: 'sendgrid' };
-      } else {
-        var errText = await response.text();
-        console.warn('SendGrid error:', errText);
-        UI.toast('Email failed — opening mail app instead', 'error');
-        // Fallback to mailto
-        window.open('mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body));
-        return { success: false, method: 'mailto_fallback', error: errText };
+        return { success: true, method: 'sendgrid', status: response.status };
       }
+
+      // Classify the error for a clearer toast
+      var errText = await response.text();
+      var hint;
+      if (response.status === 401 || response.status === 403) hint = 'SendGrid key invalid or missing permissions';
+      else if (response.status === 400) hint = 'Bad request (likely unverified sender)';
+      else if (response.status === 429) hint = 'Rate limited — try later';
+      else hint = 'SendGrid ' + response.status;
+      console.warn('[Email] send failed:', response.status, errText);
+      UI.toast('Email failed: ' + hint + ' — tap to retry or use mail app', 'error');
+      return { success: false, method: 'sendgrid_error', status: response.status, error: errText, hint: hint };
     } catch (e) {
-      console.warn('Email send error:', e);
-      // Fallback
-      window.open('mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body));
+      console.warn('[Email] network error:', e);
+      UI.toast('Email failed: network — opening mail app', 'error');
+      Email._mailto(to, subject, body);
       return { success: false, method: 'mailto_fallback', error: e.message };
     }
   },

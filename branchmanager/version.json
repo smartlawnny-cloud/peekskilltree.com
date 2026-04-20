@@ -1,5 +1,5 @@
 {
-  "version": 291,
+  "version": 292,
   "released": "2026-04-19",
-  "notes": "Show All toggle on Jobs / Quotes / Invoices / Clients lists — tap 'Show all N' in the pagination row to render every item on one page so bulk-select works across the entire filtered set. Tap again to go back to paginated. Requests already unpaginated."
+  "notes": "SendGrid hardening: retry once on 5xx/429, classify errors (401/403/400/429) with clear toast hints, add email format validation, support server-side SENDGRID_API_KEY env (useServerKey option), no automatic mailto on every failure (only on network error). Edge Function already supports env fallback."
 }

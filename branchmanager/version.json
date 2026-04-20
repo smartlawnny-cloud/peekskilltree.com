@@ -1,5 +1,5 @@
 {
-  "version": 302,
+  "version": 303,
   "released": "2026-04-20",
-  "notes": "Bottom nav More: sidebar now opens as a drawer (was hidden by display:none !important even when .open class was added). Uses existing toggleSidebar() helper. Overlay covers rest of screen, tap to close."
+  "notes": "Nav spacing: REMOVED all env(safe-area-inset-top) math from topbar + content rules. Let Capacitor contentInset:automatic + native StatusBar plugin handle status bar entirely. Topbar gets plain 8px/48px. Bottom-nav mode keeps only bottom padding for the fixed bar."
 }

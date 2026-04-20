@@ -1,5 +1,5 @@
 {
-  "version": 275,
+  "version": 276,
   "released": "2026-04-19",
-  "notes": "Restore: catch per-item _itemRow errors + surface exact exception via toast; use firstElementChild (cleaner). Now every failure is LOUD."
+  "notes": "Restore race fix: banner now SNAPSHOTS the recovered data + SUSPENDS autosave while visible. Empty-form autosave tick can no longer clobber the saved draft before you tap Restore."
 }

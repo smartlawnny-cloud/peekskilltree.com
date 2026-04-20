@@ -168,9 +168,12 @@ var SchedulePage = {
       var hPad = (h < 10 ? '0' : '') + h;
       var slotJobs = dayJobs.filter(function(j) { return j.startTime && j.startTime.substring(0,2) === hPad; });
 
+      var hourlyWx = (typeof Weather !== 'undefined' && Weather.getHourly) ? Weather.getHourly(dateStr, h) : '';
       html += '<div style="display:flex;border-bottom:1px solid var(--border);min-height:52px;">'
-        + '<div style="width:70px;padding:8px 10px;font-size:12px;font-weight:600;color:var(--text-light);border-right:1px solid var(--border);flex-shrink:0;text-align:right;">'
-        + hour + ':00 ' + ampm + '</div>'
+        + '<div style="width:88px;padding:8px 10px;font-size:12px;font-weight:600;color:var(--text-light);border-right:1px solid var(--border);flex-shrink:0;text-align:right;">'
+        + hour + ':00 ' + ampm
+        + hourlyWx
+        + '</div>'
         + '<div data-date="' + dateStr + '" data-hour="' + h + '" '
         + 'ondragover="event.preventDefault();this.style.background=\'#e8f5e9\';this.style.border=\'2px dashed #4caf50\'" '
         + 'ondragleave="this.style.background=\'\';this.style.border=\'none\'" '
@@ -197,7 +200,7 @@ var SchedulePage = {
     var unscheduled = dayJobs.filter(function(j) { return !j.startTime; });
     if (unscheduled.length) {
       html += '<div style="display:flex;border-top:2px solid var(--accent);">'
-        + '<div style="width:70px;padding:8px 10px;font-size:11px;font-weight:700;color:var(--accent);border-right:1px solid var(--border);text-align:right;">Any<br>time</div>'
+        + '<div style="width:88px;padding:8px 10px;font-size:11px;font-weight:700;color:var(--accent);border-right:1px solid var(--border);text-align:right;">Any<br>time</div>'
         + '<div style="flex:1;padding:6px 8px;display:flex;gap:6px;flex-wrap:wrap;">';
       unscheduled.forEach(function(j) {
         html += '<div draggable="true" ondragstart="SchedulePage._dragStart(event,\'' + j.id + '\')" ondragend="SchedulePage._dragEnd(event)" '
@@ -355,9 +358,9 @@ var SchedulePage = {
       dd.setDate(dd.getDate() + i);
       var dateStr = dd.toISOString().split('T')[0];
       var isToday = dateStr === today;
-      html += '<div style="background:' + (isToday ? 'var(--green-dark)' : 'var(--bg)') + ';color:' + (isToday ? '#fff' : 'var(--text)') + ';padding:8px;text-align:center;font-size:12px;font-weight:700;">'
+      html += '<div style="background:' + (isToday ? 'var(--green-dark)' : 'var(--bg)') + ';color:' + (isToday ? '#fff' : 'var(--text)') + ';padding:6px 8px 8px;text-align:center;font-size:12px;font-weight:700;">'
+        + (typeof Weather !== 'undefined' ? '<div style="margin-bottom:2px;min-height:16px;">' + Weather.getInline(dateStr) + '</div>' : '')
         + days[i] + '<br><span style="font-size:18px;font-weight:800;">' + dd.getDate() + '</span>'
-        + (typeof Weather !== 'undefined' ? Weather.getInline(dateStr) : '')
         + '</div>';
     }
 

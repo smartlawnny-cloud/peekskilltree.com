@@ -51,8 +51,9 @@ var Weather = {
 
     var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + Weather.LAT + '&longitude=' + Weather.LON
       + '&current=temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m'
+      + '&hourly=temperature_2m,precipitation_probability,weather_code'
       + '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,wind_speed_10m_max'
-      + '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/New_York&forecast_days=5';
+      + '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/New_York&forecast_days=7';
 
     fetch(url).then(function(r) { return r.json(); }).then(function(data) {
       Weather.cache = data;
@@ -127,6 +128,24 @@ var Weather = {
     el.innerHTML = html;
   },
 
+  // Hourly inline for day view — returns "☀️ 62° · 💧20%" or ""
+  getHourly: function(dateStr, hour) {
+    if (!Weather.isEnabled() || !Weather.cache || !Weather.cache.hourly) return '';
+    var h = Weather.cache.hourly;
+    var hPad = (hour < 10 ? '0' : '') + hour;
+    var needle = dateStr + 'T' + hPad + ':00';
+    for (var i = 0; i < h.time.length; i++) {
+      if (h.time[i] === needle) {
+        var t = Math.round(h.temperature_2m[i]);
+        var p = h.precipitation_probability ? h.precipitation_probability[i] : 0;
+        var icon = Weather._icon(h.weather_code[i]);
+        var rainPart = p > 10 ? ' · <span style="color:' + (p > 60 ? '#e65100' : '#1976d2') + ';">💧' + p + '%</span>' : '';
+        return '<div style="font-size:10px;line-height:1.2;color:var(--text-light);margin-top:2px;font-weight:500;">' + icon + ' ' + t + '°' + rainPart + '</div>';
+      }
+    }
+    return '';
+  },
+
   // Get compact inline HTML for a specific date (for calendar headers)
   // Returns "☀️ 55°" or "" if no data
   getInline: function(dateStr) {
@@ -136,7 +155,9 @@ var Weather = {
       if (days.time[i] === dateStr) {
         var hi = Math.round(days.temperature_2m_max[i]);
         var icon = Weather._icon(days.weathercode[i]);
-        return '<span style="font-size:12px;" title="' + hi + '°F">' + icon + hi + '°</span>';
+        var rain = days.precipitation_probability_max ? days.precipitation_probability_max[i] : 0;
+        var rainStr = rain > 10 ? ' <span style="color:' + (rain > 60 ? '#e65100' : '#1976d2') + ';">' + rain + '%</span>' : '';
+        return '<span style="font-size:11px;" title="' + hi + '°F · ' + rain + '% rain">' + icon + ' ' + hi + '°' + rainStr + '</span>';
       }
     }
     return '';

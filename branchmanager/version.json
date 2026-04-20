@@ -1,5 +1,5 @@
 {
-  "version": 283,
+  "version": 284,
   "released": "2026-04-19",
-  "notes": "Schedule week view: remove '+ job' quick-create hints from empty cells. Create jobs via universal topbar + button."
+  "notes": "Weather toggle: hourly temp+rain% on day view time labels; week view shows weather ABOVE the date header; month view stays to right of date (both now include precipitation %). Added hourly fetch from open-meteo."
 }

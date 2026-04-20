@@ -639,12 +639,14 @@ var QuotesPage = {
       try {
         var rd = JSON.parse(recovered);
         if (rd.clientName || (rd.lineItems && rd.lineItems.length > 0 && rd.lineItems[0].service)) {
+          var liCount = (rd.lineItems && rd.lineItems.length) || 0;
           var banner = document.createElement('div');
           banner.id = 'q-recovery-banner';
-          banner.style.cssText = 'background:#fff3e0;border:1px solid #ffe0b2;border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;';
-          banner.innerHTML = '<div><strong style="color:#e65100;">📋 Recovered draft</strong><span style="font-size:13px;color:var(--text-light);margin-left:8px;">' + (rd.clientName || 'Unsaved quote') + ' — ' + new Date(rd.savedAt).toLocaleTimeString() + '</span></div>'
-            + '<div style="display:flex;gap:6px;">'
+          banner.style.cssText = 'background:#fff3e0;border:1px solid #ffe0b2;border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;';
+          banner.innerHTML = '<div><strong style="color:#e65100;">📋 Recovered draft</strong><span style="font-size:13px;color:var(--text-light);margin-left:8px;">' + (rd.clientName || 'Unsaved quote') + ' — ' + liCount + ' line item' + (liCount === 1 ? '' : 's') + ' — ' + new Date(rd.savedAt).toLocaleTimeString() + '</span></div>'
+            + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
             + '<button onclick="QuotesPage._restoreAutoSave()" class="btn btn-primary" style="font-size:12px;padding:4px 12px;">Restore</button>'
+            + '<button onclick="alert(localStorage.getItem(\'' + QuotesPage._autoSaveKey + '\'))" class="btn btn-outline" style="font-size:12px;padding:4px 10px;">Show data</button>'
             + '<button onclick="this.parentElement.parentElement.remove();localStorage.removeItem(\'' + QuotesPage._autoSaveKey + '\')" class="btn btn-outline" style="font-size:12px;padding:4px 12px;">Discard</button>'
             + '</div>';
           var formEl = document.getElementById('quote-form');

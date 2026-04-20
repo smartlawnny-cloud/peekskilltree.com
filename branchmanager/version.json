@@ -1,5 +1,5 @@
 {
-  "version": 270,
+  "version": 271,
   "released": "2026-04-19",
-  "notes": "Quote autosave: fire _autoSave() immediately after addItem, _addPhotoFirst, _addMorePhotos — button-driven actions don't trigger form input events so the 2s+15s saves would miss them"
+  "notes": "Recovery banner now shows 'N line items' in the subtitle AND exposes a 'Show data' button that alerts the raw saved JSON — so we can see ground truth without console access"
 }

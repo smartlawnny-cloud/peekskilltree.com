@@ -1,5 +1,5 @@
 {
-  "version": 295,
-  "released": "2026-04-19",
-  "notes": "Bulk everywhere: Clients + Requests now have row checkboxes + floating action bar (Convert/Ignore/Delete for requests; Active/Lead/Archive/Export/Delete for clients). Removed legacy previous-system jobs banner from Jobs page."
+  "version": 296,
+  "released": "2026-04-20",
+  "notes": "Bottom nav mode: detect Capacitor iOS app (window.Capacitor) as standalone, not just PWA install signals. Bottom nav now activates correctly inside the wrapped native app."
 }

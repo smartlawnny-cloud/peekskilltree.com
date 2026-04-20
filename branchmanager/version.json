@@ -1,5 +1,5 @@
 {
-  "version": 286,
+  "version": 287,
   "released": "2026-04-19",
-  "notes": "Jobs overview card: each dot row is now clickable and filters the list to that category (Ending within 30 days / Late / Requires Invoicing / Action Required / Unscheduled). Title 'Overview' still filters to All."
+  "notes": "Pre-Trip Inspection: moved off Jobs page onto its own sidebar tab (Pre-Trip). Added to auth allowlist."
 }

@@ -1,5 +1,5 @@
 {
-  "version": 292,
+  "version": 293,
   "released": "2026-04-19",
-  "notes": "SendGrid hardening: retry once on 5xx/429, classify errors (401/403/400/429) with clear toast hints, add email format validation, support server-side SENDGRID_API_KEY env (useServerKey option), no automatic mailto on every failure (only on network error). Edge Function already supports env fallback."
+  "notes": "Tax rate is now an inline editable input on Invoice + Quote forms (was hidden). Change on the fly — total recalcs live via oninput → calcTotal()."
 }

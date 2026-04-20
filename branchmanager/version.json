@@ -1,5 +1,5 @@
 {
-  "version": 281,
+  "version": 282,
   "released": "2026-04-19",
-  "notes": "Schedule: unscheduled panel now accepts DROP from calendar — drag a scheduled job onto it to clear its scheduled date. Panel always visible (even empty) so it's a drop target."
+  "notes": "Quote form: tap the 🌳 tree icon (or existing thumbnail) next to 'New tree' on a collapsed line item → opens photo picker. Adds photos to that row, refreshes both header thumb and body photo grid, and auto-fires Claude Haiku tree ID if AI is on."
 }

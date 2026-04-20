@@ -909,7 +909,9 @@ var QuotesPage = {
     // Summary strip: photo + species (AI-filled, extracted from description) + price + chevron
     // Species = the part of description BEFORE the first " — " (e.g. "White Oak" from
     // "White Oak — 22\" DBH — 45' tall — Good — healthy form")
-    var summaryThumb = photos.length ? '<img src="' + photos[0] + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0;">' : '<div style="width:40px;height:40px;background:var(--bg);border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:16px;flex-shrink:0;">🌳</div>';
+    var summaryThumb = photos.length
+      ? '<img src="' + photos[0] + '" onclick="event.stopPropagation();QuotesPage._uploadPhotoToRow(this)" style="width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer;">'
+      : '<div onclick="event.stopPropagation();QuotesPage._uploadPhotoToRow(this)" title="Tap to add photo" style="width:40px;height:40px;background:var(--bg);border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:16px;flex-shrink:0;cursor:pointer;">🌳</div>';
     var titleText;
     if (!hasContent) {
       titleText = 'New tree — fill below';
@@ -1112,6 +1114,64 @@ var QuotesPage = {
     var rows = document.querySelectorAll('.quote-item-row');
     var idx = Array.prototype.indexOf.call(rows, row);
     QuotesPage._identifyTree(photos, idx);
+  },
+
+  // Tap the tree thumbnail → upload a photo to THIS row. Replaces the placeholder
+  // for the header thumb + prepends the photo grid in the body.
+  _uploadPhotoToRow: function(thumbEl) {
+    var wrap = thumbEl.closest('.q-item-wrap');
+    if (!wrap) return;
+    var row = wrap.querySelector('.quote-item-row');
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.onchange = function(e) {
+      var files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      Promise.all(files.map(function(f) {
+        return new Promise(function(resolve) {
+          var r = new FileReader();
+          r.onload = function(ev) { resolve(ev.target.result); };
+          r.readAsDataURL(f);
+        });
+      })).then(function(newUrls) {
+        var existing = [];
+        if (row.dataset.photos) { try { existing = JSON.parse(row.dataset.photos); } catch(e){} }
+        else if (row.dataset.photo) { existing = [row.dataset.photo]; }
+        var all = existing.concat(newUrls).slice(0, 5);
+        row.dataset.photos = JSON.stringify(all);
+        row.dataset.photo = all[0];
+        // Swap header thumb to the new photo
+        var newThumb = document.createElement('img');
+        newThumb.src = all[0];
+        newThumb.style.cssText = 'width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer;';
+        newThumb.onclick = function(ev) { ev.stopPropagation(); QuotesPage._uploadPhotoToRow(newThumb); };
+        thumbEl.replaceWith(newThumb);
+        // Refresh the body photo grid
+        var allWraps = document.querySelectorAll('.q-item-wrap');
+        var wrapIdx = Array.prototype.indexOf.call(allWraps, wrap);
+        var body = wrap.querySelector('.q-item-body');
+        var existingGrid = body ? body.querySelector('.q-photo-grid') : null;
+        if (existingGrid) existingGrid.remove();
+        var grid = document.createElement('div');
+        grid.className = 'q-photo-grid';
+        grid.style.cssText = 'display:grid;grid-template-columns:repeat(' + Math.min(all.length, 3) + ',1fr);gap:4px;margin-bottom:10px;';
+        grid.innerHTML = all.map(function(u, pi) {
+          return '<img src="' + u + '" onclick="event.stopPropagation();QuotesPage._openLightbox(' + JSON.stringify(all).replace(/"/g,'&quot;') + ',' + pi + ',' + wrapIdx + ')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;">';
+        }).join('') + (all.length > 1 ? '<div style="grid-column:1/-1;font-size:11px;color:var(--text-light);text-align:center;">' + all.length + ' photos</div>' : '');
+        if (body) body.insertBefore(grid, body.firstChild);
+        UI.toast('📷 ' + newUrls.length + ' photo(s) added');
+        QuotesPage._autoSave();
+        // Optional auto-AI if enabled + key present
+        var aiOn = localStorage.getItem('bm-ai-enabled') !== '0';
+        var rowIdx = Array.prototype.indexOf.call(document.querySelectorAll('.quote-item-row'), row);
+        if (aiOn && localStorage.getItem('bm-claude-key')) {
+          QuotesPage._identifyTree(all, rowIdx);
+        }
+      });
+    };
+    input.click();
   },
 
   // Add more photos to an existing line item (appends to dataset.photos array)

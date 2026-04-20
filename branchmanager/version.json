@@ -1,5 +1,5 @@
 {
-  "version": 298,
+  "version": 299,
   "released": "2026-04-20",
-  "notes": "Settings: API Keys & Integrations section now starts collapsed by default (was auto-open when 0 keys configured)"
+  "notes": "Bottom nav layout: content gets top-padding equal to iOS safe-area + 14px so it's not flush against the status bar; white strip fills the status-bar area."
 }

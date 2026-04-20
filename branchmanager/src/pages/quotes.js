@@ -602,7 +602,8 @@ var QuotesPage = {
       + '<button class="btn btn-outline" onclick="QuotesPage.saveAs(\'draft\')">Save Draft</button>'
       + '<button class="btn btn-primary" onclick="QuotesPage.saveAs(\'sent\')">Save & Send</button>'
       + '</div></div>'
-      + '<h2 style="font-size:20px;margin-bottom:16px;">' + (quoteId ? 'Edit Quote #' + q.quoteNumber : 'New Quote') + '</h2>'
+      + '<h2 style="font-size:20px;margin-bottom:4px;">' + (quoteId ? 'Edit Quote #' + q.quoteNumber : 'New Quote') + '</h2>'
+      + '<div id="q-save-status" style="font-size:11px;color:var(--text-light);margin-bottom:12px;font-style:italic;">Not saved yet — start typing to auto-save.</div>'
       + html
       + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">'
       + '<button class="btn btn-outline" onclick="loadPage(\'quotes\')">Cancel</button>'
@@ -699,6 +700,16 @@ var QuotesPage = {
     try {
       localStorage.setItem(QuotesPage._autoSaveKey, JSON.stringify(data));
       console.log('[autoSave] ' + data.lineItems.length + ' line items saved, key=' + QuotesPage._autoSaveKey);
+      // Live status line so user can SEE that saves are happening
+      var statusEl = document.getElementById('q-save-status');
+      if (statusEl) {
+        var now = new Date();
+        var hh = now.getHours(), mm = String(now.getMinutes()).padStart(2, '0');
+        var hr12 = ((hh + 11) % 12) + 1;
+        statusEl.textContent = '💾 Saved: ' + data.lineItems.length + ' line item' + (data.lineItems.length === 1 ? '' : 's')
+          + (data.clientName ? ' · ' + data.clientName : '')
+          + ' · ' + hr12 + ':' + mm + (hh >= 12 ? 'p' : 'a');
+      }
     } catch(e) { console.warn('[autoSave] failed:', e); }
   },
 

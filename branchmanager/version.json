@@ -1,5 +1,5 @@
 {
-  "version": 272,
+  "version": 273,
   "released": "2026-04-19",
-  "notes": "CRITICAL: bump-version.sh now bumps every ?v= cache-buster on script/link tags. Previously my autosave + restore + diagnostic fixes never reached the browser because quotes.js was stuck at ?v=246. Also manually bumped quotes.js + propertymap.js this ship."
+  "notes": "Quote form: live 'Saved: N line items · client · HH:MM' status line under title. Updates every autosave so you can SEE what's being captured in real time."
 }

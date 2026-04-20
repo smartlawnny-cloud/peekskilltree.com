@@ -73,14 +73,14 @@ var JobsPage = {
     var upcomingTotal = upcomingVisits.reduce(function(s,j){return s+(j.total||0);},0);
 
     html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
-      // Overview
-      + '<div onclick="JobsPage._setFilter(\'all\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
-      + '<div style="font-size:12px;"><span style="color:#e6a817;">●</span> Ending within 30 days (' + upcomingVisits.length + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#dc3545;">●</span> Late (' + late + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#e6a817;">●</span> Requires Invoicing (' + needsInvoicing.length + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#fd7e14;">●</span> Action Required (' + actionReq.length + ')</div>'
-      + '<div style="font-size:12px;"><span style="color:#6c757d;">●</span> Unscheduled (' + unscheduled.length + ')</div>'
+      // Overview — each row filters to its category
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      + '<div style="font-size:14px;font-weight:700;margin-bottom:8px;cursor:pointer;" onclick="JobsPage._setFilter(\'all\')">Overview</div>'
+      + '<div style="font-size:12px;padding:2px 0;cursor:pointer;" onclick="JobsPage._setFilter(\'ending_soon\')"><span style="color:#e6a817;">●</span> Ending within 30 days (' + upcomingVisits.length + ')</div>'
+      + '<div style="font-size:12px;padding:2px 0;cursor:pointer;" onclick="JobsPage._setFilter(\'late\')"><span style="color:#dc3545;">●</span> Late (' + late + ')</div>'
+      + '<div style="font-size:12px;padding:2px 0;cursor:pointer;" onclick="JobsPage._setFilter(\'requires_invoicing\')"><span style="color:#e6a817;">●</span> Requires Invoicing (' + needsInvoicing.length + ')</div>'
+      + '<div style="font-size:12px;padding:2px 0;cursor:pointer;" onclick="JobsPage._setFilter(\'action_required\')"><span style="color:#fd7e14;">●</span> Action Required (' + actionReq.length + ')</div>'
+      + '<div style="font-size:12px;padding:2px 0;cursor:pointer;" onclick="JobsPage._setFilter(\'unscheduled\')"><span style="color:#6c757d;">●</span> Unscheduled (' + unscheduled.length + ')</div>'
       + '</div>'
       // Recent visits
       + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'

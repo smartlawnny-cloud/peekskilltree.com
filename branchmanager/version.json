@@ -1,5 +1,5 @@
 {
-  "version": 285,
+  "version": 286,
   "released": "2026-04-19",
-  "notes": "Jobs 'Unscheduled' filter: orange banner with bulk 'Mark all N as completed' button. Jobber-imported jobs often have status=scheduled but no scheduledDate — this lets you clean them out in one tap."
+  "notes": "Jobs overview card: each dot row is now clickable and filters the list to that category (Ending within 30 days / Late / Requires Invoicing / Action Required / Unscheduled). Title 'Overview' still filters to All."
 }

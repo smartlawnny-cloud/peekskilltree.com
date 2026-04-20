@@ -1,5 +1,5 @@
 {
-  "version": 277,
+  "version": 278,
   "released": "2026-04-19",
-  "notes": "Restore FINAL FIX: drop _suspendAutoSave (was silently blocking all saves once banner appeared). Recovery data now snapshotted into a separate -recovery localStorage key so live autosave can't touch it."
+  "notes": "Fix Schedule page crash: add Photos.getAll(type, id) alias for Photos.getPhotos — schedule.js still calls the old name from pre-Branch Cam"
 }

@@ -287,6 +287,11 @@ var Photos = {
     try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e) { return []; }
   },
 
+  // Back-compat alias — schedule.js + others call Photos.getAll(type, id)
+  getAll: function(recordType, recordId) {
+    return Photos.getPhotos(recordType, recordId);
+  },
+
   // Standard tags for tree-service work
   STANDARD_TAGS: ['Before', 'After', 'Hazard', 'Damage', 'Equipment', 'Permit', 'Receipt', 'Crew', 'Property'],
 

@@ -1,5 +1,5 @@
 {
-  "version": 300,
+  "version": 301,
   "released": "2026-04-20",
-  "notes": "Nav spacing unified + bulletproof. New html.bm-standalone class set when PWA install OR Capacitor iOS app detected. Top nav mode: topbar padding-top has a 54px minimum floor. Bottom nav mode: content padding-top has a 60px minimum floor. No more relying on env(safe-area-inset-top) which returns 0 in Capacitor WKWebView."
+  "notes": "Bottom nav order: Home · Today · Clients · Search (2nd from right) · More. Search replaces Quotes in the 4th slot per original spec."
 }

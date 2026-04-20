@@ -1,5 +1,5 @@
 {
-  "version": 274,
+  "version": 275,
   "released": "2026-04-19",
-  "notes": "Quote form Equipment section: visible pill picker for all 8 equipment types (Bucket/Chipper/Crane/Dump/Mini-skid/Stump Grinder/Man Lift/Trailer) + running $/hr total. Tap pill to include/exclude without opening the map."
+  "notes": "Restore: catch per-item _itemRow errors + surface exact exception via toast; use firstElementChild (cleaner). Now every failure is LOUD."
 }

@@ -774,41 +774,46 @@ var QuotesPage = {
       // on slow devices, and the restore silently no-op'd.
       if (data.lineItems && data.lineItems.length > 0) {
         setTimeout(function() {
-          var container = document.getElementById('q-items');
-          if (!container) {
-            console.warn('[restore] #q-items container missing — items lost');
-            UI.toast('Could not find line items container', 'error');
-            return;
-          }
-          container.innerHTML = '';
-          var services = (typeof DB !== 'undefined' && DB.services) ? DB.services.getAll() : [];
-          var appended = 0;
-          data.lineItems.forEach(function(li, i) {
-            var tmp = document.createElement('div');
-            tmp.innerHTML = QuotesPage._itemRow(i, li, services, /*expanded=*/ i === data.lineItems.length - 1);
-            // Find the wrap element (skip any whitespace text nodes)
-            var newWrap = null;
-            for (var c = 0; c < tmp.childNodes.length; c++) {
-              if (tmp.childNodes[c].nodeType === 1) { newWrap = tmp.childNodes[c]; break; }
+          try {
+            var container = document.getElementById('q-items');
+            if (!container) {
+              UI.toast('⚠ Cannot restore — q-items container missing', 'error');
+              return;
             }
-            if (newWrap) {
+            container.innerHTML = '';
+            var services = (typeof DB !== 'undefined' && DB.services) ? DB.services.getAll() : [];
+            var appended = 0;
+            data.lineItems.forEach(function(li, i) {
+              var tmp = document.createElement('div');
+              try {
+                tmp.innerHTML = QuotesPage._itemRow(i, li || {}, services, /*expanded=*/ i === data.lineItems.length - 1);
+              } catch (rowErr) {
+                console.error('[restore] _itemRow threw for item ' + i, rowErr, li);
+                UI.toast('Item ' + (i+1) + ' render error: ' + rowErr.message, 'error');
+                return; // skip this item
+              }
+              var newWrap = tmp.firstElementChild;
+              if (!newWrap) {
+                console.warn('[restore] no element after innerHTML for item ' + i, tmp.innerHTML.slice(0, 200));
+                return;
+              }
               container.appendChild(newWrap);
               appended++;
               var row = newWrap.querySelector('.quote-item-row');
               if (row) {
-                if (li.photos && li.photos.length) row.dataset.photos = JSON.stringify(li.photos);
-                if (li.photo) row.dataset.photo = li.photo;
+                if (li && li.photos && li.photos.length) row.dataset.photos = JSON.stringify(li.photos);
+                if (li && li.photo) row.dataset.photo = li.photo;
               }
-            }
-          });
-          QuotesPage.calcTotal();
-          console.log('[restore] appended ' + appended + ' / ' + data.lineItems.length + ' line items');
-          if (appended < data.lineItems.length) {
-            UI.toast('Only ' + appended + ' of ' + data.lineItems.length + ' line items restored', 'error');
+            });
+            QuotesPage.calcTotal();
+            UI.toast('✅ Restored ' + appended + ' of ' + data.lineItems.length + ' line items');
+          } catch (loopErr) {
+            console.error('[restore] loop crashed', loopErr);
+            UI.toast('Restore loop crashed: ' + loopErr.message, 'error');
           }
         }, 250);
       } else {
-        console.log('[restore] no line items in saved data:', data.lineItems);
+        UI.toast('No line items in saved draft', 'error');
       }
 
       // Remove recovery banner — try class first, then text fallback

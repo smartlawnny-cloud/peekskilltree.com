@@ -164,6 +164,7 @@ var SupabaseDB = {
     if (SupabaseDB._debug) console.log('Initial sync complete');
     UI.toast('Data synced to cloud!');
     SupabaseDB.startPaymentPolling();
+    SupabaseDB.startLiveSync();
   },
 
   _pullFromCloud: async function() {
@@ -234,6 +235,7 @@ var SupabaseDB = {
     }
 
     SupabaseDB.startPaymentPolling();
+    SupabaseDB.startLiveSync();
     if (totalPulled > 0) {
       if (SupabaseDB._debug) console.log('Cloud sync complete: ' + totalPulled + ' total records');
       UI.toast(totalPulled + ' records synced from cloud');
@@ -316,6 +318,29 @@ var SupabaseDB = {
     SupabaseDB._pollInterval = setInterval(function() {
       SupabaseDB._checkNewPayments();
     }, 2 * 60 * 1000); // every 2 minutes
+  },
+
+  // Live sync: pull clients/requests/quotes/jobs/invoices from cloud every 30s
+  // while the app is visible. Gives near-realtime cross-device updates.
+  _livePollInterval: null,
+  startLiveSync: function() {
+    if (SupabaseDB._livePollInterval) return;
+    var tick = async function() {
+      if (document.hidden) return; // save battery when tab backgrounded
+      if (!SupabaseDB.ready || !SupabaseDB.client) return;
+      try {
+        if (typeof CloudSync !== 'undefined' && !CloudSync.syncing) {
+          await CloudSync.init();
+        }
+      } catch(e) {}
+    };
+    SupabaseDB._livePollInterval = setInterval(tick, 30 * 1000); // 30s
+    // Also sync when tab comes back into focus
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) tick();
+    });
+    // Also on window focus (app return from background in PWA/Capacitor)
+    window.addEventListener('focus', tick);
   },
 
   _checkNewPayments: async function() {

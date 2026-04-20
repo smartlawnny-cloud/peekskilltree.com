@@ -1,5 +1,5 @@
 {
-  "version": 303,
+  "version": 304,
   "released": "2026-04-20",
-  "notes": "Nav spacing: REMOVED all env(safe-area-inset-top) math from topbar + content rules. Let Capacitor contentInset:automatic + native StatusBar plugin handle status bar entirely. Topbar gets plain 8px/48px. Bottom-nav mode keeps only bottom padding for the fixed bar."
+  "notes": "Live sync: clients/requests/quotes/jobs/invoices now auto-pull from Supabase every 30s while app is visible + immediately on tab focus / app return. Near-realtime across all devices."
 }

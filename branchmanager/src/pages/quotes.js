@@ -515,6 +515,10 @@ var QuotesPage = {
       +   '</div>'
       +   '<button type="button" onclick="QuotesPage._openEquipmentMap()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">🗺 Open Equipment Map →</button>'
       + '</div>'
+      + '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-light);margin-bottom:8px;cursor:pointer;">'
+      +   '<input type="checkbox" id="q-show-equipmap-client"' + (q.showEquipMapToClient !== false ? ' checked' : '') + ' style="width:16px;height:16px;cursor:pointer;accent-color:var(--green-dark);">'
+      +   'Show the equipment layout to the client on their approval page'
+      + '</label>'
       // Equipment checklist (5 items)
       + '<div id="q-equip-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;margin-bottom:10px;">' + _equipChecks + '</div>'
       // Summary line with running total
@@ -1706,6 +1710,7 @@ var QuotesPage = {
       taxAmount: taxAmount,
       total: total,
       notes: document.getElementById('q-notes').value.trim(),
+      showEquipMapToClient: !!(document.getElementById('q-show-equipmap-client') || {}).checked,
       status: form.dataset.saveStatus || 'draft',
       // Preserve origin request link (don't lose on edit)
       requestId: QuotesPage._originRequestId || existingQ.requestId || null,

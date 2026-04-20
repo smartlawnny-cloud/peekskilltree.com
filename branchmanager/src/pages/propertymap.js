@@ -107,7 +107,7 @@ var PropertyMap = {
 
     var html;
     if (isMobile) {
-      // ── MOBILE: Full page layout with bottom equipment drawer ──
+      // ── MOBILE: Map LEFT, equipment list RIGHT (side-by-side) ──
       html = '<div id="propmap-fullpage" style="position:fixed;inset:0;z-index:9999;background:var(--white);display:flex;flex-direction:column;">'
         // Top bar
         + '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--white);border-bottom:1px solid var(--border);z-index:10;">'
@@ -115,21 +115,16 @@ var PropertyMap = {
         + '<input type="text" id="map-address" value="' + (address || '') + '" placeholder="Enter address..." style="flex:1;padding:8px 10px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;">'
         + '<button class="btn btn-primary" style="padding:6px 12px;font-size:13px;" onclick="PropertyMap.geocode()">Go</button>'
         + '</div>'
-        // Map (fills available space)
-        + '<div style="flex:1;position:relative;">'
-        + '<div id="prop-map" style="width:100%;height:100%;"></div>'
-        // Placed count badge
-        + '<div id="placed-count" style="position:absolute;top:10px;right:10px;background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;display:none;">0 placed</div>'
-        + '</div>'
-        // Equipment drawer — collapsed by default (tap pill to expand)
-        + '<div id="eq-drawer" style="background:var(--bg);border-top:1px solid var(--border);">'
-        +   '<button id="eq-drawer-toggle" type="button" onclick="PropertyMap._toggleDrawer()" style="width:100%;background:transparent;border:none;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--text);">'
-        +     '<span>🛠 Equipment <span style="color:var(--text-light);font-weight:500;margin-left:6px;">· tap to pick</span></span>'
-        +     '<span id="eq-drawer-chev" style="font-size:14px;color:var(--text-light);transform:rotate(0deg);transition:transform .2s;">▴</span>'
-        +   '</button>'
-        +   '<div id="eq-drawer-body" style="display:none;padding:0 12px 10px;">'
-        +     '<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button class="btn btn-outline" style="font-size:11px;padding:4px 8px;" onclick="PropertyMap.clearMarkers()">Clear all</button></div>'
-        +     '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;">' + eqButtons + '</div>'
+        // Body: map left, equipment sidebar right
+        + '<div style="flex:1;display:flex;min-height:0;">'
+        +   '<div style="flex:1;position:relative;min-width:0;">'
+        +     '<div id="prop-map" style="width:100%;height:100%;"></div>'
+        +     '<div id="placed-count" style="position:absolute;top:10px;right:10px;background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;display:none;">0 placed</div>'
+        +   '</div>'
+        +   '<div style="width:140px;background:var(--bg);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;">'
+        +     '<div style="padding:8px 10px;background:var(--white);border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">🛠 Equipment</div>'
+        +     '<div id="eq-drawer-body" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;">' + eqButtons + '</div>'
+        +     '<button class="btn btn-outline" style="margin:6px 8px 8px;font-size:11px;padding:6px;" onclick="PropertyMap.clearMarkers()">Clear all</button>'
         +   '</div>'
         + '</div>'
         // Bottom action bar

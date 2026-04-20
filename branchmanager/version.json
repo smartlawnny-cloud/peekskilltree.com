@@ -1,5 +1,5 @@
 {
-  "version": 287,
+  "version": 288,
   "released": "2026-04-19",
-  "notes": "Pre-Trip Inspection: moved off Jobs page onto its own sidebar tab (Pre-Trip). Added to auth allowlist."
+  "notes": "Bulk edit expansion: Jobs adds Reschedule/Unschedule/Delete. Invoices adds Delete. Quotes adds Delete. All pages now have checkbox selection + floating action bar with confirmation dialogs."
 }

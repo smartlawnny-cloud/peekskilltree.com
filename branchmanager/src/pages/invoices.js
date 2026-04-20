@@ -118,9 +118,10 @@ var InvoicesPage = {
     html += '<div id="inv-batch-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);animation:invBatchSlideUp .25s ease-out;">'
       + '<span id="inv-batch-count" style="font-weight:700;font-size:14px;">0 selected</span>'
       + '<div style="display:flex;gap:8px;align-items:center;">'
-      + '<button onclick="InvoicesPage._batchPaid()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Mark Paid</button>'
-      + '<button onclick="InvoicesPage._batchSendAll()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Send All</button>'
-      + '<button onclick="InvoicesPage._batchExport()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Export</button>'
+      + '<button onclick="InvoicesPage._batchPaid()" style="background:#2e7d32;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">💰 Mark Paid</button>'
+      + '<button onclick="InvoicesPage._batchSendAll()" style="background:#2e7d32;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📧 Send</button>'
+      + '<button onclick="InvoicesPage._batchExport()" style="background:#455a64;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📥 Export</button>'
+      + '<button onclick="InvoicesPage._batchDelete()" style="background:#c62828;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🗑 Delete</button>'
       + '<button onclick="InvoicesPage._batchClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
       + '</div></div>'
       + '<style>@keyframes invBatchSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>';
@@ -355,6 +356,15 @@ var InvoicesPage = {
       loadPage('invoices');
     });
   },
+  _batchDelete: function() {
+    var ids = InvoicesPage._getSelected();
+    if (ids.length === 0) return;
+    if (!confirm('Delete ' + ids.length + ' invoice' + (ids.length > 1 ? 's' : '') + '? This cannot be undone.')) return;
+    ids.forEach(function(id) { DB.invoices.remove(id); });
+    UI.toast(ids.length + ' invoice' + (ids.length > 1 ? 's' : '') + ' deleted');
+    loadPage('invoices');
+  },
+
   _batchExport: function() {
     var ids = InvoicesPage._getSelected();
     if (ids.length === 0) return;

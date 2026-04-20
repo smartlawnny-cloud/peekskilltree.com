@@ -79,8 +79,9 @@ var QuotesPage = {
     html += '<div id="q-batch-bar" class="bm-batch-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);">'
       + '<span id="q-batch-count" style="font-weight:700;font-size:14px;">0 selected</span>'
       + '<div style="display:flex;gap:8px;align-items:center;">'
-      +   '<button onclick="QuotesPage._batchFollowUp()" style="background:#e6a817;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📬 Send Follow-up</button>'
-      +   '<button onclick="QuotesPage._batchDecline()" style="background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✗ Mark Declined</button>'
+      +   '<button onclick="QuotesPage._batchFollowUp()" style="background:#e6a817;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📬 Follow-up</button>'
+      +   '<button onclick="QuotesPage._batchDecline()" style="background:#dc3545;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✗ Decline</button>'
+      +   '<button onclick="QuotesPage._batchDelete && QuotesPage._batchDelete()" style="background:#c62828;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🗑 Delete</button>'
       +   '<button onclick="QuotesPage._batchClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
       + '</div></div>';
 
@@ -292,6 +293,15 @@ var QuotesPage = {
       UI.toast(ids.length + ' quote' + (ids.length > 1 ? 's' : '') + ' marked declined');
       loadPage('quotes');
     });
+  },
+
+  _batchDelete: function() {
+    var ids = QuotesPage._getSelected();
+    if (ids.length === 0) return;
+    if (!confirm('Delete ' + ids.length + ' quote' + (ids.length > 1 ? 's' : '') + '? This cannot be undone.')) return;
+    ids.forEach(function(id) { DB.quotes.remove(id); });
+    UI.toast(ids.length + ' quote' + (ids.length > 1 ? 's' : '') + ' deleted');
+    loadPage('quotes');
   },
 
   showForm: function(quoteId, clientId, requestId) {

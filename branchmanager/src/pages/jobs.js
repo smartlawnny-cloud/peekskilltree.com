@@ -161,9 +161,12 @@ var JobsPage = {
     html += '<div id="job-bulk-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);animation:batchSlideUp .25s ease-out;">'
       + '<span id="job-bulk-count" style="font-weight:700;font-size:14px;">0 selected</span>'
       + '<div style="display:flex;gap:8px;align-items:center;">'
-      + '<button onclick="JobsPage._batchComplete()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Mark Complete</button>'
-      + '<button onclick="JobsPage._batchAssignCrew()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Assign Crew</button>'
-      + '<button onclick="JobsPage._batchExport()" style="background:#2e7d32;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Export</button>'
+      + '<button onclick="JobsPage._batchComplete()" style="background:#2e7d32;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✓ Complete</button>'
+      + '<button onclick="JobsPage._batchAssignCrew()" style="background:#2e7d32;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">👷 Crew</button>'
+      + '<button onclick="JobsPage._batchReschedule()" style="background:#455a64;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📅 Reschedule</button>'
+      + '<button onclick="JobsPage._batchUnschedule()" style="background:#e65100;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Unschedule</button>'
+      + '<button onclick="JobsPage._batchExport()" style="background:#455a64;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📥 Export</button>'
+      + '<button onclick="JobsPage._batchDelete()" style="background:#c62828;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🗑 Delete</button>'
       + '<button onclick="JobsPage._selectAll(false)" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
       + '</div></div>'
       + '<style>@keyframes batchSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>';
@@ -456,10 +459,38 @@ var JobsPage = {
     var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });
     if (ids.length === 0) return;
     UI.confirm('Mark ' + ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' as completed?', function() {
-      ids.forEach(function(id) { DB.jobs.update(id, { status: 'completed' }); });
+      var now = new Date().toISOString();
+      ids.forEach(function(id) { DB.jobs.update(id, { status: 'completed', completedAt: now }); });
       UI.toast(ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' marked complete');
       loadPage('jobs');
     });
+  },
+
+  _batchDelete: function() {
+    var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });
+    if (ids.length === 0) return;
+    if (!confirm('Delete ' + ids.length + ' job' + (ids.length > 1 ? 's' : '') + '? This cannot be undone.')) return;
+    ids.forEach(function(id) { DB.jobs.remove(id); });
+    UI.toast(ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' deleted');
+    loadPage('jobs');
+  },
+
+  _batchUnschedule: function() {
+    var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });
+    if (ids.length === 0) return;
+    ids.forEach(function(id) { DB.jobs.update(id, { scheduledDate: null, startTime: null }); });
+    UI.toast(ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' unscheduled');
+    loadPage('jobs');
+  },
+
+  _batchReschedule: function() {
+    var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });
+    if (ids.length === 0) return;
+    var date = prompt('Reschedule to date (YYYY-MM-DD):', new Date().toISOString().substring(0, 10));
+    if (!date) return;
+    ids.forEach(function(id) { DB.jobs.update(id, { scheduledDate: date }); });
+    UI.toast(ids.length + ' job' + (ids.length > 1 ? 's' : '') + ' rescheduled to ' + date);
+    loadPage('jobs');
   },
   _batchInvoice: function() {
     var ids = Array.from(document.querySelectorAll('.job-check:checked')).map(function(cb) { return cb.value; });

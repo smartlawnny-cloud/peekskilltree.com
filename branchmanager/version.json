@@ -1,5 +1,5 @@
 {
-  "version": 299,
+  "version": 300,
   "released": "2026-04-20",
-  "notes": "Bottom nav layout: content gets top-padding equal to iOS safe-area + 14px so it's not flush against the status bar; white strip fills the status-bar area."
+  "notes": "Nav spacing unified + bulletproof. New html.bm-standalone class set when PWA install OR Capacitor iOS app detected. Top nav mode: topbar padding-top has a 54px minimum floor. Bottom nav mode: content padding-top has a 60px minimum floor. No more relying on env(safe-area-inset-top) which returns 0 in Capacitor WKWebView."
 }

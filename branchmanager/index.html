@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 299; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 300; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -55,6 +55,7 @@
     var isStandalone = window.matchMedia('(display-mode: standalone)').matches
       || window.navigator.standalone
       || !!window.Capacitor;
+    if (isStandalone) document.documentElement.classList.add('bm-standalone');
     if (mode === 'bottom' && isStandalone) {
       document.documentElement.classList.add('bm-bottom-nav');
     }
@@ -340,20 +341,25 @@
 
   html.bm-bottom-nav #bottom-nav { display: grid !important; }
   html.bm-bottom-nav .sidebar { display: none !important; }
+  /* ========================================================================
+     STANDALONE SPACING RULES — PWA install OR Capacitor iOS/Android wrapper.
+     Always use max(env(safe-area-inset-top, 0px) + 12px, 60px) so the iOS
+     status bar NEVER covers content — even when env() returns 0 (Capacitor
+     WKWebView bug) or when a user installs on an iPhone without a notch.
+     ======================================================================== */
+
+  /* TOP-NAV mode (sidebar + topbar): make the topbar tall enough to clear the status bar */
+  html.bm-standalone:not(.bm-bottom-nav) .topbar {
+    padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 54px) !important;
+    min-height: 52px !important;
+  }
+
+  /* BOTTOM-NAV mode (no topbar): push page content below the status bar */
   html.bm-bottom-nav .content {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
+    padding-top: max(calc(env(safe-area-inset-top, 0px) + 16px), 60px) !important;
     padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
   }
   html.bm-bottom-nav .topbar { display: none !important; }
-  /* White strip over the iOS status bar area when topbar is hidden */
-  html.bm-bottom-nav body::before {
-    content: '';
-    position: fixed; top: 0; left: 0; right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background: var(--white);
-    z-index: 100;
-    border-bottom: 1px solid var(--border);
-  }
 
   /* Quotes / Jobs / Invoices / Requests list — same card-on-mobile pattern */
   @media (hover: hover) {
@@ -432,13 +438,6 @@
     /* Tighter topbar on mobile — less vertical padding so it doesn't sit so high */
     .topbar { padding:6px 16px !important; padding-top:max(6px,env(safe-area-inset-top)) !important; min-height:44px !important; }
     .topbar h2 { font-size:16px !important; }
-
-    /* PWA standalone: force a floor of 50px top-padding so the topbar never
-       overlaps the iPhone status bar. Reverted to v227-era behavior — the
-       'fixes' in v240-244 made things worse. */
-    @media (display-mode: standalone) {
-      .topbar { padding-top:max(env(safe-area-inset-top),50px) !important; min-height:38px !important; }
-    }
     .search-box { min-width:auto; flex:1; }
     /* bottom-nav removed */
     .detail-grid { grid-template-columns:1fr !important; }
@@ -847,7 +846,7 @@
         </div>
         <!-- pageAction deprecated: universal '+' in topbar covers all create actions. Element kept with forced display:none so legacy loadPage() logic stays intact without breaking anything. -->
         <button class="btn btn-primary" id="pageAction" style="display:none !important;" aria-hidden="true">+ New</button>
-        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v299</span>
+        <span id="bmVersionBadge" onclick="if(confirm('Force-refresh the app (clear cache)?')){location.href='?reset=1';}" title="Tap to force-refresh. Version badge — if this doesn't match the latest, your PWA is stale." style="font-size:10px;color:#94a3b8;margin-left:10px;font-weight:600;letter-spacing:.05em;cursor:pointer;">v300</span>
 <script>(function(){try{var b=document.getElementById('bmVersionBadge');if(b&&typeof BUNDLED_VERSION!=='undefined')b.textContent='v'+BUNDLED_VERSION;}catch(e){}})();</script>
       </div>
     </div>
@@ -859,65 +858,65 @@
 </div>
 
 <!-- Module scripts -->
-<script src="config.js?v=299"></script>
-<script src="src/auth.js?v=299"></script>
-<script src="src/db.js?v=299"></script>
-<script src="src/ui.js?v=299"></script>
-<script defer src="src/pages/dashboard.js?v=299"></script>
-<script defer src="src/pages/clients.js?v=299"></script>
-<script defer src="src/pages/requests.js?v=299"></script>
-<script defer src="src/pages/quotes.js?v=299"></script>
-<script defer src="src/pages/quotes-tm.js?v=299"></script>
-<script defer src="src/pages/jobs.js?v=299"></script>
-<script defer src="src/pages/invoices.js?v=299"></script>
-<script defer src="src/pages/schedule.js?v=299"></script>
-<script defer src="src/pages/insights.js?v=299"></script>
+<script src="config.js?v=300"></script>
+<script src="src/auth.js?v=300"></script>
+<script src="src/db.js?v=300"></script>
+<script src="src/ui.js?v=300"></script>
+<script defer src="src/pages/dashboard.js?v=300"></script>
+<script defer src="src/pages/clients.js?v=300"></script>
+<script defer src="src/pages/requests.js?v=300"></script>
+<script defer src="src/pages/quotes.js?v=300"></script>
+<script defer src="src/pages/quotes-tm.js?v=300"></script>
+<script defer src="src/pages/jobs.js?v=300"></script>
+<script defer src="src/pages/invoices.js?v=300"></script>
+<script defer src="src/pages/schedule.js?v=300"></script>
+<script defer src="src/pages/insights.js?v=300"></script>
 <script src="src/geofence.js"></script>
 <script src="src/weather.js"></script>
-<script defer src="src/pages/comms.js?v=299"></script>
-<script defer src="src/pages/messaging.js?v=299"></script>
-<script defer src="src/pages/profitloss.js?v=299"></script>
-<script src="src/photos.js?v=299"></script>
+<script defer src="src/pages/comms.js?v=300"></script>
+<script defer src="src/pages/messaging.js?v=300"></script>
+<script defer src="src/pages/profitloss.js?v=300"></script>
+<script src="src/photos.js?v=300"></script>
 <script src="src/dailyinspection.js"></script>
 <script defer src="src/pages/clientmap.js"></script>
 <script defer src="src/pages/photomap.js"></script>
-<script defer src="src/pages/crewview.js?v=299"></script>
-<script defer src="src/pages/employeecenter.js?v=299"></script>
-<script defer src="src/pages/budget.js?v=299"></script>
-<script defer src="src/pages/equipment.js?v=299"></script>
-<script defer src="src/pages/jobcosting.js?v=299"></script>
-<script defer src="src/pages/dispatch.js?v=299"></script>
-<script defer src="src/pages/recurring.js?v=299"></script>
-<script defer src="src/pages/notifications.js?v=299"></script>
-<script defer src="src/pages/expenses.js?v=299"></script>
-<script src="src/dialpad.js?v=299"></script>
-<script src="src/email.js?v=299"></script>
-<script defer src="src/pages/reports.js?v=299"></script>
-<script defer src="src/pages/reviewtools.js?v=299"></script>
-<script defer src="src/pages/weeklysummary.js?v=299"></script>
-<script defer src="src/pages/backup.js?v=299"></script>
-<script defer src="src/pages/onlinebooking.js?v=299"></script>
-<script defer src="src/pages/formbuilder.js?v=299"></script>
-<script defer src="src/pages/receptionist.js?v=299"></script>
-<script defer src="src/pages/campaigns.js?v=299"></script>
-<script defer src="src/pages/marketing.js?v=299"></script>
-<script defer src="src/pages/referrals.js?v=299"></script>
-<script defer src="src/pages/import.js?v=299"></script>
-<script src="src/stripe.js?v=299"></script>
+<script defer src="src/pages/crewview.js?v=300"></script>
+<script defer src="src/pages/employeecenter.js?v=300"></script>
+<script defer src="src/pages/budget.js?v=300"></script>
+<script defer src="src/pages/equipment.js?v=300"></script>
+<script defer src="src/pages/jobcosting.js?v=300"></script>
+<script defer src="src/pages/dispatch.js?v=300"></script>
+<script defer src="src/pages/recurring.js?v=300"></script>
+<script defer src="src/pages/notifications.js?v=300"></script>
+<script defer src="src/pages/expenses.js?v=300"></script>
+<script src="src/dialpad.js?v=300"></script>
+<script src="src/email.js?v=300"></script>
+<script defer src="src/pages/reports.js?v=300"></script>
+<script defer src="src/pages/reviewtools.js?v=300"></script>
+<script defer src="src/pages/weeklysummary.js?v=300"></script>
+<script defer src="src/pages/backup.js?v=300"></script>
+<script defer src="src/pages/onlinebooking.js?v=300"></script>
+<script defer src="src/pages/formbuilder.js?v=300"></script>
+<script defer src="src/pages/receptionist.js?v=300"></script>
+<script defer src="src/pages/campaigns.js?v=300"></script>
+<script defer src="src/pages/marketing.js?v=300"></script>
+<script defer src="src/pages/referrals.js?v=300"></script>
+<script defer src="src/pages/import.js?v=300"></script>
+<script src="src/stripe.js?v=300"></script>
 <script defer src="src/sendjim.js"></script>
-<script defer src="src/pages/settings.js?v=299"></script>
-<script defer src="src/pages/propertymap.js?v=299"></script>
+<script defer src="src/pages/settings.js?v=300"></script>
+<script defer src="src/pages/propertymap.js?v=300"></script>
 <script defer src="src/pages/estimator.js"></script>
-<script defer src="src/pages/cardone.js?v=299"></script>
-<script defer src="src/pages/aitreeid.js?v=299"></script>
-<script defer src="src/pages/videoquote.js?v=299"></script>
+<script defer src="src/pages/cardone.js?v=300"></script>
+<script defer src="src/pages/aitreeid.js?v=300"></script>
+<script defer src="src/pages/videoquote.js?v=300"></script>
 <script defer src="src/pages/treemeasure.js"></script>
-<script defer src="src/pages/search.js?v=299"></script>
-<script defer src="src/pages/clienthub.js?v=299"></script>
-<script defer src="src/pages/team.js?v=299"></script>
-<script defer src="src/pages/automations.js?v=299"></script>
-<script defer src="src/pages/pipeline.js?v=299"></script>
-<script src="src/supabase.js?v=299"></script>
+<script defer src="src/pages/search.js?v=300"></script>
+<script defer src="src/pages/clienthub.js?v=300"></script>
+<script defer src="src/pages/team.js?v=300"></script>
+<script defer src="src/pages/automations.js?v=300"></script>
+<script defer src="src/pages/pipeline.js?v=300"></script>
+<script src="src/supabase.js?v=300"></script>
 <script>
 // Auto-configure Supabase connection
 if (!localStorage.getItem('bm-supabase-url')) {
@@ -929,29 +928,29 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script defer src="src/pages/pdfgen.js"></script>
 <!-- photos.js moved earlier, before photomap.js -->
 <script src="src/templates.js"></script>
-<script src="src/supacloud.js?v=299"></script>
-<script src="src/cloudkeys.js?v=299"></script>
-<script defer src="src/pages/payments.js?v=299"></script>
-<script defer src="src/pages/workflow.js?v=299"></script>
-<script defer src="src/pages/reviews.js?v=299"></script>
-<script defer src="src/pages/timetrack.js?v=299"></script>
-<script defer src="src/pages/checklists.js?v=299"></script>
-<script defer src="src/pages/visits.js?v=299"></script>
-<script defer src="src/pages/customfields.js?v=299"></script>
+<script src="src/supacloud.js?v=300"></script>
+<script src="src/cloudkeys.js?v=300"></script>
+<script defer src="src/pages/payments.js?v=300"></script>
+<script defer src="src/pages/workflow.js?v=300"></script>
+<script defer src="src/pages/reviews.js?v=300"></script>
+<script defer src="src/pages/timetrack.js?v=300"></script>
+<script defer src="src/pages/checklists.js?v=300"></script>
+<script defer src="src/pages/visits.js?v=300"></script>
+<script defer src="src/pages/customfields.js?v=300"></script>
 <script defer src="src/pages/commandpalette.js"></script>
-<script defer src="src/pages/ai.js?v=299"></script>
-<script defer src="src/pages/satisfaction.js?v=299"></script>
-<script defer src="src/pages/emailtemplates.js?v=299"></script>
-<script defer src="src/pages/crewperformance.js?v=299"></script>
+<script defer src="src/pages/ai.js?v=300"></script>
+<script defer src="src/pages/satisfaction.js?v=300"></script>
+<script defer src="src/pages/emailtemplates.js?v=300"></script>
+<script defer src="src/pages/crewperformance.js?v=300"></script>
 <script defer src="src/pages/materials.js"></script>
-<script defer src="src/pages/beforeafter.js?v=299"></script>
-<script defer src="src/pages/modeselector.js?v=299"></script>
-<script defer src="src/pages/taskreminders.js?v=299"></script>
-<script defer src="src/pages/teamchat.js?v=299"></script>
-<script defer src="src/pages/mediacenter.js?v=299"></script>
-<script defer src="src/pages/reminders.js?v=299"></script>
-<script defer src="src/pages/payroll.js?v=299"></script>
-<script defer src="src/pages/permissions.js?v=299"></script>
+<script defer src="src/pages/beforeafter.js?v=300"></script>
+<script defer src="src/pages/modeselector.js?v=300"></script>
+<script defer src="src/pages/taskreminders.js?v=300"></script>
+<script defer src="src/pages/teamchat.js?v=300"></script>
+<script defer src="src/pages/mediacenter.js?v=300"></script>
+<script defer src="src/pages/reminders.js?v=300"></script>
+<script defer src="src/pages/payroll.js?v=300"></script>
+<script defer src="src/pages/permissions.js?v=300"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';

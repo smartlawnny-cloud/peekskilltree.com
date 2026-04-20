@@ -1,5 +1,5 @@
 {
-  "version": 301,
+  "version": 302,
   "released": "2026-04-20",
-  "notes": "Bottom nav order: Home · Today · Clients · Search (2nd from right) · More. Search replaces Quotes in the 4th slot per original spec."
+  "notes": "Bottom nav More: sidebar now opens as a drawer (was hidden by display:none !important even when .open class was added). Uses existing toggleSidebar() helper. Overlay covers rest of screen, tap to close."
 }

@@ -1,5 +1,5 @@
 {
-  "version": 282,
+  "version": 283,
   "released": "2026-04-19",
-  "notes": "Quote form: tap the 🌳 tree icon (or existing thumbnail) next to 'New tree' on a collapsed line item → opens photo picker. Adds photos to that row, refreshes both header thumb and body photo grid, and auto-fires Claude Haiku tree ID if AI is on."
+  "notes": "Schedule week view: remove '+ job' quick-create hints from empty cells. Create jobs via universal topbar + button."
 }

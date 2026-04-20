@@ -397,11 +397,7 @@ var SchedulePage = {
       weekAdminTasks.forEach(function(t) {
         html += '<div style="background:#f3e5f5;border-left:3px solid #7b1fa2;border-radius:4px;padding:3px 6px;font-size:11px;color:#6a1b9a;cursor:pointer;margin-top:2px;" onclick="event.stopPropagation();AdminTasks.toggleComplete(\'' + t.id + '\')">&#x1F4CB; ' + UI.esc(t.title) + '</div>';
       });
-      if (dayJobs.length === 0 && weekAdminTasks.length === 0) {
-        html += '<div onclick="event.stopPropagation();JobsPage.showForm(null,{date:\'' + dateStr + '\'})" title="New job" style="font-size:11px;color:#ccc;text-align:center;padding-top:16px;cursor:pointer;" onmouseover="this.style.color=\'var(--green-dark)\'" onmouseout="this.style.color=\'#ccc\'">+ job</div>';
-      } else if (dayJobs.length === 0) {
-        html += '<div onclick="event.stopPropagation();JobsPage.showForm(null,{date:\'' + dateStr + '\'})" title="New job" style="font-size:11px;color:#ccc;text-align:center;padding-top:4px;cursor:pointer;" onmouseover="this.style.color=\'var(--green-dark)\'" onmouseout="this.style.color=\'#ccc\'">+ job</div>';
-      }
+      // "+ job" quick-create removed from week view per user — create jobs via the universal '+' in topbar instead
       html += '</div>';
     }
     html += '</div>';

@@ -642,19 +642,34 @@ var QuotesPage = {
     QuotesPage._autoSaveKey = 'bm-quote-autosave-' + (quoteId || 'new');
     QuotesPage._autoSaveTimer = setInterval(function() { QuotesPage._autoSave(); }, 15000);
 
-    // Save on any input change
+    // Save on any input change — tighter debounce (500ms) so typed data
+    // persists quickly before navigation
     var form = document.getElementById('quote-form');
     if (form) {
       form.addEventListener('input', function() {
         clearTimeout(QuotesPage._autoSaveDebounce);
-        QuotesPage._autoSaveDebounce = setTimeout(function() { QuotesPage._autoSave(); }, 2000);
+        QuotesPage._autoSaveDebounce = setTimeout(function() { QuotesPage._autoSave(); }, 500);
       });
+      // Immediate save on any field blur (user moved focus elsewhere)
+      form.addEventListener('blur', function() { QuotesPage._autoSave(); }, true);
+      // Immediate save when user is about to leave the page / switch tabs
+      document.addEventListener('visibilitychange', QuotesPage._saveOnHide);
     }
 
     // Warn before leaving page with unsaved changes
     window._quoteFormDirty = false;
     if (form) form.addEventListener('input', function() { window._quoteFormDirty = true; });
     window.addEventListener('beforeunload', QuotesPage._beforeUnload);
+    // pagehide fires reliably on iOS Safari when navigating away
+    window.addEventListener('pagehide', QuotesPage._saveOnHide);
+
+    // Flush save whenever a sidebar nav item is tapped (in-app nav) — capture
+    // phase so we save BEFORE loadPage tears down the form.
+    QuotesPage._navFlushHandler = function(e) {
+      var nav = e.target && e.target.closest && e.target.closest('.nav-item, [data-page], .bm-bottom-nav a');
+      if (nav) QuotesPage._saveOnHide();
+    };
+    document.addEventListener('click', QuotesPage._navFlushHandler, true);
 
     // Check for recovered draft
     var recovered = localStorage.getItem(QuotesPage._autoSaveKey);
@@ -834,6 +849,12 @@ var QuotesPage = {
     }
   },
 
+  // Flush save immediately on visibility/pagehide — no debounce
+  _saveOnHide: function() {
+    if (QuotesPage._autoSaveDebounce) { clearTimeout(QuotesPage._autoSaveDebounce); QuotesPage._autoSaveDebounce = null; }
+    QuotesPage._autoSave();
+  },
+
   _beforeUnload: function(e) {
     if (window._quoteFormDirty) {
       e.preventDefault();
@@ -850,6 +871,12 @@ var QuotesPage = {
     QuotesPage._pendingRestore = null;
     window._quoteFormDirty = false;
     window.removeEventListener('beforeunload', QuotesPage._beforeUnload);
+    window.removeEventListener('pagehide', QuotesPage._saveOnHide);
+    document.removeEventListener('visibilitychange', QuotesPage._saveOnHide);
+    if (QuotesPage._navFlushHandler) {
+      document.removeEventListener('click', QuotesPage._navFlushHandler, true);
+      QuotesPage._navFlushHandler = null;
+    }
   },
 
   // Default rates for common services (editable in settings)

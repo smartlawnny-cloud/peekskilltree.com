@@ -1,5 +1,5 @@
 {
-  "version": 296,
+  "version": 297,
   "released": "2026-04-20",
-  "notes": "Bottom nav mode: detect Capacitor iOS app (window.Capacitor) as standalone, not just PWA install signals. Bottom nav now activates correctly inside the wrapped native app."
+  "notes": "Bottom nav fix: inline style=display:none was overriding the CSS rule. Removed inline, added !important on the show rule."
 }

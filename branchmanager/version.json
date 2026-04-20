@@ -1,5 +1,5 @@
 {
-  "version": 288,
+  "version": 289,
   "released": "2026-04-19",
-  "notes": "Bulk edit expansion: Jobs adds Reschedule/Unschedule/Delete. Invoices adds Delete. Quotes adds Delete. All pages now have checkbox selection + floating action bar with confirmation dialogs."
+  "notes": "Jobs: restore missing row checkboxes (desktop table + mobile cards) so bulk bar appears. Pre-Trip page: fleet-aware inspection — pick Altec bucket, chip truck, Ram pickup, Bandit chipper, stump grinder, mini-skid, or trailer. Each has its own DOT-compliant checklist with ~6-40 items. 30-day history panel. Check-all shortcut."
 }

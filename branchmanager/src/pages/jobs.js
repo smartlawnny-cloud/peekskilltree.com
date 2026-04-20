@@ -174,6 +174,7 @@ var JobsPage = {
     // ── DESKTOP table ──
     html += '<div class="q-desktop-only" style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
       + '<table class="data-table"><thead><tr>'
+      + '<th style="width:32px;"><input type="checkbox" onchange="JobsPage._selectAll(this.checked)" title="Select all"></th>'
       + self._sortTh('Client', 'clientName') + self._sortTh('Job number', 'jobNumber') + '<th>Property</th>' + self._sortTh('Schedule', 'scheduledDate') + self._sortTh('Status', 'status') + self._sortTh('Total', 'total', 'text-align:right;')
       + '</tr></thead><tbody>';
 
@@ -182,6 +183,7 @@ var JobsPage = {
     } else {
       page.forEach(function(j) {
         html += '<tr style="cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
+          + '<td onclick="event.stopPropagation()"><input type="checkbox" class="job-check" value="' + j.id + '" onchange="JobsPage._updateBulk()" style="width:16px;height:16px;"></td>'
           + '<td><strong>' + UI.esc(j.clientName || '—') + '</strong></td>'
           + '<td>#' + (j.jobNumber || '') + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(j.description || '—') + '</td>'
@@ -202,6 +204,7 @@ var JobsPage = {
         var relSched = j.scheduledDate ? UI.dateShort(j.scheduledDate) : 'Unscheduled';
         html += '<div data-jid="' + j.id + '" class="job-card" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;">'
           + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'
+          +   '<div onclick="event.stopPropagation()" style="flex-shrink:0;padding-top:2px;"><input type="checkbox" class="job-check" value="' + j.id + '" onchange="JobsPage._updateBulk()" style="width:18px;height:18px;"></div>'
           +   '<div style="flex:1;min-width:0;">'
           +     '<div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(j.clientName || '—') + '</div>'
           +     (j.property ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + UI.esc(j.property) + '</div>' : '')

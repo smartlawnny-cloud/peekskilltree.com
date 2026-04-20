@@ -510,6 +510,73 @@ var InvoicesPage = {
     }
   },
 
+  // Modal: preview invoice + choose delivery (email / SMS link / copy link / open pay page)
+  _showSendChooser: function(id) {
+    var inv = DB.invoices.getById(id);
+    if (!inv) return;
+    var client = inv.clientId ? DB.clients.getById(inv.clientId) : null;
+    var email = inv.clientEmail || (client && client.email) || '';
+    var phone = inv.clientPhone || (client && client.phone) || '';
+    var payLink = InvoicesPage._getPayLink(id);
+    var amt = UI.money(inv.balance || inv.total);
+
+    var body = '<div style="max-width:520px;">'
+      + '<div style="background:linear-gradient(135deg,#1a3c12,#00836c);color:#fff;padding:16px 18px;border-radius:10px;margin-bottom:14px;">'
+      +   '<div style="font-size:12px;opacity:.85;">Invoice #' + inv.invoiceNumber + ' · ' + (inv.clientName||'') + '</div>'
+      +   '<div style="font-size:28px;font-weight:800;margin-top:2px;">' + amt + '</div>'
+      +   (inv.dueDate ? '<div style="font-size:12px;opacity:.8;margin-top:2px;">Due ' + UI.dateShort(inv.dueDate) + '</div>' : '')
+      + '</div>'
+      + '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;">'
+      +   '<div style="font-weight:600;margin-bottom:4px;">Pay link:</div>'
+      +   '<div style="font-family:monospace;font-size:11px;word-break:break-all;color:var(--text-light);">' + payLink + '</div>'
+      + '</div>'
+      + '<div style="display:grid;gap:8px;">'
+      +   '<label style="font-size:12px;color:var(--text-light);">Email recipient</label>'
+      +   '<input type="email" id="send-email-to" value="' + (email || '').replace(/"/g, '&quot;') + '" placeholder="recipient@example.com" style="padding:9px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+      +   '<button class="btn btn-primary" onclick="InvoicesPage._chooserSendEmail(\'' + id + '\')" style="margin-top:4px;">📧 Send Email</button>'
+      +   '<div style="height:1px;background:var(--border);margin:8px 0;"></div>'
+      +   '<label style="font-size:12px;color:var(--text-light);">SMS link to ' + (phone ? UI.phone(phone) : 'client phone') + '</label>'
+      +   '<button class="btn btn-outline" ' + (!phone ? 'disabled' : '') + ' onclick="InvoicesPage._chooserSendSMS(\'' + id + '\')" style="' + (!phone ? 'opacity:.5;cursor:not-allowed;' : '') + '">📱 Open SMS with pay link</button>'
+      +   '<button class="btn btn-outline" onclick="InvoicesPage._chooserCopyLink(\'' + id + '\')">📋 Copy pay link to clipboard</button>'
+      +   '<button class="btn btn-outline" onclick="window.open(\'' + payLink + '\', \'_blank\')">🔗 Open pay page in new tab</button>'
+      + '</div>'
+      + '<div style="margin-top:16px;font-size:11px;color:var(--text-light);text-align:center;">Invoice saved and marked sent — pick any delivery method above.</div>'
+      + '</div>';
+
+    UI.showModal('Send Invoice #' + inv.invoiceNumber, body, {
+      footer: '<button class="btn btn-outline" onclick="UI.closeModal();loadPage(\'invoices\');">Done</button>'
+    });
+  },
+
+  _chooserSendEmail: function(id) {
+    var toEl = document.getElementById('send-email-to');
+    if (!toEl) return;
+    var email = (toEl.value || '').trim();
+    if (!email) { UI.toast('Enter a recipient', 'error'); return; }
+    var inv = DB.invoices.getById(id);
+    if (inv) { inv.clientEmail = email; DB.invoices.update(id, { clientEmail: email }); }
+    InvoicesPage._sendInvoiceEmail(id);
+    UI.closeModal();
+    loadPage('invoices');
+  },
+
+  _chooserSendSMS: function(id) {
+    var inv = DB.invoices.getById(id);
+    if (!inv) return;
+    var client = inv.clientId ? DB.clients.getById(inv.clientId) : null;
+    var phone = (inv.clientPhone || (client && client.phone) || '').replace(/\D/g, '');
+    if (!phone) { UI.toast('No phone on file', 'error'); return; }
+    var payLink = InvoicesPage._getPayLink(id);
+    var msg = 'Invoice #' + inv.invoiceNumber + ' from ' + InvoicesPage._co().name + ' — ' + UI.money(inv.balance || inv.total) + '. Pay: ' + payLink;
+    window.open('sms:' + phone + '?&body=' + encodeURIComponent(msg));
+  },
+
+  _chooserCopyLink: function(id) {
+    var link = InvoicesPage._getPayLink(id);
+    if (navigator.clipboard) navigator.clipboard.writeText(link).then(function(){ UI.toast('Pay link copied ✓'); });
+    else prompt('Copy this link:', link);
+  },
+
   _sendInvoiceEmail: function(id) {
     var inv = DB.invoices.getById(id);
     if (!inv) return;
@@ -827,9 +894,13 @@ var InvoicesPage = {
       + '<span style="color:var(--text-light);">Subtotal</span><span id="inv-subtotal-display" style="font-weight:600;">' + UI.money(_invSubtotal) + '</span>'
       + '</div>'
       + '<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid var(--border);">'
-      +   '<span style="color:var(--text-light);display:flex;align-items:center;gap:6px;">Tax '
-      +     '<input type="number" id="inv-tax-rate" value="' + _invTaxRate + '" step="0.001" min="0" max="100" oninput="InvoicesPage.calcTotal()" style="width:58px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:right;">'
-      +     '<span>%</span>'
+      +   '<span style="color:var(--text-light);display:inline-flex;align-items:center;gap:4px;">'
+      +     '<span id="inv-tax-label">Tax (<span id="inv-tax-rate-display">' + _invTaxRate + '</span>%)</span>'
+      +     '<a onclick="var e=document.getElementById(\'inv-tax-edit\');var l=document.getElementById(\'inv-tax-label\');e.style.display=\'inline-flex\';l.style.display=\'none\';e.querySelector(\'input\').focus();e.querySelector(\'input\').select();" style="font-size:11px;color:var(--accent);cursor:pointer;text-decoration:underline;">(edit)</a>'
+      +     '<span id="inv-tax-edit" style="display:none;align-items:center;gap:4px;">'
+      +       '<input type="number" id="inv-tax-rate" value="' + _invTaxRate + '" step="0.001" min="0" max="100" onblur="document.getElementById(\'inv-tax-rate-display\').textContent=this.value;document.getElementById(\'inv-tax-edit\').style.display=\'none\';document.getElementById(\'inv-tax-label\').style.display=\'inline\';" oninput="InvoicesPage.calcTotal()" style="width:58px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:right;">'
+      +       '<span>%</span>'
+      +     '</span>'
       +   '</span>'
       +   '<span id="inv-tax-display" style="font-weight:600;">' + UI.money(_invTaxAmt) + '</span>'
       + '</div>'
@@ -1031,16 +1102,26 @@ var InvoicesPage = {
       status: status
     };
 
+    var savedId;
     if (invoiceId) {
       DB.invoices.update(invoiceId, data);
+      savedId = invoiceId;
       UI.toast('Invoice updated');
     } else {
-      DB.invoices.create(data);
+      var newInv = DB.invoices.create(data);
+      savedId = newInv && newInv.id;
       UI.toast('Invoice created');
     }
 
     _unsave();
     if (document.querySelector('.modal-overlay')) UI.closeModal();
+
+    // If user hit "Save & Send" → open the send-chooser modal (preview + delivery options)
+    if (status === 'sent' && savedId) {
+      setTimeout(function() { InvoicesPage._showSendChooser(savedId); }, 100);
+      return;
+    }
+
     loadPage('invoices');
   }
 };

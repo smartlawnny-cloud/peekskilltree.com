@@ -1,5 +1,5 @@
 {
-  "version": 316,
+  "version": 317,
   "released": "2026-04-21",
-  "notes": "Top-nav mode PWA/Capacitor: topbar padding-top=max(env(safe-area-inset-top),50px) so it always clears the iOS status bar. Bottom-nav mode untouched."
+  "notes": "Removed v316 topbar padding — was making topbar sit too high in viewport. iOS and Capacitor already reserve the status-bar area natively. Plain 48px topbar."
 }

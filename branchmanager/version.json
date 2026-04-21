@@ -1,5 +1,5 @@
 {
-  "version": 304,
+  "version": 305,
   "released": "2026-04-20",
-  "notes": "Live sync: clients/requests/quotes/jobs/invoices now auto-pull from Supabase every 30s while app is visible + immediately on tab focus / app return. Near-realtime across all devices."
+  "notes": "Session timeout bumped 30 min → 30 days. Your device is already locked by Face ID / passcode — 30-min auto-logout was just noise for a trusted-device app."
 }

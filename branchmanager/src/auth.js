@@ -183,8 +183,10 @@ var Auth = {
     window.location.reload();
   },
 
-  // Session timeout — auto logout after 30 min inactivity
-  _TIMEOUT_MS: 30 * 60 * 1000,
+  // Session timeout — auto logout after 30 DAYS inactivity (was 30 min).
+  // Your phone/computer is already locked with biometrics; extra timeout here
+  // just creates friction without real security benefit on a trusted device.
+  _TIMEOUT_MS: 30 * 24 * 60 * 60 * 1000,
   _lastActivity: Date.now(),
   _timeoutTimer: null,
 

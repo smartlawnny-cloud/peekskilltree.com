@@ -1,5 +1,5 @@
 {
-  "version": 305,
+  "version": 306,
   "released": "2026-04-20",
-  "notes": "Session timeout bumped 30 min → 30 days. Your device is already locked by Face ID / passcode — 30-min auto-logout was just noise for a trusted-device app."
+  "notes": "Drop viewport-fit=cover. iOS + Capacitor now reserve the status-bar area at the webview level — content starts cleanly below status bar with zero CSS math. No more fighting env(safe-area-inset-top)."
 }

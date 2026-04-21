@@ -193,8 +193,8 @@ var DB = (function() {
     record.id = record.id || _id();
     record.createdAt = record.createdAt || _now();
     record.updatedAt = _now();
-    // Multi-tenant: stamp tenant_id if we have one (graceful degrade if not)
-    if (!record.tenant_id && !record.tenantId) {
+    // Multi-tenant: stamp tenant_id if not already set (graceful degrade if no tenant)
+    if (!record.tenant_id) {
       var tid = getTenantId();
       if (tid) record.tenant_id = tid;
     }

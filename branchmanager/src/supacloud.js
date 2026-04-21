@@ -110,11 +110,7 @@ var CloudSync = {
         }
         var result = origCreate.call(dbSection, record);
         var cloudRecord = CloudSync._toSnake(result);
-        // Multi-tenant: make sure tenant_id is on the cloud row (some tables skip)
-        if (!cloudRecord.tenant_id && typeof DB !== 'undefined' && DB.getTenantId) {
-          var _tid = DB.getTenantId();
-          if (_tid) cloudRecord.tenant_id = _tid;
-        }
+        // tenant_id already stamped by db.js create() — no double-check needed
         // ID is already a UUID — no need to overwrite
         sb.from(table).insert(cloudRecord).then(function(res) {
           if (res.error) {

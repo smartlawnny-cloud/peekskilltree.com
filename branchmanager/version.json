@@ -1,5 +1,5 @@
 {
-  "version": 309,
+  "version": 310,
   "released": "2026-04-20",
-  "notes": "Realtime: subscribe to postgres_changes on clients/requests/quotes/jobs/invoices/payments via Supabase websocket. Changes on any device push to all connected clients in <200ms. 30s fallback poll kept for reliability. Requires SQL migration to enable realtime on each table."
+  "notes": "Critical: CloudSync no longer auto-redirects to dashboard on every sync tick. With realtime + 30s poll, this was wiping any open form/detail page constantly. Now only redirects on initial boot when no form is open."
 }

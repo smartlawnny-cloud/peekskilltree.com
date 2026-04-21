@@ -76,8 +76,14 @@ var CloudSync = {
     CloudSync.lastSync = Date.now();
     if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: done — ' + totalRows + ' total rows cached');
 
-    // Refresh page if we loaded new data
-    if (totalRows > 0 && typeof loadPage === 'function') {
+    // Don't blow away an open form/detail when sync ticks. Only redirect on
+    // INITIAL boot (when window._currentPage isn't set yet).
+    var hasOpenForm = document.getElementById('inv-form')
+      || document.getElementById('quote-form')
+      || document.getElementById('client-form')
+      || document.getElementById('job-form')
+      || document.getElementById('req-form');
+    if (totalRows > 0 && typeof loadPage === 'function' && !window._currentPage && !hasOpenForm) {
       loadPage('dashboard');
     }
   },

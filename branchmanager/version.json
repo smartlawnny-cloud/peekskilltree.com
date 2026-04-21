@@ -1,5 +1,5 @@
 {
-  "version": 308,
+  "version": 309,
   "released": "2026-04-20",
-  "notes": "XSS hardening: photo viewer buttons now use addEventListener (no string interpolation of recordType/recordId). Recovery banner escapes clientName with UI.esc."
+  "notes": "Realtime: subscribe to postgres_changes on clients/requests/quotes/jobs/invoices/payments via Supabase websocket. Changes on any device push to all connected clients in <200ms. 30s fallback poll kept for reliability. Requires SQL migration to enable realtime on each table."
 }

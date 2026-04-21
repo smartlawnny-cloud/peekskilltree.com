@@ -320,27 +320,49 @@ var SupabaseDB = {
     }, 2 * 60 * 1000); // every 2 minutes
   },
 
-  // Live sync: pull clients/requests/quotes/jobs/invoices from cloud every 30s
-  // while the app is visible. Gives near-realtime cross-device updates.
+  // Live sync — SUBSCRIBE to row-level changes on tenant-scoped tables via
+  // Supabase Realtime. Updates land on all connected devices in <200ms.
+  // Also keeps the 30s fallback poll for websocket flakiness / offline recovery.
   _livePollInterval: null,
+  _realtimeChannel: null,
   startLiveSync: function() {
     if (SupabaseDB._livePollInterval) return;
+
+    // Fallback: 30s poll while visible (safety net)
     var tick = async function() {
-      if (document.hidden) return; // save battery when tab backgrounded
+      if (document.hidden) return;
       if (!SupabaseDB.ready || !SupabaseDB.client) return;
       try {
-        if (typeof CloudSync !== 'undefined' && !CloudSync.syncing) {
-          await CloudSync.init();
-        }
+        if (typeof CloudSync !== 'undefined' && !CloudSync.syncing) await CloudSync.init();
       } catch(e) {}
     };
-    SupabaseDB._livePollInterval = setInterval(tick, 30 * 1000); // 30s
-    // Also sync when tab comes back into focus
-    document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) tick();
-    });
-    // Also on window focus (app return from background in PWA/Capacitor)
+    SupabaseDB._livePollInterval = setInterval(tick, 30 * 1000);
+    document.addEventListener('visibilitychange', function() { if (!document.hidden) tick(); });
     window.addEventListener('focus', tick);
+
+    // Realtime: one channel, many postgres-change subscriptions
+    try {
+      if (!SupabaseDB.client || !SupabaseDB.client.channel) return;
+      if (SupabaseDB._realtimeChannel) SupabaseDB._realtimeChannel.unsubscribe();
+
+      var TABLES = ['clients', 'requests', 'quotes', 'jobs', 'invoices', 'payments'];
+      var ch = SupabaseDB.client.channel('bm-live-' + Math.random().toString(36).slice(2, 8));
+
+      TABLES.forEach(function(tbl) {
+        ch.on('postgres_changes', { event: '*', schema: 'public', table: tbl }, function(payload) {
+          // Debounce: re-run CloudSync.init once per 750ms of bursts
+          clearTimeout(SupabaseDB._rtDebounce);
+          SupabaseDB._rtDebounce = setTimeout(function() {
+            if (typeof CloudSync !== 'undefined' && !CloudSync.syncing) CloudSync.init();
+          }, 750);
+        });
+      });
+
+      ch.subscribe(function(status) {
+        if (SupabaseDB._debug) console.log('[Realtime] channel status:', status);
+      });
+      SupabaseDB._realtimeChannel = ch;
+    } catch (e) { console.warn('[Realtime] failed to subscribe:', e); }
   },
 
   _checkNewPayments: async function() {

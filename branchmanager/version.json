@@ -1,5 +1,5 @@
 {
-  "version": 307,
+  "version": 308,
   "released": "2026-04-20",
-  "notes": "Biometric lock (Face ID / Touch ID / Windows Hello) via WebAuthn. Settings → Security → 🔐 toggle. One tap to enroll, then lock screen on every app open until authenticated. Session is per-tab (unlocks for that session only)."
+  "notes": "XSS hardening: photo viewer buttons now use addEventListener (no string interpolation of recordType/recordId). Recovery banner escapes clientName with UI.esc."
 }

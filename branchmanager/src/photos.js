@@ -331,12 +331,21 @@ var Photos = {
     });
     overlay.appendChild(tagWrap);
 
+    // Build buttons with addEventListener (no string interpolation — avoids XSS
+    // if recordType/recordId ever contain quotes/special chars).
     var btnRow = document.createElement('div');
     btnRow.style.cssText = 'display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center;';
-    btnRow.innerHTML = '<button onclick="Photos._customTag(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#fff;color:#333;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;">+ Tag</button>'
-      + '<button onclick="document.getElementById(\'photo-viewer\').remove();Photos.annotate(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#fff;color:#333;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;">✎ Annotate</button>'
-      + '<button onclick="Photos._deletePhoto(\'' + recordType + '\', \'' + recordId + '\', ' + index + ')" style="background:#c0392b;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;">Delete</button>'
-      + '<button onclick="document.getElementById(\'photo-viewer\').remove()" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;">Close</button>';
+    function mkBtn(label, bg, color, onTap) {
+      var b = document.createElement('button');
+      b.textContent = label;
+      b.style.cssText = 'background:' + bg + ';color:' + color + ';border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;';
+      b.addEventListener('click', onTap);
+      return b;
+    }
+    btnRow.appendChild(mkBtn('+ Tag', '#fff', '#333', function() { Photos._customTag(recordType, recordId, index); }));
+    btnRow.appendChild(mkBtn('✎ Annotate', '#fff', '#333', function() { var v = document.getElementById('photo-viewer'); if (v) v.remove(); Photos.annotate(recordType, recordId, index); }));
+    btnRow.appendChild(mkBtn('Delete', '#c0392b', '#fff', function() { Photos._deletePhoto(recordType, recordId, index); }));
+    btnRow.appendChild(mkBtn('Close', '#555', '#fff', function() { var v = document.getElementById('photo-viewer'); if (v) v.remove(); }));
     overlay.appendChild(btnRow);
     overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);

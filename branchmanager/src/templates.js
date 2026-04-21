@@ -41,8 +41,8 @@ var Templates = {
       name: 'Quote Follow-Up (5 days)',
       trigger: '5 days after quote sent, no response',
       channel: 'email',
-      subject: 'Following up on your estimate — Quote #{{quoteNumber}}',
-      body: 'Hi {{name}},\n\nJust checking in on the estimate I sent over last week for the work at {{address}} (Quote #{{quoteNumber}} — {{amount}}).\n\nDo you have any questions, or would you like to move forward? Happy to adjust the scope if needed.\n\nLet me know!\n\n{{ownerName}}\n{{companyPhone}}'
+      subject: 'Quick follow-up on Quote #{{quoteNumber}} — {{amount}}',
+      body: 'Hi {{name}},\n\nJust checking in on the estimate I sent for the work at {{address}}.\n\n  Quote #{{quoteNumber}} — {{amount}}\n  Expires: {{expiresAt}}\n\nReady to move forward? Approve in one tap:\n{{approvalLink}}\n\nQuestions or want to adjust scope? Just reply or call {{companyPhone}}.\n\nThanks,\n{{ownerName}}\n{{companyName}}'
     },
 
     // ── Quote Follow-Up (10 days) ──
@@ -50,8 +50,8 @@ var Templates = {
       name: 'Quote Follow-Up (10 days)',
       trigger: '10 days after quote sent, no response',
       channel: 'email',
-      subject: 'Still interested? — Quote #{{quoteNumber}}',
-      body: 'Hi {{name}},\n\nI wanted to follow up one more time on the estimate for {{address}}. The quote (#{{quoteNumber}} — {{amount}}) is still valid if you\'d like to proceed.\n\nIf the timing isn\'t right or you went another direction, no worries at all — just let me know so I can close out the file.\n\nThanks,\n{{ownerName}}\n{{companyName}}\n{{companyPhone}}'
+      subject: 'Last call: Quote #{{quoteNumber}} expires soon',
+      body: 'Hi {{name}},\n\nThis is a final reminder on the estimate for {{address}}. The quote expires {{expiresAt}} — after that we\'ll need to re-quote at current rates.\n\n  Quote #{{quoteNumber}} — {{amount}}\n\nApprove now: {{approvalLink}}\n\nIf you\'ve gone another direction or the timing isn\'t right, just hit reply with "close" and I\'ll archive the file. No hard feelings.\n\nEither way, thanks for considering us.\n\n{{ownerName}}\n{{companyName}}\n{{companyPhone}}'
     },
 
     // ── Booking Confirmation ──
@@ -74,8 +74,8 @@ var Templates = {
       name: 'Visit Reminder (1 day)',
       trigger: '1 day before scheduled visit',
       channel: 'email',
-      subject: 'Reminder: Tree service tomorrow — {{date}}',
-      body: 'Hi {{name}},\n\nJust a reminder that our crew is scheduled to be at {{address}} tomorrow.\n\nJob #{{jobNumber}}\nDate: {{date}}\nArrival: 8-9am\n\nPlease make sure we have clear access to the work area. Move any vehicles, patio furniture, or items near the trees we\'ll be working on.\n\nWe\'ll text you when we\'re on the way!\n\n{{ownerName}}\n{{companyName}}'
+      subject: 'Tomorrow: Tree service at {{address}} — {{date}}',
+      body: 'Hi {{name}},\n\nQuick reminder — our crew arrives at {{address}} tomorrow.\n\n  Job #{{jobNumber}}\n  Date: {{date}}\n  Arrival window: 8-9 AM\n\nBefore we get there:\n  • Move vehicles, patio furniture, grills, or anything fragile away from the work area\n  • Make sure side gates / driveway are accessible\n  • Pets indoors if possible (saws are loud)\n\nNeed to reschedule? Tap to call: tel:{{companyPhone}}\n\nWe\'ll text you when the crew is on the way.\n\n{{ownerName}}\n{{companyName}}'
     },
     visit_reminder_sms: {
       name: 'Visit Reminder (1 hr)',
@@ -98,8 +98,8 @@ var Templates = {
       name: 'Invoice Follow-Up (1 day)',
       trigger: '1 day after invoice due date',
       channel: 'email',
-      subject: 'Payment reminder — Invoice #{{invoiceNumber}}',
-      body: 'Hi {{name}},\n\nJust a friendly reminder that invoice #{{invoiceNumber}} for {{amount}} was due yesterday. If you\'ve already sent payment, please disregard this message.\n\nIf you have any questions about the invoice, feel free to reach out.\n\nThanks,\n{{ownerName}}\n{{companyPhone}}'
+      subject: 'Reminder: Invoice #{{invoiceNumber}} — {{amount}}',
+      body: 'Hi {{name}},\n\nFriendly reminder — invoice #{{invoiceNumber}} for {{amount}} was due yesterday.\n\nPay online (1 minute, card or Apple Pay):\n{{payLink}}\n\nIf payment is already on the way, ignore this. Otherwise hit the link above or call {{companyPhone}}.\n\nThanks,\n{{ownerName}}\n{{companyName}}'
     },
 
     // ── Invoice Follow-Up (4 days overdue) ──
@@ -107,8 +107,8 @@ var Templates = {
       name: 'Invoice Follow-Up (4 days)',
       trigger: '4 days after invoice due date',
       channel: 'email',
-      subject: 'Past due: Invoice #{{invoiceNumber}} — {{amount}}',
-      body: 'Hi {{name}},\n\nI\'m following up on invoice #{{invoiceNumber}} for {{amount}}, which is now 4 days past due.\n\nCould you let me know when we can expect payment? If there\'s an issue with the invoice, I\'m happy to discuss.\n\nPayment can be sent via check, Venmo, Zelle, or card.\n\nThank you,\n{{ownerName}}\n{{companyName}}\n{{companyPhone}}'
+      subject: 'Action needed: Invoice #{{invoiceNumber}} is 4 days past due',
+      body: 'Hi {{name}},\n\nInvoice #{{invoiceNumber}} for {{amount}} is now 4 days past due.\n\nPlease pay today to keep things current:\n{{payLink}}\n\nIf there\'s an issue with the invoice or you need to set up a payment plan, please reply or call {{companyPhone}} so we can sort it out.\n\nThanks for your prompt attention,\n{{ownerName}}\n{{companyName}}'
     },
 
     // ── Review Request ──
@@ -117,19 +117,29 @@ var Templates = {
       trigger: '2 days after job completed',
       channel: 'email',
       subject: 'How did we do? — {{companyName}}',
-      body: 'Hi {{name}},\n\nThanks again for choosing {{companyName}} for your recent tree work at {{address}}.\n\nWe\'d love to hear how we did! A quick Google review helps us reach more homeowners in the area:\n\nhttps://g.page/r/CcVkZHV_EKlEEBM/review\n\nIt only takes 30 seconds and means a lot to our small business.\n\nThank you!\n{{ownerName}}\n{{companyName}}'
+      body: 'Hi {{name}},\n\nThanks again for choosing {{companyName}} for your recent tree work at {{address}}.\n\nWe\'d love to hear how we did! A 30-second Google review helps us reach more homeowners in the area:\n\n{{reviewLink}}\n\nThanks for the support!\n{{ownerName}}\n{{companyName}}'
     },
     review_request_sms: {
       name: 'Review Request',
       trigger: '2 days after job completed',
       channel: 'sms',
-      body: 'Hi {{name}}, thanks for choosing {{companyName}}! If you were happy with our work, we\'d love a quick Google review: https://g.page/r/CcVkZHV_EKlEEBM/review — Thank you! Doug'
+      body: 'Hi {{name}}, thanks for choosing {{companyName}}! If you were happy with our work, we\'d love a quick Google review: {{reviewLink}} — Thank you! {{ownerName}}'
+    },
+
+    // ── Quote Approval Confirmation (auto-sent when client approves) ──
+    quote_approved_email: {
+      name: 'Quote Approval Confirmation',
+      trigger: 'Client approves quote on approve.html',
+      channel: 'email',
+      subject: 'Approved! Quote #{{quoteNumber}} — next steps',
+      body: 'Hi {{name}},\n\nGreat — you\'re on the schedule. Quote #{{quoteNumber}} for {{amount}} is approved.\n\nWhat happens next:\n  1. We\'ll reach out within 1 business day to lock in a date\n  2. We typically schedule within 1-2 weeks\n  3. The day before, you\'ll get a reminder + access prep checklist\n  4. Day-of: we text when the crew is on the way\n\nIf you need to discuss anything before scheduling, reply or call {{companyPhone}}.\n\nThanks for choosing {{companyName}}!\n\n{{ownerName}}'
     }
   },
 
   // Fill template variables
   fill: function(template, data) {
     var text = template;
+    var base = (typeof location !== 'undefined') ? (location.origin + location.pathname.replace(/[^/]*$/, '')) : 'https://peekskilltree.com/branchmanager/';
     var vars = {
       '{{name}}': data.name || data.clientName || '',
       '{{company}}': data.company || '',
@@ -137,10 +147,16 @@ var Templates = {
       '{{email}}': data.email || data.clientEmail || '',
       '{{amount}}': data.amount || data.total ? UI.money(data.amount || data.total) : '',
       '{{date}}': data.date ? UI.dateShort(data.date) : '',
+      '{{expiresAt}}': data.expiresAt ? UI.dateShort(data.expiresAt) : '',
       '{{address}}': data.address || data.property || '',
       '{{jobNumber}}': data.jobNumber || '',
       '{{quoteNumber}}': data.quoteNumber || '',
       '{{invoiceNumber}}': data.invoiceNumber || '',
+      '{{quoteId}}': data.quoteId || data.id || '',
+      '{{invoiceId}}': data.invoiceId || data.id || '',
+      '{{approvalLink}}': data.approvalLink || (data.quoteId || data.id ? base + 'approve.html?id=' + (data.quoteId || data.id) : ''),
+      '{{payLink}}': data.payLink || (data.invoiceId || data.id ? base + 'pay.html?id=' + (data.invoiceId || data.id) : ''),
+      '{{reviewLink}}': BM_CONFIG.googleReviewUrl || data.reviewLink || 'https://g.page/r/CcVkZHV_EKlEEBM/review',
       '{{companyName}}': BM_CONFIG.companyName,
       '{{companyPhone}}': BM_CONFIG.phone,
       '{{companyEmail}}': BM_CONFIG.email,

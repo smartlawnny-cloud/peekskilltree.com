@@ -1,5 +1,5 @@
 {
-  "version": 314,
+  "version": 315,
   "released": "2026-04-20",
-  "notes": "Surface cloud-save failures with toast (was silent console warning). Reveals schema mismatches like missing 'subtotal' column."
+  "notes": "Client comms polish: rewrote 5 weak templates (5d + 10d quote followup, 1d + 4d invoice reminder, visit reminder) with clear CTAs + action links. Added {{approvalLink}} {{payLink}} {{reviewLink}} {{expiresAt}} tokens to Templates.fill. Google review URL now reads from BM_CONFIG.googleReviewUrl. New quote_approved_email template for manual sends."
 }

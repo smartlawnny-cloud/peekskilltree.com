@@ -1,5 +1,5 @@
 {
-  "version": 318,
+  "version": 319,
   "released": "2026-04-21",
-  "notes": "Tree Measure: removed from quote form (top action buttons went 3→2, Add Photos/Manual only) and from the inline tree-row buttons. Measure now lives as a tab inside Tools hub."
+  "notes": "Quotes T&M: Step 1 now uses Climber/Groundsman/Foreman checkboxes (1 each when checked); Step 2 is a single Total Hours input. Removed the 'Price Check (Mode 2)' intro box — T&M production estimate is visible directly."
 }

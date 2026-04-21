@@ -361,13 +361,19 @@ var QuotesPage = {
     var hasResolvedClient = !!(client || q.clientId || q.clientName);
     var clientExpanded = !hasResolvedClient; // if no client info, start open
     var clientSummaryName = client ? UI.esc(client.name) : (q.clientName ? UI.esc(q.clientName) : 'Pick a client');
-    var clientSummaryAddr = _qProperty ? ' · 📍 ' + UI.esc(_qProperty) : '';
+    // Extract town from property address: "123 Main St, Peekskill, NY 10566" -> "Peekskill"
+    var _townName = '';
+    if (_qProperty) {
+      var _parts = _qProperty.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+      if (_parts.length >= 3) _townName = _parts[_parts.length - 3]; // before state/zip
+      else if (_parts.length === 2) _townName = _parts[1];
+    }
+    var clientSummaryLine = clientSummaryName + (_townName ? ' · ' + UI.esc(_townName) : '');
     html += '<div class="q-client-box" style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       // Summary header (always visible)
       + '<div onclick="QuotesPage._toggleClientBox(this)" style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;">'
-      +   '<div style="width:36px;height:36px;border-radius:50%;background:' + (client ? 'var(--green-bg)' : 'var(--bg)') + ';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:var(--green-dark);">👤</div>'
       +   '<div style="flex:1;min-width:0;">'
-      +     '<div style="font-size:15px;font-weight:700;color:' + (client ? 'var(--text)' : 'var(--text-light)') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" class="q-client-summary-name">' + clientSummaryName + '</div>'
+      +     '<div style="font-size:15px;font-weight:700;color:' + (client ? 'var(--text)' : 'var(--text-light)') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" class="q-client-summary-name">' + clientSummaryLine + '</div>'
       +   '</div>'
       +   '<div class="q-client-chevron" style="font-size:16px;color:var(--text-light);transition:transform .2s;' + (clientExpanded ? '' : 'transform:rotate(-90deg);') + '">▾</div>'
       + '</div>'
@@ -518,10 +524,10 @@ var QuotesPage = {
       +   '</div>'
       +   '<button type="button" onclick="QuotesPage._openEquipmentMap()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">🗺 Open Equipment Map →</button>'
       + '</div>'
-      + '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-light);margin-bottom:8px;cursor:pointer;">'
-      +   '<input type="checkbox" id="q-show-equipmap-client"' + (q.showEquipMapToClient !== false ? ' checked' : '') + ' style="width:16px;height:16px;cursor:pointer;accent-color:var(--green-dark);">'
-      +   'Show the equipment layout to the client on their approval page'
-      + '</label>'
+      // Select-all shortcut
+      + '<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">'
+      +   '<button type="button" onclick="QuotesPage._selectAllEquip(this)" style="background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:4px 8px;">Select all</button>'
+      + '</div>'
       // Equipment checklist (5 items)
       + '<div id="q-equip-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;margin-bottom:10px;">' + _equipChecks + '</div>'
       // Summary line with running total
@@ -580,46 +586,41 @@ var QuotesPage = {
       + '<div style="font-size:11px;color:var(--text-light);">Quote valid for 30 days.</div>'
       + '</div>';
 
-    // ═══ MODE 2: Time & Materials sanity check (hidden until user clicks "Price-check this quote") ═══
-    html += '<div style="margin:20px 0 12px;padding:14px;background:#f5f3ff;border:1px dashed #c4b5fd;border-radius:10px;">'
-      +   '<div style="font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:4px;">💡 Price Check (Mode 2 — Time & Materials)</div>'
-      +   '<div style="font-size:12px;color:#6d28d9;margin-bottom:10px;">Sanity-check your line-item quote against what the job would cost billed hourly. <strong>Your line-item total should be HIGHER than T&M.</strong></div>'
-      +   '<button type="button" id="q-show-tm-btn" onclick="document.getElementById(\'q-mode-tm\').style.display=\'block\';this.style.display=\'none\';document.getElementById(\'q-mode-tm\').scrollIntoView({behavior:\'smooth\'});" style="width:100%;padding:12px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;' + (tmData.totalHrs ? 'display:none;' : '') + '">📊 Run T&M Price Check</button>'
-      + '</div>';
-
-    html += '<div id="q-mode-tm" style="display:' + (tmData.totalHrs ? 'block' : 'none') + ';border:2px solid #7c3aed;border-radius:10px;padding:16px;margin-bottom:12px;">'
+    // ═══ T&M Production Estimate (always visible — used as sanity check vs line-item total) ═══
+    html += '<div id="q-mode-tm" style="display:block;border:2px solid #7c3aed;border-radius:10px;padding:16px;margin:20px 0 12px;">'
       + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Production Estimate (T&M)</div>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Enter total job hours, then pick the equipment and crew you\'ll use.</p>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Check which crew members are going, then enter total hours.</p>'
 
-      // ═══ STEP 1 — Total job hours (big, prominent) ═══
-      // ═══ STEP 1 — Crew (how many + roles) ═══
+      // ═══ STEP 1 — Crew (checkboxes) ═══
       + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
       +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 1 — Crew needed</label>'
       +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">'
-      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;"># Climbers <span style="color:#94a3b8;">($50/hr)</span></label>'
-      +       '<input type="number" id="q-tm-climber-count" value="' + (tmData.climberCount || '') + '" placeholder="0" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;"># Groundsmen <span style="color:#94a3b8;">($30/hr)</span></label>'
-      +       '<input type="number" id="q-tm-ground-count" value="' + (tmData.groundCount || '') + '" placeholder="0" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;"># Foreman <span style="color:#94a3b8;">($60/hr)</span></label>'
-      +       '<input type="number" id="q-tm-foreman-count" value="' + (tmData.foremanCount || '') + '" placeholder="0" min="0" step="1" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      +     '<label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--white);border:2px solid ' + (((tmData.climberCount|0) > 0) ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">'
+      +       '<input type="checkbox" id="q-tm-climber-chk"' + (((tmData.climberCount|0) > 0) ? ' checked' : '') + ' onchange="document.getElementById(\'q-tm-climber-count\').value=this.checked?1:0;this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';QuotesPage._calcTM();" style="width:18px;height:18px;">'
+      +       '<span style="flex:1;">Climber</span><span style="color:var(--text-light);font-size:11px;font-weight:500;">$50/hr</span>'
+      +     '</label>'
+      +     '<label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--white);border:2px solid ' + (((tmData.groundCount|0) > 0) ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">'
+      +       '<input type="checkbox" id="q-tm-ground-chk"' + (((tmData.groundCount|0) > 0) ? ' checked' : '') + ' onchange="document.getElementById(\'q-tm-ground-count\').value=this.checked?1:0;this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';QuotesPage._calcTM();" style="width:18px;height:18px;">'
+      +       '<span style="flex:1;">Groundsman</span><span style="color:var(--text-light);font-size:11px;font-weight:500;">$30/hr</span>'
+      +     '</label>'
+      +     '<label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--white);border:2px solid ' + (((tmData.foremanCount|0) > 0) ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">'
+      +       '<input type="checkbox" id="q-tm-foreman-chk"' + (((tmData.foremanCount|0) > 0) ? ' checked' : '') + ' onchange="document.getElementById(\'q-tm-foreman-count\').value=this.checked?1:0;this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';QuotesPage._calcTM();" style="width:18px;height:18px;">'
+      +       '<span style="flex:1;">Foreman</span><span style="color:var(--text-light);font-size:11px;font-weight:500;">$60/hr</span>'
+      +     '</label>'
       +   '</div>'
+      +   // Hidden number inputs preserve backward-compat with _calcTM + save paths
+      +   '<input type="hidden" id="q-tm-climber-count" value="' + (tmData.climberCount || '') + '">'
+      +   '<input type="hidden" id="q-tm-ground-count" value="' + (tmData.groundCount || '') + '">'
+      +   '<input type="hidden" id="q-tm-foreman-count" value="' + (tmData.foremanCount || '') + '">'
       + '</div>'
 
-      // Equipment section removed here — now lives above the Totals card, outside T&M.
-      // T&M reads the same #q-tm-* checkboxes to compute cost.
-
-      // ═══ STEP 2 — Hours (on-site + yard + drive, all at same full crew+equip rate) ═══
+      // ═══ STEP 2 — Hours ═══
       + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
       +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 2 — Hours</label>'
-      +   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'
-      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;">On-site hrs</label>'
-      +       '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:6px;font-size:16px;font-weight:700;text-align:center;"></div>'
-      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;">Yard hrs <span style="color:#94a3b8;">(prep)</span></label>'
-      +       '<input type="number" id="q-tm-yard-hrs" value="' + (tmData.yardHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:15px;text-align:center;"></div>'
-      +     '<div><label style="font-size:11px;color:var(--text-light);display:block;margin-bottom:2px;">Drive hrs <span style="color:#94a3b8;">(round trip)</span></label>'
-      +       '<input type="number" id="q-tm-drive-hrs" value="' + (tmData.driveHrs || '') + '" placeholder="0" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:15px;text-align:center;"></div>'
-      +   '</div>'
-      +   '<div style="font-size:11px;color:var(--text-light);margin-top:6px;">All hours bill at the same crew + equipment rate. Yard + drive time add to total billable.</div>'
+      +   '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="Total hours on job" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:6px;font-size:16px;font-weight:700;text-align:center;">'
+      +   // Hidden yard/drive hrs preserve save-path compatibility (always 0 now)
+      +   '<input type="hidden" id="q-tm-yard-hrs" value="0">'
+      +   '<input type="hidden" id="q-tm-drive-hrs" value="0">'
       + '</div>'
 
       // ═══ STEP 3 — Disposal (optional) ═══
@@ -1244,6 +1245,18 @@ var QuotesPage = {
 
   // Open Property Map in equipment-planning mode; on close, sync placed equipment
   // to the hidden T&M checkboxes so the T&M cost picks up whatever was dropped.
+  // Toggle all equipment checkboxes on/off
+  _selectAllEquip: function(btn) {
+    var checks = document.querySelectorAll('#q-equip-list input[type=checkbox]');
+    var allOn = Array.from(checks).every(function(c) { return c.checked; });
+    checks.forEach(function(c) {
+      if (c.checked === !allOn) return; // already desired state
+      c.checked = !allOn;
+      c.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    if (btn) btn.textContent = allOn ? 'Select all' : 'Deselect all';
+  },
+
   // New checkbox-list handler (v279+)
   _toggleEquipCheckbox: function(cb) {
     var key = cb.dataset.key;
@@ -1719,7 +1732,8 @@ var QuotesPage = {
       taxAmount: taxAmount,
       total: total,
       notes: document.getElementById('q-notes').value.trim(),
-      showEquipMapToClient: !!(document.getElementById('q-show-equipmap-client') || {}).checked,
+      // Field removed from form; preserve existing value if editing, else default true
+      showEquipMapToClient: (existingQ && existingQ.showEquipMapToClient !== undefined) ? existingQ.showEquipMapToClient : true,
       status: form.dataset.saveStatus || 'draft',
       // Preserve origin request link (don't lose on edit)
       requestId: QuotesPage._originRequestId || existingQ.requestId || null,

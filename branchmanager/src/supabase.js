@@ -239,8 +239,10 @@ var SupabaseDB = {
     if (totalPulled > 0) {
       if (SupabaseDB._debug) console.log('Cloud sync complete: ' + totalPulled + ' total records');
       UI.toast(totalPulled + ' records synced from cloud');
-      // Refresh current page to show data
-      if (typeof loadPage === 'function') {
+      // Refresh current page — but never wipe an open form
+      var hasOpenForm = document.getElementById('inv-form') || document.getElementById('quote-form')
+        || document.getElementById('client-form') || document.getElementById('job-form') || document.getElementById('req-form');
+      if (typeof loadPage === 'function' && !hasOpenForm) {
         var activeNav = document.querySelector('.nav-item.active');
         if (activeNav && activeNav.dataset.page) {
           loadPage(activeNav.dataset.page);

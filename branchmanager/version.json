@@ -1,5 +1,5 @@
 {
-  "version": 312,
+  "version": 313,
   "released": "2026-04-20",
-  "notes": "Audit smell cleanups: drop dead camelCase tenantId check in db.js create; drop redundant tenant_id stamp in supacloud (db.js already handles it)."
+  "notes": "Bulletproof loadPage: refuses to re-render the SAME page if a form is open. Stops every form-clobbering bug at the root, regardless of which sync function fired the reload. Plus added the same hasOpenForm guard to _pullFromCloud."
 }

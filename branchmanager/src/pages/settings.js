@@ -831,13 +831,25 @@ var SettingsPage = {
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
     // Security
+    var _bioSupported = typeof Biometric !== 'undefined' && Biometric.isSupported();
+    var _bioOn = typeof Biometric !== 'undefined' && Biometric.isEnabled();
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin-bottom:12px;">🔒 Security</h3>'
       + '<div style="display:grid;gap:12px;">'
+      // Biometric lock (Face ID / Touch ID)
+      + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg);border-radius:8px;gap:10px;">'
+      +   '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;">🔐 Face ID / Touch ID Lock</div>'
+      +   '<div style="font-size:12px;color:var(--text-light);">' + (_bioSupported ? 'Require biometric auth when opening the app' : 'Not supported on this browser/device') + '</div></div>'
+      +   (_bioSupported
+          ? (_bioOn
+              ? '<button class="btn btn-outline" style="font-size:12px;" onclick="if(confirm(\'Disable biometric lock?\')){Biometric.disable();loadPage(\'settings\');}">Disable</button>'
+              : '<button class="btn btn-primary" style="font-size:12px;" onclick="Biometric.register().then(function(ok){if(ok)loadPage(\'settings\');});">Enable</button>')
+          : '<span style="color:var(--text-light);font-size:12px;">Unavailable</span>')
+      + '</div>'
       // Session timeout
       + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg);border-radius:8px;">'
       + '<div><div style="font-weight:600;font-size:13px;">Session Timeout</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Auto-logout after 30 minutes of inactivity</div></div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Auto-logout after 30 days of inactivity</div></div>'
       + '<span style="color:var(--green-dark);font-weight:700;font-size:13px;">✓ Active</span></div>'
       // Audit logging
       + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg);border-radius:8px;">'

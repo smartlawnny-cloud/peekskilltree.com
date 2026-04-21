@@ -1,5 +1,5 @@
 {
-  "version": 321,
+  "version": 322,
   "released": "2026-04-21",
-  "notes": "Client detail page full redesign: header card (no emoji) with name + clickable address + contact chips + tags; 6-button action row (Call/Text/Email/+Quote/+Job/+Invoice); 3 KPIs (Lifetime Revenue / Balance Due / Last Visit); reorganized tabs — Overview, Work, Billing, Comms, Property, About."
+  "notes": "Fix: dropped stale 'options: null' field from quote save payload (Quote Options feature was removed long ago but the dead field was still triggering schema-drift errors on cloud save)."
 }

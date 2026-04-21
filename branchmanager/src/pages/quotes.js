@@ -1745,7 +1745,6 @@ var QuotesPage = {
       depositAmount: depositAmount,
       depositDue: depositDue,
       expiresAt: expiresAt,
-      options: null,
       timeMaterial: (function() {
         function n(id) { var e = document.getElementById(id); return e ? (parseFloat(e.value) || 0) : 0; }
         function c(id) { var e = document.getElementById(id); return !!(e && e.checked); }

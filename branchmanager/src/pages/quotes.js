@@ -385,6 +385,8 @@ var QuotesPage = {
     if (client || q.clientName || q.clientId) {
       var _cid = (client && client.id) || q.clientId || '';
       var _cname = (client && client.name) || q.clientName || '';
+      var _cphone = (client && (client.phone || client.phoneNumber)) || '';
+      var _cphoneTel = _cphone.replace(/[^0-9+]/g, '');
       html += '<input type="hidden" id="q-clientId" value="' + _cid + '">'
         + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">'
         +   (_cid
@@ -392,6 +394,7 @@ var QuotesPage = {
             : '<span style="font-size:15px;font-weight:700;color:var(--text);">' + UI.esc(_cname) + '</span>')
         + '</div>'
         + (_qProperty ? '<div style="margin-top:6px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(_qProperty) + '" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(_qProperty) + ' →</a></div>' : '')
+        + (_cphone ? '<div style="margin-top:4px;"><a href="tel:' + _cphoneTel + '" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📞 ' + UI.esc(_cphone) + '</a></div>' : '')
         + '<input type="hidden" id="q-property" value="' + UI.esc(_qProperty) + '">';
     } else {
       // Build list of up-to-5 most-recently-quoted clients for quick-pick

@@ -1,5 +1,5 @@
 {
-  "version": 319,
+  "version": 320,
   "released": "2026-04-21",
-  "notes": "Quotes T&M: Step 1 now uses Climber/Groundsman/Foreman checkboxes (1 each when checked); Step 2 is a single Total Hours input. Removed the 'Price Check (Mode 2)' intro box — T&M production estimate is visible directly."
+  "notes": "Quote client card: expanded body now shows full address (Apple Maps link) + clickable phone number."
 }

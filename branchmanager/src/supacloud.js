@@ -114,10 +114,17 @@ var CloudSync = {
         // ID is already a UUID — no need to overwrite
         sb.from(table).insert(cloudRecord).then(function(res) {
           if (res.error) {
-            console.warn('Cloud create error (' + table + '):', res.error.message);
+            console.warn('Cloud create error (' + table + '):', res.error.message, res.error.code);
             CloudSync._markUnsynced();
+            // Loud toast so silent cloud failures stop happening unnoticed
+            if (typeof UI !== 'undefined' && UI.toast) {
+              UI.toast('⚠ Cloud save failed (' + table + '): ' + res.error.message.slice(0, 80), 'error');
+            }
           }
-        }).catch(function() { CloudSync._markUnsynced(); });
+        }).catch(function(e) {
+          CloudSync._markUnsynced();
+          console.warn('Cloud create network error (' + table + '):', e);
+        });
         return result;
       };
 

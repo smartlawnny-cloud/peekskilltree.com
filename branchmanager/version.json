@@ -1,5 +1,5 @@
 {
-  "version": 313,
+  "version": 314,
   "released": "2026-04-20",
-  "notes": "Bulletproof loadPage: refuses to re-render the SAME page if a form is open. Stops every form-clobbering bug at the root, regardless of which sync function fired the reload. Plus added the same hasOpenForm guard to _pullFromCloud."
+  "notes": "Surface cloud-save failures with toast (was silent console warning). Reveals schema mismatches like missing 'subtotal' column."
 }

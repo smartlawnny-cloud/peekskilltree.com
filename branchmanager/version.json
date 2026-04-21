@@ -1,5 +1,5 @@
 {
-  "version": 310,
+  "version": 311,
   "released": "2026-04-20",
-  "notes": "Critical: CloudSync no longer auto-redirects to dashboard on every sync tick. With realtime + 30s poll, this was wiping any open form/detail page constantly. Now only redirects on initial boot when no form is open."
+  "notes": "Audit fixes: 1) _checkNewPayments respects open forms (same v310 pattern). 2) Logout tears down realtime subscription + polling timers + biometric session. 3) Biometric isEnabled self-heals when credId is missing. 4) authenticate() catches corrupted base64 + auto-disables. 5) Photos library tag chips use data attributes + delegated handlers (XSS-safe)."
 }

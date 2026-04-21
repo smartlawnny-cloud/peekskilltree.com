@@ -469,10 +469,12 @@ var Photos = {
     // Tag chips
     if (allTags.length) {
       html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">';
-      html += '<button onclick="Photos._libFilter=\'\'; Photos.openLibrary();" style="background:' + (!activeTag ? '#2e7d32' : 'var(--white)') + ';color:' + (!activeTag ? '#fff' : 'var(--text)') + ';border:1px solid ' + (!activeTag ? '#2e7d32' : 'var(--border)') + ';padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;">All (' + all.length + ')</button>';
+      // Use data-tag attribute + delegated click — no string-interpolated onclicks (safe vs apostrophes/scripts in tag names)
+      function escAttr(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+      html += '<button data-libtag="" style="background:' + (!activeTag ? '#2e7d32' : 'var(--white)') + ';color:' + (!activeTag ? '#fff' : 'var(--text)') + ';border:1px solid ' + (!activeTag ? '#2e7d32' : 'var(--border)') + ';padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;">All (' + all.length + ')</button>';
       allTags.forEach(function(t) {
         var on = activeTag === t;
-        html += '<button onclick="Photos._libFilter=\'' + t.replace(/'/g, "\\'") + '\'; Photos.openLibrary();" style="background:' + (on ? '#2e7d32' : 'var(--white)') + ';color:' + (on ? '#fff' : 'var(--text)') + ';border:1px solid ' + (on ? '#2e7d32' : 'var(--border)') + ';padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;">' + t + ' (' + tagCounts[t] + ')</button>';
+        html += '<button data-libtag="' + escAttr(t) + '" style="background:' + (on ? '#2e7d32' : 'var(--white)') + ';color:' + (on ? '#fff' : 'var(--text)') + ';border:1px solid ' + (on ? '#2e7d32' : 'var(--border)') + ';padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;">' + escAttr(t) + ' (' + tagCounts[t] + ')</button>';
       });
       html += '</div>';
     }
@@ -496,6 +498,13 @@ var Photos = {
     }
 
     container.innerHTML = html;
+    // Wire tag-filter buttons (delegated, no inline onclicks)
+    container.querySelectorAll('[data-libtag]').forEach(function(b) {
+      b.addEventListener('click', function() {
+        Photos._libFilter = b.getAttribute('data-libtag') || '';
+        Photos.openLibrary();
+      });
+    });
   },
 
   _deletePhoto: function(recordType, recordId, index) {

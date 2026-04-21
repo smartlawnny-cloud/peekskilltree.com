@@ -171,6 +171,14 @@ var Auth = {
     // Clear sensitive cached data on logout
     localStorage.removeItem('bm-recent-search');
     localStorage.removeItem('bm-recent-searches');
+    // Tear down realtime + polling so we don't leak subscriptions across users
+    try {
+      if (SupabaseDB && SupabaseDB._realtimeChannel) { SupabaseDB._realtimeChannel.unsubscribe(); SupabaseDB._realtimeChannel = null; }
+      if (SupabaseDB && SupabaseDB._livePollInterval) { clearInterval(SupabaseDB._livePollInterval); SupabaseDB._livePollInterval = null; }
+      if (SupabaseDB && SupabaseDB._pollInterval) { clearInterval(SupabaseDB._pollInterval); SupabaseDB._pollInterval = null; }
+    } catch(e) {}
+    // Clear biometric session unlock so the next login re-prompts
+    try { sessionStorage.removeItem('bm-biometric-unlocked'); } catch(e) {}
     if (SupabaseDB && SupabaseDB.ready) {
       SupabaseDB.client.auth.signOut().catch(function() {});
     }

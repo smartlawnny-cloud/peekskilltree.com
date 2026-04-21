@@ -409,8 +409,10 @@ var SupabaseDB = {
           var amt = p.amount_paid ? '$' + parseFloat(p.amount_paid).toFixed(2) : '';
           UI.toast('💳 Payment received! Invoice #' + p.invoice_number + ' — ' + amt + ' (Stripe)', 'success');
         });
-        // Refresh page if on invoices
-        if (typeof loadPage === 'function') {
+        // Refresh page if on invoices — but NOT if a form/detail is open (would wipe input)
+        var hasOpenForm = document.getElementById('inv-form') || document.getElementById('quote-form')
+          || document.getElementById('client-form') || document.getElementById('job-form') || document.getElementById('req-form');
+        if (typeof loadPage === 'function' && !hasOpenForm) {
           var active = document.querySelector('.nav-item.active');
           var pg = active && active.dataset.page;
           if (pg && (pg === 'invoices' || pg === 'dashboard' || pg === 'payments')) {

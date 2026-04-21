@@ -18,8 +18,14 @@ var Biometric = {
   },
 
   isEnabled: function() {
-    return localStorage.getItem(Biometric.ENABLE_KEY) === '1'
-        && !!localStorage.getItem(Biometric.CRED_KEY);
+    var enabled = localStorage.getItem(Biometric.ENABLE_KEY) === '1';
+    var credId = localStorage.getItem(Biometric.CRED_KEY);
+    // Both must be present; otherwise self-heal by disabling
+    if (enabled && (!credId || credId.length < 4)) {
+      localStorage.removeItem(Biometric.ENABLE_KEY);
+      return false;
+    }
+    return enabled && !!credId;
   },
 
   isUnlocked: function() {
@@ -98,11 +104,19 @@ var Biometric = {
     if (!Biometric.isSupported()) return false;
     var credId = localStorage.getItem(Biometric.CRED_KEY);
     if (!credId) return false;
+    var idBuf;
+    try { idBuf = Biometric._b64url2buf(credId); }
+    catch (e) {
+      console.warn('[Biometric] corrupted credential — disabling');
+      Biometric.disable();
+      UI.toast('Biometric data corrupted — please re-enable in Settings', 'error');
+      return false;
+    }
     try {
       var result = await navigator.credentials.get({
         publicKey: {
           challenge: Biometric._randomChallenge(),
-          allowCredentials: [{ type: 'public-key', id: Biometric._b64url2buf(credId) }],
+          allowCredentials: [{ type: 'public-key', id: idBuf }],
           userVerification: 'required',
           timeout: 60000,
           rpId: location.hostname

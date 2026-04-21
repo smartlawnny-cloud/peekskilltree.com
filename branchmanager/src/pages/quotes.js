@@ -463,13 +463,10 @@ var QuotesPage = {
       + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Line Items</div>'
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Take or upload a photo — AI identifies species, DBH, condition, and suggests service + price.</p>';
 
-    // Three-button action row: Add Tree (photo+AI) | Measure | Manual
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">'
+    // Two-button action row: Add Tree (photo+AI) | Manual — Measure lives in Tools
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'
       + '<button type="button" onclick="QuotesPage._addPhotoFirst()" style="padding:14px 8px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">'
       +   '📷 Add Tree Photo'
-      + '</button>'
-      + '<button type="button" onclick="QuotesPage._openTreeMeasure()" style="padding:14px 8px;background:#fff;color:var(--text);border:2px solid var(--border);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;" title="Measure DBH or height">'
-      +   '📏 Measure'
       + '</button>'
       + '<button type="button" onclick="QuotesPage.addItem()" style="padding:14px 8px;background:#fff;color:var(--text);border:2px solid var(--border);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;" title="Enter manually without photo">'
       +   '✍️ Manual'
@@ -983,7 +980,6 @@ var QuotesPage = {
       +   '<button type="button" onclick="QuotesPage._addMorePhotos(this)" style="padding:8px 12px;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📷 Add Photos</button>'
       +   '<button type="button" onclick="QuotesPage._runAIOnRow(this)" style="padding:8px 12px;background:#fff;color:#7c3aed;border:1px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" title="Let Claude fill species, DBH, condition, rate">🤖 Run AI</button>'
       +   '<button type="button" onclick="QuotesPage._plantNetSecondOpinion(this)" style="padding:8px 12px;background:#fff;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" title="Verify species with PlantNet (second opinion)">🌿 2nd</button>'
-      +   '<button type="button" onclick="QuotesPage._openMeasureModal(this)" style="padding:8px 12px;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📏 Measure</button>'
       +   '<button type="button" onclick="QuotesPage._collapseRow(this)" style="padding:8px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto;">✓ Done</button>'
       + '</div>'
       + '</div>';

@@ -1,5 +1,5 @@
 {
-  "version": 317,
+  "version": 318,
   "released": "2026-04-21",
-  "notes": "Removed v316 topbar padding — was making topbar sit too high in viewport. iOS and Capacitor already reserve the status-bar area natively. Plain 48px topbar."
+  "notes": "Tree Measure: removed from quote form (top action buttons went 3→2, Add Photos/Manual only) and from the inline tree-row buttons. Measure now lives as a tab inside Tools hub."
 }

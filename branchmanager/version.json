@@ -1,5 +1,5 @@
 {
-  "version": 320,
+  "version": 321,
   "released": "2026-04-21",
-  "notes": "Quote client card: expanded body now shows full address (Apple Maps link) + clickable phone number."
+  "notes": "Client detail page full redesign: header card (no emoji) with name + clickable address + contact chips + tags; 6-button action row (Call/Text/Email/+Quote/+Job/+Invoice); 3 KPIs (Lifetime Revenue / Balance Due / Last Visit); reorganized tabs — Overview, Work, Billing, Comms, Property, About."
 }

@@ -670,322 +670,410 @@ var ClientsPage = {
     var sortedJobsByDate = clientJobs.slice().sort(function(a, b) { return (b.scheduledDate || b.createdAt || '') > (a.scheduledDate || a.createdAt || '') ? 1 : -1; });
     var lastJobDate = sortedJobsByDate.length ? (sortedJobsByDate[0].scheduledDate || sortedJobsByDate[0].createdAt) : null;
 
+    // ── Computed display bits ──
+    var addrEsc = c.address ? UI.esc(c.address) : '';
+    var phoneEsc = c.phone ? UI.phone(c.phone) : '';
+    var phoneTel = c.phone ? c.phone.replace(/[^0-9+]/g, '') : '';
+    var nameJs = (c.name || '').replace(/'/g, "\\'");
+    var upcoming = clientJobs.filter(function(j){ return j.status === 'scheduled' || j.status === 'in_progress' || j.status === 'late'; })
+      .sort(function(a, b){ return (a.scheduledDate || '').localeCompare(b.scheduledDate || ''); });
+
+    // Town from address
+    var townOnly = '';
+    if (c.address) {
+      var parts = c.address.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+      if (parts.length >= 3) townOnly = parts[parts.length - 3];
+      else if (parts.length === 2) townOnly = parts[1];
+    }
+
     // previous system-style client detail
     var html = ''
-      // Center + contain — overflow-x:hidden stops wide grandchildren from
-      // pushing the page sideways on PWA.
       + '<div style="max-width:960px;margin:0 auto;width:100%;overflow-x:hidden;box-sizing:border-box;">'
-      // Breadcrumb
-      + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;">'
-      + '<a onclick="loadPage(\'clients\')" style="color:var(--text-light);cursor:pointer;text-decoration:none;">' + BM_CONFIG.companyName + '</a>'
-      + ' | <span style="color:var(--text);">' + UI.esc(c.name) + '</span></div>'
 
-      // Action buttons (right-aligned)
-      + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px;flex-wrap:wrap;">'
-      + (c.phone ? '<button class="btn" style="background:var(--green-dark);color:#fff;" onclick="Dialpad.call(\'' + c.phone.replace(/'/g, '') + '\',\'' + id + '\',\'' + (c.name || '').replace(/'/g, "\\'") + '\')">📞 Call</button>' : '')
-      + (c.phone ? '<button class="btn" style="background:#7c3aed;color:#fff;" onclick="Dialpad.showTextModal(\'' + id + '\',\'' + (c.name || '').replace(/'/g, "\\'") + '\',\'' + (c.phone || '').replace(/'/g, '') + '\')">💬 Text</button>' : '')
-      + (c.email ? '<button class="btn btn-primary" onclick="window.location.href=\'mailto:' + c.email + '\'">✉️ Email</button>' : '')
-      + '<button class="btn btn-outline" onclick="ClientsPage.showForm(\'' + id + '\')">✏️ Edit</button>'
-      + '<button class="btn btn-outline" onclick="ClientsPage._showPortalMenu(\'' + id + '\')" title="Share client portal">🔗 Portal ▾</button>'
-      + '<button class="btn btn-outline" style="font-size:12px;" onclick="ClientsPage.showStatement(\'' + id + '\')">📄 Statement</button>'
+      // ── Back link ──
+      + '<div style="margin-bottom:10px;">'
+      +   '<a onclick="loadPage(\'clients\')" style="font-size:13px;color:var(--text-light);cursor:pointer;text-decoration:none;">← Clients</a>'
       + '</div>'
 
-      // Client name (big, like previous system)
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">'
-      + '<div style="width:48px;height:48px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text-light);">👤</div>'
-      + '<h2 style="font-size:28px;font-weight:700;">' + UI.esc(c.name) + '</h2>'
+      // ── Header card ──
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      +   '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">'
+      +     '<div style="flex:1;min-width:240px;">'
+      +       '<h2 style="font-size:26px;font-weight:700;margin:0 0 6px;line-height:1.2;">' + UI.esc(c.name) + '</h2>'
+      +       (addrEsc
+          ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(c.address) + '" target="_blank" style="font-size:14px;color:var(--accent);text-decoration:none;display:inline-block;margin-bottom:6px;">📍 ' + addrEsc + '</a>'
+          : '<div style="font-size:13px;color:var(--text-light);margin-bottom:6px;">No address on file</div>')
+      +       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">'
+      +         (phoneEsc ? '<a onclick="ClientsPage._showContactPicker(\'' + id + '\')" style="font-size:13px;color:var(--text);background:var(--bg);padding:4px 10px;border-radius:20px;cursor:pointer;text-decoration:none;font-weight:600;">📞 ' + phoneEsc + '</a>' : '')
+      +         (c.email ? '<a href="mailto:' + c.email + '" style="font-size:13px;color:var(--text);background:var(--bg);padding:4px 10px;border-radius:20px;text-decoration:none;font-weight:600;">✉️ ' + UI.esc(c.email) + '</a>' : '')
+      +         (c.status ? '<span style="font-size:12px;">' + UI.statusBadge(c.status) + '</span>' : '')
+      +       '</div>'
+      +       ((c.tags && c.tags.length)
+          ? (function(){ var seen = {}; var uniq = c.tags.filter(function(t){ var k = (t||'').toLowerCase(); return seen[k] ? false : (seen[k] = true); });
+              return '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;">'
+                + uniq.map(function(t){ return '<span style="padding:3px 10px;background:var(--green-bg);color:var(--green-dark);border-radius:20px;font-size:11px;font-weight:600;">' + UI.esc(t) + '</span>'; }).join('')
+                + '</div>';
+            })()
+          : '')
+      +     '</div>'
+      +     '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="ClientsPage.showForm(\'' + id + '\')">Edit</button>'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="ClientsPage._showPortalMenu(\'' + id + '\')">🔗 Portal</button>'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="ClientsPage.showStatement(\'' + id + '\')">📄 Statement</button>'
+      +     '</div>'
+      +   '</div>'
       + '</div>'
 
-      // Quick Stats row
-      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--white);margin-bottom:16px;">'
-      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
-      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Total Jobs</div>'
-      + '<div style="font-size:26px;font-weight:700;margin-top:4px;">' + clientJobs.length + '</div>'
-      + '</div>'
-      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
-      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Total Invoiced</div>'
-      + '<div style="font-size:26px;font-weight:700;margin-top:4px;">' + UI.moneyInt(totalInvoiced) + '</div>'
-      + '</div>'
-      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
-      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Balance Due</div>'
-      + '<div style="font-size:26px;font-weight:700;margin-top:4px;' + (totalOutstanding > 0 ? 'color:var(--red);' : 'color:var(--green-dark);') + '">' + UI.moneyInt(totalOutstanding) + '</div>'
-      + '</div>'
-      + '<div style="padding:14px 16px;">'
-      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Last Job</div>'
-      + '<div style="font-size:16px;font-weight:700;margin-top:6px;">' + (lastJobDate ? UI.dateShort(lastJobDate) : '<span style="color:var(--text-light);font-size:13px;">None</span>') + '</div>'
-      + '</div>'
+      // ── Primary action row ──
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;">'
+      +   (phoneTel ? '<button class="btn" style="background:var(--green-dark);color:#fff;font-size:13px;padding:10px;" onclick="Dialpad.call(\'' + phoneTel + '\',\'' + id + '\',\'' + nameJs + '\')">📞 Call</button>' : '')
+      +   (phoneTel ? '<button class="btn" style="background:#7c3aed;color:#fff;font-size:13px;padding:10px;" onclick="Dialpad.showTextModal(\'' + id + '\',\'' + nameJs + '\',\'' + phoneTel + '\')">💬 Text</button>' : '')
+      +   (c.email ? '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="window.location.href=\'mailto:' + c.email + '\'">✉️ Email</button>' : '')
+      +   '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="QuotesPage.showForm(null,\'' + id + '\')">+ Quote</button>'
+      +   '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="JobsPage.showForm(null,\'' + id + '\')">+ Job</button>'
+      +   '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="InvoicesPage.showForm(null,\'' + id + '\')">+ Invoice</button>'
       + '</div>'
 
-      // Quick Actions bar
-      + '<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">'
-      + '<button class="btn btn-primary" style="font-size:13px;" onclick="QuotesPage.showForm(null,\'' + id + '\')">+ New Quote</button>'
-      + '<button class="btn btn-primary" style="font-size:13px;" onclick="JobsPage.showForm(null,\'' + id + '\')">+ New Job</button>'
-      + '<button class="btn btn-primary" style="font-size:13px;" onclick="InvoicesPage.showForm(null,\'' + id + '\')">+ New Invoice</button>'
+      // ── 3 KPIs ──
+      + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;">'
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;">'
+      +     '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Lifetime Revenue</div>'
+      +     '<div style="font-size:22px;font-weight:700;margin-top:4px;color:var(--green-dark);">' + UI.moneyInt(totalRevenue) + '</div>'
+      +     '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">' + completedJobs.length + ' completed job' + (completedJobs.length !== 1 ? 's' : '') + '</div>'
+      +   '</div>'
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;">'
+      +     '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Balance Due</div>'
+      +     '<div style="font-size:22px;font-weight:700;margin-top:4px;' + (totalOutstanding > 0 ? 'color:var(--red);' : 'color:var(--green-dark);') + '">' + UI.moneyInt(totalOutstanding) + '</div>'
+      +     '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">' + (totalOutstanding > 0 ? 'Unpaid invoices' : 'All paid up') + '</div>'
+      +   '</div>'
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;">'
+      +     '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-light);letter-spacing:.05em;">Last Visit</div>'
+      +     '<div style="font-size:18px;font-weight:700;margin-top:4px;">' + (lastJobDate ? UI.dateShort(lastJobDate) : '<span style="color:var(--text-light);font-size:14px;">—</span>') + '</div>'
+      +     '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">' + (upcoming.length > 0 ? upcoming.length + ' upcoming' : 'None scheduled') + '</div>'
+      +   '</div>'
       + '</div>'
 
-      // Two column: Properties (left) + Contact info (right)
-      + '<div class="detail-grid" style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;">'
-
-      // Left — Properties card
-      + '<div>'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<h3 style="font-size:18px;font-weight:700;">Properties</h3>'
-      + '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="ClientsPage.showForm(\'' + id + '\')">+ New Property</button>'
-      + '</div>'
-      + (c.address ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(c.address) + '" target="_blank" style="display:flex;gap:12px;align-items:start;text-decoration:none;color:inherit;padding:4px;border-radius:6px;transition:background .15s;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
-        + '<div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;color:#2e7d32;flex-shrink:0;">📍</div>'
-        + '<div style="font-size:14px;line-height:1.6;flex:1;">' + UI.esc(c.address).replace(/,/g, '<br>') + '<div style="font-size:11px;color:var(--accent);margin-top:2px;">Open in Maps →</div></div>'
-        + '</a>' : '<div style="color:var(--text-light);font-size:13px;">No property address</div>')
+      // ── Tabs nav ──
+      + '<div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;">'
+      +   '<button class="cd-tab active" onclick="ClientsPage._tab(this,\'cd-overview\')" style="padding:10px 16px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--accent);white-space:nowrap;">Overview</button>'
+      +   '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-work\')" style="padding:10px 16px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);white-space:nowrap;">Work (' + (clientQuotes.length + clientJobs.length) + ')</button>'
+      +   '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-billing\')" style="padding:10px 16px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);white-space:nowrap;">Billing (' + clientInvoices.length + ')</button>'
+      +   '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-comms\')" style="padding:10px 16px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);white-space:nowrap;">Comms</button>'
+      +   '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-property\')" style="padding:10px 16px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);white-space:nowrap;">Property</button>'
+      +   '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-about\')" style="padding:10px 16px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);white-space:nowrap;">About</button>'
       + '</div>'
 
-      // Schedule section
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
-      + '<h3 style="font-size:18px;font-weight:700;">Schedule</h3>'
-      + '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="JobsPage.showForm(null,\'' + id + '\')">New</button>'
-      + '</div>';
-    var upcomingJobs = clientJobs.filter(function(j){ return j.status==='scheduled'||j.status==='in_progress'; });
-    var overdueJobs = clientJobs.filter(function(j){ return j.status==='late'; });
-    if (overdueJobs.length) {
-      html += '<div style="color:#dc3545;font-size:13px;font-weight:600;margin-bottom:8px;">Overdue</div>';
-      overdueJobs.forEach(function(j) {
-        html += '<div style="padding:8px 0;border-bottom:1px solid var(--bg);font-size:13px;cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
-          + '<strong>' + (j.description || 'Job #' + j.jobNumber) + '</strong><br>'
-          + '<span style="color:var(--text-light);">' + UI.dateShort(j.scheduledDate) + '</span></div>';
+      // ══════════════════════════════════════════════════════════
+      // OVERVIEW TAB
+      // ══════════════════════════════════════════════════════════
+      + '<div id="cd-overview" class="cd-panel">'
+
+      //  Upcoming work
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
+      +     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      +       '<h3 style="font-size:16px;font-weight:700;margin:0;">Upcoming work</h3>'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="JobsPage.showForm(null,\'' + id + '\')">+ Schedule</button>'
+      +     '</div>';
+    if (upcoming.length) {
+      upcoming.slice(0, 5).forEach(function(j) {
+        var isLate = j.status === 'late';
+        html += '<div onclick="JobsPage.showDetail(\'' + j.id + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bg);cursor:pointer;">'
+          +   '<div style="flex:1;min-width:0;">'
+          +     '<div style="font-size:13px;font-weight:600;color:' + (isLate ? 'var(--red)' : 'var(--text)') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.description || 'Job #' + (j.jobNumber || '—')) + '</div>'
+          +     '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">' + (j.scheduledDate ? UI.dateShort(j.scheduledDate) : 'Unscheduled') + (isLate ? ' · OVERDUE' : '') + '</div>'
+          +   '</div>'
+          +   '<div style="font-size:13px;font-weight:600;color:var(--green-dark);">' + (j.total ? UI.moneyInt(j.total) : '') + '</div>'
+          + '</div>';
       });
-    }
-    if (upcomingJobs.length) {
-      upcomingJobs.forEach(function(j) {
-        html += '<div style="padding:8px 0;border-bottom:1px solid var(--bg);font-size:13px;cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
-          + '<strong>' + (j.description || 'Job #' + j.jobNumber) + '</strong><br>'
-          + '<span style="color:var(--text-light);">' + UI.dateShort(j.scheduledDate) + '</span></div>';
-      });
-    }
-    if (!upcomingJobs.length && !overdueJobs.length) {
-      html += '<div style="color:var(--text-light);font-size:13px;">No upcoming schedule</div>';
+    } else {
+      html += '<div style="font-size:13px;color:var(--text-light);padding:10px 0;">No upcoming work. Tap <strong>+ Schedule</strong> to add a job.</div>';
     }
     html += '</div>'
 
-      // Recent pricing
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px;">'
-      + '<h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Recent pricing for this property</h3>';
+      //  Recent pricing for this property
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
+      +     '<h3 style="font-size:16px;font-weight:700;margin:0 0 10px;">Recent pricing</h3>';
     var recentLineItems = [];
     clientQuotes.forEach(function(q) {
       if (q.lineItems) q.lineItems.forEach(function(li) {
-        recentLineItems.push({ service: li.service, quoted: li.amount || (li.qty * li.rate), type: 'quoted' });
+        recentLineItems.push({ service: li.service, quoted: li.amount || (li.qty * li.rate) });
       });
     });
     if (recentLineItems.length) {
-      html += '<table style="width:100%;font-size:13px;border-collapse:collapse;">'
-        + '<tr style="text-transform:uppercase;font-size:10px;font-weight:600;color:var(--text-light);letter-spacing:.05em;"><td style="padding:6px 0;">Line Item</td><td style="padding:6px 0;text-align:right;">Quoted</td></tr>';
+      html += '<table style="width:100%;font-size:13px;border-collapse:collapse;">';
       recentLineItems.slice(0, 5).forEach(function(li) {
-        html += '<tr><td style="padding:6px 0;">' + (li.service || 'Custom') + '</td><td style="padding:6px 0;text-align:right;">' + UI.money(li.quoted) + '</td></tr>';
+        html += '<tr><td style="padding:6px 0;">' + UI.esc(li.service || 'Custom') + '</td><td style="padding:6px 0;text-align:right;font-weight:600;">' + UI.money(li.quoted) + '</td></tr>';
       });
       html += '</table>';
     } else {
-      // Fall back to recent completed jobs as pricing reference
-      var recentJobs = clientJobs.filter(function(j) { return j.status === 'completed' && j.total > 0; })
-        .sort(function(a, b) { return (b.scheduledDate || b.createdAt || '') > (a.scheduledDate || a.createdAt || '') ? 1 : -1; })
+      var recentJobsForPricing = clientJobs.filter(function(j){ return j.status === 'completed' && j.total > 0; })
+        .sort(function(a, b){ return (b.scheduledDate || b.createdAt || '').localeCompare(a.scheduledDate || a.createdAt || ''); })
         .slice(0, 5);
-      if (recentJobs.length) {
-        html += '<table style="width:100%;font-size:13px;border-collapse:collapse;">'
-          + '<tr style="text-transform:uppercase;font-size:10px;font-weight:600;color:var(--text-light);letter-spacing:.05em;"><td style="padding:6px 0;">Job</td><td style="padding:6px 0;">Date</td><td style="padding:6px 0;text-align:right;">Total</td></tr>';
-        recentJobs.forEach(function(j) {
-          var dateStr = j.scheduledDate ? new Date(j.scheduledDate).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : '—';
+      if (recentJobsForPricing.length) {
+        html += '<table style="width:100%;font-size:13px;border-collapse:collapse;">';
+        recentJobsForPricing.forEach(function(j) {
+          var dateStr = j.scheduledDate ? new Date(j.scheduledDate).toLocaleDateString('en-US', { month:'short', year:'numeric' }) : '—';
           html += '<tr><td style="padding:5px 0;">' + UI.esc(j.description || 'Job #' + j.jobNumber) + '</td>'
-            + '<td style="padding:5px 0;color:var(--text-light);">' + dateStr + '</td>'
+            + '<td style="padding:5px 0;color:var(--text-light);font-size:12px;">' + dateStr + '</td>'
             + '<td style="padding:5px 0;text-align:right;font-weight:600;">' + UI.moneyInt(j.total) + '</td></tr>';
         });
         html += '</table>';
       } else {
-        html += '<div style="color:var(--text-light);font-size:13px;">No pricing history</div>';
+        html += '<div style="font-size:13px;color:var(--text-light);">No pricing history yet.</div>';
       }
     }
-    html += '</div></div>'
+    html += '</div>';
 
-      // Right — Contact info + Tags + Internal notes
-      + '<div>'
-      + '<div style="margin-bottom:16px;">'
-      + '<h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Contact info</h3>'
-      + '<table style="width:100%;font-size:14px;border-collapse:collapse;">'
-      + (c.phone ? '<tr><td style="padding:8px 0;color:var(--text-light);width:60px;">Main</td><td style="padding:8px 0;"><a onclick="ClientsPage._showContactPicker(\'' + id + '\')" style="color:var(--accent);text-decoration:none;cursor:pointer;font-weight:600;">' + UI.phone(c.phone) + '</a> <span style="font-size:11px;color:var(--text-light);margin-left:6px;">tap to call/text</span></td></tr>' : '')
-      + (c.email ? '<tr><td style="padding:8px 0;color:var(--text-light);">Main</td><td style="padding:8px 0;"><a href="mailto:' + c.email + '" style="color:#1565c0;text-decoration:none;">' + c.email + '</a></td></tr>' : '')
-      + '<tr><td style="padding:8px 0;color:var(--text-light);">Status</td><td style="padding:8px 0;">' + UI.statusBadge(c.status) + '</td></tr>'
-      + '<tr><td style="padding:8px 0;color:var(--text-light);">Revenue</td><td style="padding:8px 0;font-weight:600;">' + UI.moneyInt(totalRevenue) + '</td></tr>'
-      + '<tr><td style="padding:8px 0;color:var(--text-light);">Owed</td><td style="padding:8px 0;' + (totalOutstanding > 0 ? 'color:var(--red);font-weight:600;' : '') + '">' + UI.moneyInt(totalOutstanding) + '</td></tr>'
-      + '</table></div>'
+    //  Trees summary (if any)
+    var overviewTrees = TreeInventory.getForClient(id);
+    if (overviewTrees.length) {
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+        + '<h3 style="font-size:16px;font-weight:700;margin:0;">🌳 Trees on record</h3>'
+        + '<a onclick="ClientsPage._tab(document.querySelector(\'.cd-tab[onclick*=cd-property]\'),\'cd-property\')" style="font-size:12px;color:var(--accent);cursor:pointer;">View all · ' + overviewTrees.length + '</a>'
+        + '</div>'
+        + '</div>';
+    }
 
-      // Tags
-      + '<div style="margin-bottom:16px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
-      + '<h3 style="font-size:18px;font-weight:700;">Tags</h3>'
-      + '<button class="btn btn-outline" style="font-size:12px;padding:4px 10px;" onclick="ClientsPage.showAddTagModal(\'' + id + '\')">+ Add Tag</button>'
-      + '</div>'
-      + (c.tags && c.tags.length ? (function() { var seen = {}; var uniq = c.tags.filter(function(t) { var k = t.toLowerCase(); return seen[k] ? false : (seen[k] = true); }); return '<div style="display:flex;gap:4px;flex-wrap:wrap;">' + uniq.map(function(t) { return '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px 4px 12px;background:var(--green-bg);border:1px solid #c8e6c9;border-radius:20px;font-size:12px;font-weight:600;color:var(--green-dark);">' + UI.esc(t) + '<button onclick="event.stopPropagation();ClientsPage.removeTagFromClient(\'' + id + '\',\'' + t.replace(/'/g, "\\'") + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-light);padding:0 2px;line-height:1;" title="Remove tag">×</button></span>'; }).join('') + '</div>'; })() : '<div style="font-size:13px;color:var(--text-light);font-style:italic;">No tags — add tags to organize clients</div>')
-      + '</div>';
+    html += '</div>' // close cd-overview
+
+      // ══════════════════════════════════════════════════════════
+      // WORK TAB — quotes + jobs
+      // ══════════════════════════════════════════════════════════
+      + '<div id="cd-work" class="cd-panel" style="display:none;">'
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
+      +     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      +       '<h3 style="font-size:16px;font-weight:700;margin:0;">Quotes (' + clientQuotes.length + ')</h3>'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="QuotesPage.showForm(null,\'' + id + '\')">+ New Quote</button>'
+      +     '</div>';
+    if (clientQuotes.length) {
+      var sortedQ = clientQuotes.slice().sort(function(a, b){ return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+      html += '<table class="data-table"><thead><tr><th>#</th><th>Date</th><th>Description</th><th>Status</th><th style="text-align:right;">Total</th></tr></thead><tbody>';
+      sortedQ.forEach(function(q) {
+        html += '<tr style="cursor:pointer;" onclick="QuotesPage._pendingDetail=\'' + q.id + '\';loadPage(\'quotes\')">'
+          + '<td><strong>' + (q.quoteNumber || '—') + '</strong></td>'
+          + '<td style="white-space:nowrap;color:var(--text-light);font-size:12px;">' + UI.dateShort(q.createdAt) + '</td>'
+          + '<td>' + UI.esc(q.description || '—') + '</td>'
+          + '<td>' + UI.statusBadge(q.status) + '</td>'
+          + '<td style="text-align:right;font-weight:600;">' + UI.money(q.total) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="font-size:13px;color:var(--text-light);">No quotes yet.</div>';
+    }
+    html += '</div>'
+
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;">'
+      +     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      +       '<h3 style="font-size:16px;font-weight:700;margin:0;">Jobs (' + clientJobs.length + ')</h3>'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="JobsPage.showForm(null,\'' + id + '\')">+ New Job</button>'
+      +     '</div>';
+    if (clientJobs.length) {
+      var sortedJ = clientJobs.slice().sort(function(a, b){ return (b.scheduledDate || b.createdAt || '').localeCompare(a.scheduledDate || a.createdAt || ''); });
+      html += '<table class="data-table"><thead><tr><th>Date</th><th>Description</th><th>Status</th><th style="text-align:right;">Value</th></tr></thead><tbody>';
+      sortedJ.forEach(function(j) {
+        html += '<tr style="cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
+          + '<td style="white-space:nowrap;color:var(--text-light);font-size:12px;">' + UI.dateShort(j.scheduledDate) + '</td>'
+          + '<td>' + UI.esc(j.description || 'Job #' + (j.jobNumber || '—')) + '</td>'
+          + '<td>' + UI.statusBadge(j.status) + '</td>'
+          + '<td style="text-align:right;font-weight:600;">' + UI.moneyInt(j.total) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="font-size:13px;color:var(--text-light);">No jobs yet.</div>';
+    }
+    html += '</div>';
+
+    html += '</div>' // close cd-work
+
+      // ══════════════════════════════════════════════════════════
+      // BILLING TAB
+      // ══════════════════════════════════════════════════════════
+      + '<div id="cd-billing" class="cd-panel" style="display:none;">'
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;">'
+      +     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      +       '<h3 style="font-size:16px;font-weight:700;margin:0;">Invoices (' + clientInvoices.length + ')</h3>'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="InvoicesPage.showForm(null,\'' + id + '\')">+ New Invoice</button>'
+      +     '</div>';
+    if (clientInvoices.length) {
+      var sortedI = clientInvoices.slice().sort(function(a, b){ return (b.issueDate || b.createdAt || '').localeCompare(a.issueDate || a.createdAt || ''); });
+      html += '<table class="data-table"><thead><tr><th>#</th><th>Date</th><th>Status</th><th style="text-align:right;">Total</th><th style="text-align:right;">Balance</th></tr></thead><tbody>';
+      sortedI.forEach(function(inv) {
+        var bal = inv.balance != null ? inv.balance : inv.total;
+        html += '<tr style="cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')">'
+          + '<td><strong>' + (inv.invoiceNumber || '—') + '</strong></td>'
+          + '<td style="white-space:nowrap;color:var(--text-light);font-size:12px;">' + UI.dateShort(inv.issueDate || inv.createdAt) + '</td>'
+          + '<td>' + UI.statusBadge(inv.status) + '</td>'
+          + '<td style="text-align:right;font-weight:600;">' + UI.money(inv.total || 0) + '</td>'
+          + '<td style="text-align:right;font-weight:600;' + (bal > 0 ? 'color:var(--red)' : 'color:var(--green-dark)') + ';">' + UI.money(bal || 0) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="font-size:13px;color:var(--text-light);">No invoices yet.</div>';
+    }
+    html += '</div></div>' // close cd-billing
+
+      // ══════════════════════════════════════════════════════════
+      // COMMS TAB — activity timeline + CommsLog
+      // ══════════════════════════════════════════════════════════
+      + '<div id="cd-comms" class="cd-panel" style="display:none;">';
+    // (timeline built below)
+    html += '<div id="cd-comms-content"></div></div>' // close cd-comms
+
+      // ══════════════════════════════════════════════════════════
+      // PROPERTY TAB — address, trees, photos
+      // ══════════════════════════════════════════════════════════
+      + '<div id="cd-property" class="cd-panel" style="display:none;">'
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
+      +     '<h3 style="font-size:16px;font-weight:700;margin:0 0 10px;">Address</h3>'
+      +     (addrEsc
+          ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(c.address) + '" target="_blank" style="display:flex;gap:12px;align-items:start;text-decoration:none;color:inherit;">'
+            + '<div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;color:#2e7d32;flex-shrink:0;">📍</div>'
+            + '<div style="font-size:14px;line-height:1.6;flex:1;">' + addrEsc.replace(/,/g, '<br>') + '<div style="font-size:11px;color:var(--accent);margin-top:2px;">Open in Maps →</div></div>'
+            + '</a>'
+          : '<div style="color:var(--text-light);font-size:13px;">No address on file. <a onclick="ClientsPage.showForm(\'' + id + '\')" style="color:var(--accent);cursor:pointer;">Add one →</a></div>')
+      +   '</div>'
+
+      //  Trees card
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
+      +     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      +       '<h3 style="font-size:16px;font-weight:700;margin:0;">🌳 Trees (' + overviewTrees.length + ')</h3>'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="TreeInventory.showForm(\'' + id + '\')">+ Add Tree</button>'
+      +     '</div>';
+    if (overviewTrees.length === 0) {
+      html += '<div style="font-size:13px;color:var(--text-light);">No trees logged yet. Useful for risk assessment + recurring work.</div>';
+    } else {
+      html += '<table class="data-table"><thead><tr><th>Species</th><th>DBH</th><th>Condition</th><th>Work Needed</th></tr></thead><tbody>';
+      overviewTrees.forEach(function(t) {
+        var condColor = { 'Excellent': '#00836c', 'Good': '#2e7d32', 'Fair': '#e6a817', 'Poor': '#e07c24', 'Hazard': '#dc3545' }[t.condition] || 'var(--text-light)';
+        html += '<tr onclick="TreeInventory.showDetail(\'' + t.id + '\')" style="cursor:pointer;">'
+          + '<td><strong>' + UI.esc(t.species || 'Unknown') + '</strong>' + (t.location ? '<br><span style="font-size:11px;color:var(--text-light);">📍 ' + UI.esc(t.location) + '</span>' : '') + '</td>'
+          + '<td style="font-weight:600;">' + (t.dbh ? t.dbh + '"' : '—') + '</td>'
+          + '<td><span style="font-weight:600;color:' + condColor + ';">' + UI.esc(t.condition || '—') + '</span></td>'
+          + '<td style="font-size:12px;">' + UI.esc(t.workNeeded || '—') + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+    html += '</div>'
+
+      //  Photos
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;">'
+      +     '<h3 style="font-size:16px;font-weight:700;margin:0 0 10px;">📷 Photos</h3>';
+    if (typeof Photos !== 'undefined') {
+      html += Photos.renderGallery('client', id);
+    } else {
+      html += '<div style="font-size:13px;color:var(--text-light);">Photo module not loaded.</div>';
+    }
+    html += '</div>';
+
+    html += '</div>' // close cd-property
+
+      // ══════════════════════════════════════════════════════════
+      // ABOUT TAB — tags, notes, custom fields, contact
+      // ══════════════════════════════════════════════════════════
+      + '<div id="cd-about" class="cd-panel" style="display:none;">'
+
+      //  Contact info
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
+      +     '<h3 style="font-size:16px;font-weight:700;margin:0 0 10px;">Contact info</h3>'
+      +     '<table style="width:100%;font-size:14px;border-collapse:collapse;">'
+      +       (c.phone ? '<tr><td style="padding:8px 0;color:var(--text-light);width:80px;">Phone</td><td style="padding:8px 0;"><a onclick="ClientsPage._showContactPicker(\'' + id + '\')" style="color:var(--accent);cursor:pointer;text-decoration:none;font-weight:600;">' + UI.phone(c.phone) + '</a></td></tr>' : '')
+      +       (c.email ? '<tr><td style="padding:8px 0;color:var(--text-light);">Email</td><td style="padding:8px 0;"><a href="mailto:' + c.email + '" style="color:#1565c0;text-decoration:none;">' + UI.esc(c.email) + '</a></td></tr>' : '')
+      +       '<tr><td style="padding:8px 0;color:var(--text-light);">Status</td><td style="padding:8px 0;">' + UI.statusBadge(c.status) + '</td></tr>'
+      +       (c.source ? '<tr><td style="padding:8px 0;color:var(--text-light);">Source</td><td style="padding:8px 0;">' + UI.esc(c.source) + '</td></tr>' : '')
+      +     '</table>'
+      +     '<div style="margin-top:10px;"><button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="ClientsPage.showForm(\'' + id + '\')">Edit contact info</button></div>'
+      +   '</div>'
+
+      //  Tags
+      +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
+      +     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      +       '<h3 style="font-size:16px;font-weight:700;margin:0;">Tags</h3>'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="ClientsPage.showAddTagModal(\'' + id + '\')">+ Add Tag</button>'
+      +     '</div>'
+      +     ((c.tags && c.tags.length)
+          ? (function(){ var seen = {}; var uniq = c.tags.filter(function(t){ var k = (t||'').toLowerCase(); return seen[k] ? false : (seen[k] = true); });
+              return '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+                + uniq.map(function(t){ return '<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 8px 4px 12px;background:var(--green-bg);border:1px solid #c8e6c9;border-radius:20px;font-size:12px;font-weight:600;color:var(--green-dark);">' + UI.esc(t) + '<button onclick="event.stopPropagation();ClientsPage.removeTagFromClient(\'' + id + '\',\'' + t.replace(/'/g, "\\'") + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-light);padding:0 2px;line-height:1;">×</button></span>'; }).join('')
+                + '</div>';
+            })()
+          : '<div style="font-size:13px;color:var(--text-light);">No tags — add tags to organize clients.</div>')
+      +   '</div>';
 
     // Custom fields
     if (typeof CustomFields !== 'undefined') {
-      html += CustomFields.renderDisplay('client', id);
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
+        + CustomFields.renderDisplay('client', id)
+        + '</div>';
     }
 
-    html += // Internal notes — inline editable
-        '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
-      + '<h3 style="font-size:18px;font-weight:700;">Internal notes</h3>'
-      + '<button onclick="ClientsPage._editNote(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);font-weight:600;">✏️ Edit</button>'
-      + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Only visible to your team</div>'
-      + '<div id="client-note-view-' + id + '" style="font-size:13px;color:' + (c.notes ? 'var(--text)' : 'var(--text-light)') + ';line-height:1.6;padding:8px;background:var(--bg);border-radius:6px;min-height:40px;">' + (c.notes ? UI.esc(c.notes) : 'No notes yet. Click Edit to add notes.') + '</div>'
-      + '<div id="client-note-edit-' + id + '" style="display:none;">'
-      + '<textarea id="client-note-ta-' + id + '" style="width:100%;height:100px;border:2px solid var(--accent);border-radius:6px;padding:8px;font-size:13px;resize:vertical;">' + UI.esc(c.notes || '') + '</textarea>'
-      + '<div style="display:flex;gap:6px;margin-top:6px;">'
-      + '<button onclick="ClientsPage._saveNote(\'' + id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Save</button>'
-      + '<button onclick="ClientsPage._cancelNote(\'' + id + '\')" style="background:none;border:1px solid var(--border);padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;">Cancel</button>'
-      + '</div></div>'
-      + '</div>'
-      + '</div></div>'
+    //  Internal notes
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;">'
+      +     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+      +       '<h3 style="font-size:16px;font-weight:700;margin:0;">Internal notes</h3>'
+      +       '<button onclick="ClientsPage._editNote(\'' + id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);font-weight:600;">✏️ Edit</button>'
+      +     '</div>'
+      +     '<div style="font-size:11px;color:var(--text-light);margin-bottom:8px;">Only visible to your team.</div>'
+      +     '<div id="client-note-view-' + id + '" style="font-size:13px;color:' + (c.notes ? 'var(--text)' : 'var(--text-light)') + ';line-height:1.6;padding:10px;background:var(--bg);border-radius:6px;min-height:40px;white-space:pre-wrap;">' + (c.notes ? UI.esc(c.notes) : 'No notes yet. Click Edit to add.') + '</div>'
+      +     '<div id="client-note-edit-' + id + '" style="display:none;">'
+      +       '<textarea id="client-note-ta-' + id + '" style="width:100%;height:100px;border:2px solid var(--accent);border-radius:6px;padding:8px;font-size:13px;resize:vertical;box-sizing:border-box;">' + UI.esc(c.notes || '') + '</textarea>'
+      +       '<div style="display:flex;gap:6px;margin-top:6px;">'
+      +         '<button onclick="ClientsPage._saveNote(\'' + id + '\')" style="background:var(--green-dark);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Save</button>'
+      +         '<button onclick="ClientsPage._cancelNote(\'' + id + '\')" style="background:none;border:1px solid var(--border);padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;">Cancel</button>'
+      +       '</div>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>' // close cd-about
 
-      // Right content — tabs
-      + '<div>'
-      + '<div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;">'
-      + '<button class="cd-tab active" onclick="ClientsPage._tab(this,\'cd-jobs\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--accent);">Jobs (' + clientJobs.length + ')</button>'
-      + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-quotes\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Quotes (' + clientQuotes.length + ')</button>'
-      + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-invoices\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Invoices (' + clientInvoices.length + ')</button>'
-      + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-activity\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">Activity</button>'
-      + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-photos\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">📷 Photos</button>'
-      + '<button class="cd-tab" onclick="ClientsPage._tab(this,\'cd-trees\');" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-light);">🌳 Trees (' + TreeInventory.getForClient(id).length + ')</button>'
-      + '</div>'
+      + '</div>'; // close max-width wrapper
 
-      // Jobs tab — last 10, sorted newest first
-      + '<div id="cd-jobs" class="cd-panel">'
-      + (clientJobs.length ? (function() {
-          var sorted = clientJobs.slice().sort(function(a,b){ return (b.scheduledDate||b.createdAt||'') > (a.scheduledDate||a.createdAt||'') ? 1 : -1; });
-          var shown = sorted.slice(0, 10);
-          var moreCount = sorted.length - shown.length;
-          return '<table class="data-table"><thead><tr><th>Date</th><th>Description</th><th>Status</th><th style="text-align:right;">Value</th></tr></thead><tbody>'
-            + shown.map(function(j) {
-              return '<tr style="cursor:pointer;" onclick="JobsPage.showDetail(\'' + j.id + '\')">'
-                + '<td style="white-space:nowrap;color:var(--text-light);font-size:12px;">' + UI.dateShort(j.scheduledDate) + '</td>'
-                + '<td>' + UI.esc(j.description || 'Job #' + (j.jobNumber || '—')) + '</td>'
-                + '<td>' + UI.statusBadge(j.status) + '</td>'
-                + '<td style="text-align:right;font-weight:600;">' + UI.moneyInt(j.total) + '</td>'
-                + '</tr>';
-            }).join('')
-            + '</tbody></table>'
-            + (moreCount > 0 ? '<div style="text-align:center;padding:10px;font-size:13px;color:var(--text-light);">Showing 10 of ' + sorted.length + ' jobs — <a onclick="ClientsPage._tab(document.querySelector(\'.cd-tab[onclick*=cd-jobs]\'),\'cd-jobs\')" style="color:var(--accent);cursor:pointer;">view all in Jobs page</a></div>' : '');
-        })() : UI.emptyState('🔧', 'No jobs yet', 'Create a job for this client.', '+ New Job', 'JobsPage.showForm(null,\'' + id + '\')'))
-      + '</div>'
 
-      // Quotes tab
-      + '<div id="cd-quotes" class="cd-panel" style="display:none;">'
-      + (clientQuotes.length ? (function() {
-          var sortedQ = clientQuotes.slice().sort(function(a,b){ return (b.createdAt||'') > (a.createdAt||'') ? 1 : -1; });
-          return '<table class="data-table"><thead><tr><th>#</th><th>Date</th><th>Description</th><th>Status</th><th>Total</th></tr></thead><tbody>'
-            + sortedQ.map(function(q) {
-              return '<tr style="cursor:pointer;" onclick="QuotesPage._pendingDetail=\'' + q.id + '\';loadPage(\'quotes\')"><td><strong>' + (q.quoteNumber || '—') + '</strong></td>'
-                + '<td style="white-space:nowrap;color:var(--text-light);font-size:12px;">' + UI.dateShort(q.createdAt) + '</td>'
-                + '<td>' + UI.esc(q.description || '—') + '</td><td>' + UI.statusBadge(q.status) + '</td><td style="font-weight:600;">' + UI.money(q.total) + '</td></tr>';
-            }).join('') + '</tbody></table>';
-        })() : UI.emptyState('📋', 'No quotes yet', 'Create a quote for this client.', '+ New Quote', 'QuotesPage.showForm(null,\'' + id + '\')'))
-      + '</div>'
-
-      // Invoices tab — last 10, sorted newest first
-      + '<div id="cd-invoices" class="cd-panel" style="display:none;">'
-      + (clientInvoices.length ? (function() {
-          var sorted = clientInvoices.slice().sort(function(a,b){ return (b.createdAt||b.issueDate||'') > (a.createdAt||a.issueDate||'') ? 1 : -1; });
-          var shown = sorted.slice(0, 10);
-          var moreCount = sorted.length - shown.length;
-          return '<table class="data-table"><thead><tr><th>#</th><th>Date</th><th>Status</th><th style="text-align:right;">Amount</th></tr></thead><tbody>'
-            + shown.map(function(inv) {
-              return '<tr style="cursor:pointer;" onclick="InvoicesPage.showDetail(\'' + inv.id + '\')">'
-                + '<td><strong>' + (inv.invoiceNumber || '—') + '</strong></td>'
-                + '<td style="white-space:nowrap;color:var(--text-light);font-size:12px;">' + UI.dateShort(inv.issueDate || inv.createdAt) + '</td>'
-                + '<td>' + UI.statusBadge(inv.status) + '</td>'
-                + '<td style="text-align:right;font-weight:600;' + ((inv.balance||0) > 0 ? 'color:var(--red)' : 'color:var(--green-dark)') + ';">' + UI.money(inv.total || 0) + '</td>'
-                + '</tr>';
-            }).join('')
-            + '</tbody></table>'
-            + (moreCount > 0 ? '<div style="text-align:center;padding:10px;font-size:13px;color:var(--text-light);">Showing 10 of ' + sorted.length + ' invoices</div>' : '');
-        })() : UI.emptyState('💰', 'No invoices yet', 'Create an invoice for this client.', '+ New Invoice', 'InvoicesPage.showForm(null,\'' + id + '\')'))
-      + '</div>'
-
-      // Activity timeline tab
-      + '<div id="cd-activity" class="cd-panel" style="display:none;">';
-
-    // Build timeline from all client data
+    // ── Build Comms tab timeline ──
     var timeline = [];
     clientQuotes.forEach(function(q) {
-      timeline.push({ date: q.createdAt, type: 'quote', icon: '📋', color: '#8b2252',
+      timeline.push({ date: q.createdAt, icon: '📋', color: '#8b2252',
         title: 'Quote #' + q.quoteNumber + ' created', detail: q.description || '', amount: q.total, status: q.status,
-        onclick: "QuotesPage.showDetail('" + q.id + "')" });
-      if (q.status === 'sent' || q.status === 'awaiting') {
-        timeline.push({ date: q.sentAt || q.createdAt, type: 'quote_sent', icon: '📤', color: '#1565c0',
-          title: 'Quote #' + q.quoteNumber + ' sent to client', detail: '', amount: q.total });
-      }
-      if (q.status === 'approved') {
-        timeline.push({ date: q.approvedAt || q.createdAt, type: 'quote_approved', icon: '✅', color: '#2e7d32',
-          title: 'Quote #' + q.quoteNumber + ' approved', detail: '', amount: q.total });
-      }
+        onclick: "QuotesPage._pendingDetail='" + q.id + "';loadPage('quotes')" });
+      if (q.status === 'sent' || q.status === 'awaiting') timeline.push({ date: q.sentAt || q.createdAt, icon: '📤', color: '#1565c0', title: 'Quote #' + q.quoteNumber + ' sent', amount: q.total });
+      if (q.status === 'approved') timeline.push({ date: q.approvedAt || q.createdAt, icon: '✅', color: '#2e7d32', title: 'Quote #' + q.quoteNumber + ' approved', amount: q.total });
     });
     clientJobs.forEach(function(j) {
-      timeline.push({ date: j.createdAt, type: 'job', icon: '🔧', color: '#2e7d32',
+      timeline.push({ date: j.createdAt, icon: '🔧', color: '#2e7d32',
         title: 'Job #' + j.jobNumber + ' created', detail: j.description || '', amount: j.total, status: j.status,
         onclick: "JobsPage.showDetail('" + j.id + "')" });
-      if (j.status === 'completed') {
-        timeline.push({ date: j.completedAt || j.scheduledDate || j.createdAt, type: 'job_done', icon: '✅', color: '#2e7d32',
-          title: 'Job #' + j.jobNumber + ' completed', detail: '' });
-      }
+      if (j.status === 'completed') timeline.push({ date: j.completedAt || j.scheduledDate || j.createdAt, icon: '✅', color: '#2e7d32', title: 'Job #' + j.jobNumber + ' completed' });
     });
     clientInvoices.forEach(function(inv) {
-      timeline.push({ date: inv.createdAt, type: 'invoice', icon: '💰', color: '#1565c0',
-        title: 'Invoice #' + inv.invoiceNumber + ' created', detail: inv.subject || '', amount: inv.total, status: inv.status,
+      timeline.push({ date: inv.createdAt, icon: '💰', color: '#1565c0',
+        title: 'Invoice #' + inv.invoiceNumber + ' created', amount: inv.total, status: inv.status,
         onclick: "InvoicesPage.showDetail('" + inv.id + "')" });
-      if (inv.status === 'paid') {
-        timeline.push({ date: inv.paidAt || inv.createdAt, type: 'payment', icon: '💵', color: '#2e7d32',
-          title: 'Payment received — Invoice #' + inv.invoiceNumber, detail: '', amount: inv.total });
-      }
+      if (inv.status === 'paid') timeline.push({ date: inv.paidAt || inv.createdAt, icon: '💵', color: '#2e7d32', title: 'Payment received — Invoice #' + inv.invoiceNumber, amount: inv.total });
     });
-    // Satisfaction ratings
     clientJobs.forEach(function(j) {
       if (j.satisfaction && j.satisfaction.rating) {
-        var stars = '';
-        for (var s = 1; s <= 5; s++) stars += s <= j.satisfaction.rating ? '⭐' : '☆';
-        timeline.push({ date: j.satisfaction.ratedAt || j.completedAt || j.createdAt, type: 'rating', icon: '😊', color: '#ffc107',
-          title: 'Client rated Job #' + j.jobNumber + ' — ' + stars + ' (' + j.satisfaction.rating + '/5)',
-          detail: j.satisfaction.comment || '' });
+        var stars = ''; for (var s = 1; s <= 5; s++) stars += s <= j.satisfaction.rating ? '⭐' : '☆';
+        timeline.push({ date: j.satisfaction.ratedAt || j.completedAt || j.createdAt, icon: '😊', color: '#ffc107',
+          title: 'Client rated Job #' + j.jobNumber + ' — ' + stars, detail: j.satisfaction.comment || '' });
       }
     });
-    // Communication log entries
     if (typeof CommsLog !== 'undefined') {
-      var comms = CommsLog.getAll(id);
-      comms.forEach(function(comm) {
+      CommsLog.getAll(id).forEach(function(comm) {
         var icons = { call: '📞', text: '💬', email: '📧', note: '📌', visit: '🏠', voicemail: '📱' };
-        var dirLabel = comm.direction === 'inbound' ? '← Inbound' : '→ Outbound';
-        timeline.push({ date: comm.date, type: 'comm', icon: icons[comm.type] || '📋', color: comm.direction === 'inbound' ? '#2980b9' : '#27ae60',
-          title: (comm.type || 'Note').charAt(0).toUpperCase() + (comm.type || 'note').slice(1) + ' ' + dirLabel,
+        timeline.push({ date: comm.date, icon: icons[comm.type] || '📋', color: comm.direction === 'inbound' ? '#2980b9' : '#27ae60',
+          title: (comm.type || 'Note').charAt(0).toUpperCase() + (comm.type || 'note').slice(1) + ' ' + (comm.direction === 'inbound' ? '← Inbound' : '→ Outbound'),
           detail: comm.notes || '' });
       });
     }
-    // Client notes
-    if (c.notes) {
-      timeline.push({ date: c.createdAt, type: 'note', icon: '📝', color: '#666',
-        title: 'Internal note added', detail: c.notes });
-    }
-    // Client created
-    timeline.push({ date: c.createdAt, type: 'created', icon: '👤', color: '#999',
-      title: 'Client record created', detail: c.source ? 'Source: ' + c.source : '' });
+    timeline.push({ date: c.createdAt, icon: '👋', color: '#999', title: 'Client added', detail: c.source ? 'Source: ' + c.source : '' });
+    timeline.sort(function(a, b){ return new Date(b.date) - new Date(a.date); });
 
-    timeline.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
-
-    if (timeline.length > 0) {
-      html += '<div style="position:relative;padding-left:28px;">';
-      // Vertical line
-      html += '<div style="position:absolute;left:12px;top:8px;bottom:8px;width:2px;background:var(--border);"></div>';
+    var timelineHtml = '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;">';
+    if (timeline.length) {
+      timelineHtml += '<div style="position:relative;padding-left:28px;">'
+        + '<div style="position:absolute;left:12px;top:8px;bottom:8px;width:2px;background:var(--border);"></div>';
       timeline.forEach(function(ev) {
-        html += '<div style="position:relative;margin-bottom:16px;' + (ev.onclick ? 'cursor:pointer;' : '') + '"' + (ev.onclick ? ' onclick="' + ev.onclick + '"' : '') + '>'
-          + '<div style="position:absolute;left:-24px;top:2px;width:20px;height:20px;border-radius:50%;background:' + ev.color + ';display:flex;align-items:center;justify-content:center;font-size:10px;z-index:1;">' + ev.icon + '</div>'
+        timelineHtml += '<div style="position:relative;margin-bottom:14px;' + (ev.onclick ? 'cursor:pointer;' : '') + '"' + (ev.onclick ? ' onclick="' + ev.onclick + '"' : '') + '>'
+          + '<div style="position:absolute;left:-24px;top:2px;width:20px;height:20px;border-radius:50%;background:' + ev.color + ';display:flex;align-items:center;justify-content:center;font-size:10px;">' + ev.icon + '</div>'
           + '<div style="font-size:11px;color:var(--text-light);margin-bottom:2px;">' + UI.dateRelative(ev.date) + '</div>'
           + '<div style="font-weight:600;font-size:13px;">' + ev.title
           + (ev.amount ? ' <span style="color:var(--green-dark);">' + UI.moneyInt(ev.amount) + '</span>' : '')
@@ -993,83 +1081,22 @@ var ClientsPage = {
           + (ev.detail ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + UI.esc(ev.detail) + '</div>' : '')
           + '</div>';
       });
-      html += '</div>';
+      timelineHtml += '</div>';
     } else {
-      html += '<div style="text-align:center;padding:24px;color:var(--text-light);">No activity yet</div>';
+      timelineHtml += '<div style="text-align:center;padding:24px;color:var(--text-light);">No activity yet.</div>';
     }
+    timelineHtml += '</div>';
 
-    // Communication log
-    if (typeof CommsLog !== 'undefined') {
-      html += CommsLog.renderForClient(id);
+    // Optional CommsLog-rendered block (quick-log form)
+    if (typeof CommsLog !== 'undefined' && CommsLog.renderForClient) {
+      timelineHtml += '<div style="margin-top:14px;">' + CommsLog.renderForClient(id) + '</div>';
     }
-
-    html += '</div>';
-
-    // Photos tab panel
-    html += '<div id="cd-photos" class="cd-panel" style="display:none;">';
-    if (typeof Photos !== 'undefined') {
-      html += Photos.renderGallery('client', id);
-    } else {
-      html += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">No photo module loaded</div>';
-    }
-    html += '</div>';
-
-    // Trees tab panel
-    html += '<div id="cd-trees" class="cd-panel" style="display:none;">';
-    var clientTrees = TreeInventory.getForClient(id);
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
-      + '<div style="font-size:13px;color:var(--text-light);">' + clientTrees.length + ' tree' + (clientTrees.length !== 1 ? 's' : '') + ' on record</div>'
-      + '<button class="btn btn-primary" style="font-size:12px;padding:6px 14px;" onclick="TreeInventory.showForm(\'' + id + '\')">+ Add Tree</button>'
-      + '</div>';
-    if (clientTrees.length === 0) {
-      html += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">'
-        + '<div style="font-size:40px;margin-bottom:10px;">🌳</div>'
-        + '<h3 style="font-size:16px;color:var(--text);margin-bottom:6px;">No trees logged yet</h3>'
-        + '<p style="font-size:13px;max-width:320px;margin:0 auto 16px;">Record trees on this property — species, DBH, condition, and work needed. Helpful for quoting and risk assessment.</p>'
-        + '<button class="btn btn-primary" onclick="TreeInventory.showForm(\'' + id + '\')">+ Log First Tree</button>'
-        + '</div>';
-    } else {
-      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'
-        + '<table class="data-table"><thead><tr>'
-        + '<th>#</th><th>Species</th><th>DBH</th><th>Est. Height</th><th>Condition</th><th>Work Needed</th><th style="width:36px;"></th>'
-        + '</tr></thead><tbody>';
-      clientTrees.forEach(function(t, idx) {
-        var condColor = { 'Excellent': '#00836c', 'Good': '#2e7d32', 'Fair': '#e6a817', 'Poor': '#e07c24', 'Hazard': '#dc3545' }[t.condition] || 'var(--text-light)';
-        html += '<tr onclick="TreeInventory.showDetail(\'' + t.id + '\')" style="cursor:pointer;">'
-          + '<td style="font-weight:600;color:var(--text-light);">' + (idx + 1) + '</td>'
-          + '<td><strong>' + UI.esc(t.species || 'Unknown') + '</strong>'
-          + (t.location ? '<br><span style="font-size:11px;color:var(--text-light);">📍 ' + UI.esc(t.location) + '</span>' : '')
-          + '</td>'
-          + '<td style="font-weight:600;">' + (t.dbh ? t.dbh + '"' : '—') + '</td>'
-          + '<td>' + (t.height ? '~' + t.height + ' ft' : '—') + '</td>'
-          + '<td><span style="font-weight:600;color:' + condColor + ';">' + UI.esc(t.condition || '—') + '</span></td>'
-          + '<td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(t.workNeeded || '—') + '</td>'
-          + '<td><button onclick="event.stopPropagation();TreeInventory.showForm(\'' + id + '\',\'' + t.id + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-light);" title="Edit">✏️</button></td>'
-          + '</tr>';
-      });
-      html += '</tbody></table></div>';
-
-      // Summary stats
-      var withWork = clientTrees.filter(function(t){return t.workNeeded && t.workNeeded.trim();});
-      var hazards = clientTrees.filter(function(t){return t.condition === 'Hazard';});
-      var poor = clientTrees.filter(function(t){return t.condition === 'Poor';});
-      if (withWork.length || hazards.length) {
-        html += '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">';
-        if (hazards.length) html += '<div style="flex:1;min-width:140px;background:#fde8e8;border-radius:8px;padding:10px 14px;"><div style="font-size:11px;font-weight:600;color:#842029;text-transform:uppercase;letter-spacing:.05em;">⚠️ Hazard Trees</div><div style="font-size:24px;font-weight:700;color:#842029;">' + hazards.length + '</div></div>';
-        if (poor.length) html += '<div style="flex:1;min-width:140px;background:#fff3e0;border-radius:8px;padding:10px 14px;"><div style="font-size:11px;font-weight:600;color:#e07c24;text-transform:uppercase;letter-spacing:.05em;">Poor Condition</div><div style="font-size:24px;font-weight:700;color:#e07c24;">' + poor.length + '</div></div>';
-        if (withWork.length) html += '<div style="flex:1;min-width:140px;background:#e8f5e9;border-radius:8px;padding:10px 14px;"><div style="font-size:11px;font-weight:600;color:#2e7d32;text-transform:uppercase;letter-spacing:.05em;">Work Needed</div><div style="font-size:24px;font-weight:700;color:#2e7d32;">' + withWork.length + '</div></div>';
-        html += '</div>';
-      }
-    }
-    html += '</div>';
-
-    html += '</div></div>';
-    // Close the max-width:960px;margin:0 auto wrapper opened at the top
-    html += '</div>';
 
     // Render as full page
     document.getElementById('pageTitle').textContent = c.name;
     document.getElementById('pageContent').innerHTML = html;
+    var commsEl = document.getElementById('cd-comms-content');
+    if (commsEl) commsEl.innerHTML = timelineHtml;
     document.getElementById('pageAction').style.display = 'none';
     if (typeof lucide !== 'undefined') lucide.createIcons();
     return; // Skip modal below

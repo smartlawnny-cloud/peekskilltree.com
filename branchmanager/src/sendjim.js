@@ -67,7 +67,7 @@ var SendJim = {
       + '<button class="btn btn-primary" onclick="SendJim.saveKey()">Save Key</button>'
       + (connected ? '<button class="btn btn-outline" onclick="SendJim.disconnect()">Disconnect</button>' : '')
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://sendjim.com" target="_blank" style="color:var(--green-dark);">sendjim.com</a></p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://sendjim.com" target="_blank" rel="noopener noreferrer" style="color:var(--green-dark);">sendjim.com</a></p>'
       + '</div>';
 
     // Automations

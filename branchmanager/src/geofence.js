@@ -82,7 +82,7 @@ var Geofence = {
             'Next job: ' + nextJob.clientName + ' — ' + (nextJob.property || ''),
             'leaving-base'
           );
-          Geofence._showBanner('🚛 Heading to <strong>' + nextJob.clientName + '</strong> — <a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(nextJob.property || nextJob.clientName) + '" target="_blank" style="color:#fff;font-weight:700;">Navigate</a>');
+          Geofence._showBanner('🚛 Heading to <strong>' + nextJob.clientName + '</strong> — <a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(nextJob.property || nextJob.clientName) + '" target="_blank" rel="noopener noreferrer" style="color:#fff;font-weight:700;">Navigate</a>');
         }
       } else {
         // Left without clocking in
@@ -148,7 +148,7 @@ var Geofence = {
           j.clientName + ' — ' + (j.property || j.description || ''),
           'job-reminder'
         );
-        Geofence._showBanner('⏰ <strong>' + j.clientName + '</strong> starts in ' + Math.round(minutesUntil) + ' min — <a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(j.property || j.clientName) + '" target="_blank" style="color:#fff;font-weight:700;">Navigate</a>');
+        Geofence._showBanner('⏰ <strong>' + j.clientName + '</strong> starts in ' + Math.round(minutesUntil) + ' min — <a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(j.property || j.clientName) + '" target="_blank" rel="noopener noreferrer" style="color:#fff;font-weight:700;">Navigate</a>');
       }
 
       // At job time

@@ -288,7 +288,7 @@ var MarketingPage = (function() {
     } else {
       inner += emptyState('📊',
         'Connect SocialPilot to see posts scheduled, published, and engagement.',
-        '<a href="https://www.socialpilot.co/api" target="_blank" class="btn btn-primary" style="margin-right:6px;">Get API key</a>'
+        '<a href="https://www.socialpilot.co/api" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="margin-right:6px;">Get API key</a>'
         + '<button class="btn" onclick="MarketingPage.connectSocial()">Paste key</button>');
     }
     return card(inner);

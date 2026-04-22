@@ -124,7 +124,7 @@ var FormBuilderPage = {
       + '<div id="fb-preview" style="border:2px solid var(--border);border-radius:10px;padding:16px;background:#f9fafb;">'
       + FormBuilderPage._buildPreview(cfg)
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin:8px 0 0;text-align:center;">Form live at <a href="https://peekskilltree.com/contact.html" target="_blank">peekskilltree.com/contact.html</a></p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin:8px 0 0;text-align:center;">Form live at <a href="https://peekskilltree.com/contact.html" target="_blank" rel="noopener noreferrer">peekskilltree.com/contact.html</a></p>'
       + '</div>';
 
     html += '</div></div></div>';

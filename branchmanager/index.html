@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 336; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 337; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -73,6 +73,31 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- Content Security Policy — first line of XSS defense. Allows only trusted origins.
+     'unsafe-inline' is required for the legacy inline onclick handlers + inline <style>
+     blocks scattered through the JS; removing them is a longer refactor.
+     'unsafe-eval' is needed by maplibre-gl WASM; removing would require CSP-safe build. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src  'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://*.supabase.co https://js.stripe.com;
+  style-src   'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com;
+  font-src    'self' https://fonts.gstatic.com data:;
+  img-src     'self' data: blob: https: https://*.supabase.co;
+  connect-src 'self' https://*.supabase.co wss://*.supabase.co
+              https://api.anthropic.com https://api.stripe.com
+              https://api.open-meteo.com https://api.qrserver.com
+              https://epqs.nationalmap.gov https://nominatim.openstreetmap.org
+              https://my-api.plantnet.org https://dialpad.com
+              https://server.arcgisonline.com https://s3.amazonaws.com
+              https://*.tile.openstreetmap.org;
+  frame-src   https://js.stripe.com https://hooks.stripe.com;
+  worker-src  'self' blob:;
+  object-src  'none';
+  base-uri    'self';
+  form-action 'self';
+">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Branch Manager</title>
 <meta name="description" content="Second Nature Tree Service — Job Management">
 <meta name="theme-color" content="#1a8a5c">
@@ -881,69 +906,69 @@
 </div>
 
 <!-- Module scripts -->
-<script src="config.js?v=336"></script>
-<script src="src/auth.js?v=336"></script>
-<script src="src/biometric.js?v=336"></script>
-<script src="src/db.js?v=336"></script>
-<script src="src/ui.js?v=336"></script>
-<script defer src="src/pages/dashboard.js?v=336"></script>
-<script defer src="src/pages/clients.js?v=336"></script>
-<script defer src="src/pages/requests.js?v=336"></script>
-<script defer src="src/pages/quotes.js?v=336"></script>
-<script defer src="src/pages/quotes-tm.js?v=336"></script>
-<script defer src="src/pages/jobs.js?v=336"></script>
-<script defer src="src/pages/invoices.js?v=336"></script>
-<script defer src="src/pages/schedule.js?v=336"></script>
-<script defer src="src/pages/insights.js?v=336"></script>
+<script src="config.js?v=337"></script>
+<script src="src/auth.js?v=337"></script>
+<script src="src/biometric.js?v=337"></script>
+<script src="src/db.js?v=337"></script>
+<script src="src/ui.js?v=337"></script>
+<script defer src="src/pages/dashboard.js?v=337"></script>
+<script defer src="src/pages/clients.js?v=337"></script>
+<script defer src="src/pages/requests.js?v=337"></script>
+<script defer src="src/pages/quotes.js?v=337"></script>
+<script defer src="src/pages/quotes-tm.js?v=337"></script>
+<script defer src="src/pages/jobs.js?v=337"></script>
+<script defer src="src/pages/invoices.js?v=337"></script>
+<script defer src="src/pages/schedule.js?v=337"></script>
+<script defer src="src/pages/insights.js?v=337"></script>
 <script src="src/geofence.js"></script>
-<script defer src="src/passive-tracker.js?v=336"></script>
+<script defer src="src/passive-tracker.js?v=337"></script>
 <script src="src/weather.js"></script>
-<script defer src="src/pages/comms.js?v=336"></script>
-<script defer src="src/pages/messaging.js?v=336"></script>
-<script defer src="src/pages/profitloss.js?v=336"></script>
-<script src="src/photos.js?v=336"></script>
+<script defer src="src/pages/comms.js?v=337"></script>
+<script defer src="src/pages/messaging.js?v=337"></script>
+<script defer src="src/pages/profitloss.js?v=337"></script>
+<script src="src/photos.js?v=337"></script>
 <script src="src/dailyinspection.js"></script>
 <script defer src="src/pages/clientmap.js"></script>
 <script defer src="src/pages/photomap.js"></script>
-<script defer src="src/pages/crewview.js?v=336"></script>
-<script defer src="src/pages/employeecenter.js?v=336"></script>
-<script defer src="src/pages/budget.js?v=336"></script>
-<script defer src="src/pages/equipment.js?v=336"></script>
-<script defer src="src/pages/jobcosting.js?v=336"></script>
-<script defer src="src/pages/dispatch.js?v=336"></script>
-<script defer src="src/pages/recurring.js?v=336"></script>
-<script defer src="src/pages/notifications.js?v=336"></script>
-<script defer src="src/pages/expenses.js?v=336"></script>
-<script src="src/dialpad.js?v=336"></script>
-<script src="src/email.js?v=336"></script>
-<script defer src="src/pages/reports.js?v=336"></script>
-<script defer src="src/pages/reviewtools.js?v=336"></script>
-<script defer src="src/pages/weeklysummary.js?v=336"></script>
-<script defer src="src/pages/backup.js?v=336"></script>
-<script defer src="src/pages/onlinebooking.js?v=336"></script>
-<script defer src="src/pages/formbuilder.js?v=336"></script>
-<script defer src="src/pages/receptionist.js?v=336"></script>
-<script defer src="src/pages/campaigns.js?v=336"></script>
-<script defer src="src/pages/marketing.js?v=336"></script>
-<script defer src="src/pages/referrals.js?v=336"></script>
-<script defer src="src/pages/import.js?v=336"></script>
-<script src="src/stripe.js?v=336"></script>
+<script defer src="src/pages/crewview.js?v=337"></script>
+<script defer src="src/pages/employeecenter.js?v=337"></script>
+<script defer src="src/pages/budget.js?v=337"></script>
+<script defer src="src/pages/equipment.js?v=337"></script>
+<script defer src="src/pages/jobcosting.js?v=337"></script>
+<script defer src="src/pages/dispatch.js?v=337"></script>
+<script defer src="src/pages/recurring.js?v=337"></script>
+<script defer src="src/pages/notifications.js?v=337"></script>
+<script defer src="src/pages/expenses.js?v=337"></script>
+<script src="src/dialpad.js?v=337"></script>
+<script src="src/email.js?v=337"></script>
+<script defer src="src/pages/reports.js?v=337"></script>
+<script defer src="src/pages/reviewtools.js?v=337"></script>
+<script defer src="src/pages/weeklysummary.js?v=337"></script>
+<script defer src="src/pages/backup.js?v=337"></script>
+<script defer src="src/pages/onlinebooking.js?v=337"></script>
+<script defer src="src/pages/formbuilder.js?v=337"></script>
+<script defer src="src/pages/receptionist.js?v=337"></script>
+<script defer src="src/pages/campaigns.js?v=337"></script>
+<script defer src="src/pages/marketing.js?v=337"></script>
+<script defer src="src/pages/referrals.js?v=337"></script>
+<script defer src="src/pages/import.js?v=337"></script>
+<script src="src/stripe.js?v=337"></script>
 <script defer src="src/sendjim.js"></script>
-<script defer src="src/pages/settings.js?v=336"></script>
-<script defer src="src/pages/propertymap.js?v=336"></script>
+<script defer src="src/pages/settings.js?v=337"></script>
+<script defer src="src/pages/propertymap.js?v=337"></script>
 <script defer src="src/pages/estimator.js"></script>
-<script defer src="src/pages/cardone.js?v=336"></script>
-<script defer src="src/pages/aitreeid.js?v=336"></script>
-<script defer src="src/pages/videoquote.js?v=336"></script>
-<script defer src="src/pages/voicequote.js?v=336"></script>
-<script defer src="src/pages/tracking.js?v=336"></script>
+<script defer src="src/pages/cardone.js?v=337"></script>
+<script defer src="src/pages/aitreeid.js?v=337"></script>
+<script defer src="src/pages/videoquote.js?v=337"></script>
+<script defer src="src/pages/voicequote.js?v=337"></script>
+<script defer src="src/pages/tracking.js?v=337"></script>
 <script defer src="src/pages/treemeasure.js"></script>
-<script defer src="src/pages/search.js?v=336"></script>
-<script defer src="src/pages/clienthub.js?v=336"></script>
-<script defer src="src/pages/team.js?v=336"></script>
-<script defer src="src/pages/automations.js?v=336"></script>
-<script defer src="src/pages/pipeline.js?v=336"></script>
-<script src="src/supabase.js?v=336"></script>
+<script defer src="src/pages/search.js?v=337"></script>
+<script defer src="src/pages/clienthub.js?v=337"></script>
+<script defer src="src/pages/team.js?v=337"></script>
+<script defer src="src/pages/automations.js?v=337"></script>
+<script defer src="src/pages/pipeline.js?v=337"></script>
+<script src="src/supabase.js?v=337"></script>
 <script>
 // Auto-configure Supabase connection
 if (!localStorage.getItem('bm-supabase-url')) {
@@ -955,29 +980,29 @@ if (!localStorage.getItem('bm-supabase-url')) {
 <script defer src="src/pages/pdfgen.js"></script>
 <!-- photos.js moved earlier, before photomap.js -->
 <script src="src/templates.js"></script>
-<script src="src/supacloud.js?v=336"></script>
-<script src="src/cloudkeys.js?v=336"></script>
-<script defer src="src/pages/payments.js?v=336"></script>
-<script defer src="src/pages/workflow.js?v=336"></script>
-<script defer src="src/pages/reviews.js?v=336"></script>
-<script defer src="src/pages/timetrack.js?v=336"></script>
-<script defer src="src/pages/checklists.js?v=336"></script>
-<script defer src="src/pages/visits.js?v=336"></script>
-<script defer src="src/pages/customfields.js?v=336"></script>
+<script src="src/supacloud.js?v=337"></script>
+<script src="src/cloudkeys.js?v=337"></script>
+<script defer src="src/pages/payments.js?v=337"></script>
+<script defer src="src/pages/workflow.js?v=337"></script>
+<script defer src="src/pages/reviews.js?v=337"></script>
+<script defer src="src/pages/timetrack.js?v=337"></script>
+<script defer src="src/pages/checklists.js?v=337"></script>
+<script defer src="src/pages/visits.js?v=337"></script>
+<script defer src="src/pages/customfields.js?v=337"></script>
 <script defer src="src/pages/commandpalette.js"></script>
-<script defer src="src/pages/ai.js?v=336"></script>
-<script defer src="src/pages/satisfaction.js?v=336"></script>
-<script defer src="src/pages/emailtemplates.js?v=336"></script>
-<script defer src="src/pages/crewperformance.js?v=336"></script>
+<script defer src="src/pages/ai.js?v=337"></script>
+<script defer src="src/pages/satisfaction.js?v=337"></script>
+<script defer src="src/pages/emailtemplates.js?v=337"></script>
+<script defer src="src/pages/crewperformance.js?v=337"></script>
 <script defer src="src/pages/materials.js"></script>
-<script defer src="src/pages/beforeafter.js?v=336"></script>
-<script defer src="src/pages/modeselector.js?v=336"></script>
-<script defer src="src/pages/taskreminders.js?v=336"></script>
-<script defer src="src/pages/teamchat.js?v=336"></script>
-<script defer src="src/pages/mediacenter.js?v=336"></script>
-<script defer src="src/pages/reminders.js?v=336"></script>
-<script defer src="src/pages/payroll.js?v=336"></script>
-<script defer src="src/pages/permissions.js?v=336"></script>
+<script defer src="src/pages/beforeafter.js?v=337"></script>
+<script defer src="src/pages/modeselector.js?v=337"></script>
+<script defer src="src/pages/taskreminders.js?v=337"></script>
+<script defer src="src/pages/teamchat.js?v=337"></script>
+<script defer src="src/pages/mediacenter.js?v=337"></script>
+<script defer src="src/pages/reminders.js?v=337"></script>
+<script defer src="src/pages/payroll.js?v=337"></script>
+<script defer src="src/pages/permissions.js?v=337"></script>
 <script>
 // ── Navigation ──
 var currentPage = 'dashboard';

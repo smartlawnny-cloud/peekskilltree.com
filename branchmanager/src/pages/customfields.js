@@ -72,7 +72,7 @@ var CustomFields = {
       if (field.type === 'checkbox') {
         display = val ? '✅ Yes' : '❌ No';
       } else if (field.type === 'url' && val) {
-        display = '<a href="' + val + '" target="_blank" style="color:#1565c0;">' + UI.esc(val) + '</a>';
+        display = '<a href="' + val + '" target="_blank" rel="noopener noreferrer" style="color:#1565c0;">' + UI.esc(val) + '</a>';
       } else if (field.type === 'email' && val) {
         display = '<a href="mailto:' + val + '" style="color:#1565c0;">' + UI.esc(val) + '</a>';
       } else if (field.type === 'phone' && val) {

@@ -128,7 +128,7 @@ var OnlineBooking = {
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
       + '<h3 style="font-size:15px;margin:0;">Form Preview</h3>'
-      + '<a href="' + bookingUrl + '" target="_blank" style="background:var(--green-dark);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-weight:600;font-size:12px;text-decoration:none;">Open Full Form ↗</a>'
+      + '<a href="' + bookingUrl + '" target="_blank" rel="noopener noreferrer" style="background:var(--green-dark);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-weight:600;font-size:12px;text-decoration:none;">Open Full Form ↗</a>'
       + '</div>'
       + '<div style="border:2px solid var(--border);border-radius:12px;padding:24px;max-width:500px;margin:0 auto;">'
       + OnlineBooking._renderFormPreview()
@@ -153,7 +153,7 @@ var OnlineBooking = {
       + '</select>'
       + '<textarea placeholder="Describe the work needed..." rows="3" style="padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;font-family:inherit;resize:vertical;" disabled></textarea>'
       + '<button style="background:#1a3c12;color:#fff;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:700;cursor:not-allowed;opacity:.8;">Submit Request</button>'
-      + '<p style="font-size:11px;color:#999;text-align:center;margin:0;">Preview only — <a href="' + OnlineBooking.BOOKING_URL + '" target="_blank" style="color:#1a3c12;">open live form</a></p>'
+      + '<p style="font-size:11px;color:#999;text-align:center;margin:0;">Preview only — <a href="' + OnlineBooking.BOOKING_URL + '" target="_blank" rel="noopener noreferrer" style="color:#1a3c12;">open live form</a></p>'
       + '</div>';
   },
 

@@ -413,7 +413,7 @@ var QuotesPage = {
             ? '<a onclick="ClientsPage.showDetail(\'' + _cid + '\')" style="font-size:15px;font-weight:700;color:var(--text);cursor:pointer;text-decoration:none;border-bottom:1px dashed var(--text-light);">' + UI.esc(_cname) + ' →</a>'
             : '<span style="font-size:15px;font-weight:700;color:var(--text);">' + UI.esc(_cname) + '</span>')
         + '</div>'
-        + (_qProperty ? '<div style="margin-top:6px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(_qProperty) + '" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(_qProperty) + ' →</a></div>' : '')
+        + (_qProperty ? '<div style="margin-top:6px;"><a href="https://maps.apple.com/?daddr=' + encodeURIComponent(_qProperty) + '" target="_blank" rel="noopener noreferrer" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📍 ' + UI.esc(_qProperty) + ' →</a></div>' : '')
         + (_cphone ? '<div style="margin-top:4px;"><a href="tel:' + _cphoneTel + '" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📞 ' + UI.esc(_cphone) + '</a></div>' : '')
         + '<input type="hidden" id="q-property" value="' + UI.esc(_qProperty) + '">';
     } else {
@@ -1819,7 +1819,7 @@ var QuotesPage = {
       + '<div>'
       + '<h2 style="font-size:22px;font-weight:700;margin:0 0 4px;">Quote #' + (q.quoteNumber||'') + ' — ' + UI.esc(q.clientName || '—') + '</h2>'
       + '<div style="font-size:13px;color:var(--text-light);">' + UI.dateShort(q.createdAt) + (q.sentAt ? ' · Sent ' + UI.dateShort(q.sentAt) : '') + '</div>'
-      + (q.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(q.property) + '" target="_blank" style="display:block;font-size:13px;color:var(--accent);margin-top:2px;text-decoration:none;">📍 ' + UI.esc(q.property) + ' →</a>' : '')
+      + (q.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(q.property) + '" target="_blank" rel="noopener noreferrer" style="display:block;font-size:13px;color:var(--accent);margin-top:2px;text-decoration:none;">📍 ' + UI.esc(q.property) + ' →</a>' : '')
       + '</div>'
       + '<div style="text-align:right;">' + UI.statusBadge(q.status) + '<div style="font-size:24px;font-weight:800;color:var(--accent);margin-top:6px;">' + UI.money(q.total) + '</div></div>'
       + '</div>'

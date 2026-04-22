@@ -664,11 +664,11 @@ var RequestsPage = {
       + '<div style="font-size:16px;font-weight:700;margin-bottom:4px;">' + UI.esc(r.clientName || '—')
       + (matchedClient ? ' <span style="font-size:11px;color:var(--green-dark);font-weight:600;">● Existing</span>' : ' <span style="font-size:11px;color:#e07c24;font-weight:600;">● New Lead</span>')
       + '</div>'
-      + (r.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(r.property) + '" target="_blank" style="display:block;font-size:13px;color:var(--accent);margin-bottom:8px;text-decoration:none;">📍 ' + UI.esc(r.property) + ' →</a>' : '')
+      + (r.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(r.property) + '" target="_blank" rel="noopener noreferrer" style="display:block;font-size:13px;color:var(--accent);margin-bottom:8px;text-decoration:none;">📍 ' + UI.esc(r.property) + ' →</a>' : '')
       + (r.phone ? '<a href="tel:' + r.phone.replace(/\D/g,'') + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;">📞 ' + UI.phone(r.phone) + '</a>' : '')
       + (r.phone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;" onclick="if(typeof Dialpad!==\'undefined\'){Dialpad.showTextModal(\'' + r.phone.replace(/\D/g,'') + '\',\'Hi ' + UI.esc((r.clientName||'').split(' ')[0]||'there') + ', thanks for reaching out to \' + RequestsPage._co().name + \'! We received your request and will follow up shortly. Questions? Call \' + RequestsPage._co().phone + \'.\');}else{window.location=\'sms:' + r.phone.replace(/\D/g,'') + '\';}">💬 Text</button>' : '')
       + (r.email ? '<a href="mailto:' + r.email + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:13px;">✉️ ' + UI.esc(r.email) + '</a>' : '')
-      + (r.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(r.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:13px;">🗺 Directions</a>' : '')
+      + (r.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(r.property) + '" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="width:100%;justify-content:center;font-size:13px;">🗺 Directions</a>' : '')
       + (matchedClient ? '<div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px;">'
         + '<div style="font-size:12px;color:var(--text-light);margin-bottom:6px;">CLIENT HISTORY</div>'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;">'

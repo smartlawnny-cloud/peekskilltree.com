@@ -372,7 +372,7 @@ var Dialpad = {
       + '<button onclick="Dialpad.saveKey()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Save Key</button>'
       + (configured ? '<button onclick="Dialpad.testSMS()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Send Test SMS</button>' : '')
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your API key at <a href="https://dialpad.com/settings" target="_blank" style="color:#7c3aed;">dialpad.com/settings</a> → API & Integrations → Generate API Key.</p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your API key at <a href="https://dialpad.com/settings" target="_blank" rel="noopener noreferrer" style="color:#7c3aed;">dialpad.com/settings</a> → API & Integrations → Generate API Key.</p>'
       + '<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text-light);line-height:1.6;">'
       + '<strong style="color:var(--text);">How it works:</strong><br>'
       + '<span style="color:var(--green-dark);font-weight:600;">📱 Without API key</span> — Tap the Text button in the field and a compose window opens. Hit "Open SMS App" and iPhone\'s Messages opens with the number and your message pre-filled. Tap send. <em>This is the primary mode for field use.</em><br><br>'

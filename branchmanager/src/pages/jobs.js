@@ -391,7 +391,7 @@ var JobsPage = {
       + '<textarea id="rv-email" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:13px;min-height:100px;font-family:inherit;resize:vertical;">' + UI.esc(emailBody) + '</textarea>'
       + (email ? '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">✉️ ' + email + '</div>' : '<div style="font-size:12px;color:var(--red);margin-top:4px;">No email on file</div>')
       + '</div></div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Review link: <a href="' + reviewLink + '" target="_blank" style="color:var(--accent);">' + reviewLink + '</a></div>';
+      + '<div style="font-size:12px;color:var(--text-light);">Review link: <a href="' + reviewLink + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">' + reviewLink + '</a></div>';
 
     // Stash review context — onclick only passes the job id
     JobsPage._reviewCtx = { jobId: id, phone: phone, email: email, emailSubject: emailSubject };
@@ -824,7 +824,7 @@ var JobsPage = {
       + '<div class="more-dd" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 0;z-index:200;min-width:180px;box-shadow:0 4px 16px rgba(0,0,0,.12);">'
       + '<button onclick="JobsPage.showForm(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit Job</button>'
       + '<button onclick="PDF.generateJobSheet(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📄 Job Sheet PDF</button>'
-      + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);text-decoration:none;">🗺 Navigate to Property</a>' : '')
+      + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" rel="noopener noreferrer" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);text-decoration:none;">🗺 Navigate to Property</a>' : '')
       + (j.status !== 'completed' ? '<button onclick="JobsPage._markComplete(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✓ Mark Complete</button>' : '')
       + (j.status === 'completed' && !j.invoiceId ? '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">💰 Create Invoice</button>' : '')
       + '<button onclick="JobsPage._requestReview(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">⭐ Request Review</button>'
@@ -842,7 +842,7 @@ var JobsPage = {
       + '<div style="font-size:13px;color:var(--text-light);">'
       + (j.scheduledDate ? UI.dateShort(j.scheduledDate) + (j.startTime ? ' at ' + j.startTime : '') : 'Not scheduled')
       + '</div>'
-      + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" style="display:block;font-size:13px;color:var(--accent);margin-top:2px;text-decoration:none;">📍 ' + UI.esc(j.property) + ' →</a>' : '')
+      + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" rel="noopener noreferrer" style="display:block;font-size:13px;color:var(--accent);margin-top:2px;text-decoration:none;">📍 ' + UI.esc(j.property) + ' →</a>' : '')
       + '</div>'
       + '<div style="text-align:right;">' + UI.statusBadge(j.status) + '<div style="font-size:24px;font-weight:800;color:var(--accent);margin-top:6px;">' + UI.money(j.total) + '</div></div>'
       + '</div></div>'
@@ -854,7 +854,7 @@ var JobsPage = {
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
       + '<div style="font-size:12px;color:var(--text-light);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">Client</div>'
       + '<div style="font-size:16px;font-weight:700;margin-bottom:4px;">' + UI.esc(j.clientName || '—') + '</div>'
-      + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" style="display:block;font-size:13px;color:var(--accent);margin-bottom:8px;text-decoration:none;">📍 ' + UI.esc(j.property) + ' →</a>' : '')
+      + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" rel="noopener noreferrer" style="display:block;font-size:13px;color:var(--accent);margin-bottom:8px;text-decoration:none;">📍 ' + UI.esc(j.property) + ' →</a>' : '')
       + (j.clientPhone || (client && client.phone) ? '<a href="tel:' + (j.clientPhone || (client && client.phone)||'').replace(/\D/g,'') + '" style="display:block;font-size:13px;color:var(--accent);margin-bottom:4px;text-decoration:none;">📞 ' + (j.clientPhone || (client && client.phone)) + '</a>' : '')
       + (j.clientEmail || (client && client.email) ? '<a href="mailto:' + (j.clientEmail || (client && client.email) || '') + '" style="font-size:13px;color:#1565c0;text-decoration:none;">✉️ ' + (j.clientEmail || (client && client.email) || '') + '</a>' : '')
       + '</div>'
@@ -1019,7 +1019,7 @@ var JobsPage = {
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Quick Actions</h4>'
       + (j.clientPhone ? '<a href="tel:' + j.clientPhone + '" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">📞 Call Client</a>' : '')
       + (j.clientPhone ? '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="if(typeof Dialpad!==\'undefined\'){var fn=\'' + UI.esc((j.clientName||'').split(' ')[0]||'there') + '\';var msg=\'Hi \'+fn+\', this is Doug from \'+JobsPage._co().name+\'.' + (j.scheduledDate ? ' Your job is scheduled for ' + UI.dateShort(j.scheduledDate) + '.' : '') + ' Let us know if you have any questions! \'+JobsPage._co().phone;Dialpad.showTextModal(\'' + (j.clientPhone||'').replace(/\D/g,'') + '\',msg);}">📱 Text Client</button>' : '')
-      + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">🗺 Navigate</a>' : '')
+      + (j.property ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(j.property) + '" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;">🗺 Navigate</a>' : '')
       + '<button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:6px;font-size:12px;" onclick="JobsPage._showPropertyMap(\'' + id + '\')">📐 Equipment Layout</button>'
       + '</div>'
 

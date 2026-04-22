@@ -32,7 +32,7 @@ var SettingsPage = {
         +       'supabase secrets set SENDGRID_API_KEY=SG...<br>'
         +       'supabase secrets set SUPABASE_SERVICE_ROLE_KEY=ey...'
         +     '</div>'
-        +     '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">⬜</span><span><a href="https://dashboard.stripe.com/webhooks/create" target="_blank" style="color:#a5f3e8;">Stripe → Webhooks → Add endpoint</a> → <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">https://ltpivkqahvplapyagljt.supabase.co/functions/v1/stripe-webhook</code></span></div>'
+        +     '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">⬜</span><span><a href="https://dashboard.stripe.com/webhooks/create" target="_blank" rel="noopener noreferrer" style="color:#a5f3e8;">Stripe → Webhooks → Add endpoint</a> → <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">https://ltpivkqahvplapyagljt.supabase.co/functions/v1/stripe-webhook</code></span></div>'
         +     '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">⬜</span><span>Stripe → Payment Link → After payment → Redirect to <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">https://peekskilltree.com/branchmanager/paid.html</code></span></div>'
         +   '</div>'
         + '</details>'
@@ -536,7 +536,7 @@ var SettingsPage = {
       + (aiOk ? '<button onclick="SettingsPage._removeKey(\'bm-claude-key\',\'AI Assistant\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
       + '<div id="claude-test-result" style="margin-top:10px;font-size:12px;"></div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a> → API Keys → Create Key (free tier available)</p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">console.anthropic.com</a> → API Keys → Create Key (free tier available)</p>'
       + '</div>';
 
     // ── Stripe Payment Link ──
@@ -553,7 +553,7 @@ var SettingsPage = {
       + '<button onclick="var k=document.getElementById(\'stripe-link\').value.trim();if(!k){UI.toast(\'Paste your Stripe link first\',\'error\');return;}if(!/^https:\\/\\/buy\\.stripe\\.com\\//.test(k)){UI.toast(\'Must be a buy.stripe.com link\',\'error\');return;}localStorage.setItem(\'bm-stripe-base-link\',k);UI.toast(\'Stripe connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Link</button>'
       + (stripeOkNow ? '<button onclick="SettingsPage._removeKey(\'bm-stripe-base-link\',\'Stripe\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Create at <a href="https://dashboard.stripe.com/payment-links/create" target="_blank" style="color:var(--accent);">Stripe → Payment Links → New</a>. Set "Customer pays what they want" with a reasonable default. Redirect after payment to <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:10px;">https://peekskilltree.com/branchmanager/paid.html</code></p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Create at <a href="https://dashboard.stripe.com/payment-links/create" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Stripe → Payment Links → New</a>. Set "Customer pays what they want" with a reasonable default. Redirect after payment to <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:10px;">https://peekskilltree.com/branchmanager/paid.html</code></p>'
       + '</div>';
 
     // ── Dialpad ──
@@ -572,7 +572,7 @@ var SettingsPage = {
       + (dialpadOk ? '<button onclick="SettingsPage._removeKey(\'bm-dialpad-key\',\'Dialpad\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
       + '<div id="dialpad-test-result" style="margin-top:10px;font-size:13px;"></div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get token at <a href="https://dialpad.com/accounts/api/keys" target="_blank" style="color:var(--accent);">dialpad.com → API Keys</a>. Also register a 10DLC number for SMS compliance.</p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get token at <a href="https://dialpad.com/accounts/api/keys" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">dialpad.com → API Keys</a>. Also register a 10DLC number for SMS compliance.</p>'
       + '</div>';
 
     // ── Gusto ──
@@ -590,7 +590,7 @@ var SettingsPage = {
       + '<button onclick="loadPage(\'payroll\');" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Open Payroll</button>'
       + (gustoOk ? '<button onclick="SettingsPage._removeKey(\'bm-gusto-api-key\',\'Gusto\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Sign up at <a href="https://gusto.com" target="_blank" style="color:var(--accent);">gusto.com</a> ($40/mo + $6/employee). API token is optional — BM Payroll page exports CSV you upload to Gusto manually each pay period. Get token from Gusto Dev Portal.</p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Sign up at <a href="https://gusto.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">gusto.com</a> ($40/mo + $6/employee). API token is optional — BM Payroll page exports CSV you upload to Gusto manually each pay period. Get token from Gusto Dev Portal.</p>'
       + '</div>';
 
     // ── PlantNet (moved inside the API collapsible) ──
@@ -604,7 +604,7 @@ var SettingsPage = {
       + '</div></div>'
       + '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
       + '<button onclick="var v=document.getElementById(\'plantnet-key-input\').value.trim();localStorage.setItem(\'bm-plantnet-key\',v);UI.toast(\'PlantNet key saved ✓\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Key</button>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 requests/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" style="color:var(--accent);">my.plantnet.org</a></p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 requests/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">my.plantnet.org</a></p>'
       + '</div>';
 
     // ═══ close API Keys collapsible ═══
@@ -681,7 +681,7 @@ var SettingsPage = {
       html += '<div style="display:inline-block;padding:6px 12px;background:#e8f5e9;border-radius:8px;font-size:13px;font-weight:600;color:#2e7d32;margin-bottom:12px;">Connected to Supabase</div>'
         + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Project: ltpivkqahvplapyagljt (West US Oregon)</p>'
         + '<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--green-dark);margin-bottom:8px;">🔒 Client-facing RLS Policies (required for approve.html &amp; pay.html)</summary>'
-        + '<p style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Run this SQL once in your <a href="https://supabase.com/dashboard/project/ltpivkqahvplapyagljt/sql" target="_blank" style="color:var(--green-dark);">Supabase SQL Editor</a> to allow clients to view &amp; approve quotes and pay invoices:</p>'
+        + '<p style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Run this SQL once in your <a href="https://supabase.com/dashboard/project/ltpivkqahvplapyagljt/sql" target="_blank" rel="noopener noreferrer" style="color:var(--green-dark);">Supabase SQL Editor</a> to allow clients to view &amp; approve quotes and pay invoices:</p>'
         + '<pre style="background:#1e2128;color:#a8d8a8;padding:14px;border-radius:8px;font-size:11px;overflow:auto;white-space:pre;line-height:1.6;">'
         + '-- Safe to re-run: drops existing policies first\n'
         + 'DROP POLICY IF EXISTS "Anon read quotes" ON quotes;\n'
@@ -969,12 +969,12 @@ var SettingsPage = {
       + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fff3e0;border-radius:8px;border:1px solid #ffe0b2;">'
       + '<div><div style="font-weight:600;font-size:13px;color:#e65100;">⚠️ Database RLS Policies</div>'
       + '<div style="font-size:12px;color:#bf360c;">Run <code>migrate-rls.sql</code> in Supabase SQL Editor to restrict anon key access</div></div>'
-      + '<a href="https://supabase.com/dashboard" target="_blank" class="btn btn-outline" style="font-size:12px;">Open Supabase</a></div>'
+      + '<a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="font-size:12px;">Open Supabase</a></div>'
       // 2FA
       + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fff3e0;border-radius:8px;border:1px solid #ffe0b2;">'
       + '<div><div style="font-weight:600;font-size:13px;color:#e65100;">⚠️ Two-Factor Authentication</div>'
       + '<div style="font-size:12px;color:#bf360c;">Enable 2FA in Supabase Auth settings for extra protection</div></div>'
-      + '<a href="https://supabase.com/dashboard" target="_blank" class="btn btn-outline" style="font-size:12px;">Enable</a></div>'
+      + '<a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="font-size:12px;">Enable</a></div>'
       + '</div></div>';
 
     // Admin Tools

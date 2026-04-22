@@ -39,7 +39,7 @@ var AI = {
         + '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;line-height:1.6;">Enter your Anthropic API key to enable AI-powered estimates, client emails, and business insights. Your key is stored locally — never sent to anyone but Anthropic.</p>'
         + '<input type="password" id="ai-key-input" placeholder="sk-ant-api03-..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:12px;">'
         + '<button class="btn btn-primary" onclick="AI._saveKey();AI._refreshInline();" style="width:100%;">Connect</button>'
-        + '<p style="font-size:11px;color:var(--text-light);margin-top:12px;">Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a></p>'
+        + '<p style="font-size:11px;color:var(--text-light);margin-top:12px;">Get a key at <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">console.anthropic.com</a></p>'
         + '</div></div>';
       return html;
     }
@@ -211,7 +211,7 @@ var AI = {
         + '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Enter your Anthropic API key to enable AI-powered estimates, client emails, and business insights.</p>'
         + '<input type="password" id="ai-key-input" placeholder="sk-ant-..." style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:12px;">'
         + '<button class="btn btn-primary" onclick="AI._saveKey()" style="width:100%;">Connect</button>'
-        + '<p style="font-size:11px;color:var(--text-light);margin-top:12px;">Key is stored locally on your device only. Get one at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a></p>'
+        + '<p style="font-size:11px;color:var(--text-light);margin-top:12px;">Key is stored locally on your device only. Get one at <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">console.anthropic.com</a></p>'
         + '</div></div>';
       return html;
     }

@@ -790,7 +790,7 @@ var InvoicesPage = {
             + '<input type="text" id="stripe-url-' + id + '" placeholder="https://buy.stripe.com/..." style="flex:1;padding:7px 10px;border:2px solid var(--border);border-radius:6px;font-size:12px;">'
             + '<button class="btn btn-primary" style="font-size:11px;white-space:nowrap;" onclick="InvoicesPage._saveStripeUrl(\'' + id + '\',document.getElementById(\'stripe-url-' + id + '\').value.trim())">Save</button>'
             + '</div>'
-            + '<div style="font-size:11px;color:var(--text-light);">Get one: <a href="https://dashboard.stripe.com/payment-links" target="_blank" style="color:var(--accent);">dashboard.stripe.com → Payment Links</a></div>')
+            + '<div style="font-size:11px;color:var(--text-light);">Get one: <a href="https://dashboard.stripe.com/payment-links" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">dashboard.stripe.com → Payment Links</a></div>')
         + '</div>';
     }
 

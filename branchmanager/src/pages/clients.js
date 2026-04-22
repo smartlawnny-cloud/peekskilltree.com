@@ -702,7 +702,7 @@ var ClientsPage = {
       +     '<div style="flex:1;min-width:240px;">'
       +       '<h2 style="font-size:26px;font-weight:700;margin:0 0 6px;line-height:1.2;">' + UI.esc(c.name) + '</h2>'
       +       (addrEsc
-          ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(c.address) + '" target="_blank" style="font-size:14px;color:var(--accent);text-decoration:none;display:inline-block;margin-bottom:6px;">📍 ' + addrEsc + '</a>'
+          ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(c.address) + '" target="_blank" rel="noopener noreferrer" style="font-size:14px;color:var(--accent);text-decoration:none;display:inline-block;margin-bottom:6px;">📍 ' + addrEsc + '</a>'
           : '<div style="font-size:13px;color:var(--text-light);margin-bottom:6px;">No address on file</div>')
       +       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">'
       +         (phoneEsc ? '<a onclick="ClientsPage._showContactPicker(\'' + id + '\')" style="font-size:13px;color:var(--text);background:var(--bg);padding:4px 10px;border-radius:20px;cursor:pointer;text-decoration:none;font-weight:600;">📞 ' + phoneEsc + '</a>' : '')
@@ -928,7 +928,7 @@ var ClientsPage = {
       +   '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;">'
       +     '<h3 style="font-size:16px;font-weight:700;margin:0 0 10px;">Address</h3>'
       +     (addrEsc
-          ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(c.address) + '" target="_blank" style="display:flex;gap:12px;align-items:start;text-decoration:none;color:inherit;">'
+          ? '<a href="https://maps.apple.com/?daddr=' + encodeURIComponent(c.address) + '" target="_blank" rel="noopener noreferrer" style="display:flex;gap:12px;align-items:start;text-decoration:none;color:inherit;">'
             + '<div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;color:#2e7d32;flex-shrink:0;">📍</div>'
             + '<div style="font-size:14px;line-height:1.6;flex:1;">' + addrEsc.replace(/,/g, '<br>') + '<div style="font-size:11px;color:var(--accent);margin-top:2px;">Open in Maps →</div></div>'
             + '</a>'

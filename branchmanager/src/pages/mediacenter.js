@@ -736,7 +736,7 @@ var MediaCenter = {
           return '<div style="background:#fff8e1;border-radius:10px;padding:14px 16px;">'
             + '<div style="font-size:13px;font-weight:600;color:#e65100;margin-bottom:6px;">&#128249; Videos suitable for YouTube Shorts</div>'
             + '<div style="font-size:13px;color:#555;margin-bottom:10px;">' + videoNames + '</div>'
-            + '<a href="https://studio.youtube.com" target="_blank" style="display:inline-block;font-size:13px;font-weight:600;color:#c00;text-decoration:none;background:#fff;border:1px solid #fca5a5;padding:6px 14px;border-radius:8px;">Open YouTube Studio &#8594;</a>'
+            + '<a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" style="display:inline-block;font-size:13px;font-weight:600;color:#c00;text-decoration:none;background:#fff;border:1px solid #fca5a5;padding:6px 14px;border-radius:8px;">Open YouTube Studio &#8594;</a>'
             + '</div>';
         })()
       + '</div>';

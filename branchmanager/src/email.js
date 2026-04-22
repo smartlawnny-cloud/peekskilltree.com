@@ -182,7 +182,7 @@ var Email = {
       + '<button onclick="Email.saveKey()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Save Key</button>'
       + (configured ? '<button onclick="Email.testSend()" style="background:#1a82e2;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Test Send</button>' : '')
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" style="color:var(--green-dark);">app.sendgrid.com</a>. Create key with "Mail Send" permission.</p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" rel="noopener noreferrer" style="color:var(--green-dark);">app.sendgrid.com</a>. Create key with "Mail Send" permission.</p>'
       + '</div>';
   },
 

@@ -74,7 +74,7 @@ var Stripe = {
 
     if (link) {
       return '<div style="margin-top:12px;">'
-        + '<a href="' + link + '" target="_blank" class="btn" style="background:#635bff;color:#fff;width:100%;padding:12px;font-size:15px;display:block;text-align:center;text-decoration:none;">'
+        + '<a href="' + link + '" target="_blank" rel="noopener noreferrer" class="btn" style="background:#635bff;color:#fff;width:100%;padding:12px;font-size:15px;display:block;text-align:center;text-decoration:none;">'
         + '💳 Open Stripe — ' + UI.money(inv.balance || inv.total)
         + '</a>'
         + '<button class="btn btn-outline" style="width:100%;margin-top:6px;font-size:12px;" onclick="Stripe.sendPaymentLink(\'' + invoiceId + '\')">'
@@ -145,7 +145,7 @@ var Stripe = {
       + '</div>'
       + '<div style="font-size:11px;color:#166534;margin-bottom:6px;"><strong>One-time setup steps:</strong></div>'
       + '<ol style="font-size:11px;color:#166534;margin:0 0 8px 16px;line-height:1.7;">'
-      + '<li><a href="https://dashboard.stripe.com/webhooks/create" target="_blank" style="color:#059669;">Stripe → Developers → Webhooks → Add endpoint</a></li>'
+      + '<li><a href="https://dashboard.stripe.com/webhooks/create" target="_blank" rel="noopener noreferrer" style="color:#059669;">Stripe → Developers → Webhooks → Add endpoint</a></li>'
       + '<li>Paste the URL above → Events: <code>checkout.session.completed</code></li>'
       + '<li>Copy the "Signing secret" (whsec_...) — paste in terminal:<br>'
       + '<code style="background:#dcfce7;padding:2px 4px;border-radius:3px;">supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...</code></li>'
@@ -156,10 +156,10 @@ var Stripe = {
       // Action buttons
       + '<div style="display:flex;gap:8px;">'
       + '<button class="btn btn-primary" onclick="Stripe.saveSettings()">Save Settings</button>'
-      + '<a href="https://dashboard.stripe.com/payment-links/create" target="_blank" class="btn btn-outline">Create Payment Link →</a>'
+      + '<a href="https://dashboard.stripe.com/payment-links/create" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Create Payment Link →</a>'
       + (connected ? '<button class="btn btn-outline" onclick="Stripe.disconnect()">Disconnect</button>' : '')
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Publishable key from <a href="https://dashboard.stripe.com/apikeys" target="_blank" style="color:var(--green-dark);">dashboard.stripe.com/apikeys</a></p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Publishable key from <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" style="color:var(--green-dark);">dashboard.stripe.com/apikeys</a></p>'
       + '</div>';
   },
 

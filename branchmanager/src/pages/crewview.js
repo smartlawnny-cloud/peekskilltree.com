@@ -101,7 +101,7 @@ var CrewView = {
 
           // Action buttons — big and touch-friendly
           + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
-          + '<a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(j.property || j.clientName) + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;background:var(--green-bg);border:1px solid #c8e6c9;border-radius:10px;text-decoration:none;color:var(--green-dark);font-weight:600;font-size:14px;">🗺 Navigate</a>'
+          + '<a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(j.property || j.clientName) + '" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;background:var(--green-bg);border:1px solid #c8e6c9;border-radius:10px;text-decoration:none;color:var(--green-dark);font-weight:600;font-size:14px;">🗺 Navigate</a>'
           + '<a href="tel:' + (j.clientPhone || '').replace(/\D/g, '') + '" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;background:#e3f2fd;border:1px solid #bbdefb;border-radius:10px;text-decoration:none;color:#1565c0;font-weight:600;font-size:14px;">📞 Call</a>';
 
         if (j.status === 'scheduled') {

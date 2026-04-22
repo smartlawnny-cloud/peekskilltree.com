@@ -1,5 +1,5 @@
 {
-  "version": 325,
+  "version": 326,
   "released": "2026-04-21",
-  "notes": "CRITICAL: fixed infinite reload loop — BUNDLED_VERSION constant in index.html was hardcoded to 318 but version.json was 324, so the self-healing check nuked caches + reloaded on every page load. Bump script now also updates BUNDLED_VERSION."
+  "notes": "Quote form client picker simplified — just a search bar. Empty field shows 8 recent clients; typing filters the list; if no match, a green 'Create new client: [typed name]' row appears inline. Removed the big heading, subtitle, 'Recent' pill row, and separate 'Create New Client' button."
 }

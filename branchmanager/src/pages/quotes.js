@@ -417,53 +417,15 @@ var QuotesPage = {
         + (_cphone ? '<div style="margin-top:4px;"><a href="tel:' + _cphoneTel + '" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation();">📞 ' + UI.esc(_cphone) + '</a></div>' : '')
         + '<input type="hidden" id="q-property" value="' + UI.esc(_qProperty) + '">';
     } else {
-      // Build list of up-to-5 most-recently-quoted clients for quick-pick
-      var _recentClients = [];
-      try {
-        var _allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]');
-        var _byId = {};
-        _allClients.forEach(function(c){ _byId[c.id] = c; });
-        var _allQuotes = DB.quotes.getAll().slice().sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
-        var _seen = {};
-        for (var _q = 0; _q < _allQuotes.length && _recentClients.length < 5; _q++) {
-          var _cid = _allQuotes[_q].clientId;
-          if (!_cid || _seen[_cid]) continue;
-          var _cl = _byId[_cid]; if (!_cl) continue;
-          _seen[_cid] = true;
-          _recentClients.push(_cl);
-        }
-      } catch(e) {}
-
       html += '<input type="hidden" id="q-clientId" value="">'
         + '<input type="hidden" id="q-property" value="">'
-        // Big label
-        + '<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">Who is this quote for?</div>'
-        + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Search existing clients, tap a recent one, or create a new one.</div>'
-        // Big search field with leading icon
-        + '<div style="position:relative;margin-bottom:10px;">'
+        + '<div style="position:relative;">'
         +   '<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text-light);pointer-events:none;">🔍</span>'
-        +   '<input type="text" id="q-client-search" placeholder="Type a name, address, or phone…" autocomplete="off" '
-        +     'oninput="QuotesPage._searchClient(this.value)" onfocus="QuotesPage._showRecentClients()" '
-        +     'style="width:100%;padding:14px 14px 14px 40px;border:2px solid var(--green-dark);border-radius:10px;font-size:15px;box-sizing:border-box;box-shadow:0 0 0 4px rgba(0,131,108,0.08);">'
+        +   '<input type="text" id="q-client-search" placeholder="Search client, or type a new name…" autocomplete="off" '
+        +     'oninput="QuotesPage._searchClient(this.value)" onfocus="QuotesPage._searchClient(this.value)" '
+        +     'style="width:100%;padding:12px 14px 12px 40px;border:2px solid var(--green-dark);border-radius:10px;font-size:15px;box-sizing:border-box;">'
         + '</div>'
-        + '<div id="q-client-results" style="display:none;position:relative;z-index:10;margin-bottom:10px;"></div>';
-
-      // Recent client pills (quick-pick)
-      if (_recentClients.length > 0) {
-        html += '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Recent</div>'
-          + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
-        _recentClients.forEach(function(c) {
-          var initials = (c.name || '?').split(/\s+/).slice(0,2).map(function(w){return w.charAt(0).toUpperCase();}).join('');
-          html += '<button type="button" onclick="QuotesPage._selectClient(\'' + c.id + '\',\'' + UI.esc(c.name).replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;font-weight:500;">'
-            + '<span style="width:22px;height:22px;border-radius:50%;background:var(--green-bg);color:var(--green-dark);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">' + initials + '</span>'
-            + UI.esc(c.name)
-            + '</button>';
-        });
-        html += '</div>';
-      }
-
-      // New client CTA
-      html += '<button type="button" onclick="QuotesPage._promptNewClient()" style="width:100%;padding:12px;background:#fff;color:var(--green-dark);border:2px dashed var(--green-light);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Create New Client</button>';
+        + '<div id="q-client-results" style="display:none;position:relative;z-index:10;margin-top:8px;"></div>';
     }
 
     // Description lives inside the client box
@@ -2530,30 +2492,54 @@ var QuotesPage = {
   _searchClient: function(query) {
     clearTimeout(QuotesPage._clientSearchTimeout);
     var results = document.getElementById('q-client-results');
-    if (!query || query.length < 2) { results.style.display = 'none'; return; }
+    if (!results) return;
     QuotesPage._clientSearchTimeout = setTimeout(function() {
-      var q = query.toLowerCase();
       var allClients = [];
       try { allClients = JSON.parse(localStorage.getItem('bm-clients') || '[]'); } catch(e) {}
-      var matches = allClients.filter(function(c) {
-        return (c.name || '').toLowerCase().indexOf(q) >= 0 || (c.address || '').toLowerCase().indexOf(q) >= 0 || (c.phone || '').indexOf(q) >= 0;
-      }).slice(0, 8);
-      if (matches.length === 0) {
-        results.innerHTML = '<div style="padding:10px 14px;font-size:13px;color:var(--text-light);background:var(--white);border:1px solid var(--border);border-radius:8px;margin-top:4px;">No clients found. <button type="button" style="color:var(--accent);background:none;border:none;cursor:pointer;font-weight:600;text-decoration:underline;" onclick="QuotesPage._newClientInline()">+ Create new</button></div>';
-        results.style.display = 'block';
-        return;
+
+      var q = (query || '').trim().toLowerCase();
+      var matches;
+      if (!q) {
+        // Empty query: show 8 most-recent clients so you can quick-pick
+        matches = allClients.slice().sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); }).slice(0, 8);
+      } else {
+        matches = allClients.filter(function(c) {
+          return (c.name || '').toLowerCase().indexOf(q) >= 0
+            || (c.address || '').toLowerCase().indexOf(q) >= 0
+            || (c.phone || '').indexOf(q) >= 0;
+        }).slice(0, 8);
       }
-      var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:250px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);">';
+
+      var rows = '';
       matches.forEach(function(c) {
-        html += '<div onclick="QuotesPage._selectClient(\'' + c.id + '\',\'' + UI.esc(c.name).replace(/'/g,"\\'") + '\')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;font-size:14px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
+        rows += '<div onclick="QuotesPage._selectClient(\'' + c.id + '\',\'' + UI.esc(c.name).replace(/'/g,"\\'") + '\')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;font-size:14px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
           + '<strong>' + UI.esc(c.name) + '</strong>'
           + (c.address ? '<div style="font-size:12px;color:var(--text-light);margin-top:1px;">' + UI.esc(c.address) + '</div>' : '')
           + '</div>';
       });
-      html += '</div>';
-      results.innerHTML = html;
+
+      // Always offer "Create new" when user has typed something
+      if (q) {
+        rows += '<div onclick="QuotesPage._newClientInline()" style="padding:10px 14px;cursor:pointer;font-size:14px;color:var(--green-dark);font-weight:600;background:var(--green-bg);" onmouseover="this.style.filter=\'brightness(0.95)\'" onmouseout="this.style.filter=\'\'">+ Create new client: <em style="font-style:normal;">' + UI.esc(query) + '</em></div>';
+      }
+
+      if (!rows) { results.style.display = 'none'; return; }
+      results.innerHTML = '<div style="background:var(--white);border:1px solid var(--border);border-radius:8px;max-height:280px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);">' + rows + '</div>';
       results.style.display = 'block';
     }, 150);
+  },
+
+  _newClientInline: function() {
+    var inputEl = document.getElementById('q-client-search');
+    var typed = inputEl ? inputEl.value.trim() : '';
+    var name = typed || prompt('New client name:');
+    if (!name || !name.trim()) return;
+    var newClient = DB.clients.create({
+      name: name.trim(),
+      status: 'lead',
+      createdAt: new Date().toISOString()
+    });
+    QuotesPage._selectClient(newClient.id, newClient.name);
   },
 
   _selectClient: function(id, name) {

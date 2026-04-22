@@ -61,8 +61,7 @@ var DashboardPage = {
       + '<h2 style="font-size:28px;font-weight:700;margin-top:2px;">' + greeting + ', ' + userName.split(' ')[0] + '</h2>'
       + '</div>';
 
-    // === BRANCH CAM WIDGET ===
-    html += DashboardPage._branchCamWidget();
+    // Branch Cam widget removed from dashboard per user request — still accessible via Tools → Branch Cam.
 
     // Money-on-the-Table widget was permanently removed Apr 19, 2026 — same signals
     // are surfaced in the Smart Daily Briefing + Ready-to-Invoice cards below.

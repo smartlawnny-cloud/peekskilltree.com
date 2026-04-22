@@ -1,5 +1,5 @@
 {
-  "version": 327,
+  "version": 328,
   "released": "2026-04-21",
-  "notes": "Cross-device API-key sync now actually works. (1) Shipped migrate-tenant-settings.sql — the CloudKeys code expected this table but it was never created, so sync was silently failing. (2) CloudKeys now subscribes to Supabase realtime — a key saved on one device propagates to every other logged-in device instantly (no reload needed)."
+  "notes": "PWA/App nav: added a third 'Both' option so power users can have the top sidebar AND the bottom tab bar visible at the same time. Card is now green-highlighted so it's findable. Applies to PWA installs and the Capacitor iOS/Android builds."
 }

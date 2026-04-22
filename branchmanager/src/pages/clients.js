@@ -646,6 +646,7 @@ var ClientsPage = {
 
   _showDetailImpl: function(id) {
     console.log('[ClientsPage.showDetail] called with id:', id);
+    if (window.bmRememberDetail) window.bmRememberDetail('clients', id);
     var c = DB.clients.getById(id);
     if (!c) {
       console.warn('[ClientsPage] Client not found:', id);
@@ -728,7 +729,7 @@ var ClientsPage = {
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;">'
       +   (phoneTel ? '<button class="btn" style="background:var(--green-dark);color:#fff;font-size:13px;padding:10px;" onclick="Dialpad.call(\'' + phoneTel + '\',\'' + id + '\',\'' + nameJs + '\')">📞 Call</button>' : '')
       +   (phoneTel ? '<button class="btn" style="background:#7c3aed;color:#fff;font-size:13px;padding:10px;" onclick="Dialpad.showTextModal(\'' + id + '\',\'' + nameJs + '\',\'' + phoneTel + '\')">💬 Text</button>' : '')
-      +   (c.email ? '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="window.location.href=\'mailto:' + c.email + '\'">✉️ Email</button>' : '')
+      +   (c.email ? '<a class="btn btn-primary" style="font-size:13px;padding:10px;text-decoration:none;text-align:center;" href="mailto:' + encodeURIComponent(c.email) + '">✉️ Email</a>' : '')
       +   '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="QuotesPage.showForm(null,\'' + id + '\')">+ Quote</button>'
       +   '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="JobsPage.showForm(null,\'' + id + '\')">+ Job</button>'
       +   '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="InvoicesPage.showForm(null,\'' + id + '\')">+ Invoice</button>'

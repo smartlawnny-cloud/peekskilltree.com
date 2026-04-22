@@ -533,6 +533,7 @@ var RequestsPage = {
   showDetail: function(id) {
     var r = DB.requests.getById(id);
     if (!r) return;
+    if (window.bmRememberDetail) window.bmRememberDetail('requests', id);
     var self = RequestsPage;
 
     var statusColor = { new:'#1565c0', assessment_scheduled:'#e07c24', assessment_complete:'#2e7d32',

@@ -793,6 +793,7 @@ var JobsPage = {
   showDetail: function(id) {
     var j = DB.jobs.getById(id);
     if (!j) return;
+    if (window.bmRememberDetail) window.bmRememberDetail('jobs', id);
 
     var timeEntries = DB.timeEntries ? DB.timeEntries.getAll().filter(function(te) { return te.jobId === id; }) : [];
     var totalHours = timeEntries.reduce(function(s, te) { return s + (te.hours || 0); }, 0);

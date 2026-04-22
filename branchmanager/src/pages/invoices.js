@@ -657,6 +657,7 @@ var InvoicesPage = {
   showDetail: function(id) {
     var inv = DB.invoices.getById(id);
     if (!inv) return;
+    if (window.bmRememberDetail) window.bmRememberDetail('invoices', id);
 
     var statusColors = {draft:'#6c757d',sent:'#1565c0',viewed:'#e07c24',partial:'#e6a817',paid:'#2e7d32',overdue:'#dc3545',cancelled:'#6c757d'};
     var statusColor = statusColors[inv.status] || '#1565c0';

@@ -1816,6 +1816,7 @@ var QuotesPage = {
   showDetail: function(id) {
     var q = DB.quotes.getById(id);
     if (!q) return;
+    if (window.bmRememberDetail) window.bmRememberDetail('quotes', id);
 
     // Jobber-style quote detail
     var statusColors = {draft:'#6c757d',sent:'#e07c24',awaiting:'#e07c24',approved:'#2e7d32',converted:'#2e7d32',declined:'#dc3545'};

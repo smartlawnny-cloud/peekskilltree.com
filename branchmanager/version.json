@@ -1,5 +1,5 @@
 {
-  "version": 333,
+  "version": 334,
   "released": "2026-04-22",
-  "notes": "Quote form cleanup: (1) Equipment Map — the equipment list is now a horizontal strip at the BOTTOM of the map (was a narrow sidebar on the right, cramped to read). Same layout on mobile + desktop. (2) T&M 'Labor' card matches the Equipment card — plain white with a subtle border, no purple. (3) T&M breakdown: Labor has its own section with subtotal, Equipment has its own section with subtotal, then a combined 'Labor + Equipment' line above insurance / disposal / final price. Compare Pricing Methods button: green instead of purple."
+  "notes": "Scaffolding for Passive Location Tracking (BETA, owner-only): (1) Supabase migration for 2 new tables (location_pings + detected_locations) with tenant-scoped RLS, realtime on detected_locations, 30-day ping pruning fn. (2) New Settings toggle card: enable/disable tracking, ping interval (default 60s), dwell radius (50m), dwell time (60min). (3) Time Tracking Enhancements card with the full shortlist wired as toggles: A. Auto clock-in/out at tagged job sites, B. 'Who's on the clock' dashboard widget, C. Break tracking + Overtime shield. Tracker module + Web Push + dwell logic ship next."
 }

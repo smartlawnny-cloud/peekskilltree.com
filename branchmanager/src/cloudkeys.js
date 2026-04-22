@@ -17,7 +17,10 @@ var CloudKeys = {
     'bm-gusto-api-key', 'bm-plantnet-key', 'bm-tm-rates', 'bm-ai-enabled',
     'bm-dark-mode', 'bm-co-name', 'bm-co-phone', 'bm-co-email', 'bm-co-address',
     'bm-co-website', 'bm-tax-rate', 'bm-zip', 'bm-revenue-goals',
-    'bm-receptionist-settings', 'bm-pwa-nav', 'bm-app-nav'
+    'bm-receptionist-settings', 'bm-pwa-nav', 'bm-app-nav',
+    // Passive tracking + time-tracking roadmap toggles
+    'bm-passive-track', 'bm-passive-interval', 'bm-passive-dwell-radius', 'bm-passive-dwell-minutes',
+    'bm-auto-clock-in', 'bm-break-tracking', 'bm-ot-shield', 'bm-ot-threshold', 'bm-who-on-clock-badge'
   ],
 
   ready: false,

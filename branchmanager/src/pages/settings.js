@@ -149,7 +149,113 @@ var SettingsPage = {
       + '<label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">'
       + '<input type="checkbox" id="loc-geofence" style="width:18px;height:18px;"' + (locGeofence ? ' checked' : '') + '>'
       + '<div><strong>Geofence Auto Clock-In</strong><div style="font-size:12px;color:var(--text-light);">Automatically clock crew in when they arrive at a job site</div></div></label>'
+      + '</div>';
+
+    // ── Passive Location Tracking (BETA, owner-only for now) ──
+    var passiveOn   = localStorage.getItem('bm-passive-track') === 'true';
+    var passiveInt  = parseInt(localStorage.getItem('bm-passive-interval') || '60', 10);     // seconds between pings
+    var dwellRad    = parseInt(localStorage.getItem('bm-passive-dwell-radius') || '50', 10); // meters
+    var dwellMin    = parseInt(localStorage.getItem('bm-passive-dwell-minutes') || '60', 10); // minutes
+    html += '<div style="margin-top:16px;background:' + (passiveOn ? 'var(--green-bg)' : 'var(--bg)') + ';border:2px solid ' + (passiveOn ? 'var(--green-light)' : 'var(--border)') + ';border-radius:12px;padding:16px 18px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px;">'
+      +   '<div style="flex:1;min-width:220px;">'
+      +     '<div style="font-size:14px;font-weight:800;color:var(--text);">🛰 Passive Location Tracking <span style="background:#7c3aed;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;vertical-align:middle;">BETA</span></div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-top:3px;">Captures your location in the background while BM is open. When you\'ve been somewhere a while, BM asks if it\'s a job site — one tap tags it. Owner-only for now; crew will be invited later.</div>'
+      +   '</div>'
+      +   '<label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;flex-shrink:0;">'
+      +     '<input type="checkbox" id="passive-track-toggle" onchange="SettingsPage._togglePassiveTracking(this.checked)"' + (passiveOn ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'
+      +     '<span style="position:absolute;inset:0;background:' + (passiveOn ? 'var(--green-dark)' : '#cbd5e1') + ';border-radius:26px;transition:.2s;"></span>'
+      +     '<span style="position:absolute;top:3px;left:' + (passiveOn ? '25px' : '3px') + ';width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
+      +   '</label>'
       + '</div>'
+
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px;' + (passiveOn ? '' : 'opacity:0.5;pointer-events:none;') + '">'
+      +   '<div><label style="font-size:11px;font-weight:600;color:var(--text-light);display:block;margin-bottom:2px;">Ping every (sec)</label>'
+      +     '<input type="number" id="passive-interval" value="' + passiveInt + '" min="30" max="600" step="30" onchange="SettingsPage._savePassiveSettings()" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;"></div>'
+      +   '<div><label style="font-size:11px;font-weight:600;color:var(--text-light);display:block;margin-bottom:2px;">Dwell radius (m)</label>'
+      +     '<input type="number" id="passive-dwell-radius" value="' + dwellRad + '" min="20" max="200" step="10" onchange="SettingsPage._savePassiveSettings()" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;"></div>'
+      +   '<div><label style="font-size:11px;font-weight:600;color:var(--text-light);display:block;margin-bottom:2px;">Dwell time (min)</label>'
+      +     '<input type="number" id="passive-dwell-minutes" value="' + dwellMin + '" min="15" max="240" step="5" onchange="SettingsPage._savePassiveSettings()" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;"></div>'
+      + '</div>'
+
+      + '<div id="passive-status" style="font-size:11px;color:var(--text-light);margin-top:10px;">' + (passiveOn ? '✓ Tracking active — pings every ' + passiveInt + 's. Grant location when iOS prompts.' : 'Off. Enable to start capturing pings.') + '</div>'
+
+      + '<details style="margin-top:10px;">'
+      +   '<summary style="cursor:pointer;font-size:11px;color:var(--text-light);font-weight:600;">Privacy + data details ▾</summary>'
+      +   '<div style="font-size:11px;color:var(--text-light);margin-top:6px;line-height:1.6;padding-left:6px;border-left:2px solid var(--border);">'
+      +     '• Pings are stored in your <em>own</em> tenant in Supabase (RLS-scoped).<br>'
+      +     '• Raw pings auto-prune after 30 days. Tagged job locations stay.<br>'
+      +     '• Tracking <strong>only runs while BM is the active tab/app</strong> — closing or backgrounding stops capture. (Background tracking would need a native wrapper.)<br>'
+      +     '• Web Push notifications ask iOS permission the first time a dwell is detected.<br>'
+      +     '• Toggle off any time → existing data stays unless you delete it from Review page (coming next).'
+      +   '</div>'
+      + '</details>'
+      + '</div>';
+
+    // ── Time Tracking Enhancements (the shortlist from the review — stubs for now, wired as we build) ──
+    var autoClockIn     = localStorage.getItem('bm-auto-clock-in') === 'true';
+    var breakTracking   = localStorage.getItem('bm-break-tracking') === 'true';
+    var overtimeShield  = localStorage.getItem('bm-ot-shield') !== 'false'; // default ON
+    var otThresholdHrs  = parseInt(localStorage.getItem('bm-ot-threshold') || '40', 10);
+    var whoOnClockBadge = localStorage.getItem('bm-who-on-clock-badge') !== 'false'; // default ON
+    html += '<div style="margin-top:16px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      + '<div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px;">⏱ Time Tracking Enhancements</div>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">The shortlist from the review — toggles are here; each feature ships one at a time.</div>'
+
+      // A — Auto clock-in/out from detected job sites (links passive tracking to timesheets)
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px solid var(--border);">'
+      +   '<div style="flex:1;min-width:200px;">'
+      +     '<div style="font-size:13px;font-weight:700;">A. Auto clock-in / clock-out at tagged jobs</div>'
+      +     '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">When you arrive at a detected_location tagged with a job, clock in automatically. Leave → clock out.</div>'
+      +   '</div>'
+      +   '<label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0;margin-top:2px;">'
+      +     '<input type="checkbox" onchange="localStorage.setItem(\'bm-auto-clock-in\', this.checked ? \'true\' : \'false\');UI.toast(\'Auto clock-in: \' + (this.checked ? \'ON\' : \'OFF\'));"' + (autoClockIn ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'
+      +     '<span style="position:absolute;inset:0;background:' + (autoClockIn ? 'var(--green-dark)' : '#cbd5e1') + ';border-radius:24px;transition:.2s;"></span>'
+      +     '<span style="position:absolute;top:3px;left:' + (autoClockIn ? '23px' : '3px') + ';width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
+      +   '</label>'
+      + '</div>'
+
+      // B — Who's on the clock (dashboard widget)
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px solid var(--border);">'
+      +   '<div style="flex:1;min-width:200px;">'
+      +     '<div style="font-size:13px;font-weight:700;">B. "Who\'s on the clock" dashboard widget</div>'
+      +     '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Live roster of everyone currently clocked in — name, job, elapsed, GPS status. Flags stuck sessions (>10hr).</div>'
+      +   '</div>'
+      +   '<label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0;margin-top:2px;">'
+      +     '<input type="checkbox" onchange="localStorage.setItem(\'bm-who-on-clock-badge\', this.checked ? \'true\' : \'false\');UI.toast(\'Dashboard widget: \' + (this.checked ? \'ON\' : \'OFF\'));"' + (whoOnClockBadge ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'
+      +     '<span style="position:absolute;inset:0;background:' + (whoOnClockBadge ? 'var(--green-dark)' : '#cbd5e1') + ';border-radius:24px;transition:.2s;"></span>'
+      +     '<span style="position:absolute;top:3px;left:' + (whoOnClockBadge ? '23px' : '3px') + ';width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
+      +   '</label>'
+      + '</div>'
+
+      // C — Break tracking + OT shield
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px solid var(--border);">'
+      +   '<div style="flex:1;min-width:200px;">'
+      +     '<div style="font-size:13px;font-weight:700;">C. Break tracking</div>'
+      +     '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Start/End Break button in the clock-in widget. Required for NY labor compliance on shifts &gt; 6 hours.</div>'
+      +   '</div>'
+      +   '<label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0;margin-top:2px;">'
+      +     '<input type="checkbox" onchange="localStorage.setItem(\'bm-break-tracking\', this.checked ? \'true\' : \'false\');UI.toast(\'Break tracking: \' + (this.checked ? \'ON\' : \'OFF\'));"' + (breakTracking ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'
+      +     '<span style="position:absolute;inset:0;background:' + (breakTracking ? 'var(--green-dark)' : '#cbd5e1') + ';border-radius:24px;transition:.2s;"></span>'
+      +     '<span style="position:absolute;top:3px;left:' + (breakTracking ? '23px' : '3px') + ';width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
+      +   '</label>'
+      + '</div>'
+
+      + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0 2px;border-top:1px solid var(--border);">'
+      +   '<div style="flex:1;min-width:200px;">'
+      +     '<div style="font-size:13px;font-weight:700;">Overtime shield</div>'
+      +     '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Warn crew + owner when someone\'s within 4hr of weekly OT. Current threshold: '
+      +       '<input type="number" value="' + otThresholdHrs + '" min="30" max="60" step="1" onchange="localStorage.setItem(\'bm-ot-threshold\', this.value);UI.toast(\'OT threshold: \'+this.value+\'hr/week\');" style="width:44px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;font-size:11px;text-align:center;"> hr/week</div>'
+      +   '</div>'
+      +   '<label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0;">'
+      +     '<input type="checkbox" onchange="localStorage.setItem(\'bm-ot-shield\', this.checked ? \'true\' : \'false\');UI.toast(\'OT shield: \' + (this.checked ? \'ON\' : \'OFF\'));"' + (overtimeShield ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'
+      +     '<span style="position:absolute;inset:0;background:' + (overtimeShield ? 'var(--green-dark)' : '#cbd5e1') + ';border-radius:24px;transition:.2s;"></span>'
+      +     '<span style="position:absolute;top:3px;left:' + (overtimeShield ? '23px' : '3px') + ';width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
+      +   '</label>'
+      + '</div>'
+
+      + '</div>'
+
       + '</div>';
 
     // ═══ /GROUP: Business Info ═══
@@ -1620,5 +1726,46 @@ var SettingsPage = {
     localStorage.setItem('bm-gps-work-only', document.getElementById('loc-work-only').checked ? 'true' : 'false');
     localStorage.setItem('bm-geofence', document.getElementById('loc-geofence').checked ? 'true' : 'false');
     UI.toast('Location settings saved');
+  },
+
+  // ── Passive Location Tracking (BETA) ──
+  _togglePassiveTracking: function(on) {
+    localStorage.setItem('bm-passive-track', on ? 'true' : 'false');
+    if (on) {
+      // Ask for permission up front so the real start doesn't fail silently
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then(function(res) {
+          if (res.state === 'denied') {
+            UI.toast('Location permission denied — enable in browser settings', 'error');
+          }
+        }).catch(function(){});
+      }
+      if (typeof PassiveTracker !== 'undefined' && PassiveTracker.start) {
+        PassiveTracker.start();
+      }
+      UI.toast('Passive tracking ON');
+    } else {
+      if (typeof PassiveTracker !== 'undefined' && PassiveTracker.stop) {
+        PassiveTracker.stop();
+      }
+      UI.toast('Passive tracking OFF');
+    }
+    // Re-render so the inputs enable/disable correctly
+    setTimeout(function(){ loadPage('settings'); }, 300);
+  },
+
+  _savePassiveSettings: function() {
+    var intEl = document.getElementById('passive-interval');
+    var radEl = document.getElementById('passive-dwell-radius');
+    var minEl = document.getElementById('passive-dwell-minutes');
+    var clamp = function(v, lo, hi) { v = parseInt(v, 10); if (isNaN(v)) return lo; return Math.max(lo, Math.min(hi, v)); };
+    if (intEl) localStorage.setItem('bm-passive-interval', String(clamp(intEl.value, 30, 600)));
+    if (radEl) localStorage.setItem('bm-passive-dwell-radius', String(clamp(radEl.value, 20, 200)));
+    if (minEl) localStorage.setItem('bm-passive-dwell-minutes', String(clamp(minEl.value, 15, 240)));
+    // Tell the tracker to pick up new settings if it's running
+    if (typeof PassiveTracker !== 'undefined' && PassiveTracker.applySettings) {
+      PassiveTracker.applySettings();
+    }
+    UI.toast('Saved');
   }
 };

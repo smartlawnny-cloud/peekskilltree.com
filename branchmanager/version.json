@@ -1,5 +1,5 @@
 {
-  "version": 334,
+  "version": 335,
   "released": "2026-04-22",
-  "notes": "Scaffolding for Passive Location Tracking (BETA, owner-only): (1) Supabase migration for 2 new tables (location_pings + detected_locations) with tenant-scoped RLS, realtime on detected_locations, 30-day ping pruning fn. (2) New Settings toggle card: enable/disable tracking, ping interval (default 60s), dwell radius (50m), dwell time (60min). (3) Time Tracking Enhancements card with the full shortlist wired as toggles: A. Auto clock-in/out at tagged job sites, B. 'Who's on the clock' dashboard widget, C. Break tracking + Overtime shield. Tracker module + Web Push + dwell logic ship next."
+  "notes": "Passive Location Tracker module is live. Watches GPS in the foreground, buffers pings (flushes to Supabase every 3 min), detects dwells (60+ min within 50m radius by default), inserts detected_locations row + pings a toast/notification. Auto-starts on boot if Settings → Passive Location Tracking is ON. PWA-only (foreground) for now; Capacitor background geolocation plugs into this same module later. Answer to 'can it track when app is closed like Rewind?': not in the browser — needs the native iOS build. Integrated approach chosen (build into BM), with a lean 'BM Crew' sibling app noted for Phase 2 once crew comes online."
 }

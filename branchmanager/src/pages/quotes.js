@@ -2405,7 +2405,7 @@ var QuotesPage = {
     fetch('https://ltpivkqahvplapyagljt.supabase.co/functions/v1/ai-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey: aiKey, model: 'claude-haiku-4-5', max_tokens: 400, messages: [{ role: 'user', content: content }] })
+      body: JSON.stringify({ apiKey: (window.bmClaudeKey ? window.bmClaudeKey() : aiKey) || aiKey, model: 'claude-haiku-4-5', max_tokens: 400, messages: [{ role: 'user', content: content }] })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {

@@ -22,7 +22,7 @@ var VoiceQuote = {
 
   render: function() {
     var supported = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-    var apiKeyOk = !!(localStorage.getItem('bm-claude-key') || '').trim();
+    var apiKeyOk = (localStorage.getItem("bm-claude-server-managed") === "true" || !!(localStorage.getItem("bm-claude-key") || "").trim());
 
     var html = '<div style="max-width:680px;margin:0 auto;padding-bottom:80px;">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
@@ -271,7 +271,7 @@ var VoiceQuote = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        apiKey: apiKey,
+        apiKey: (window.bmClaudeKey ? window.bmClaudeKey() : apiKey) || apiKey,
         model: 'claude-sonnet-4-5',
         max_tokens: 1500,
         system: system,

@@ -430,7 +430,7 @@ var AI = {
           max_tokens: 1024,
           system: systemPrompt,
           messages: apiMessages,
-          apiKey: AI._apiKey
+          apiKey: window.bmClaudeKey() || AI._apiKey
         })
       })
       .then(function(res) {

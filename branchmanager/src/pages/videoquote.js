@@ -345,7 +345,7 @@ var VideoQuote = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        apiKey: aiKey,
+        apiKey: (window.bmClaudeKey ? window.bmClaudeKey() : aiKey) || aiKey,
         model: 'claude-sonnet-4-5',
         max_tokens: 500,
         messages: [{

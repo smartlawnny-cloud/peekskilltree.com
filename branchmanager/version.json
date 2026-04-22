@@ -1,5 +1,5 @@
 {
-  "version": 337,
+  "version": 338,
   "released": "2026-04-22",
-  "notes": "Security pass: Content-Security-Policy meta tag + X-Content-Type-Options + referrer policy. rel='noopener noreferrer' mass-swept onto all 42 target='_blank' links (tab-napping fix). Wrote scripts/bump.sh to atomically sync version across version.json / BUNDLED_VERSION / sw.js CACHE_NAME / all ?v= cache-busters (prevents another infinite-reload incident like v318->v324). Wrote migrate-rls-tighten.sql to drop the wide-open anon policies on payments + crew_locations."
+  "notes": "Claude key can now live ONLY on Supabase. Settings → AI Assistant has a Server-managed/Device toggle. When server-managed: the key is set once via 'supabase secrets set ANTHROPIC_API_KEY=…' and no device ever stores or sees it. The ai-chat edge function prefers env var over client-sent key. All 5 client callers (Settings Test, AI Assistant, Quotes AI, Voice Quote, Video Quote, Tree ID) updated via window.bmClaudeKey() helper. bm-claude-server-managed setting syncs across devices via CloudKeys."
 }

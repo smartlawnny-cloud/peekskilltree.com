@@ -522,22 +522,48 @@ var SettingsPage = {
 
     // AI Assistant
     var aiKey = localStorage.getItem('bm-claude-key') || '';
-    var aiOk = aiKey.length > 10;
+    var aiServerManaged = localStorage.getItem('bm-claude-server-managed') === 'true';
+    var aiOk = aiServerManaged || aiKey.length > 10;
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
       + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
       + '<div style="width:40px;height:40px;background:linear-gradient(135deg,#D4A574,#C4956A);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🤖</div>'
       + '<div><h3 style="margin:0;">AI Assistant</h3>'
-      + '<div style="font-size:12px;color:' + (aiOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (aiOk ? '✅ Connected — AI estimates & emails active' : '⚠️ Not connected — paste your AI API key') + '</div>'
-      + '</div></div>'
-      + '<div style="margin-bottom:8px;"><input type="password" id="claude-ai-key" value="' + aiKey + '" placeholder="sk-ant-api03-..." style="width:100%;padding:10px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
-      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      + '<button onclick="var k=document.getElementById(\'claude-ai-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-claude-key\',k);if(typeof AI!==\'undefined\'){AI._apiKey=k;}UI.toast(\'AI Assistant connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
-      + '<button onclick="SettingsPage._testClaudeKey()" style="background:#7c3aed;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">🧪 Test</button>'
-      + (aiOk ? '<button onclick="SettingsPage._removeKey(\'bm-claude-key\',\'AI Assistant\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + '<div style="font-size:12px;color:' + (aiOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">'
+      +   (aiServerManaged ? '🔒 Server-managed key (secure — never leaves Supabase)'
+          : aiOk ? '✅ Connected — key stored on this device'
+          : '⚠️ Not connected — choose a mode below')
       + '</div>'
-      + '<div id="claude-test-result" style="margin-top:10px;font-size:12px;"></div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">console.anthropic.com</a> → API Keys → Create Key (free tier available)</p>'
+      + '</div></div>'
+
+      // Mode picker
+      + '<div style="display:flex;gap:6px;margin-bottom:12px;background:var(--bg);border-radius:8px;padding:4px;">'
+      +   '<button onclick="localStorage.setItem(\'bm-claude-server-managed\',\'true\');UI.toast(\'Switched to server-managed key\');loadPage(\'settings\');" style="flex:1;padding:8px;border:none;background:' + (aiServerManaged ? 'var(--green-dark)' : 'transparent') + ';color:' + (aiServerManaged ? '#fff' : 'var(--text)') + ';border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">🔒 Server-managed <span style="font-weight:400;opacity:.8;">(recommended)</span></button>'
+      +   '<button onclick="localStorage.setItem(\'bm-claude-server-managed\',\'false\');UI.toast(\'Switched to device key\');loadPage(\'settings\');" style="flex:1;padding:8px;border:none;background:' + (!aiServerManaged ? 'var(--green-dark)' : 'transparent') + ';color:' + (!aiServerManaged ? '#fff' : 'var(--text)') + ';border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">📱 Device key</button>'
       + '</div>';
+
+    if (aiServerManaged) {
+      html += '<div style="background:var(--green-bg);border:1px solid var(--green-light);border-radius:8px;padding:12px;font-size:12px;color:var(--text);">'
+        +   '<div style="font-weight:700;margin-bottom:4px;">🔒 Key lives only on Supabase</div>'
+        +   'BM calls Claude through the <code>ai-chat</code> edge function, which reads <code>ANTHROPIC_API_KEY</code> from its own secrets store. Your key is never in localStorage, never in JS, never on any device.<br><br>'
+        +   '<strong>One-time setup (in Terminal):</strong>'
+        +   '<pre style="background:#1a1a1a;color:#e8e8e8;padding:10px;border-radius:6px;margin-top:8px;font-size:11px;overflow-x:auto;white-space:pre-wrap;">supabase secrets set ANTHROPIC_API_KEY=sk-ant-api03-...\nsupabase functions deploy ai-chat --no-verify-jwt</pre>'
+        +   'After that, every device signed in sees ✅ — nobody has to paste a key anywhere.'
+        + '</div>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
+        +   '<button onclick="SettingsPage._testClaudeKey()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">🧪 Test server key</button>'
+        + '</div>'
+        + '<div id="claude-test-result" style="margin-top:10px;font-size:12px;"></div>';
+    } else {
+      html += '<div style="margin-bottom:8px;"><input type="password" id="claude-ai-key" value="' + aiKey + '" placeholder="sk-ant-api03-..." style="width:100%;padding:10px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        + '<button onclick="var k=document.getElementById(\'claude-ai-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-claude-key\',k);if(typeof AI!==\'undefined\'){AI._apiKey=k;}UI.toast(\'AI Assistant connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
+        + '<button onclick="SettingsPage._testClaudeKey()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">🧪 Test</button>'
+        + (aiOk ? '<button onclick="SettingsPage._removeKey(\'bm-claude-key\',\'AI Assistant\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+        + '</div>'
+        + '<div id="claude-test-result" style="margin-top:10px;font-size:12px;"></div>'
+        + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">console.anthropic.com</a> → API Keys → Create Key</p>';
+    }
+    html += '</div>';
 
     // ── Stripe Payment Link ──
     var stripeLink = localStorage.getItem('bm-stripe-base-link') || '';
@@ -1506,9 +1532,10 @@ var SettingsPage = {
   _testClaudeKey: function() {
     var keyEl = document.getElementById('claude-ai-key');
     var resultEl = document.getElementById('claude-test-result');
+    var serverManaged = localStorage.getItem('bm-claude-server-managed') === 'true';
     var key = (keyEl && keyEl.value.trim()) || localStorage.getItem('bm-claude-key') || '';
-    if (!key) {
-      if (resultEl) resultEl.innerHTML = '<span style="color:#dc3545;">⚠️ Paste a key first.</span>';
+    if (!serverManaged && !key) {
+      if (resultEl) resultEl.innerHTML = '<span style="color:#dc3545;">⚠️ Paste a key first, or switch to Server-managed mode.</span>';
       return;
     }
     if (resultEl) resultEl.innerHTML = '<span style="color:var(--text-light);">Testing…</span>';
@@ -1516,7 +1543,7 @@ var SettingsPage = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        apiKey: key,
+        apiKey: serverManaged ? '' : key,
         model: 'claude-haiku-4-5',
         max_tokens: 40,
         system: 'You are a test. Reply with exactly: OK',

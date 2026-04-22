@@ -115,7 +115,7 @@ var AITreeID = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        apiKey: aiKey,
+        apiKey: (window.bmClaudeKey ? window.bmClaudeKey() : aiKey) || aiKey,
         model: 'claude-haiku-4-5',
         max_tokens: 500,
         messages: [{

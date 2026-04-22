@@ -18,9 +18,14 @@ serve(async (req) => {
   try {
     const { messages, system, model, max_tokens, apiKey } = await req.json()
 
-    const key = apiKey || Deno.env.get('ANTHROPIC_API_KEY')
+    // Prefer the server-side secret so the key never has to leave the client's
+    // localStorage. Clients can still send apiKey as a fallback for dev/test,
+    // but production flow is: `supabase secrets set ANTHROPIC_API_KEY=sk-ant-...`
+    const key = Deno.env.get('ANTHROPIC_API_KEY') || apiKey
     if (!key) {
-      return new Response(JSON.stringify({ error: 'No AI API key configured' }), {
+      return new Response(JSON.stringify({
+        error: 'No AI API key configured. Set ANTHROPIC_API_KEY as a Supabase function secret, or paste a key in BM Settings.'
+      }), {
         status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
     }

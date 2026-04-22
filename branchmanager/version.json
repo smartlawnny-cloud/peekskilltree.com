@@ -1,5 +1,5 @@
 {
-  "version": 329,
+  "version": 330,
   "released": "2026-04-21",
-  "notes": "Nav settings: PWA and native App are now SEPARATE (each has its own Top/Bottom/Both choice — Settings shows two rows in the green box). Added bm-app-nav to CloudKeys sync list. Fixed a ReferenceError race where init crashed if ModeSelector script hadn't loaded yet."
+  "notes": "Settings page cleanup: T&M Pricing Rates moved into Quote & Invoice Defaults (was floating orphaned at the bottom). Removed duplicate 'Connected Apps' status block from Services & Products (the API Keys & Integrations section below it already shows the same info). Quick Setup banner: the Deploy Edge Functions / Stripe webhook terminal commands are now tucked behind an 'Advanced' expander so the banner is half the size for most users."
 }

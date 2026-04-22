@@ -20,17 +20,22 @@ var SettingsPage = {
         + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">' + (supabaseOk ? '✅' : '⬜') + '</span><span' + (supabaseOk ? ' style="text-decoration:line-through;opacity:.7;"' : '') + '>Supabase connected — your data is live</span></div>'
         + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">' + (sgOk2 ? '✅' : '⬜') + '</span><span' + (sgOk2 ? ' style="text-decoration:line-through;opacity:.7;"' : '') + '>SendGrid key — enables automated emails</span></div>'
         + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">' + (stripeOk ? '✅' : '⬜') + '</span><span' + (stripeOk ? ' style="text-decoration:line-through;opacity:.7;"' : '') + '>Stripe payment link — accept online payments</span></div>'
-        + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">⬜</span><span>Deploy Edge Functions (one-time terminal commands):</span></div>'
-        + '<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px 12px;font-family:monospace;font-size:11px;line-height:1.8;margin-left:26px;">'
-        + 'supabase functions deploy stripe-webhook --no-verify-jwt<br>'
-        + 'supabase functions deploy request-notify --no-verify-jwt<br>'
-        + 'supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...<br>'
-        + 'supabase secrets set SENDGRID_API_KEY=SG...<br>'
-        + 'supabase secrets set SUPABASE_SERVICE_ROLE_KEY=ey...'
         + '</div>'
-        + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">⬜</span><span><a href="https://dashboard.stripe.com/webhooks/create" target="_blank" style="color:#a5f3e8;">Stripe → Webhooks → Add endpoint</a> → <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">https://ltpivkqahvplapyagljt.supabase.co/functions/v1/stripe-webhook</code></span></div>'
-        + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">⬜</span><span>Stripe → Payment Link → After payment → Redirect to <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">https://peekskilltree.com/branchmanager/paid.html</code></span></div>'
-        + '</div>'
+        + '<details style="margin-top:10px;">'
+        +   '<summary style="cursor:pointer;font-size:12px;color:#a5f3e8;font-weight:600;list-style:none;opacity:.8;">Advanced: Edge Function deploy + Stripe webhook setup ▾</summary>'
+        +   '<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;font-size:13px;">'
+        +     '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">⬜</span><span>Deploy Edge Functions (one-time terminal commands):</span></div>'
+        +     '<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px 12px;font-family:monospace;font-size:11px;line-height:1.8;margin-left:26px;">'
+        +       'supabase functions deploy stripe-webhook --no-verify-jwt<br>'
+        +       'supabase functions deploy request-notify --no-verify-jwt<br>'
+        +       'supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...<br>'
+        +       'supabase secrets set SENDGRID_API_KEY=SG...<br>'
+        +       'supabase secrets set SUPABASE_SERVICE_ROLE_KEY=ey...'
+        +     '</div>'
+        +     '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">⬜</span><span><a href="https://dashboard.stripe.com/webhooks/create" target="_blank" style="color:#a5f3e8;">Stripe → Webhooks → Add endpoint</a> → <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">https://ltpivkqahvplapyagljt.supabase.co/functions/v1/stripe-webhook</code></span></div>'
+        +     '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">⬜</span><span>Stripe → Payment Link → After payment → Redirect to <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">https://peekskilltree.com/branchmanager/paid.html</code></span></div>'
+        +   '</div>'
+        + '</details>'
         + '</div>';
     }
 
@@ -295,6 +300,41 @@ var SettingsPage = {
       + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">12 Hour (1:30 PM)</div></div>'
       + '</div></div>';
 
+    // — T&M Pricing Rates (moved here from standalone section at the bottom) —
+    var _tmRates = (typeof QuotesPage !== 'undefined' && QuotesPage.getTMRates) ? QuotesPage.getTMRates() : {};
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      + '<h3 style="margin:0 0 6px;">🛠 T&M Pricing Rates</h3>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Used by the Price Check on every quote. Override per your crew + equipment costs.</p>'
+      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Crew (hourly)</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;">'
+      +   SettingsPage._rateInput('Climber', 'climber', _tmRates.climber)
+      +   SettingsPage._rateInput('Groundsman', 'ground', _tmRates.ground)
+      +   SettingsPage._rateInput('Foreman', 'foreman', _tmRates.foreman)
+      + '</div>'
+      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Equipment (hourly)</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;">'
+      +   SettingsPage._rateInput('Bucket truck', 'bucket', _tmRates.bucket)
+      +   SettingsPage._rateInput('Chipper', 'chipper', _tmRates.chipper)
+      +   SettingsPage._rateInput('Crane', 'crane', _tmRates.crane)
+      +   SettingsPage._rateInput('Stump grinder', 'stumpGrinder', _tmRates.stumpGrinder)
+      +   SettingsPage._rateInput('Mini-skid', 'miniSkid', _tmRates.miniSkid)
+      +   SettingsPage._rateInput('Dump truck', 'dumpTruck', _tmRates.dumpTruck)
+      +   SettingsPage._rateInput('Man lift / ladder', 'liftLadder', _tmRates.liftLadder)
+      +   SettingsPage._rateInput('Trailer', 'trailer', _tmRates.trailer)
+      + '</div>'
+      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Markup + Overhead</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'
+      +   '<div><label style="font-size:11px;color:var(--text-light);display:block;">Insurance/overhead %</label>'
+      +     '<input type="number" id="tm-rate-insurance" value="' + Math.round((_tmRates.insurance || 0.31) * 100) + '" step="1" min="0" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      +   '<div><label style="font-size:11px;color:var(--text-light);display:block;">Markup multiplier (×)</label>'
+      +     '<input type="number" id="tm-rate-markup" value="' + (_tmRates.markup || 1.5) + '" step="0.05" min="1" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;">'
+      +   '<button onclick="SettingsPage._saveTMRates()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Rates</button>'
+      +   '<button onclick="if(confirm(\'Reset all T&amp;M rates to defaults?\')){localStorage.removeItem(\'bm-tm-rates\');loadPage(\'settings\');UI.toast(\'Rates reset to defaults\');}" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 18px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">Reset to Defaults</button>'
+      + '</div>'
+      + '</div>';
+
     // ═══ /GROUP: Quote & Invoice Defaults ═══
     html += '</div></details>';
 
@@ -306,28 +346,7 @@ var SettingsPage = {
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
-    // ── Connected Apps ──
-    var connectedApps = [
-      { name: 'SendGrid', status: !!(localStorage.getItem('bm-sendgrid-key')), desc: 'Email delivery' },
-      { name: 'Stripe', status: !!(localStorage.getItem('bm-stripe-key') || (typeof Stripe !== 'undefined')), desc: 'Payment processing' },
-      { name: 'Gusto', status: !!(localStorage.getItem('bm-gusto-api-key')), desc: 'Payroll' },
-      { name: 'AI Assistant', status: !!(localStorage.getItem('bm-claude-key')), desc: 'AI pricing & emails' },
-      { name: 'Dialpad', status: !!(localStorage.getItem('bm-dialpad-key')), desc: 'Phone system' },
-      { name: 'SendJim', status: !!(localStorage.getItem('bm-sendjim-key')), desc: 'Direct mail' }
-    ];
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<h3 style="margin:0 0 16px;">Connected Apps</h3>';
-    connectedApps.forEach(function(app) {
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;">'
-        + '<div style="display:flex;align-items:center;gap:10px;">'
-        + '<div style="width:8px;height:8px;border-radius:50%;background:' + (app.status ? 'var(--green-dark)' : '#ccc') + ';"></div>'
-        + '<div><strong style="font-size:13px;">' + app.name + '</strong>'
-        + '<div style="font-size:11px;color:var(--text-light);">' + app.desc + '</div></div>'
-        + '</div>'
-        + '<span style="font-size:12px;font-weight:600;color:' + (app.status ? 'var(--green-dark)' : 'var(--text-light)') + ';">' + (app.status ? 'Connected' : 'Not connected') + '</span>'
-        + '</div>';
-    });
-    html += '</div>';
+    // Connected Apps status removed — duplicated the "🔌 API Keys & Integrations" section below.
 
     // Products & Services Catalog
     var allServices = DB.services.getAll();
@@ -684,47 +703,7 @@ var SettingsPage = {
       +   '</label>'
       + '</div>';
 
-    // === T&M PRICING RATES (editable, collapsible) ===
-    var _tmRates = (typeof QuotesPage !== 'undefined' && QuotesPage.getTMRates) ? QuotesPage.getTMRates() : {};
-    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span>🛠 T&M Pricing Rates</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
-      + '</summary>'
-      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Used by the Price Check (Mode 2) calculation on every quote. Override defaults per your crew + equipment costs.</p>'
-      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Crew (hourly)</div>'
-      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;">'
-      +   SettingsPage._rateInput('Climber', 'climber', _tmRates.climber)
-      +   SettingsPage._rateInput('Groundsman', 'ground', _tmRates.ground)
-      +   SettingsPage._rateInput('Foreman', 'foreman', _tmRates.foreman)
-      + '</div>'
-      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Equipment (hourly)</div>'
-      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;">'
-      +   SettingsPage._rateInput('Bucket truck', 'bucket', _tmRates.bucket)
-      +   SettingsPage._rateInput('Chipper', 'chipper', _tmRates.chipper)
-      +   SettingsPage._rateInput('Crane', 'crane', _tmRates.crane)
-      +   SettingsPage._rateInput('Stump grinder', 'stumpGrinder', _tmRates.stumpGrinder)
-      +   SettingsPage._rateInput('Mini-skid', 'miniSkid', _tmRates.miniSkid)
-      +   SettingsPage._rateInput('Dump truck', 'dumpTruck', _tmRates.dumpTruck)
-      +   SettingsPage._rateInput('Man lift / ladder', 'liftLadder', _tmRates.liftLadder)
-      +   SettingsPage._rateInput('Trailer', 'trailer', _tmRates.trailer)
-      + '</div>'
-      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Markup + Overhead</div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'
-      +   '<div><label style="font-size:11px;color:var(--text-light);display:block;">Insurance/overhead %</label>'
-      +     '<input type="number" id="tm-rate-insurance" value="' + Math.round((_tmRates.insurance || 0.31) * 100) + '" step="1" min="0" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      +   '<div><label style="font-size:11px;color:var(--text-light);display:block;">Markup multiplier (×)</label>'
-      +     '<input type="number" id="tm-rate-markup" value="' + (_tmRates.markup || 1.5) + '" step="0.05" min="1" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
-      + '</div>'
-      + '<div style="display:flex;gap:8px;">'
-      +   '<button onclick="SettingsPage._saveTMRates()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Rates</button>'
-      +   '<button onclick="if(confirm(\'Reset all T&amp;M rates to defaults?\')){localStorage.removeItem(\'bm-tm-rates\');loadPage(\'settings\');UI.toast(\'Rates reset to defaults\');}" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 18px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">Reset to Defaults</button>'
-      + '</div>'
-      + '</div>'
-      + '</details>';
-
-    // PlantNet card moved inside the API Keys & Integrations collapsible above.
+    // T&M Pricing Rates moved into the Quote & Invoice Defaults section above.
 
     // === SYNC KEYS ACROSS DEVICES ===
     // Export all bm-* settings as a base64 code; paste on another device to restore.

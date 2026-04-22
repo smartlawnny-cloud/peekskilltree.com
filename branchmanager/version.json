@@ -1,5 +1,5 @@
 {
-  "version": 335,
+  "version": 336,
   "released": "2026-04-22",
-  "notes": "Passive Location Tracker module is live. Watches GPS in the foreground, buffers pings (flushes to Supabase every 3 min), detects dwells (60+ min within 50m radius by default), inserts detected_locations row + pings a toast/notification. Auto-starts on boot if Settings → Passive Location Tracking is ON. PWA-only (foreground) for now; Capacitor background geolocation plugs into this same module later. Answer to 'can it track when app is closed like Rewind?': not in the browser — needs the native iOS build. Integrated approach chosen (build into BM), with a lean 'BM Crew' sibling app noted for Phase 2 once crew comes online."
+  "notes": "Location Tracking Review page (/tracking): lists detected_locations with Pending / Tagged / Ignored tabs. Each row — tag as Job (link to existing job), Client (link to client), free-form label, Yard, Ignore, or Delete. Links from Settings → Passive Location Tracking card. Passive tracker now auto-detects native Capacitor builds and uses the background-geolocation plugin when present (true background tracking); falls back to foreground watchPosition in PWA mode. Info.plist updated with NSLocation*UsageDescription strings + UIBackgroundModes ['location','fetch']."
 }

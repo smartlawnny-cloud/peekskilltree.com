@@ -218,10 +218,22 @@ var PassiveTracker = (function() {
     });
   }
 
+  // ── Mode detection ─────────────────────────────────────────────────────
+  // In the Capacitor-wrapped native app, prefer the background-geolocation
+  // plugin (true background tracking with "Always" permission). Fall back to
+  // browser watchPosition in PWA mode (foreground-only).
+  function isNative() {
+    return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  }
+  function nativeBG() {
+    // Expose from the plugin bridge: BackgroundGeolocation.addWatcher / removeWatcher
+    // Exact API depends on the plugin chosen at build-time.
+    return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation) || null;
+  }
+
   // ── Public API ─────────────────────────────────────────────────────────
   function start() {
     if (state.running) return;
-    if (!navigator.geolocation) { console.warn('[PassiveTracker] no geolocation'); return; }
 
     // Ask notification permission once
     if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
@@ -234,20 +246,62 @@ var PassiveTracker = (function() {
     state.cluster   = null;
     state.running   = true;
 
-    state.watchId = navigator.geolocation.watchPosition(onPosition, onError, {
-      enableHighAccuracy: true,
-      maximumAge:         15000,
-      timeout:            15000
-    });
+    var bg = nativeBG();
+    if (bg && bg.addWatcher) {
+      // Native: true background tracking via Capacitor plugin
+      bg.addWatcher({
+        backgroundMessage:   'Branch Manager is tracking job sites.',
+        backgroundTitle:     'Branch Manager',
+        requestPermissions:  true,
+        stale:               false,
+        distanceFilter:      25  // meters — plugin's internal throttle
+      }, function(location, error) {
+        if (error) { onError(error); return; }
+        // Plugin location shape: { latitude, longitude, accuracy, altitude, speed, bearing, time }
+        onPosition({
+          coords: {
+            latitude:  location.latitude,
+            longitude: location.longitude,
+            accuracy:  location.accuracy,
+            altitude:  location.altitude,
+            speed:     location.speed,
+            heading:   location.bearing
+          },
+          timestamp: location.time || Date.now()
+        });
+      }).then(function(watcherId) {
+        state.watchId = watcherId;
+        console.log('[PassiveTracker] native BG tracking started, watcher', watcherId);
+      }).catch(function(err) {
+        console.warn('[PassiveTracker] native BG failed, falling back to watchPosition:', err);
+        state.watchId = navigator.geolocation.watchPosition(onPosition, onError, {
+          enableHighAccuracy: true, maximumAge: 15000, timeout: 15000
+        });
+      });
+    } else {
+      // PWA fallback — foreground only
+      if (!navigator.geolocation) { console.warn('[PassiveTracker] no geolocation'); state.running = false; return; }
+      state.watchId = navigator.geolocation.watchPosition(onPosition, onError, {
+        enableHighAccuracy: true, maximumAge: 15000, timeout: 15000
+      });
+    }
 
     state.flushInterval = setInterval(flush, S().flushIntervalMs);
-    console.log('[PassiveTracker] started, session', state.sessionId);
+    console.log('[PassiveTracker] started (' + (isNative() ? 'native' : 'PWA') + '), session', state.sessionId);
   }
 
   function stop() {
     if (!state.running) return;
-    if (state.watchId != null) { navigator.geolocation.clearWatch(state.watchId); state.watchId = null; }
-    if (state.flushInterval)    { clearInterval(state.flushInterval); state.flushInterval = null; }
+    var bg = nativeBG();
+    if (state.watchId != null) {
+      if (bg && bg.removeWatcher && typeof state.watchId === 'string') {
+        bg.removeWatcher({ id: state.watchId }).catch(function(){});
+      } else if (navigator.geolocation) {
+        navigator.geolocation.clearWatch(state.watchId);
+      }
+      state.watchId = null;
+    }
+    if (state.flushInterval) { clearInterval(state.flushInterval); state.flushInterval = null; }
     flush(); // drain
     state.running = false;
     state.cluster = null;

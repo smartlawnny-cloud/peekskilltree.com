@@ -180,6 +180,8 @@ var SettingsPage = {
 
       + '<div id="passive-status" style="font-size:11px;color:var(--text-light);margin-top:10px;">' + (passiveOn ? '✓ Tracking active — pings every ' + passiveInt + 's. Grant location when iOS prompts.' : 'Off. Enable to start capturing pings.') + '</div>'
 
+      + '<div style="margin-top:10px;"><button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="loadPage(\'tracking\')">🛰 Review detected places →</button></div>'
+
       + '<details style="margin-top:10px;">'
       +   '<summary style="cursor:pointer;font-size:11px;color:var(--text-light);font-weight:600;">Privacy + data details ▾</summary>'
       +   '<div style="font-size:11px;color:var(--text-light);margin-top:6px;line-height:1.6;padding-left:6px;border-left:2px solid var(--border);">'

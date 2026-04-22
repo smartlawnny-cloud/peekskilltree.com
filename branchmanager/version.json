@@ -1,5 +1,5 @@
 {
-  "version": 331,
+  "version": 332,
   "released": "2026-04-22",
-  "notes": "Dashboard: removed the Branch Cam widget. Still accessible via Tools → 📸 Branch Cam."
+  "notes": "CRITICAL init fix: bmInit now waits for DOMContentLoaded (after all defer'd page scripts load) instead of running inline. This was causing 'SettingsPage is not defined' / 'ModeSelector is not defined' errors on cold load, which could silently break submit handlers — probably the cause of clients like Paulette not persisting. Also means refresh + PWA startup are more reliable."
 }

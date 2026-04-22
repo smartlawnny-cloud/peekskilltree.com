@@ -1,5 +1,5 @@
 {
-  "version": 328,
+  "version": 329,
   "released": "2026-04-21",
-  "notes": "PWA/App nav: added a third 'Both' option so power users can have the top sidebar AND the bottom tab bar visible at the same time. Card is now green-highlighted so it's findable. Applies to PWA installs and the Capacitor iOS/Android builds."
+  "notes": "Nav settings: PWA and native App are now SEPARATE (each has its own Top/Bottom/Both choice — Settings shows two rows in the green box). Added bm-app-nav to CloudKeys sync list. Fixed a ReferenceError race where init crashed if ModeSelector script hadn't loaded yet."
 }

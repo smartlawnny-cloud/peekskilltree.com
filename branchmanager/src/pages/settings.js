@@ -761,21 +761,30 @@ var SettingsPage = {
         + '</div>';
     }
 
-    // === PWA NAVIGATION STYLE (Top vs Bottom tab bar) ===
+    // === NAVIGATION STYLE — separate settings for PWA (Safari home-screen install) and App (Capacitor iOS/Android build) ===
     var _pwaNav = localStorage.getItem('bm-pwa-nav') || 'top';
-    var _pillBase = 'flex:1;padding:10px 0;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;';
+    var _appNav = localStorage.getItem('bm-app-nav') || 'top';
+    var _pillBase = 'flex:1;padding:8px 0;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;';
     var _pillOn = 'background:var(--green-dark);color:#fff;';
     var _pillOff = 'background:transparent;color:var(--text-light);';
-    html += '<div style="background:var(--green-bg);border:2px solid var(--green-light);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">'
-      +   '<div style="flex:1;min-width:200px;">'
-      +     '<div style="font-size:14px;font-weight:700;color:var(--text);">📱 PWA / App Navigation</div>'
-      +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">On your installed home-screen app or iOS/Android build. Pick Top sidebar, Bottom tab bar, or Both.</div>'
-      +   '</div>'
-      +   '<div style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:220px;background:var(--white);">'
-      +     '<button onclick="SettingsPage._setPwaNav(\'top\')" style="' + _pillBase + (_pwaNav === 'top' ? _pillOn : _pillOff) + '">Top</button>'
-      +     '<button onclick="SettingsPage._setPwaNav(\'bottom\')" style="' + _pillBase + (_pwaNav === 'bottom' ? _pillOn : _pillOff) + '">Bottom</button>'
-      +     '<button onclick="SettingsPage._setPwaNav(\'both\')" style="' + _pillBase + (_pwaNav === 'both' ? _pillOn : _pillOff) + '">Both</button>'
-      +   '</div>'
+    function _navRow(label, sub, currentVal, handlerName) {
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--green-light);">'
+        +   '<div style="flex:1;min-width:180px;">'
+        +     '<div style="font-size:13px;font-weight:700;color:var(--text);">' + label + '</div>'
+        +     '<div style="font-size:11px;color:var(--text-light);margin-top:1px;">' + sub + '</div>'
+        +   '</div>'
+        +   '<div style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:220px;background:var(--white);">'
+        +     '<button onclick="SettingsPage.' + handlerName + '(\'top\')" style="' + _pillBase + (currentVal === 'top' ? _pillOn : _pillOff) + '">Top</button>'
+        +     '<button onclick="SettingsPage.' + handlerName + '(\'bottom\')" style="' + _pillBase + (currentVal === 'bottom' ? _pillOn : _pillOff) + '">Bottom</button>'
+        +     '<button onclick="SettingsPage.' + handlerName + '(\'both\')" style="' + _pillBase + (currentVal === 'both' ? _pillOn : _pillOff) + '">Both</button>'
+        +   '</div>'
+        + '</div>';
+    }
+    html += '<div style="background:var(--green-bg);border:2px solid var(--green-light);border-radius:12px;padding:14px 18px 8px;margin-bottom:16px;">'
+      +   '<div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px;">📱 Navigation Style</div>'
+      +   '<div style="font-size:11px;color:var(--text-light);margin-bottom:6px;">Pick how the nav bar shows. You can set PWA and the native App independently.</div>'
+      +   _navRow('PWA (home-screen install)', 'Safari → Add to Home Screen', _pwaNav, '_setPwaNav')
+      +   _navRow('App (iOS / Android build)', 'Capacitor-wrapped native app', _appNav, '_setAppNav')
       + '</div>';
 
     // ═══ GROUP: Data Import / Export / Backup (collapsible) ═══
@@ -1261,8 +1270,17 @@ var SettingsPage = {
     if (current === mode) return;
     localStorage.setItem('bm-pwa-nav', mode);
     var label = mode === 'bottom' ? 'Bottom tab bar' : (mode === 'both' ? 'Top + Bottom' : 'Top sidebar');
-    UI.toast('Nav style: ' + label + ' ✓');
-    // Reload so the layout recalculates (sidebar vs bottom-nav).
+    UI.toast('PWA nav: ' + label + ' ✓');
+    setTimeout(function() { location.reload(); }, 400);
+  },
+
+  _setAppNav: function(mode) {
+    if (mode !== 'top' && mode !== 'bottom' && mode !== 'both') return;
+    var current = localStorage.getItem('bm-app-nav') || 'top';
+    if (current === mode) return;
+    localStorage.setItem('bm-app-nav', mode);
+    var label = mode === 'bottom' ? 'Bottom tab bar' : (mode === 'both' ? 'Top + Bottom' : 'Top sidebar');
+    UI.toast('App nav: ' + label + ' ✓');
     setTimeout(function() { location.reload(); }, 400);
   },
 

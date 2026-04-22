@@ -1,5 +1,5 @@
 {
-  "version": 322,
+  "version": 323,
   "released": "2026-04-21",
-  "notes": "Fix: dropped stale 'options: null' field from quote save payload (Quote Options feature was removed long ago but the dead field was still triggering schema-drift errors on cloud save)."
+  "notes": "Voice-to-Quote (BETA): new Tools tab — record a walkaround, Claude transcribes + builds a structured quote draft (scope + line items + pricing) and opens the quote form pre-filled. Settings: added 🧪 Test button next to the Claude key so you can verify the key works (and see the real error if it doesn't). Fixed edge-function default model to the live 'claude-sonnet-4-5' alias."
 }

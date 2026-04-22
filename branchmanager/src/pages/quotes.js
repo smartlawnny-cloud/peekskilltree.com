@@ -333,6 +333,26 @@ var QuotesPage = {
       items = [{ service: 'Tree Removal', description: desc, qty: 1, rate: price }];
       q.description = desc;
     }
+
+    // Check for voice-quote AI draft
+    var voiceDraft = null;
+    try { voiceDraft = JSON.parse(localStorage.getItem('bm-voice-quote-draft')); localStorage.removeItem('bm-voice-quote-draft'); } catch(e) {}
+    if (voiceDraft && !quoteId) {
+      if (Array.isArray(voiceDraft.lineItems) && voiceDraft.lineItems.length) {
+        items = voiceDraft.lineItems.map(function(li) {
+          return {
+            service: li.service || 'Custom',
+            description: li.description || '',
+            qty: li.qty != null ? li.qty : 1,
+            rate: li.rate != null ? li.rate : (li.amount || 0)
+          };
+        });
+      }
+      if (voiceDraft.description) q.description = voiceDraft.description;
+      if (voiceDraft.scope) q.scope = voiceDraft.scope;
+      if (voiceDraft.notes) q.internalNotes = voiceDraft.notes;
+      UI.toast('🎙️ AI draft loaded — review & adjust before sending');
+    }
     var services = DB.services.getAll();
 
     // Get clients synchronously from localStorage

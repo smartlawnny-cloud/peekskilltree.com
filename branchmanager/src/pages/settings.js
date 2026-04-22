@@ -405,8 +405,10 @@ var SettingsPage = {
       + '<div style="margin-bottom:8px;"><input type="password" id="claude-ai-key" value="' + aiKey + '" placeholder="sk-ant-api03-..." style="width:100%;padding:10px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="var k=document.getElementById(\'claude-ai-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-claude-key\',k);if(typeof AI!==\'undefined\'){AI._apiKey=k;}UI.toast(\'AI Assistant connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
+      + '<button onclick="SettingsPage._testClaudeKey()" style="background:#7c3aed;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">🧪 Test</button>'
       + (aiOk ? '<button onclick="SettingsPage._removeKey(\'bm-claude-key\',\'AI Assistant\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
       + '</div>'
+      + '<div id="claude-test-result" style="margin-top:10px;font-size:12px;"></div>'
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a> → API Keys → Create Key (free tier available)</p>'
       + '</div>';
 
@@ -1392,6 +1394,39 @@ var SettingsPage = {
     }
 
     UI.toast('Done — ' + photosMigrated + ' photos moved across ' + quotesTouched + ' quotes' + (photosFailed ? ' (' + photosFailed + ' failed)' : ' ✓'));
+  },
+
+  _testClaudeKey: function() {
+    var keyEl = document.getElementById('claude-ai-key');
+    var resultEl = document.getElementById('claude-test-result');
+    var key = (keyEl && keyEl.value.trim()) || localStorage.getItem('bm-claude-key') || '';
+    if (!key) {
+      if (resultEl) resultEl.innerHTML = '<span style="color:#dc3545;">⚠️ Paste a key first.</span>';
+      return;
+    }
+    if (resultEl) resultEl.innerHTML = '<span style="color:var(--text-light);">Testing…</span>';
+    fetch('https://ltpivkqahvplapyagljt.supabase.co/functions/v1/ai-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: key,
+        model: 'claude-haiku-4-5',
+        max_tokens: 40,
+        system: 'You are a test. Reply with exactly: OK',
+        messages: [{ role: 'user', content: 'ping' }]
+      })
+    }).then(function(res) {
+      return res.json().then(function(body){ return { ok: res.ok, status: res.status, body: body }; });
+    }).then(function(r) {
+      if (r.ok && r.body && r.body.content && r.body.content[0]) {
+        if (resultEl) resultEl.innerHTML = '<span style="color:var(--green-dark);font-weight:600;">✅ Connected — Claude replied: "' + (r.body.content[0].text || '').trim().slice(0, 40) + '"</span>';
+      } else {
+        var msg = (r.body && (r.body.error && (r.body.error.message || r.body.error)) || r.body && r.body.message) || ('HTTP ' + r.status);
+        if (resultEl) resultEl.innerHTML = '<span style="color:#dc3545;font-weight:600;">❌ Failed: ' + UI.esc(String(msg)) + '</span>';
+      }
+    }).catch(function(err) {
+      if (resultEl) resultEl.innerHTML = '<span style="color:#dc3545;font-weight:600;">❌ Network error: ' + UI.esc(err.message || String(err)) + '</span>';
+    });
   },
 
   _removeKey: function(storageKey, label) {

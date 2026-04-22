@@ -74,6 +74,44 @@ var CloudKeys = {
     // After init, push any tracked keys that exist locally but not in cloud yet
     // (handles the "first device with keys" case)
     setTimeout(CloudKeys._pushUnsynced, 1500);
+
+    // Live-sync: listen for other-device writes to tenant_settings and merge
+    // into localStorage on the fly so (e.g.) a new Claude key shows up on all
+    // open tabs without a reload.
+    CloudKeys._subscribeRealtime(tid);
+  },
+
+  _subscribeRealtime: function(tid) {
+    if (!SupabaseDB || !SupabaseDB.client || !SupabaseDB.client.channel) return;
+    if (CloudKeys._channel) return; // already subscribed
+    try {
+      CloudKeys._channel = SupabaseDB.client
+        .channel('tenant_settings_' + tid)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'tenant_settings', filter: 'tenant_id=eq.' + tid },
+          function(payload) {
+            try {
+              var row = payload.new || payload.old;
+              if (!row || !row.key) return;
+              if (CloudKeys.TRACKED.indexOf(row.key) === -1) return;
+              CloudKeys._suppressPush = true;
+              if (payload.eventType === 'DELETE') {
+                localStorage.removeItem(row.key);
+                localStorage.removeItem('_cks_' + row.key);
+              } else {
+                var cloudTs = row.updated_at ? new Date(row.updated_at).getTime() : Date.now();
+                var localTs = parseInt(localStorage.getItem('_cks_' + row.key) || '0', 10);
+                if (cloudTs > localTs) {
+                  localStorage.setItem(row.key, row.value || '');
+                  localStorage.setItem('_cks_' + row.key, String(cloudTs));
+                  if (row.key === 'bm-claude-key' && typeof AI !== 'undefined') AI._apiKey = row.value || '';
+                }
+              }
+              CloudKeys._suppressPush = false;
+            } catch(e) { CloudKeys._suppressPush = false; console.warn('CloudKeys realtime handler:', e); }
+          })
+        .subscribe();
+    } catch(e) { console.warn('CloudKeys realtime subscribe failed:', e); }
   },
 
   _wrap: function() {

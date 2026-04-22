@@ -1,5 +1,5 @@
 {
-  "version": 326,
+  "version": 327,
   "released": "2026-04-21",
-  "notes": "Quote form client picker simplified — just a search bar. Empty field shows 8 recent clients; typing filters the list; if no match, a green 'Create new client: [typed name]' row appears inline. Removed the big heading, subtitle, 'Recent' pill row, and separate 'Create New Client' button."
+  "notes": "Cross-device API-key sync now actually works. (1) Shipped migrate-tenant-settings.sql — the CloudKeys code expected this table but it was never created, so sync was silently failing. (2) CloudKeys now subscribes to Supabase realtime — a key saved on one device propagates to every other logged-in device instantly (no reload needed)."
 }

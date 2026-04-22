@@ -1,5 +1,5 @@
 {
-  "version": 332,
+  "version": 333,
   "released": "2026-04-22",
-  "notes": "CRITICAL init fix: bmInit now waits for DOMContentLoaded (after all defer'd page scripts load) instead of running inline. This was causing 'SettingsPage is not defined' / 'ModeSelector is not defined' errors on cold load, which could silently break submit handlers — probably the cause of clients like Paulette not persisting. Also means refresh + PWA startup are more reliable."
+  "notes": "Quote form cleanup: (1) Equipment Map — the equipment list is now a horizontal strip at the BOTTOM of the map (was a narrow sidebar on the right, cramped to read). Same layout on mobile + desktop. (2) T&M 'Labor' card matches the Equipment card — plain white with a subtle border, no purple. (3) T&M breakdown: Labor has its own section with subtotal, Equipment has its own section with subtotal, then a combined 'Labor + Equipment' line above insurance / disposal / final price. Compare Pricing Methods button: green instead of purple."
 }

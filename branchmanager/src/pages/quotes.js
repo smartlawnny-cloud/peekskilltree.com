@@ -572,7 +572,7 @@ var QuotesPage = {
       + '</div>';
 
     // ═══ T&M Production Estimate (always visible — used as sanity check vs line-item total) ═══
-    html += '<div id="q-mode-tm" style="display:block;border:2px solid #7c3aed;border-radius:10px;padding:16px;margin:20px 0 12px;">'
+    html += '<div id="q-mode-tm" style="display:block;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;margin:20px 0 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Production Estimate (T&M)</div>'
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Check which crew members are going, then enter total hours.</p>'
 
@@ -621,7 +621,7 @@ var QuotesPage = {
       + '</div>'
 
       // Compare button + panel
-      + '<button type="button" id="q-compare-btn" onclick="QuotesPage._showPriceComparison()" style="display:none;margin-top:12px;width:100%;padding:14px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">📊 Compare Pricing Methods</button>'
+      + '<button type="button" id="q-compare-btn" onclick="QuotesPage._showPriceComparison()" style="display:none;margin-top:12px;width:100%;padding:14px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">📊 Compare Pricing Methods</button>'
       + '<div id="q-comparison" style="display:none;margin-top:12px;background:#f5f3ff;border:2px solid #c4b5fd;border-radius:10px;padding:16px;"></div>'
 
       + '</form>';

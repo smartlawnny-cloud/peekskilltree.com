@@ -103,29 +103,55 @@
 
     var breakdown = document.getElementById('q-tm-breakdown');
     if (breakdown) {
-      var rows = '';
-      function line(txt, amt) {
-        return '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);"><span>' + txt + '</span><span>' + UI.money(amt) + '</span></div>';
+      function line(txt, amt, sub) {
+        return '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--text-light);' + (sub ? 'padding-left:12px;' : '') + '"><span>' + txt + '</span><span>' + UI.money(amt) + '</span></div>';
       }
-      if (climberCount > 0 && totalHrs > 0) rows += line(climberCount + ' × Climber — ' + totalHrs + 'hr × $' + r.climber + '/hr', climberCost);
-      if (groundCount > 0 && totalHrs > 0)  rows += line(groundCount + ' × Groundsman — ' + totalHrs + 'hr × $' + r.ground + '/hr', groundLaborCost);
-      if (foremanCount > 0 && totalHrs > 0) rows += line(foremanCount + ' × Foreman — ' + totalHrs + 'hr × $' + r.foreman + '/hr', foremanCost);
-      activeEquip.forEach(function(e) {
-        if (totalHrs > 0) {
-          var cnt = pinCounts[e.key] || 1;
-          var label = (cnt > 1 ? cnt + ' × ' : '') + e.label + ' — ' + totalHrs + 'hr × $' + e.rate + '/hr';
-          rows += line(label, cnt * totalHrs * e.rate);
-        }
-      });
-      if (!rows) rows = '<div style="font-size:12px;color:var(--text-light);padding:4px 0;">Enter crew counts + hours + pick equipment to see breakdown.</div>';
+      function sectionHeader(txt) {
+        return '<div style="font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.04em;padding:8px 0 2px;">' + txt + '</div>';
+      }
+      function sectionTotal(txt, amt) {
+        return '<div style="display:flex;justify-content:space-between;padding:4px 0 8px;border-bottom:1px dashed var(--border);font-weight:700;"><span>' + txt + '</span><span>' + UI.money(amt) + '</span></div>';
+      }
 
-      breakdown.innerHTML = rows
-        + (laborCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:6px 0 3px;border-top:1px dashed var(--border);margin-top:4px;"><span>Labor subtotal</span><span>' + UI.money(laborCost) + '</span></div>' : '')
-        + (equipCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Equipment subtotal</span><span>' + UI.money(equipCost) + '</span></div>' : '')
-        + (insuranceCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Insurance + overhead (31%)</span><span>' + UI.money(insuranceCost) + '</span></div>' : '')
-        + (disposal > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Disposal</span><span>' + UI.money(disposal) + '</span></div>' : '')
-        + (subtotalCost > 0 ? '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);font-weight:600;"><span>Cost</span><span>' + UI.money(subtotalCost) + '</span></div>' : '')
-        + (tmTotal > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;font-weight:700;color:var(--accent);"><span>T&M Price (1.5× markup)</span><span>' + UI.money(tmTotal) + '</span></div>' : '');
+      var hasLabor = laborCost > 0;
+      var hasEquip = equipCost > 0;
+
+      var html = '';
+
+      // LABOR block
+      if (hasLabor) {
+        html += sectionHeader('Labor');
+        if (climberCount > 0 && totalHrs > 0) html += line(climberCount + ' × Climber — ' + totalHrs + 'hr × $' + r.climber + '/hr', climberCost, true);
+        if (groundCount > 0 && totalHrs > 0)  html += line(groundCount + ' × Groundsman — ' + totalHrs + 'hr × $' + r.ground + '/hr', groundLaborCost, true);
+        if (foremanCount > 0 && totalHrs > 0) html += line(foremanCount + ' × Foreman — ' + totalHrs + 'hr × $' + r.foreman + '/hr', foremanCost, true);
+        html += sectionTotal('Labor subtotal', laborCost);
+      }
+
+      // EQUIPMENT block
+      if (hasEquip) {
+        html += sectionHeader('Equipment');
+        activeEquip.forEach(function(e) {
+          if (totalHrs > 0) {
+            var cnt = pinCounts[e.key] || 1;
+            var label = (cnt > 1 ? cnt + ' × ' : '') + e.label + ' — ' + totalHrs + 'hr × $' + e.rate + '/hr';
+            html += line(label, cnt * totalHrs * e.rate, true);
+          }
+        });
+        html += sectionTotal('Equipment subtotal', equipCost);
+      }
+
+      if (!html) html = '<div style="font-size:12px;color:var(--text-light);padding:4px 0;">Enter crew counts + hours + pick equipment to see breakdown.</div>';
+
+      // COMBINED
+      if (hasLabor || hasEquip) {
+        html += '<div style="display:flex;justify-content:space-between;padding:8px 0 3px;font-size:13px;"><span>Labor + Equipment</span><span style="font-weight:700;">' + UI.money(laborCost + equipCost) + '</span></div>';
+        if (insuranceCost > 0) html += line('Insurance + overhead (' + Math.round((r.insurance || 0) * 100) + '%)', insuranceCost);
+        if (disposal > 0) html += line('Disposal', disposal);
+        if (subtotalCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);font-weight:600;"><span>Cost</span><span>' + UI.money(subtotalCost) + '</span></div>';
+        if (tmTotal > 0) html += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-weight:700;color:var(--green-dark);"><span>T&M Price (' + r.markup + '× markup)</span><span>' + UI.money(tmTotal) + '</span></div>';
+      }
+
+      breakdown.innerHTML = html;
     }
     var tmTotalEl = document.getElementById('q-tm-total');
     if (tmTotalEl) tmTotalEl.textContent = 'T&M Total: ' + UI.money(tmTotal);

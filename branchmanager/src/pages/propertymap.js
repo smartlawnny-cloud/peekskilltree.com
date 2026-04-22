@@ -99,7 +99,7 @@ var PropertyMap = {
           + 'onclick="PropertyMap.addEquipment(\'' + eq.id + '\')">'
           + iconStr + eq.label + '</button>';
       } else {
-        eqButtons += '<button class="btn btn-outline" style="width:100%;margin-bottom:6px;font-size:11px;padding:6px 8px;display:flex;align-items:center;gap:8px;" '
+        eqButtons += '<button type="button" style="display:inline-flex;align-items:center;gap:6px;padding:8px 10px;background:var(--white);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;" '
           + 'onclick="PropertyMap.addEquipment(\'' + eq.id + '\')">'
           + iconStr + eq.label + '</button>';
       }
@@ -115,16 +115,18 @@ var PropertyMap = {
         + '<input type="text" id="map-address" value="' + (address || '') + '" placeholder="Enter address..." style="flex:1;padding:8px 10px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;">'
         + '<button class="btn btn-primary" style="padding:6px 12px;font-size:13px;" onclick="PropertyMap.geocode()">Go</button>'
         + '</div>'
-        // Body: map left, equipment sidebar right
-        + '<div style="flex:1;display:flex;min-height:0;">'
-        +   '<div style="flex:1;position:relative;min-width:0;">'
+        // Body: map ON TOP (full width), equipment strip at BOTTOM
+        + '<div style="flex:1;display:flex;flex-direction:column;min-height:0;">'
+        +   '<div style="flex:1;position:relative;min-height:0;">'
         +     '<div id="prop-map" style="width:100%;height:100%;"></div>'
         +     '<div id="placed-count" style="position:absolute;top:10px;right:10px;background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;display:none;">0 placed</div>'
         +   '</div>'
-        +   '<div style="width:140px;background:var(--bg);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;">'
-        +     '<div style="padding:8px 10px;background:var(--white);border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">🛠 Equipment</div>'
-        +     '<div id="eq-drawer-body" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;">' + eqButtons + '</div>'
-        +     '<button class="btn btn-outline" style="margin:6px 8px 8px;font-size:11px;padding:6px;" onclick="PropertyMap.clearMarkers()">Clear all</button>'
+        +   '<div style="background:var(--bg);border-top:1px solid var(--border);flex-shrink:0;">'
+        +     '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--white);border-bottom:1px solid var(--border);">'
+        +       '<span style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">🛠 Equipment</span>'
+        +       '<button class="btn btn-outline" style="font-size:11px;padding:4px 10px;" onclick="PropertyMap.clearMarkers()">Clear all</button>'
+        +     '</div>'
+        +     '<div id="eq-drawer-body" style="padding:8px;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;">' + eqButtons + '</div>'
         +   '</div>'
         + '</div>'
         // Bottom action bar
@@ -140,22 +142,25 @@ var PropertyMap = {
       container.innerHTML = html;
       document.body.appendChild(container);
     } else {
-      // ── DESKTOP: Side-by-side in modal ──
-      html = '<div style="display:flex;gap:12px;height:70vh;min-height:400px;">'
-        + '<div style="flex:1;position:relative;">'
-        + '<div id="prop-map" style="width:100%;height:100%;border-radius:10px;overflow:hidden;"></div>'
-        + '<div style="position:absolute;top:10px;left:10px;z-index:10;">'
-        + '<div style="background:rgba(255,255,255,.95);border-radius:8px;padding:8px 12px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:13px;">'
-        + '<input type="text" id="map-address" value="' + (address || '') + '" placeholder="Enter address..." style="border:none;outline:none;font-size:14px;width:250px;font-weight:600;">'
-        + ' <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="PropertyMap.geocode()">Go</button>'
-        + '</div></div></div>'
-        + '<div style="width:180px;background:var(--white);border-radius:10px;border:1px solid var(--border);padding:12px;overflow-y:auto;">'
-        + '<h4 style="font-size:13px;margin-bottom:8px;">Equipment</h4>'
-        + '<p style="font-size:11px;color:var(--text-light);margin-bottom:10px;">Click to place. Drag to move.</p>'
-        + eqButtons
-        + '<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'
-        + '<button class="btn btn-outline" style="width:100%;font-size:12px;" onclick="PropertyMap.clearMarkers()">Clear All</button>'
-        + '</div></div></div>'
+      // ── DESKTOP: Map ON TOP, equipment strip at BOTTOM (was right sidebar) ──
+      html = '<div style="display:flex;flex-direction:column;gap:10px;height:72vh;min-height:440px;">'
+        + '<div style="flex:1;position:relative;min-height:0;">'
+        +   '<div id="prop-map" style="width:100%;height:100%;border-radius:10px;overflow:hidden;"></div>'
+        +   '<div style="position:absolute;top:10px;left:10px;z-index:10;">'
+        +     '<div style="background:rgba(255,255,255,.95);border-radius:8px;padding:8px 12px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:13px;">'
+        +       '<input type="text" id="map-address" value="' + (address || '') + '" placeholder="Enter address..." style="border:none;outline:none;font-size:14px;width:250px;font-weight:600;">'
+        +       ' <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="PropertyMap.geocode()">Go</button>'
+        +     '</div>'
+        +   '</div>'
+        + '</div>'
+        + '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;flex-shrink:0;">'
+        +   '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--white);border-radius:10px 10px 0 0;">'
+        +     '<div><strong style="font-size:13px;">Equipment</strong><span style="font-size:11px;color:var(--text-light);margin-left:8px;">Click to place. Drag to move.</span></div>'
+        +     '<button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="PropertyMap.clearMarkers()">Clear all</button>'
+        +   '</div>'
+        +   '<div style="padding:10px;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;">' + eqButtons + '</div>'
+        + '</div>'
+        + '</div>'
         + '<div id="placed-equipment" style="margin-top:12px;"></div>';
 
       UI.showModal('Property Map', html, {

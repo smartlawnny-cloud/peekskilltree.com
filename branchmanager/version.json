@@ -1,5 +1,5 @@
 {
-  "version": 342,
+  "version": 343,
   "released": "2026-04-22",
-  "notes": "HOTFIX: Settings page wasn't loading — I broke it in v340 by using single quotes around Lucide data-lucide attributes inside single-quoted JS strings. The string terminated at the first 'building-2' and everything after was a parse error. Fixed by using double-quoted attributes. My bad."
+  "notes": "Removed 'Website' from sidebar nav — was just a link to peekskilltree.com, not a real app page. Still accessible from the top-right account menu (View Website)."
 }

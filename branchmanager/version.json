@@ -1,5 +1,5 @@
 {
-  "version": 350,
+  "version": 351,
   "released": "2026-04-23",
-  "notes": "Perf + security sweep: (1) SendGrid removed from request-notify (Resend-only, deployed). (2) Added preconnect/dns-prefetch hints for unpkg + Google Fonts. (3) CSP tightened: removed 'unsafe-eval' (no eval() in code), added frame-ancestors 'none' (clickjacking protection)."
+  "notes": "Topbar tightened (padding 12px→6px, min-height 56→44px; mobile 48→38px). Added Jobber-style floating '+' FAB that shows only in bottom-nav-only mode and calls BM_contextCreate()."
 }

@@ -998,10 +998,11 @@ var SettingsPage = {
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
       + '<button class="btn btn-outline" onclick="SettingsPage.deduplicateTags()">Fix Duplicate Tags</button>'
       + '<button class="btn btn-outline" onclick="SettingsPage.reconcileOrphans()">🔗 Reconcile Orphan Records</button>'
+      + '<button class="btn btn-outline" onclick="SettingsPage.auditAIData()">🔍 Audit AI-Created Data</button>'
       + '<button class="btn btn-outline" onclick="SettingsPage.resetDemo()">Reset to Demo Data</button>'
       + '<button class="btn" style="background:var(--red);color:#fff;" onclick="SettingsPage.clearAll()">Clear All Data</button>'
       + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">"Fix Duplicate Tags" removes duplicate tag entries. "Reconcile Orphan Records" scans quotes/jobs/invoices/requests for records with a clientName but no clientId, and auto-links them to the matching client.</div>'
+      + '<div id="audit-result" style="font-size:12px;color:var(--text-light);">"Audit AI-Created Data" lists every row any Claude session has added to your DB — clients/quotes/jobs/invoices — so you can spot-check and delete fakes.</div>'
       + '</div>';
 
     // ═══ /GROUP: Data Import / Export / Backup ═══
@@ -1405,6 +1406,40 @@ var SettingsPage = {
       }
       fetchNext();
     }
+  },
+
+  auditAIData: function() {
+    var host = document.getElementById('audit-result');
+    if (host) host.innerHTML = '<span style="color:var(--text-light);">Running audit…</span>';
+    var url = (localStorage.getItem('bm-supabase-url') || '') + '/rest/v1/';
+    var key = localStorage.getItem('bm-supabase-key') || '';
+    if (!url || !key) { host.innerHTML = '<span style="color:var(--red);">Supabase not configured.</span>'; return; }
+    var tables = ['clients', 'quotes', 'jobs', 'invoices'];
+    Promise.all(tables.map(function(t) {
+      return fetch(url + t + '?select=id,name,created_at,created_by_agent,import_source&created_by_agent=not.is.null&order=created_at.desc', {
+        headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
+      }).then(function(r) { return r.ok ? r.json() : []; });
+    })).then(function(results) {
+      var total = results.reduce(function(s, r) { return s + (r ? r.length : 0); }, 0);
+      if (total === 0) {
+        host.innerHTML = '<span style="color:var(--green-dark);font-weight:600;">✅ Clean — no AI-created rows in clients/quotes/jobs/invoices. All data came from you, your customers, or legitimate imports (with import_source set).</span>';
+        return;
+      }
+      var out = '<div style="color:var(--red);font-weight:700;margin-bottom:8px;">⚠️ Found ' + total + ' AI-created row(s). Review and delete any that look wrong.</div>';
+      tables.forEach(function(tbl, i) {
+        var rows = results[i] || [];
+        if (!rows.length) return;
+        out += '<div style="margin-top:10px;font-weight:700;">' + tbl + ' (' + rows.length + ')</div><ul style="margin:4px 0 0 18px;">';
+        rows.slice(0, 20).forEach(function(r) {
+          out += '<li style="font-size:11px;margin-bottom:3px;"><strong>' + UI.esc(r.name || r.id || '') + '</strong> — created ' + (r.created_at || '').slice(0, 10) + ' by <code>' + UI.esc(r.created_by_agent || 'unknown') + '</code>' + (r.import_source ? ' · source=' + UI.esc(r.import_source) : '') + '</li>';
+        });
+        if (rows.length > 20) out += '<li style="font-size:11px;color:var(--text-light);">… and ' + (rows.length - 20) + ' more</li>';
+        out += '</ul>';
+      });
+      host.innerHTML = out;
+    }).catch(function(e) {
+      host.innerHTML = '<span style="color:var(--red);">Audit failed: ' + UI.esc(String(e.message || e)) + '</span>';
+    });
   },
 
   reconcileOrphans: function() {

@@ -1,5 +1,5 @@
 {
-  "version": 356,
+  "version": 357,
   "released": "2026-04-23",
-  "notes": "CSP: allow hook.us*.make.com + hook.eu*.make.com + hooks.zapier.com in connect-src so SocialBranch can POST to Make webhooks from the browser. Webhook at hook.us2.make.com/ie1y6kj1636b0kx1nn6t7syojw2q6vfk now live — responds 'Accepted'. Make scenario 4839929 has Webhook trigger + Facebook Pages 'Create a Post with Photos' action wired in, awaiting FB OAuth."
+  "notes": "Anti-fabrication guardrails after 5 hallucinated Jobber-client rows were deleted. DB-layer: added import_source and created_by_agent columns on clients/quotes/jobs/invoices; CHECK constraint on import_source allowlist; trigger rejects inserts where notes claim 'pulled from/imported from' but import_source is NULL. UI-layer: new 'Audit AI-Created Data' button in Settings → Data Management lists every row any Claude session has added. Memory: added NEVER-fabricate rule at top of MEMORY.md so future sessions read it first."
 }

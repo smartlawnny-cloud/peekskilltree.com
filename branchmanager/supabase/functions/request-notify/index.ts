@@ -5,14 +5,14 @@
  * Called by book.html after a customer submits a service request.
  * Sends:
  *   1. SMS alert to Doug (914) 391-5233 via Twilio
- *   2. Email notification to info@peekskilltree.com via SendGrid
+ *   2. Email notification to info@peekskilltree.com via Resend
  *   3. Confirmation email to customer (if email provided)
  *
  * Deploy:
  *   supabase functions deploy request-notify --no-verify-jwt
  *
  * Set secrets:
- *   supabase secrets set SENDGRID_API_KEY=SG...
+ *   supabase secrets set RESEND_API_KEY=re_...
  *   supabase secrets set TWILIO_ACCOUNT_SID=AC...
  *   supabase secrets set TWILIO_AUTH_TOKEN=...
  *   supabase secrets set TWILIO_FROM=+1XXXXXXXXXX
@@ -20,10 +20,9 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
-// Resend is the preferred email provider (cleaner API, better DX, free tier fits).
-// SENDGRID_API_KEY retained as fallback during migration window.
+// Resend is the email provider. SendGrid fallback removed v349 (free tier suits volume,
+// cleaner API, Resend trial expires May 22 2026 and we've verified Resend works).
 const RESEND_API_KEY    = Deno.env.get('RESEND_API_KEY')     ?? '';
-const SENDGRID_API_KEY  = Deno.env.get('SENDGRID_API_KEY')   ?? '';
 const TWILIO_SID        = Deno.env.get('TWILIO_ACCOUNT_SID') ?? '';
 const TWILIO_TOKEN      = Deno.env.get('TWILIO_AUTH_TOKEN')  ?? '';
 const TWILIO_FROM       = Deno.env.get('TWILIO_FROM')        ?? '';
@@ -42,47 +41,30 @@ async function sendSMS(to: string, body: string) {
   });
 }
 
-// ── Email — Resend (preferred) with SendGrid fallback ──────────────────────
-async function sendEmail(to: string, toName: string, subject: string, text: string, html?: string) {
-  // Try Resend first
-  if (RESEND_API_KEY) {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        // IMPORTANT: until Resend verifies peekskilltree.com, use onboarding@resend.dev
-        // or the verified domain's address. After verification this becomes info@peekskilltree.com.
-        from: 'Second Nature Tree <onboarding@resend.dev>',
-        to: [to],
-        subject,
-        text,
-        html: html || undefined,
-        reply_to: 'info@peekskilltree.com'
-      })
-    });
-    if (r.ok) return;
+// ── Email — Resend ─────────────────────────────────────────────────────────
+async function sendEmail(to: string, _toName: string, subject: string, text: string, html?: string) {
+  if (!RESEND_API_KEY) { console.warn('RESEND_API_KEY not set; skipping email'); return; }
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      // IMPORTANT: until Resend verifies peekskilltree.com, use onboarding@resend.dev.
+      // After Wix DNS verification, switch to info@peekskilltree.com.
+      from: 'Second Nature Tree <onboarding@resend.dev>',
+      to: [to],
+      subject,
+      text,
+      html: html || undefined,
+      reply_to: 'info@peekskilltree.com'
+    })
+  });
+  if (!r.ok) {
     const errTxt = await r.text();
     console.warn('Resend failed (' + r.status + '):', errTxt.slice(0, 200));
-    // Fall through to SendGrid if Resend failed
   }
-  // Fallback — SendGrid
-  if (!SENDGRID_API_KEY) return;
-  const body: any = {
-    personalizations: [{ to: [{ email: to, name: toName }] }],
-    from: { email: 'info@peekskilltree.com', name: 'Second Nature Tree Service' },
-    reply_to: { email: 'info@peekskilltree.com', name: 'Second Nature Tree Service' },
-    subject,
-    content: [{ type: 'text/plain', value: text }]
-  };
-  if (html) body.content.push({ type: 'text/html', value: html });
-  await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${SENDGRID_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
 }
 
 // ── Main handler ───────────────────────────────────────────────────────────

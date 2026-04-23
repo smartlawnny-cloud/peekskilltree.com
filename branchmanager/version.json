@@ -1,5 +1,5 @@
 {
-  "version": 349,
+  "version": 350,
   "released": "2026-04-23",
-  "notes": "Flatten left nav; Onboarding button on Payroll; Messages button on Clients; Chat & Tasks combined."
+  "notes": "Perf + security sweep: (1) SendGrid removed from request-notify (Resend-only, deployed). (2) Added preconnect/dns-prefetch hints for unpkg + Google Fonts. (3) CSP tightened: removed 'unsafe-eval' (no eval() in code), added frame-ancestors 'none' (clickjacking protection)."
 }

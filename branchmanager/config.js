@@ -37,3 +37,65 @@ var BM_CONFIG = {
     notes:      'Watch low bridges on Rt 9 (Taconic clearance 11\'3"). Avoid narrow roads in Garrison.'
   }
 };
+
+/**
+ * CompanyInfo — single source of truth for company data.
+ * Reads user-edited values from localStorage first, falls back to BM_CONFIG defaults.
+ * Replaces ~99 scattered `localStorage.getItem('bm-co-x') || BM_CONFIG.x` reads.
+ *
+ * Usage:
+ *   CompanyInfo.get('name')          → 'Second Nature Tree Service'
+ *   CompanyInfo.get('phone')         → '(914) 391-5233'
+ *   CompanyInfo.get('phoneDigits')   → '9143915233'
+ *   CompanyInfo.all()                → entire object
+ */
+var CompanyInfo = (function() {
+  // Maps CompanyInfo key → (localStorage key, BM_CONFIG key)
+  var MAP = {
+    name:         { ls: 'bm-co-name',     bm: 'companyName' },
+    phone:        { ls: 'bm-co-phone',    bm: 'phone' },
+    phoneTel:     { ls: null,             bm: 'phoneTel' },
+    phoneDigits:  { ls: null,             bm: 'phoneDigits' },
+    email:        { ls: 'bm-co-email',    bm: 'email' },
+    website:      { ls: 'bm-co-website',  bm: 'website' },
+    websiteUrl:   { ls: null,             bm: 'websiteUrl' },
+    address:      { ls: 'bm-co-address',  bm: 'address' },
+    city:         { ls: null,             bm: 'city' },
+    licenses:     { ls: 'bm-co-licenses', bm: 'licenses' },
+    licensesLong: { ls: null,             bm: 'licensesLong' },
+    state:        { ls: null,             bm: 'state' },
+    stateAbbr:    { ls: null,             bm: 'stateAbbr' },
+    timezone:     { ls: null,             bm: 'timezone' },
+    tagline:      { ls: null,             bm: 'tagline' },
+    googleReviewUrl: { ls: null,          bm: 'googleReviewUrl' },
+    taxRate:      { ls: 'bm-tax-rate',    bm: null, def: '8.375' },
+    ownerName:    { ls: null,             bm: 'ownerName' }
+  };
+
+  return {
+    get: function(key) {
+      var m = MAP[key];
+      if (!m) {
+        // Fall back to direct BM_CONFIG lookup for unmapped keys
+        return (typeof BM_CONFIG !== 'undefined' && BM_CONFIG[key]) || '';
+      }
+      if (m.ls) {
+        var v = null;
+        try { v = localStorage.getItem(m.ls); } catch(e) {}
+        if (v) return v;
+      }
+      if (m.bm && typeof BM_CONFIG !== 'undefined' && BM_CONFIG[m.bm]) return BM_CONFIG[m.bm];
+      return m.def || '';
+    },
+    set: function(key, value) {
+      var m = MAP[key];
+      if (!m || !m.ls) return false;
+      try { localStorage.setItem(m.ls, value); return true; } catch(e) { return false; }
+    },
+    all: function() {
+      var out = {};
+      Object.keys(MAP).forEach(function(k){ out[k] = CompanyInfo.get(k); });
+      return out;
+    }
+  };
+})();

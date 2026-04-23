@@ -6,13 +6,13 @@
 var PDFGen = {
   get COMPANY() {
     return {
-      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
-      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
-      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
+      name: CompanyInfo.get('name'),
+      phone: CompanyInfo.get('phone'),
+      email: CompanyInfo.get('email'),
       address: localStorage.getItem('bm-co-address') || '1 Highland Industrial Park, Peekskill, NY 10566',
-      licenseWC: (localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644').split(',')[0].trim(),
-      licensePutnam: (localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644').split(',')[1] ? (localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644').split(',')[1].trim() : 'PC-50644',
-      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
+      licenseWC: (CompanyInfo.get('licenses')).split(',')[0].trim(),
+      licensePutnam: (CompanyInfo.get('licenses')).split(',')[1] ? (CompanyInfo.get('licenses')).split(',')[1].trim() : 'PC-50644',
+      website: CompanyInfo.get('website'),
       color: '#2e7d32'
     };
   },

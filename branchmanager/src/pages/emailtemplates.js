@@ -311,10 +311,10 @@ var EmailTemplates = {
 
     var mergeData = {};
     // Always fill company fields
-    mergeData.companyName = localStorage.getItem('bm-co-name') || BM_CONFIG.companyName;
-    mergeData.companyPhone = localStorage.getItem('bm-co-phone') || BM_CONFIG.phone;
-    mergeData.companyEmail = localStorage.getItem('bm-co-email') || BM_CONFIG.email;
-    mergeData.companyWebsite = localStorage.getItem('bm-co-website') || BM_CONFIG.website;
+    mergeData.companyName = CompanyInfo.get('name');
+    mergeData.companyPhone = CompanyInfo.get('phone');
+    mergeData.companyEmail = CompanyInfo.get('email');
+    mergeData.companyWebsite = CompanyInfo.get('website');
     mergeData.reviewLink = 'https://g.page/r/CcVkZHV_EKlEEBM/review';
 
     // Overlay provided data

@@ -32,12 +32,12 @@ var PDF = {
 
   _co: function() {
     return {
-      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
-      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
-      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
-      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
+      name: CompanyInfo.get('name'),
+      phone: CompanyInfo.get('phone'),
+      email: CompanyInfo.get('email'),
+      website: CompanyInfo.get('website'),
       address: localStorage.getItem('bm-co-address') || '1 Highland Industrial Park, Peekskill, NY 10566',
-      licenses: localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644'
+      licenses: CompanyInfo.get('licenses')
     };
   },
 

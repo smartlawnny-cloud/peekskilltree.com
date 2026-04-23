@@ -381,9 +381,9 @@ var AI = {
     var thisYear = new Date().getFullYear();
     var ytdRevenue = invoices.filter(function(i){return i.status==='paid' && new Date(i.paidDate||i.createdAt).getFullYear()===thisYear;}).reduce(function(s,i){return s+(i.total||0);},0);
 
-    var coName = localStorage.getItem('bm-co-name') || BM_CONFIG.companyName;
-    var coPhone = localStorage.getItem('bm-co-phone') || BM_CONFIG.phone;
-    var coEmail = localStorage.getItem('bm-co-email') || BM_CONFIG.email;
+    var coName = CompanyInfo.get('name');
+    var coPhone = CompanyInfo.get('phone');
+    var coEmail = CompanyInfo.get('email');
     return 'You are Claude, an AI assistant built into Branch Manager — a field service management app for ' + coName + ' in Peekskill, NY.\n\n'
       + 'BUSINESS CONTEXT:\n'
       + '• Company: ' + coName + '\n'

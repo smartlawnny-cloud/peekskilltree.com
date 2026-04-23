@@ -273,7 +273,7 @@ var DB = (function() {
   var requests = {
     getAll: function() { return getAll(KEYS.requests); },
     getById: function(id) { return getById(KEYS.requests, id); },
-    create: function(data) { data.status = data.status || 'new'; return create(KEYS.requests, data); },
+    create: function(data) { data.status = data.status || 'new'; _resolveClientId(data); return create(KEYS.requests, data); },
     update: function(id, data) { return update(KEYS.requests, id, data); },
     remove: function(id) { remove(KEYS.requests, id); },
     search: function(q) { return search(KEYS.requests, q); },
@@ -287,12 +287,35 @@ var DB = (function() {
     var max = all.reduce(function(m, q) { return Math.max(m, q.quoteNumber || 0); }, 0);
     return max + 1;
   };
+  // Backfill clientId on a record that has clientName but no clientId —
+  // case-insensitive match on the clients table. Prevents orphaned records.
+  function _resolveClientId(data) {
+    if (!data) return;
+    if (data.clientId) return; // already linked
+    if (!data.clientName) return; // nothing to match on
+    var name = data.clientName.trim().toLowerCase();
+    if (!name) return;
+    try {
+      var allClients = getAll(KEYS.clients);
+      var match = allClients.find(function(c) {
+        return c && c.name && c.name.trim().toLowerCase() === name;
+      });
+      if (match) {
+        data.clientId = match.id;
+        console.debug('[DB] Backfilled clientId', match.id, 'for', data.clientName);
+      } else {
+        console.warn('[DB] Orphan record — no client match for "' + data.clientName + '". Consider creating the client first.');
+      }
+    } catch(e) { /* non-fatal */ }
+  }
+
   var quotes = {
     getAll: function() { return getAll(KEYS.quotes); },
     getById: function(id) { return getById(KEYS.quotes, id); },
     create: function(data) {
       data.status = data.status || 'draft';
       data.quoteNumber = data.quoteNumber || nextQuoteNum();
+      _resolveClientId(data);
       return create(KEYS.quotes, data);
     },
     update: function(id, data) { return update(KEYS.quotes, id, data); },
@@ -313,6 +336,7 @@ var DB = (function() {
     create: function(data) {
       data.status = data.status || 'scheduled';
       data.jobNumber = data.jobNumber || nextJobNum();
+      _resolveClientId(data);
       return create(KEYS.jobs, data);
     },
     update: function(id, data) { return update(KEYS.jobs, id, data); },
@@ -362,6 +386,7 @@ var DB = (function() {
     create: function(data) {
       data.status = data.status || 'draft';
       data.invoiceNumber = data.invoiceNumber || nextInvNum();
+      _resolveClientId(data);
       return create(KEYS.invoices, data);
     },
     update: function(id, data) { return update(KEYS.invoices, id, data); },
@@ -584,6 +609,39 @@ var DB = (function() {
     remove: function(id) { remove(KEYS.team || 'bm-team', id); }
   };
 
+  // One-shot cleanup: find records with clientName but no clientId and try to
+  // backfill. Returns a summary so callers (Settings → Reconcile) can show it.
+  function reconcileOrphans(persist) {
+    var result = { backfilled: 0, stillOrphan: 0, orphans: [] };
+    var allClients = getAll(KEYS.clients);
+    var byName = {};
+    allClients.forEach(function(c) {
+      if (c && c.name) byName[c.name.trim().toLowerCase()] = c;
+    });
+    ['quotes', 'jobs', 'invoices', 'requests'].forEach(function(tbl) {
+      var key = KEYS[tbl];
+      if (!key) return;
+      var rows = getAll(key);
+      var dirty = false;
+      rows.forEach(function(r) {
+        if (r.clientId || !r.clientName) return;
+        var match = byName[r.clientName.trim().toLowerCase()];
+        if (match) {
+          r.clientId = match.id;
+          result.backfilled++;
+          dirty = true;
+        } else {
+          result.stillOrphan++;
+          result.orphans.push({ table: tbl, id: r.id, name: r.clientName, num: r.quoteNumber || r.jobNumber || r.invoiceNumber });
+        }
+      });
+      if (dirty && persist) {
+        try { localStorage.setItem(key, JSON.stringify(rows)); } catch(e) {}
+      }
+    });
+    return result;
+  }
+
   return {
     clients: clients,
     requests: requests,
@@ -597,6 +655,7 @@ var DB = (function() {
     dashboard: dashboard,
     importCSV: importCSV,
     seedDemo: seedDemo,
+    reconcileOrphans: reconcileOrphans,
     KEYS: KEYS,
     auditLog: {
       getRecent: function(n) { try { var log = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]'); return n ? log.slice(0, n) : log; } catch(e) { return []; } },

@@ -7,11 +7,11 @@ var QuotesPage = {
 
   _co: function() {
     return {
-      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
-      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
-      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
-      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
-      licenses: localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644'
+      name: CompanyInfo.get('name'),
+      phone: CompanyInfo.get('phone'),
+      email: CompanyInfo.get('email'),
+      website: CompanyInfo.get('website'),
+      licenses: CompanyInfo.get('licenses')
     };
   },
 

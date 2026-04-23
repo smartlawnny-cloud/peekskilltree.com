@@ -41,12 +41,12 @@ var SettingsPage = {
 
     // Company Info — editable, saved to localStorage
     var co = {
-      name: localStorage.getItem('bm-co-name') || BM_CONFIG.companyName,
-      phone: localStorage.getItem('bm-co-phone') || BM_CONFIG.phone,
-      email: localStorage.getItem('bm-co-email') || BM_CONFIG.email,
+      name: CompanyInfo.get('name'),
+      phone: CompanyInfo.get('phone'),
+      email: CompanyInfo.get('email'),
       address: localStorage.getItem('bm-co-address') || (typeof BM_CONFIG !== 'undefined' ? BM_CONFIG.address : ''),
-      licenses: localStorage.getItem('bm-co-licenses') || 'WC-32079, PC-50644',
-      website: localStorage.getItem('bm-co-website') || BM_CONFIG.website,
+      licenses: CompanyInfo.get('licenses'),
+      website: CompanyInfo.get('website'),
       taxRate: localStorage.getItem('bm-tax-rate') || '8.375'
     };
     // ═══ GROUP: Business Info (collapsible) ═══
@@ -938,10 +938,11 @@ var SettingsPage = {
       + '<h3 style="color:var(--red);margin-bottom:8px;">Data Management</h3>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
       + '<button class="btn btn-outline" onclick="SettingsPage.deduplicateTags()">Fix Duplicate Tags</button>'
+      + '<button class="btn btn-outline" onclick="SettingsPage.reconcileOrphans()">🔗 Reconcile Orphan Records</button>'
       + '<button class="btn btn-outline" onclick="SettingsPage.resetDemo()">Reset to Demo Data</button>'
       + '<button class="btn" style="background:var(--red);color:#fff;" onclick="SettingsPage.clearAll()">Clear All Data</button>'
       + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">"Fix Duplicate Tags" removes duplicate tags from imported client records (e.g., [VIP, VIP] → [VIP]).</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">"Fix Duplicate Tags" removes duplicate tag entries. "Reconcile Orphan Records" scans quotes/jobs/invoices/requests for records with a clientName but no clientId, and auto-links them to the matching client.</div>'
       + '</div>';
 
     // ═══ /GROUP: Data Import / Export / Backup ═══
@@ -1233,6 +1234,27 @@ var SettingsPage = {
       }
       fetchNext();
     }
+  },
+
+  reconcileOrphans: function() {
+    // First pass — dry run, show preview
+    var dry = DB.reconcileOrphans(false);
+    var total = dry.backfilled + dry.stillOrphan;
+    if (total === 0) { UI.toast('✓ No orphan records — every quote/job/invoice is linked to a client'); return; }
+    var msg = 'Found ' + total + ' orphan record(s) (have clientName, no clientId):\n\n'
+      + '  • ' + dry.backfilled + ' can be auto-linked by name match\n'
+      + '  • ' + dry.stillOrphan + ' have no matching client — will need a client created manually\n\n';
+    if (dry.stillOrphan > 0 && dry.orphans.length) {
+      msg += 'Unmatched clientNames (first 5):\n';
+      dry.orphans.slice(0, 5).forEach(function(o) {
+        msg += '  — ' + o.table + ' #' + (o.num || '') + ': "' + o.name + '"\n';
+      });
+      msg += '\n';
+    }
+    msg += 'Run the ' + dry.backfilled + ' auto-matches now?';
+    if (!confirm(msg)) return;
+    var real = DB.reconcileOrphans(true);
+    UI.toast('✓ Backfilled ' + real.backfilled + ' records' + (real.stillOrphan ? ' · ' + real.stillOrphan + ' still orphan' : ''));
   },
 
   deduplicateTags: function() {

@@ -1,5 +1,5 @@
 {
-  "version": 355,
+  "version": 356,
   "released": "2026-04-23",
-  "notes": "Meta App Review prep: created privacy.html, terms.html, data-deletion.html as public pages (required by Meta). Full Meta submission packet at docs/meta-app-submission.md with copy-paste fields, permission justifications, use-case narratives, demo video script, submission checklist. Updated book.html SMS-consent to link to new privacy + terms."
+  "notes": "CSP: allow hook.us*.make.com + hook.eu*.make.com + hooks.zapier.com in connect-src so SocialBranch can POST to Make webhooks from the browser. Webhook at hook.us2.make.com/ie1y6kj1636b0kx1nn6t7syojw2q6vfk now live — responds 'Accepted'. Make scenario 4839929 has Webhook trigger + Facebook Pages 'Create a Post with Photos' action wired in, awaiting FB OAuth."
 }

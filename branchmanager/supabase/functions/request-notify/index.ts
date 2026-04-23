@@ -20,7 +20,10 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
-const SENDGRID_API_KEY  = Deno.env.get('SENDGRID_API_KEY')  ?? '';
+// Resend is the preferred email provider (cleaner API, better DX, free tier fits).
+// SENDGRID_API_KEY retained as fallback during migration window.
+const RESEND_API_KEY    = Deno.env.get('RESEND_API_KEY')     ?? '';
+const SENDGRID_API_KEY  = Deno.env.get('SENDGRID_API_KEY')   ?? '';
 const TWILIO_SID        = Deno.env.get('TWILIO_ACCOUNT_SID') ?? '';
 const TWILIO_TOKEN      = Deno.env.get('TWILIO_AUTH_TOKEN')  ?? '';
 const TWILIO_FROM       = Deno.env.get('TWILIO_FROM')        ?? '';
@@ -39,8 +42,33 @@ async function sendSMS(to: string, body: string) {
   });
 }
 
-// ── Email via SendGrid ─────────────────────────────────────────────────────
+// ── Email — Resend (preferred) with SendGrid fallback ──────────────────────
 async function sendEmail(to: string, toName: string, subject: string, text: string, html?: string) {
+  // Try Resend first
+  if (RESEND_API_KEY) {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        // IMPORTANT: until Resend verifies peekskilltree.com, use onboarding@resend.dev
+        // or the verified domain's address. After verification this becomes info@peekskilltree.com.
+        from: 'Second Nature Tree <onboarding@resend.dev>',
+        to: [to],
+        subject,
+        text,
+        html: html || undefined,
+        reply_to: 'info@peekskilltree.com'
+      })
+    });
+    if (r.ok) return;
+    const errTxt = await r.text();
+    console.warn('Resend failed (' + r.status + '):', errTxt.slice(0, 200));
+    // Fall through to SendGrid if Resend failed
+  }
+  // Fallback — SendGrid
   if (!SENDGRID_API_KEY) return;
   const body: any = {
     personalizations: [{ to: [{ email: to, name: toName }] }],

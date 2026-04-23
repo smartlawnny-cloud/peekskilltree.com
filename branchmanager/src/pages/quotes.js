@@ -444,11 +444,8 @@ var QuotesPage = {
     // Existing quotes skip the gate (they already have a client).
     var hasClient = !!(q && q.id) || (client && client.id);
     var gateDisplay = hasClient ? 'block' : 'none';
-    if (!hasClient) {
-      html += '<div id="q-pick-client-first" style="margin:16px 0;padding:16px;background:#fef9c3;border:1px dashed #eab308;border-radius:10px;text-align:center;font-size:13px;color:#854d0e;">'
-        +   '👆 Pick or create a client above to start adding trees.'
-        + '</div>';
-    }
+    // Dotted "Pick or create a client" box removed per user request —
+    // the empty state is implied (tree list hidden until client picked).
 
     html += '<div id="q-items-section" style="margin:16px 0;display:' + gateDisplay + ';">'
       + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Line Items</div>'
@@ -571,48 +568,48 @@ var QuotesPage = {
       + '<div style="font-size:11px;color:var(--text-light);">Quote valid for 30 days.</div>'
       + '</div>';
 
-    // ═══ T&M Production Estimate (always visible — used as sanity check vs line-item total) ═══
+    // ═══ Labor Estimate (renamed from Production Estimate / T&M) ═══
     html += '<div id="q-mode-tm" style="display:block;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;margin:20px 0 12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Production Estimate (T&M)</div>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Check which crew members are going, then enter total hours.</p>'
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">Labor Estimate</div>'
+      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Check crew members going + enter total hours. Compare against line-item total as a sanity check.</p>'
 
-      // ═══ STEP 1 — Crew (checkboxes) ═══
+      // ═══ STEP 1 — Crew (one line per role, full-width checkboxes) ═══
       + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
       +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 1 — Crew needed</label>'
-      +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">'
-      +     '<label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--white);border:2px solid ' + (((tmData.climberCount|0) > 0) ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">'
+      +   '<div style="display:flex;flex-direction:column;gap:6px;">'
+      +     '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--white);border:2px solid ' + (((tmData.climberCount|0) > 0) ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">'
       +       '<input type="checkbox" id="q-tm-climber-chk"' + (((tmData.climberCount|0) > 0) ? ' checked' : '') + ' onchange="document.getElementById(\'q-tm-climber-count\').value=this.checked?1:0;this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';QuotesPage._calcTM();" style="width:18px;height:18px;">'
       +       '<span style="flex:1;">Climber</span><span style="color:var(--text-light);font-size:11px;font-weight:500;">$50/hr</span>'
       +     '</label>'
-      +     '<label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--white);border:2px solid ' + (((tmData.groundCount|0) > 0) ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">'
+      +     '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--white);border:2px solid ' + (((tmData.groundCount|0) > 0) ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">'
       +       '<input type="checkbox" id="q-tm-ground-chk"' + (((tmData.groundCount|0) > 0) ? ' checked' : '') + ' onchange="document.getElementById(\'q-tm-ground-count\').value=this.checked?1:0;this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';QuotesPage._calcTM();" style="width:18px;height:18px;">'
       +       '<span style="flex:1;">Groundsman</span><span style="color:var(--text-light);font-size:11px;font-weight:500;">$30/hr</span>'
       +     '</label>'
-      +     '<label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--white);border:2px solid ' + (((tmData.foremanCount|0) > 0) ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">'
+      +     '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--white);border:2px solid ' + (((tmData.foremanCount|0) > 0) ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">'
       +       '<input type="checkbox" id="q-tm-foreman-chk"' + (((tmData.foremanCount|0) > 0) ? ' checked' : '') + ' onchange="document.getElementById(\'q-tm-foreman-count\').value=this.checked?1:0;this.parentElement.style.borderColor=this.checked?\'var(--green-dark)\':\'var(--border)\';QuotesPage._calcTM();" style="width:18px;height:18px;">'
       +       '<span style="flex:1;">Foreman</span><span style="color:var(--text-light);font-size:11px;font-weight:500;">$60/hr</span>'
       +     '</label>'
       +   '</div>'
-      +   // Hidden number inputs preserve backward-compat with _calcTM + save paths
       +   '<input type="hidden" id="q-tm-climber-count" value="' + (tmData.climberCount || '') + '">'
       +   '<input type="hidden" id="q-tm-ground-count" value="' + (tmData.groundCount || '') + '">'
       +   '<input type="hidden" id="q-tm-foreman-count" value="' + (tmData.foremanCount || '') + '">'
       + '</div>'
 
-      // ═══ STEP 2 — Hours ═══
-      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">'
-      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px;">Step 2 — Hours</label>'
-      +   '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="Total hours on job" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:6px;font-size:16px;font-weight:700;text-align:center;">'
-      +   // Hidden yard/drive hrs preserve save-path compatibility (always 0 now)
+      // ═══ STEP 2 — Hours (label left, input right — on same row) ═══
+      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;min-width:120px;">Step 2 — Hours</label>'
+      +   '<input type="number" id="q-tm-total-hrs" value="' + (tmData.totalHrs || '') + '" placeholder="Total hours on job" min="0" step="0.5" oninput="QuotesPage._calcTM()" style="flex:1;min-width:140px;padding:10px;border:2px solid var(--border);border-radius:6px;font-size:15px;font-weight:700;text-align:center;">'
       +   '<input type="hidden" id="q-tm-yard-hrs" value="0">'
       +   '<input type="hidden" id="q-tm-drive-hrs" value="0">'
       + '</div>'
 
-      // ═══ STEP 3 — Disposal (optional) ═══
-      + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:0 2px;">'
-      +   '<label style="font-size:12px;color:var(--text-light);font-weight:600;flex-shrink:0;">Step 3 — Dump / disposal fee:</label>'
-      +   '<input type="number" id="q-tm-disposal" value="' + (tmData.disposal || '') + '" placeholder="0" min="0" oninput="QuotesPage._calcTM()" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
-      +   '<span style="font-size:12px;color:var(--text-light);">$</span>'
+      // ═══ STEP 3 — Dump / disposal (fits in its row) ═══
+      + '<div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      +   '<label style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;min-width:120px;">Step 3 — Dump fee</label>'
+      +   '<div style="flex:1;min-width:140px;display:flex;align-items:center;gap:6px;">'
+      +     '<span style="font-size:14px;color:var(--text-light);">$</span>'
+      +     '<input type="number" id="q-tm-disposal" value="' + (tmData.disposal || '') + '" placeholder="0" min="0" oninput="QuotesPage._calcTM()" style="flex:1;min-width:0;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
+      +   '</div>'
       + '</div>'
 
       // T&M Total
@@ -916,22 +913,16 @@ var QuotesPage = {
       photoHtml += '</div>';
     }
 
-    // Summary strip: photo + species (AI-filled, extracted from description) + price + chevron
-    // Species = the part of description BEFORE the first " — " (e.g. "White Oak" from
-    // "White Oak — 22\" DBH — 45' tall — Good — healthy form")
-    var summaryThumb = photos.length
-      ? '<img src="' + photos[0] + '" onclick="event.stopPropagation();QuotesPage._uploadPhotoToRow(this)" style="width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer;">'
-      : '<div onclick="event.stopPropagation();QuotesPage._uploadPhotoToRow(this)" title="Tap to add photo" style="width:40px;height:40px;background:var(--bg);border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:16px;flex-shrink:0;cursor:pointer;">🌳</div>';
-    var titleText;
-    if (!hasContent) {
-      titleText = 'New tree — fill below';
-    } else if (item.species) {
-      titleText = UI.esc(item.species);
-    } else if (item.description && item.description.indexOf(' — ') > 0) {
-      titleText = UI.esc(item.description.split(' — ')[0]);
-    } else {
-      titleText = UI.esc(item.service || item.description || 'Tree');
-    }
+    // Summary strip: service · species · location · price (NO emojis).
+    // Hidden mini thumbnail stays so other code hooks (headerThumb selectors) keep working,
+    // but it's zero-width/zero-height — invisible to the user.
+    var summaryThumb = '<img class="q-item-header-thumb" src="' + (photos[0] || '') + '" style="display:none;">';
+    var parts = [];
+    if (item.service)  parts.push(UI.esc(item.service));
+    if (item.species)  parts.push(UI.esc(item.species));
+    else if (item.description && item.description.indexOf(' — ') > 0) parts.push(UI.esc(item.description.split(' — ')[0]));
+    if (item.location) parts.push(UI.esc(item.location));
+    var titleText = parts.length ? parts.join(' · ') : (hasContent ? UI.esc(item.description || 'Line item') : 'New line item — fill below');
     var summary = '<div class="q-item-header" onclick="QuotesPage._toggleItem(this)" style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
       + summaryThumb
       + '<div class="q-item-summary-title" style="flex:1;min-width:0;font-size:14px;font-weight:600;color:' + (hasContent ? 'var(--text)' : 'var(--text-light)') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + titleText + '</div>'
@@ -944,18 +935,22 @@ var QuotesPage = {
     var formulaHint = '<div class="q-item-formula" style="font-size:11px;color:var(--text-light);margin-top:4px;"></div>';
 
     // Expanded form body (hidden when collapsed)
+    // Order per user request: Service → Species → Location → Description → Qty → Rate
     var body = '<div class="q-item-body" style="margin-top:12px;' + (expanded ? '' : 'display:none;') + '">'
       + photoHtml
-      // Species + Location row (displayed prominently at top so user can tag where tree is)
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'
-      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Species (AI-filled)</label><input class="q-item-species" value="' + UI.esc(item.species || '') + '" placeholder="e.g. White Oak" oninput="QuotesPage._syncSummary(this)" style="font-size:13px;"></div>'
+      // Row 1: Service (full width, dropdown)
+      + '<div class="form-group" style="margin:0 0 8px;"><label style="font-size:11px;font-weight:600;">Service</label>'
+      +   '<input class="q-item-service" list="q-svc-datalist" value="' + UI.esc(item.service || '') + '" placeholder="Type or pick…" onchange="QuotesPage._onServiceChange(this)" oninput="QuotesPage._syncSummary(this)" style="font-size:13px;width:100%;box-sizing:border-box;">'
+      + '</div>'
+      // Row 2: Species + Location (half each)
+      + '<div class="quote-item-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;"' + photoStr + '>'
+      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Species</label><input class="q-item-species" value="' + UI.esc(item.species || '') + '" placeholder="e.g. White Oak" oninput="QuotesPage._syncSummary(this)" style="font-size:13px;"></div>'
       +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Location on property</label><input class="q-item-location" value="' + UI.esc(item.location || '') + '" placeholder="e.g. back yard near pool" oninput="QuotesPage._syncSummary(this)" style="font-size:13px;"></div>'
       + '</div>'
-      + '<div class="quote-item-row" style="display:grid;grid-template-columns:2fr 2fr 60px 90px 80px 36px;gap:8px;align-items:end;"' + photoStr + '>'
-      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Service</label>'
-      +     '<input class="q-item-service" list="q-svc-datalist" value="' + UI.esc(item.service || '') + '" placeholder="Type or pick…" onchange="QuotesPage._onServiceChange(this)" oninput="QuotesPage._syncSummary(this)" style="font-size:13px;">'
-      +   '</div>'
-      +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Description</label><input class="q-item-desc" value="' + UI.esc(item.description || '') + '" placeholder="Work details..." oninput="QuotesPage._syncSummary(this);QuotesPage._updateFormula(this)" style="font-size:13px;"></div>'
+      // Row 3: Description (full width)
+      + '<div class="form-group" style="margin:0 0 8px;"><label style="font-size:11px;font-weight:600;">Description</label><input class="q-item-desc" value="' + UI.esc(item.description || '') + '" placeholder="Work details..." oninput="QuotesPage._syncSummary(this);QuotesPage._updateFormula(this)" style="font-size:13px;width:100%;box-sizing:border-box;"></div>'
+      // Row 4: Qty + Rate + Amount + Delete
+      + '<div style="display:grid;grid-template-columns:80px 1fr 1fr 36px;gap:8px;align-items:end;">'
       +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Qty</label><input type="number" class="q-item-qty" value="' + (item.qty || 1) + '" min="1" oninput="QuotesPage.calcTotal();QuotesPage._syncSummary(this)" style="font-size:13px;text-align:center;"></div>'
       +   '<div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:600;">Rate ($)</label><input type="number" class="q-item-rate" value="' + (item.rate || '') + '" step="0.01" placeholder="0.00" oninput="QuotesPage.calcTotal();QuotesPage._syncSummary(this)" style="font-size:13px;">'
       +     formulaHint + '</div>'

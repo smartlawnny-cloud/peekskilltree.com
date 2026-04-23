@@ -6,7 +6,16 @@ var SettingsPage = {
   render: function() {
     var stats = DB.dashboard.getStats();
 
+    // Auto-collapse every settings card (v351) — remembers per-card state in localStorage
+    setTimeout(SettingsPage._initCollapse, 60);
+
     var html = '<div style="max-width:700px;">';
+
+    // Expand-all / Collapse-all toolbar
+    html += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;">'
+      +   '<button onclick="SettingsPage._collapseAll(true)" style="background:var(--white);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-light);">Collapse all</button>'
+      +   '<button onclick="SettingsPage._collapseAll(false)" style="background:var(--white);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-light);">Expand all</button>'
+      + '</div>';
 
     // === ONE-TIME SETUP CHECKLIST ===
     var sgOk2 = (localStorage.getItem('bm-sendgrid-key') || '').length > 10;
@@ -1060,6 +1069,69 @@ var SettingsPage = {
 
     html += '</div>';
     return html;
+  },
+
+  // Make every settings card collapsible — idempotent, runs after render.
+  _initCollapse: function() {
+    var content = document.querySelector('.content') || document.getElementById('content');
+    if (!content) return;
+    var cards = content.querySelectorAll('div[style*="background:var(--white)"]');
+    Array.prototype.forEach.call(cards, function(card) {
+      if (card.dataset.bmColl) return;
+      var h3 = card.querySelector(':scope > h3, :scope > div > h3');
+      if (!h3) return;
+      card.dataset.bmColl = '1';
+      var label = h3.textContent.trim().substring(0, 40);
+      var key = 'bm-settings-coll-' + label.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+      // Arrow indicator
+      var arrow = document.createElement('span');
+      arrow.className = 'bm-coll-arrow';
+      arrow.style.cssText = 'margin-left:auto;transition:transform .2s;display:inline-block;font-size:14px;color:var(--text-light);padding-left:8px;';
+      arrow.textContent = '▾';
+
+      // The clickable header is either h3 itself or its parent (flex row w/ Save button)
+      var header = (h3.parentElement && h3.parentElement !== card && h3.parentElement.children.length > 1)
+        ? h3.parentElement
+        : h3;
+      header.appendChild(arrow);
+      header.style.cursor = 'pointer';
+      header.style.userSelect = 'none';
+
+      // Body = all card children after the header element
+      var idx = Array.prototype.indexOf.call(card.children, header);
+      var body = Array.prototype.slice.call(card.children, idx + 1);
+
+      var collapsed = localStorage.getItem(key) === '1';
+      function apply() {
+        body.forEach(function(el) { el.style.display = collapsed ? 'none' : ''; });
+        arrow.style.transform = collapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+      }
+      apply();
+
+      header.addEventListener('click', function(e) {
+        // Don't toggle if the click target is a Save button / input / link
+        var tag = (e.target.tagName || '').toUpperCase();
+        if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'A' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+        collapsed = !collapsed;
+        localStorage.setItem(key, collapsed ? '1' : '0');
+        apply();
+      });
+    });
+  },
+
+  _collapseAll: function(collapse) {
+    var content = document.querySelector('.content') || document.getElementById('content');
+    if (!content) return;
+    var cards = content.querySelectorAll('div[data-bm-coll="1"]');
+    Array.prototype.forEach.call(cards, function(card) {
+      var h3 = card.querySelector('h3');
+      if (!h3) return;
+      var label = h3.textContent.trim().substring(0, 40);
+      var key = 'bm-settings-coll-' + label.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      localStorage.setItem(key, collapse ? '1' : '0');
+    });
+    loadPage('settings');
   },
 
   connectSupabase: function() {

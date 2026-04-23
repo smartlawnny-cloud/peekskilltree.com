@@ -9,3 +9,5 @@ capacitor.config.json
 package.json
 package-lock.json
 .claude/
+supabase/.temp/
+supabase/.branches/

@@ -1,5 +1,5 @@
 {
-  "version": 354,
+  "version": 355,
   "released": "2026-04-23",
-  "notes": "SocialBranch — native social-media suite. Dashboard/Compose/Calendar/Accounts/Analytics/Inbox tabs. Publishes via Zapier webhook today; direct GMB/Meta/YouTube as OAuth completes. 60s scheduler. Added to left nav."
+  "notes": "Meta App Review prep: created privacy.html, terms.html, data-deletion.html as public pages (required by Meta). Full Meta submission packet at docs/meta-app-submission.md with copy-paste fields, permission justifications, use-case narratives, demo video script, submission checklist. Updated book.html SMS-consent to link to new privacy + terms."
 }

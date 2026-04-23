@@ -1,5 +1,5 @@
 {
-  "version": 339,
+  "version": 340,
   "released": "2026-04-22",
-  "notes": "Clear All Data now requires typing 'DELETE' in caps + shows counts of what's about to be wiped + saves a rollback snapshot before deleting (recoverable). Purple purge: all 31 #7c3aed / purple hex codes swapped to brand green/accent variables across BM. Next ship: targeted Lucide pass on section headers (Settings, Tools, dashboards)."
+  "notes": "Lucide icon migration — Settings section headers (8 collapsible summaries) swapped from emoji to Lucide icons: Business Info (building-2), Quote & Invoice Defaults (file-text), Services & Products (wrench), API Keys & Integrations (plug), Database & Storage (database), Data Import (download), Security + Admin (lock), Templates & Automation (file-edit). Added .li-hdr CSS class so inline Lucide icons in headers scale to match text. Emoji stays for toasts, status badges, and decorative/celebratory context (warmth fits the tree-service brand). Directional sample — tell me to sweep the rest if it looks right."
 }

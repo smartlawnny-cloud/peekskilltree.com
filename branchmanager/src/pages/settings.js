@@ -52,7 +52,7 @@ var SettingsPage = {
     // ═══ GROUP: Business Info (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
       + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span><i data-lucide='building-2' class='li li-hdr'></i> Business Info</span>'
+      +   '<span><i data-lucide="building-2" class="li li-hdr"></i> Business Info</span>'
       +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
@@ -266,7 +266,7 @@ var SettingsPage = {
     // ═══ GROUP: Quote & Invoice Defaults (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
       + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span><i data-lucide='file-text' class='li li-hdr'></i> Quote & Invoice Defaults</span>'
+      +   '<span><i data-lucide="file-text" class="li li-hdr"></i> Quote & Invoice Defaults</span>'
       +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
@@ -449,7 +449,7 @@ var SettingsPage = {
     // ═══ GROUP: Services & Products (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
       + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span><i data-lucide='wrench' class='li li-hdr'></i> Services & Products</span>'
+      +   '<span><i data-lucide="wrench" class="li li-hdr"></i> Services & Products</span>'
       +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
@@ -497,7 +497,7 @@ var SettingsPage = {
       .filter(function(k){ return (localStorage.getItem(k) || '').length > 5; }).length;
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<summary style="padding:16px 20px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span><i data-lucide='plug' class='li li-hdr'></i> API Keys &amp; Integrations</span>'
+      +   '<span><i data-lucide="plug" class="li li-hdr"></i> API Keys &amp; Integrations</span>'
       +   '<span style="font-size:12px;color:var(--text-light);font-weight:500;">' + _intCount + ' / 6 connected · tap to expand</span>'
       + '</summary>'
       + '<div style="padding:0 20px 16px;border-top:1px solid var(--border);margin-top:0;">';
@@ -639,7 +639,7 @@ var SettingsPage = {
     // ═══ GROUP: Database & Storage (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
       + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span><i data-lucide='database' class='li li-hdr'></i> Database & Storage</span>'
+      +   '<span><i data-lucide="database" class="li li-hdr"></i> Database & Storage</span>'
       +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
@@ -903,7 +903,7 @@ var SettingsPage = {
     // ═══ GROUP: Data Import / Export / Backup (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
       + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span><i data-lucide='download' class='li li-hdr'></i> Data Import / Export / Backup</span>'
+      +   '<span><i data-lucide="download" class="li li-hdr"></i> Data Import / Export / Backup</span>'
       +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
@@ -950,7 +950,7 @@ var SettingsPage = {
     // ═══ GROUP: Security + Admin (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
       + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span><i data-lucide='lock' class='li li-hdr'></i> Security + Admin</span>'
+      +   '<span><i data-lucide="lock" class="li li-hdr"></i> Security + Admin</span>'
       +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
@@ -1019,7 +1019,7 @@ var SettingsPage = {
     // ═══ GROUP: Templates & Automation (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
       + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span><i data-lucide='file-edit' class='li li-hdr'></i> Templates &amp; Automation</span>'
+      +   '<span><i data-lucide="file-edit" class="li li-hdr"></i> Templates &amp; Automation</span>'
       +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';

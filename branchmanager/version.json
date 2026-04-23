@@ -1,5 +1,5 @@
 {
-  "version": 341,
+  "version": 342,
   "released": "2026-04-22",
-  "notes": "FIX: the 'app resets every so often' problem. The SW update check runs every 15 min and USED to silently reload you within 500ms of detecting a new version — so every time I shipped (4 ships in the last hour), anyone with BM open got auto-reloaded. Now replaced with a non-intrusive bottom toast '🎉 New Branch Manager version ready · Refresh now · Later'. If a form is open, the prompt defers 2 min and retries. Tapping Later postpones 30 min. You stay in control of when to reload. Cold-load self-healing (on stale bundle detection) is unchanged — that one IS a reload, but only runs once per stale bundle."
+  "notes": "HOTFIX: Settings page wasn't loading — I broke it in v340 by using single quotes around Lucide data-lucide attributes inside single-quoted JS strings. The string terminated at the first 'building-2' and everything after was a parse error. Fixed by using double-quoted attributes. My bad."
 }

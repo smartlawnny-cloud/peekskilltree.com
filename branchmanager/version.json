@@ -1,5 +1,5 @@
 {
-  "version": 345,
+  "version": 346,
   "released": "2026-04-22",
-  "notes": "Round 2 refactors: (#9) CompanyInfo.get() helper in config.js replaces 74+ scattered 'localStorage.getItem(bm-co-x) || BM_CONFIG.y' reads — one source of truth for company info. (#11) _resolveClientId() guard in DB.quotes/jobs/invoices/requests .create() auto-backfills clientId when clientName matches an existing client. Plus a new 'Reconcile Orphan Records' Settings button that scans the whole DB for orphans, shows a preview, and backfills links."
+  "notes": "AI Assistant voice — tap the 🎙 mic button to dictate your question (Web Speech API, same engine as Voice-to-Quote). Auto-restarts on silence so you can pause mid-sentence. Interim results show in the input as you speak. NEW: checkbox '🔊 Speak replies' reads Claude's answers back aloud via SpeechSynthesis — perfect for hands-free/driving. Toggle persists in localStorage (bm-ai-speak-replies)."
 }

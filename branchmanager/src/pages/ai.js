@@ -248,16 +248,23 @@ var AI = {
     }
     html += '</div>';
 
-    // Input area
+    // Input area (text + voice + send)
+    var speakOut = localStorage.getItem('bm-ai-speak-replies') === 'true';
     html += '<div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;">'
       + '<div style="display:flex;gap:8px;align-items:flex-end;">'
-      + '<textarea id="ai-input" rows="1" placeholder="Ask anything..." '
-      + 'style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:12px;font-size:14px;resize:none;max-height:100px;font-family:inherit;line-height:1.4;" '
-      + 'onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();AI.send();}" '
-      + 'oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,100)+\'px\'"></textarea>'
-      + '<button onclick="AI.send()" style="background:linear-gradient(135deg,#D4A574 0%,#C4956A 100%);color:#fff;border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">↑</button>'
+      +   '<button id="ai-mic-btn" onclick="AI.toggleMic()" title="Dictate with voice" style="background:var(--white);border:1px solid var(--border);border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;" aria-label="Voice input">🎙️</button>'
+      +   '<textarea id="ai-input" rows="1" placeholder="Ask anything… or tap mic to dictate" '
+      +     'style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:12px;font-size:14px;resize:none;max-height:100px;font-family:inherit;line-height:1.4;" '
+      +     'onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();AI.send();}" '
+      +     'oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,100)+\'px\'"></textarea>'
+      +   '<button onclick="AI.send()" style="background:linear-gradient(135deg,#D4A574 0%,#C4956A 100%);color:#fff;border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">↑</button>'
       + '</div>'
-      + '<div style="font-size:10px;color:var(--text-light);text-align:center;margin-top:6px;">Powered by AI</div>'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:6px;">'
+      +   '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">'
+      +     '<input type="checkbox" id="ai-speak-out" onchange="localStorage.setItem(\'bm-ai-speak-replies\', this.checked ? \'true\' : \'false\')"' + (speakOut ? ' checked' : '') + ' style="cursor:pointer;"> 🔊 Speak replies'
+      +   '</label>'
+      +   '<span>Powered by AI</span>'
+      + '</div>'
       + '</div>';
 
     return html;
@@ -344,6 +351,8 @@ var AI = {
       AI._saveHistory();
       AI._refreshMessages();
       AI._scrollToBottom();
+      // Speak the reply if the user toggled it on
+      if (localStorage.getItem('bm-ai-speak-replies') === 'true') AI.speak(response);
     }).catch(function(err) {
       restoreBtn();
       AI._removeTyping();
@@ -351,6 +360,93 @@ var AI = {
       AI._refreshMessages();
       AI._scrollToBottom();
     });
+  },
+
+  // ── Voice input (Web Speech API) ──
+  _recog: null,
+  _micOn: false,
+
+  toggleMic: function() {
+    if (AI._micOn) { AI.stopMic(); return; }
+    AI.startMic();
+  },
+
+  startMic: function() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { UI.toast('Voice input not supported in this browser', 'error'); return; }
+    var recog = new SR();
+    recog.continuous = true;
+    recog.interimResults = true;
+    recog.lang = 'en-US';
+    var input = document.getElementById('ai-input');
+    var existing = input ? input.value : '';
+
+    recog.onresult = function(e) {
+      var finalChunk = '';
+      var interimChunk = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var r = e.results[i];
+        if (r.isFinal) finalChunk += r[0].transcript;
+        else interimChunk += r[0].transcript;
+      }
+      if (input) {
+        var base = finalChunk ? (existing + (existing ? ' ' : '') + finalChunk).trim() : existing;
+        if (finalChunk) existing = base;
+        input.value = interimChunk ? base + (base ? ' ' : '') + interimChunk : base;
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+      }
+    };
+    recog.onerror = function(e) {
+      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        UI.toast('Mic error: ' + e.error, 'error');
+      }
+    };
+    recog.onend = function() {
+      // If the user hasn't stopped manually, auto-restart (Chrome cuts off after ~60s silence)
+      if (AI._micOn) { try { recog.start(); } catch(err) { AI._setMicIdle(); } }
+    };
+
+    try { recog.start(); } catch(err) { UI.toast('Could not start mic: ' + err.message, 'error'); return; }
+    AI._recog = recog;
+    AI._micOn = true;
+    var btn = document.getElementById('ai-mic-btn');
+    if (btn) { btn.style.background = '#dc2626'; btn.style.color = '#fff'; btn.innerHTML = '■'; }
+  },
+
+  stopMic: function() {
+    AI._micOn = false;
+    if (AI._recog) { try { AI._recog.stop(); } catch(e) {} AI._recog = null; }
+    AI._setMicIdle();
+  },
+
+  _setMicIdle: function() {
+    var btn = document.getElementById('ai-mic-btn');
+    if (btn) { btn.style.background = 'var(--white)'; btn.style.color = ''; btn.innerHTML = '🎙️'; }
+  },
+
+  // ── Voice output (SpeechSynthesis API) ──
+  _synth: null,
+  speak: function(text) {
+    try {
+      if (!window.speechSynthesis) return;
+      // Cancel any ongoing speech first
+      window.speechSynthesis.cancel();
+      // Strip markdown for cleaner spoken output
+      var clean = String(text)
+        .replace(/```[\s\S]*?```/g, ' code snippet ')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/[*_~#>]/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\n{2,}/g, '. ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (clean.length > 1000) clean = clean.slice(0, 1000) + '. Continued in text.';
+      var utter = new SpeechSynthesisUtterance(clean);
+      utter.rate = 1.05;
+      utter.pitch = 1.0;
+      window.speechSynthesis.speak(utter);
+    } catch(e) { /* speech not available */ }
   },
 
   _buildContext: function() {

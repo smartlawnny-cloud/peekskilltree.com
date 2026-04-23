@@ -103,6 +103,7 @@ var ClientsPage = {
       + '<input type="text" id="client-search" placeholder="Search clients..." value="' + UI.esc(self._search) + '" oninput="ClientsPage.setSearch(this.value)">'
       + '</div>'
       + '<button onclick="loadPage(\'clientmap\')" style="background:none;border:1px solid var(--border);padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--accent);white-space:nowrap;" title="View client map">📍 Map</button>'
+      + '<button onclick="loadPage(\'messaging\')" style="background:none;border:1px solid var(--border);padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--accent);white-space:nowrap;" title="Messages inbox">💬 Messages</button>'
       + '</div></div>';
       // + New Client button removed — universal + in topbar handles create
 

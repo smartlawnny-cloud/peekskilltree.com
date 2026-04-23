@@ -102,6 +102,7 @@ var PayrollPage = {
       + '<button onclick="PayrollPage.approveAll(\'' + weekStart + '\')" class="btn btn-primary" style="font-size:12px;">✓ Approve All</button>'
       + '<button onclick="PayrollPage.showPayrollSummary(\'' + weekStart + '\')" class="btn btn-outline" style="font-size:12px;">📊 Payroll Summary</button>'
       + '<button onclick="PayrollPage.exportWeek(\'' + weekStart + '\')" class="btn btn-outline" style="font-size:12px;">📥 Export CSV</button>'
+      + '<button onclick="window.open(\'onboarding/\',\'_blank\')" class="btn btn-outline" style="font-size:12px;">🎓 Onboarding</button>'
       + '</div>';
 
     // ── Week Grid ──

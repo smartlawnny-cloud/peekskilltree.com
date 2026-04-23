@@ -1,5 +1,5 @@
 {
-  "version": 348,
+  "version": 349,
   "released": "2026-04-23",
-  "notes": "Quote form UI: removed dotted client gate box; collapsed line item shows service · species · location (no emojis) + price; expanded line item reordered Service → Species/Location → Description → Qty/Rate/Amount; T&M renamed to Labor Estimate; crew checkboxes one-per-line; Step 2 Hours + Step 3 Dump Fee now label-left + input-right."
+  "notes": "Flatten left nav; Onboarding button on Payroll; Messages button on Clients; Chat & Tasks combined."
 }

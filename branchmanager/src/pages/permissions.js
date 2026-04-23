@@ -25,7 +25,7 @@ var RBAC = {
       }
     },
     'manager': {
-      label: 'Manager', color: '#7c3aed', icon: '👷',
+      label: 'Manager', color: 'var(--accent)', icon: '👷',
       permissions: {
         'system.manage_permissions': false,
         'system.manage_settings': false,

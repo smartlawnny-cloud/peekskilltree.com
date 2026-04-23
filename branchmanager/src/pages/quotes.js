@@ -622,7 +622,7 @@ var QuotesPage = {
 
       // Compare button + panel
       + '<button type="button" id="q-compare-btn" onclick="QuotesPage._showPriceComparison()" style="display:none;margin-top:12px;width:100%;padding:14px;background:var(--green-dark);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">📊 Compare Pricing Methods</button>'
-      + '<div id="q-comparison" style="display:none;margin-top:12px;background:#f5f3ff;border:2px solid #c4b5fd;border-radius:10px;padding:16px;"></div>'
+      + '<div id="q-comparison" style="display:none;margin-top:12px;background:var(--green-bg);border:2px solid var(--green-light);border-radius:10px;padding:16px;"></div>'
 
       + '</form>';
 
@@ -964,7 +964,7 @@ var QuotesPage = {
       + '</div>'
       + '<div style="margin-top:10px;display:flex;gap:6px;justify-content:flex-start;flex-wrap:wrap;">'
       +   '<button type="button" onclick="QuotesPage._addMorePhotos(this)" style="padding:8px 12px;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📷 Add Photos</button>'
-      +   '<button type="button" onclick="QuotesPage._runAIOnRow(this)" style="padding:8px 12px;background:#fff;color:#7c3aed;border:1px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" title="Let Claude fill species, DBH, condition, rate">🤖 Run AI</button>'
+      +   '<button type="button" onclick="QuotesPage._runAIOnRow(this)" style="padding:8px 12px;background:#fff;color:var(--accent);border:1px solid var(--green-light);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" title="Let Claude fill species, DBH, condition, rate">🤖 Run AI</button>'
       +   '<button type="button" onclick="QuotesPage._plantNetSecondOpinion(this)" style="padding:8px 12px;background:#fff;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" title="Verify species with PlantNet (second opinion)">🌿 2nd</button>'
       +   '<button type="button" onclick="QuotesPage._collapseRow(this)" style="padding:8px 14px;background:var(--green-dark);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto;">✓ Done</button>'
       + '</div>'

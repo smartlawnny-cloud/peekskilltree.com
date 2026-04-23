@@ -10,7 +10,7 @@ var AITreeID = {
       + '<div style="font-size:48px;margin-bottom:8px;">🌳</div>'
       + '<h2 style="font-size:22px;margin-bottom:4px;">AI Tree Identification</h2>'
       + '<p style="color:var(--text-light);font-size:14px;margin-bottom:4px;">Take a photo → AI identifies species, size & condition → instant line item</p>'
-      + '<span style="background:#7c3aed;color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;">BETA</span>'
+      + '<span style="background:var(--accent);color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;">BETA</span>'
       + '</div>';
 
     // Camera button

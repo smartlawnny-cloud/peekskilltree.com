@@ -612,7 +612,7 @@ var MediaCenter = {
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;">' + tagHtml + '</div>'
       + '<div style="margin-top:4px;">'
       + (item.reviewed ? '<span style="font-size:12px;color:var(--green-dark);font-weight:600;">&#10003; Reviewed</span>' : '<span style="font-size:12px;color:var(--text-light);">Not reviewed</span>')
-      + (item.exported ? ' &nbsp; <span style="font-size:12px;color:#7c3aed;font-weight:600;">&#128228; Exported</span>' : '')
+      + (item.exported ? ' &nbsp; <span style="font-size:12px;color:var(--accent);font-weight:600;">&#128228; Exported</span>' : '')
       + '</div>';
 
     var footer = (!item.reviewed ? '<button class="btn btn-outline" onclick="MediaCenter.markReviewed(\'' + id + '\');UI.closeModal();">&#10003; Mark Reviewed</button>' : '')

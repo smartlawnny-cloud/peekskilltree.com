@@ -22,7 +22,7 @@ var VideoQuote = {
       + '<div style="font-size:48px;margin-bottom:8px;">🎬</div>'
       + '<h2 style="font-size:22px;margin-bottom:4px;">Video Walkthrough Quote</h2>'
       + '<p style="color:var(--text-light);font-size:14px;margin-bottom:4px;">Record a walkthrough of the property — AI identifies every tree and builds your quote</p>'
-      + '<span style="background:#7c3aed;color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;">BETA</span>'
+      + '<span style="background:var(--accent);color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;">BETA</span>'
       + '</div>';
 
     // Record / Upload buttons

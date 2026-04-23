@@ -132,7 +132,7 @@ var TreeMeasure = {
     // ── Quick Estimate ──
     html += '<div class="card" style="margin-bottom:20px;">'
       + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">'
-      + '<div style="width:40px;height:40px;background:#ede9fe;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">💰</div>'
+      + '<div style="width:40px;height:40px;background:var(--green-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">💰</div>'
       + '<div><div style="font-weight:700;font-size:16px;">Quick Price Estimate</div>'
       + '<div style="font-size:12px;color:var(--text-light);">Based on DBH × $100/inch rule of thumb</div></div>'
       + '</div>';
@@ -155,12 +155,12 @@ var TreeMeasure = {
       + '</select></div>'
       + '</div>'
 
-      + '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:10px;padding:16px;">'
+      + '<div style="background:linear-gradient(135deg,var(--green-bg),var(--green-bg));border-radius:10px;padding:16px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-      + '<div><div style="font-size:12px;color:#5b21b6;font-weight:600;">ESTIMATED REMOVAL PRICE</div>'
-      + '<div style="font-size:36px;font-weight:800;color:#7c3aed;" id="tm-price-val">—</div></div>'
+      + '<div><div style="font-size:12px;color:var(--green-dark);font-weight:600;">ESTIMATED REMOVAL PRICE</div>'
+      + '<div style="font-size:36px;font-weight:800;color:var(--accent);" id="tm-price-val">—</div></div>'
       + '<div style="text-align:right;">'
-      + '<div style="font-size:12px;color:#5b21b6;" id="tm-price-breakdown"></div>'
+      + '<div style="font-size:12px;color:var(--green-dark);" id="tm-price-breakdown"></div>'
       + '</div>'
       + '</div>'
       + '</div>'

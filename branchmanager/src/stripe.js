@@ -131,7 +131,7 @@ var Stripe = {
       // Base payment link — THE KEY FEATURE
       + '<div style="background:#f3f0ff;border:1px solid #d6cbff;border-radius:8px;padding:12px 14px;margin-bottom:12px;">'
       + '<div style="font-size:13px;font-weight:700;color:#4c1d95;margin-bottom:6px;">⚡ Base Payment Link (one-time setup)</div>'
-      + '<div style="font-size:12px;color:#6d28d9;margin-bottom:10px;">Create ONE Stripe Payment Link → Product: any service, Price: <strong>$0.01/unit</strong>, enable <strong>"Let customers adjust quantity"</strong>. Paste it below and every invoice auto-generates the correct amount.</div>'
+      + '<div style="font-size:12px;color:var(--green-dark);margin-bottom:10px;">Create ONE Stripe Payment Link → Product: any service, Price: <strong>$0.01/unit</strong>, enable <strong>"Let customers adjust quantity"</strong>. Paste it below and every invoice auto-generates the correct amount.</div>'
       + UI.formField('Base Payment Link URL', 'text', 'stripe-base-link', baseLink, { placeholder: 'https://buy.stripe.com/...' })
       + (baseLink ? '<div style="font-size:11px;color:#059669;margin-top:-8px;">✅ Configured — all invoices will use this link with pre-filled amounts</div>' : '')
       + '</div>'

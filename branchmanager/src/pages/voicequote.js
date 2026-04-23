@@ -27,7 +27,7 @@ var VoiceQuote = {
     var html = '<div style="max-width:680px;margin:0 auto;padding-bottom:80px;">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
       +   '<button class="btn btn-outline" onclick="loadPage(\'quotes\')" style="font-size:13px;">← Back</button>'
-      +   '<span style="background:#7c3aed;color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;">BETA</span>'
+      +   '<span style="background:var(--accent);color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;">BETA</span>'
       + '</div>'
       + '<div style="text-align:center;padding:8px 0 20px;">'
       +   '<div style="font-size:40px;margin-bottom:6px;">🎙️</div>'

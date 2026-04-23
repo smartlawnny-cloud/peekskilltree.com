@@ -1,5 +1,5 @@
 {
-  "version": 338,
+  "version": 339,
   "released": "2026-04-22",
-  "notes": "Claude key can now live ONLY on Supabase. Settings → AI Assistant has a Server-managed/Device toggle. When server-managed: the key is set once via 'supabase secrets set ANTHROPIC_API_KEY=…' and no device ever stores or sees it. The ai-chat edge function prefers env var over client-sent key. All 5 client callers (Settings Test, AI Assistant, Quotes AI, Voice Quote, Video Quote, Tree ID) updated via window.bmClaudeKey() helper. bm-claude-server-managed setting syncs across devices via CloudKeys."
+  "notes": "Clear All Data now requires typing 'DELETE' in caps + shows counts of what's about to be wiped + saves a rollback snapshot before deleting (recoverable). Purple purge: all 31 #7c3aed / purple hex codes swapped to brand green/accent variables across BM. Next ship: targeted Lucide pass on section headers (Settings, Tools, dashboards)."
 }

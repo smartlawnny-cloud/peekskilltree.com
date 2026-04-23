@@ -159,7 +159,7 @@ var SettingsPage = {
     html += '<div style="margin-top:16px;background:' + (passiveOn ? 'var(--green-bg)' : 'var(--bg)') + ';border:2px solid ' + (passiveOn ? 'var(--green-light)' : 'var(--border)') + ';border-radius:12px;padding:16px 18px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px;">'
       +   '<div style="flex:1;min-width:220px;">'
-      +     '<div style="font-size:14px;font-weight:800;color:var(--text);">🛰 Passive Location Tracking <span style="background:#7c3aed;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;vertical-align:middle;">BETA</span></div>'
+      +     '<div style="font-size:14px;font-weight:800;color:var(--text);">🛰 Passive Location Tracking <span style="background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;vertical-align:middle;">BETA</span></div>'
       +     '<div style="font-size:12px;color:var(--text-light);margin-top:3px;">Captures your location in the background while BM is open. When you\'ve been somewhere a while, BM asks if it\'s a job site — one tap tags it. Owner-only for now; crew will be invited later.</div>'
       +   '</div>'
       +   '<label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;flex-shrink:0;">'
@@ -1145,11 +1145,37 @@ var SettingsPage = {
   },
 
   clearAll: function() {
-    UI.confirm('Delete ALL data? This cannot be undone.', function() {
-      Object.values(DB.KEYS).forEach(function(k) { localStorage.removeItem(k); });
-      UI.toast('All data cleared');
-      loadPage('settings');
-    });
+    // Two-stage confirm — must type exactly "DELETE" to proceed.
+    // Counts the damage so the user sees what's about to go.
+    var counts = {};
+    try { counts.clients  = JSON.parse(localStorage.getItem('bm-clients')  || '[]').length; } catch(e) { counts.clients  = '?'; }
+    try { counts.quotes   = JSON.parse(localStorage.getItem('bm-quotes')   || '[]').length; } catch(e) { counts.quotes   = '?'; }
+    try { counts.jobs     = JSON.parse(localStorage.getItem('bm-jobs')     || '[]').length; } catch(e) { counts.jobs     = '?'; }
+    try { counts.invoices = JSON.parse(localStorage.getItem('bm-invoices') || '[]').length; } catch(e) { counts.invoices = '?'; }
+
+    var typed = prompt(
+      '⚠️ DANGER — Local data will be permanently deleted from THIS device:\n\n' +
+      '  • ' + counts.clients  + ' clients\n' +
+      '  • ' + counts.quotes   + ' quotes\n' +
+      '  • ' + counts.jobs     + ' jobs\n' +
+      '  • ' + counts.invoices + ' invoices\n' +
+      '  • All time entries, expenses, photos, settings\n\n' +
+      'Cloud (Supabase) data is NOT touched — it will re-sync on next login.\n\n' +
+      'Type DELETE (all caps) to proceed, or Cancel to keep data.'
+    );
+    if (typed !== 'DELETE') {
+      UI.toast(typed == null ? 'Cancelled' : 'Confirmation text did not match — nothing deleted', 'error');
+      return;
+    }
+    // Save a rollback snapshot so the user can recover from `?restore=rollback` URL param
+    try {
+      var snapshot = {};
+      Object.values(DB.KEYS).forEach(function(k) { snapshot[k] = localStorage.getItem(k); });
+      localStorage.setItem('bm-rollback-' + Date.now(), JSON.stringify(snapshot));
+    } catch(e) {}
+    Object.values(DB.KEYS).forEach(function(k) { localStorage.removeItem(k); });
+    UI.toast('Local data cleared — rollback snapshot saved');
+    loadPage('settings');
   },
 
   syncNow: function(btn) {

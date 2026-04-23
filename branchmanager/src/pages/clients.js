@@ -404,7 +404,7 @@ var ClientsPage = {
       + '<a href="' + telHref + '" onclick="UI.closeModal();' + (dialpadConnected ? 'Dialpad.call(\'' + phoneClean + '\',\'' + clientId + '\',\'' + name + '\');' : '') + '" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;background:var(--green-dark);color:#fff;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;">'
       + '<span style="font-size:32px;">📞</span><span>Call</span></a>'
       // Text
-      + '<a href="' + smsHref + '" onclick="' + (dialpadConnected ? 'event.preventDefault();UI.closeModal();Dialpad.showTextModal(\'' + clientId + '\',\'' + name + '\',\'' + phoneClean + '\');' : 'UI.closeModal();') + '" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;background:#7c3aed;color:#fff;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;">'
+      + '<a href="' + smsHref + '" onclick="' + (dialpadConnected ? 'event.preventDefault();UI.closeModal();Dialpad.showTextModal(\'' + clientId + '\',\'' + name + '\',\'' + phoneClean + '\');' : 'UI.closeModal();') + '" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;background:var(--accent);color:#fff;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;">'
       + '<span style="font-size:32px;">💬</span><span>Text</span></a>'
       + '</div>'
       + (dialpadConnected ? '<div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:14px;">Dialpad connected — calls & texts will sync to your inbox</div>' : '<div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:14px;">Opens your phone\'s dialer. <a onclick="UI.closeModal();loadPage(\'receptionist\')" style="color:var(--accent);cursor:pointer;">Connect Dialpad</a> to log calls/texts automatically.</div>')
@@ -492,7 +492,7 @@ var ClientsPage = {
       + '<div style="font-size:13px;color:var(--text-light);margin-bottom:12px;word-break:break-all;background:var(--bg);padding:8px;border-radius:6px;font-size:11px;">' + link + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:8px;">'
       + '<button onclick="navigator.clipboard?navigator.clipboard.writeText(\'' + link.replace(/'/g, "\\'") + '\').then(function(){UI.toast(\'Link copied!\');}):void(0);UI.closeModal();" class="btn btn-outline" style="justify-content:flex-start;">📋 Copy link</button>'
-      + (c.phone ? '<a href="sms:' + c.phone.replace(/[^0-9+]/g,'') + '?body=' + encodeURIComponent(smsBody) + '" class="btn" style="background:#7c3aed;color:#fff;text-decoration:none;display:flex;align-items:center;">📱 Text to ' + c.phone + '</a>' : '')
+      + (c.phone ? '<a href="sms:' + c.phone.replace(/[^0-9+]/g,'') + '?body=' + encodeURIComponent(smsBody) + '" class="btn" style="background:var(--accent);color:#fff;text-decoration:none;display:flex;align-items:center;">📱 Text to ' + c.phone + '</a>' : '')
       + (c.email ? '<a href="mailto:' + c.email + '?subject=' + encodeURIComponent(emailSubject) + '&body=' + encodeURIComponent(emailBody) + '" class="btn btn-primary" style="text-decoration:none;display:flex;align-items:center;">✉️ Email to ' + c.email + '</a>' : '')
       + '</div></div>';
 
@@ -728,7 +728,7 @@ var ClientsPage = {
       // ── Primary action row ──
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;">'
       +   (phoneTel ? '<button class="btn" style="background:var(--green-dark);color:#fff;font-size:13px;padding:10px;" onclick="Dialpad.call(\'' + phoneTel + '\',\'' + id + '\',\'' + nameJs + '\')">📞 Call</button>' : '')
-      +   (phoneTel ? '<button class="btn" style="background:#7c3aed;color:#fff;font-size:13px;padding:10px;" onclick="Dialpad.showTextModal(\'' + id + '\',\'' + nameJs + '\',\'' + phoneTel + '\')">💬 Text</button>' : '')
+      +   (phoneTel ? '<button class="btn" style="background:var(--accent);color:#fff;font-size:13px;padding:10px;" onclick="Dialpad.showTextModal(\'' + id + '\',\'' + nameJs + '\',\'' + phoneTel + '\')">💬 Text</button>' : '')
       +   (c.email ? '<a class="btn btn-primary" style="font-size:13px;padding:10px;text-decoration:none;text-align:center;" href="mailto:' + encodeURIComponent(c.email) + '">✉️ Email</a>' : '')
       +   '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="QuotesPage.showForm(null,\'' + id + '\')">+ Quote</button>'
       +   '<button class="btn btn-primary" style="font-size:13px;padding:10px;" onclick="JobsPage.showForm(null,\'' + id + '\')">+ Job</button>'

@@ -219,9 +219,9 @@ var CardoneTools = {
           + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
           +   self._row('Marketing spend (monthly)', 'marketingSpend', 'number', marketingSpend, '$')
           + '</div>'
-          + '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px;margin-top:10px;">'
-          +   self._stat('CAC (cost per new client)', self._money(cac), '#6d28d9')
-          +   self._stat('LTV : CAC ratio', ltvToCac.toFixed(1) + ':1', '#5b21b6')
+          + '<div style="background:var(--green-bg);border:1px solid var(--green-light);border-radius:10px;padding:14px;margin-top:10px;">'
+          +   self._stat('CAC (cost per new client)', self._money(cac), 'var(--green-dark)')
+          +   self._stat('LTV : CAC ratio', ltvToCac.toFixed(1) + ':1', 'var(--green-dark)')
           +   '<div style="display:inline-block;margin-left:12px;padding:4px 12px;background:' + cacRating.color + ';color:#fff;font-size:11px;font-weight:700;border-radius:12px;">' + cacRating.label + '</div>'
           + '</div>'
         );

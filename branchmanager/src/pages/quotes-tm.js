@@ -182,7 +182,7 @@
     if (!panel) return;
 
     panel.style.display = 'block';
-    panel.innerHTML = '<div style="font-size:16px;font-weight:800;margin-bottom:16px;color:#5b21b6;">📊 Price Comparison</div>'
+    panel.innerHTML = '<div style="font-size:16px;font-weight:800;margin-bottom:16px;color:var(--green-dark);">📊 Price Comparison</div>'
       + '<div style="margin-bottom:12px;">'
       + '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;"><span>Per Tree/Task</span><span>' + UI.money(perTreeTotal) + '</span></div>'
       + '<div style="background:#e2e8f0;border-radius:6px;height:8px;"><div style="background:var(--green-dark);border-radius:6px;height:100%;width:' + Math.round((perTreeTotal / barMax) * 100) + '%;"></div></div>'
@@ -191,14 +191,14 @@
       + '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;"><span>Time & Material</span><span>' + UI.money(tmTotal) + '</span></div>'
       + '<div style="background:#e2e8f0;border-radius:6px;height:8px;"><div style="background:var(--accent);border-radius:6px;height:100%;width:' + Math.round((tmTotal / barMax) * 100) + '%;"></div></div>'
       + '</div>'
-      + '<div style="background:#fff;border-radius:8px;padding:14px;text-align:center;border:2px solid #7c3aed;">'
+      + '<div style="background:#fff;border-radius:8px;padding:14px;text-align:center;border:2px solid var(--accent);">'
       + '<div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">RECOMMENDED PRICE (Average)</div>'
-      + '<div style="font-size:28px;font-weight:800;color:#5b21b6;">' + UI.money(average) + '</div>'
+      + '<div style="font-size:28px;font-weight:800;color:var(--green-dark);">' + UI.money(average) + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Difference: ' + UI.money(diff) + ' (' + diffPct + '%) — ' + higher + ' is higher</div>'
       + '</div>'
       + '<div style="display:flex;gap:8px;margin-top:12px;">'
       + '<button type="button" onclick="QuotesPage._usePrice(' + perTreeTotal + ')" class="btn btn-outline" style="flex:1;font-size:12px;">Use Per Tree (' + UI.money(perTreeTotal) + ')</button>'
-      + '<button type="button" onclick="QuotesPage._usePrice(' + average + ')" class="btn btn-primary" style="flex:1;font-size:12px;background:#7c3aed;">Use Average (' + UI.money(average) + ')</button>'
+      + '<button type="button" onclick="QuotesPage._usePrice(' + average + ')" class="btn btn-primary" style="flex:1;font-size:12px;background:var(--accent);">Use Average (' + UI.money(average) + ')</button>'
       + '<button type="button" onclick="QuotesPage._usePrice(' + tmTotal + ')" class="btn btn-outline" style="flex:1;font-size:12px;">Use T&M (' + UI.money(tmTotal) + ')</button>'
       + '</div>';
 

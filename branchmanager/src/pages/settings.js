@@ -642,6 +642,56 @@ var SettingsPage = {
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 requests/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">my.plantnet.org</a></p>'
       + '</div>';
 
+    // ── SocialPilot (Webhook OR direct API key) ──
+    var spWebhook = localStorage.getItem('bm-socialpilot-webhook') || '';
+    var spApiKey = localStorage.getItem('bm-socialpilot-key') || '';
+    var spOk = spWebhook.length > 10 || spApiKey.length > 10;
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (spOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+      + '<div style="width:40px;height:40px;background:#FF6B35;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">📢</div>'
+      + '<div><h3 style="margin:0;">SocialPilot (Social Posting)</h3>'
+      + '<div style="font-size:12px;color:' + (spOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (spOk ? '✅ Connected — Media Center can push to social' : '⚠️ Not connected — add webhook or API key below') + '</div>'
+      + '</div></div>'
+      + '<div style="font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:4px;">Option A — Zapier / Make Webhook URL <span style="color:var(--green-dark);">(works on any paid SocialPilot plan)</span></div>'
+      + '<input type="text" id="sp-webhook" value="' + UI.esc(spWebhook) + '" placeholder="https://hooks.zapier.com/hooks/catch/..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;margin-bottom:10px;">'
+      + '<div style="font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:4px;">Option B — SocialPilot API Key <span style="color:var(--text-light);font-weight:400;">(Agency plan only)</span></div>'
+      + '<input type="password" id="sp-key" value="' + spApiKey + '" placeholder="sp_xxxxxxxxxxxx" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;margin-bottom:10px;">'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button onclick="var w=document.getElementById(\'sp-webhook\').value.trim();var k=document.getElementById(\'sp-key\').value.trim();localStorage.setItem(\'bm-socialpilot-webhook\',w);localStorage.setItem(\'bm-socialpilot-key\',k);UI.toast(\'SocialPilot saved ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save</button>'
+      + '<button onclick="SettingsPage._testSocialPilot()" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-weight:600;font-size:14px;cursor:pointer;">🔌 Test</button>'
+      + (spOk ? '<button onclick="if(confirm(\'Remove SocialPilot?\')){localStorage.removeItem(\'bm-socialpilot-webhook\');localStorage.removeItem(\'bm-socialpilot-key\');loadPage(\'settings\');}" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + '</div>'
+      + '<div id="sp-test-result" style="margin-top:10px;font-size:13px;"></div>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">No API tab in SocialPilot? Use Option A: create a free <a href="https://zapier.com/apps/webhook/integrations" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Zapier Webhook → SocialPilot</a> Zap. Paste the "Catch Hook" URL above. POST payload: <code style="background:var(--bg);padding:1px 4px;border-radius:3px;">{caption, imageUrl, platforms}</code>.</p>'
+      + '</div>';
+
+    // ── Google Business Profile (GMB) ──
+    var gmbClientId = localStorage.getItem('bm-gmb-client-id') || '';
+    var gmbToken = localStorage.getItem('bm-gmb-access-token') || '';
+    var gmbOk = gmbToken.length > 20;
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (gmbOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+      + '<div style="width:40px;height:40px;background:#4285F4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🔵</div>'
+      + '<div><h3 style="margin:0;">Google Business Profile</h3>'
+      + '<div style="font-size:12px;color:' + (gmbOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (gmbOk ? '✅ Connected — reviews, posts, hours can sync' : '⚠️ Not connected — needs OAuth setup') + '</div>'
+      + '</div></div>'
+      + '<div style="background:#f0f7ff;border-left:3px solid #4285F4;padding:10px 12px;border-radius:0 6px 6px 0;font-size:12px;color:#1e3a5f;margin-bottom:12px;line-height:1.5;">'
+      + '<strong>One-time Google Cloud setup (≈10 min):</strong><br>'
+      + '1. Open <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style="color:#4285F4;font-weight:600;">Google Cloud → Credentials</a><br>'
+      + '2. Enable "Business Profile API" (may require Google approval, 2–7 days)<br>'
+      + '3. Create OAuth 2.0 Client (Web) — add redirect: <code style="background:#fff;padding:1px 4px;border-radius:3px;font-size:11px;">https://peekskilltree.com/branchmanager/</code><br>'
+      + '4. Paste the Client ID below'
+      + '</div>'
+      + '<div style="font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:4px;">OAuth Client ID</div>'
+      + '<input type="text" id="gmb-client-id" value="' + UI.esc(gmbClientId) + '" placeholder="xxxxx.apps.googleusercontent.com" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;margin-bottom:10px;">'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button onclick="var c=document.getElementById(\'gmb-client-id\').value.trim();localStorage.setItem(\'bm-gmb-client-id\',c);UI.toast(\'Client ID saved ✓\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Client ID</button>'
+      + '<button onclick="SettingsPage._gmbConnect()" ' + (gmbClientId ? '' : 'disabled') + ' style="background:' + (gmbClientId ? '#4285F4' : '#ccc') + ';color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:' + (gmbClientId ? 'pointer' : 'not-allowed') + ';">🔗 Connect Google</button>'
+      + (gmbOk ? '<button onclick="if(confirm(\'Disconnect Google Business?\')){localStorage.removeItem(\'bm-gmb-access-token\');localStorage.removeItem(\'bm-gmb-refresh-token\');loadPage(\'settings\');}" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Disconnect</button>' : '')
+      + '</div>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Once connected, BM will auto-request review responses, sync business hours, and post job photos to your GMB feed.</p>'
+      + '</div>';
+
     // ═══ close API Keys collapsible ═══
     html += '</div></details>';
 
@@ -1118,6 +1168,55 @@ var SettingsPage = {
         apply();
       });
     });
+  },
+
+  _testSocialPilot: function() {
+    var webhook = localStorage.getItem('bm-socialpilot-webhook') || '';
+    var apiKey = localStorage.getItem('bm-socialpilot-key') || '';
+    var result = document.getElementById('sp-test-result');
+    if (!webhook && !apiKey) { result.innerHTML = '<span style="color:var(--red);">Save a webhook or key first.</span>'; return; }
+    result.innerHTML = '<span style="color:var(--text-light);">Testing…</span>';
+    var payload = { caption: 'Branch Manager connection test — ignore', imageUrl: '', platforms: ['test'], test: true };
+    var url = webhook || 'https://panel.socialpilot.co/api/v1/ping';
+    var headers = { 'Content-Type': 'application/json' };
+    if (!webhook && apiKey) headers['Authorization'] = 'Bearer ' + apiKey;
+    fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(payload) })
+      .then(function(r) { result.innerHTML = r.ok ? '<span style="color:var(--green-dark);">✅ Reached endpoint (status ' + r.status + ')</span>' : '<span style="color:#e07c24;">⚠️ Status ' + r.status + ' — check your webhook/key.</span>'; })
+      .catch(function(e) { result.innerHTML = '<span style="color:var(--red);">Network error: ' + UI.esc(String(e.message || e)) + '</span>'; });
+  },
+
+  _gmbConnect: function() {
+    var clientId = localStorage.getItem('bm-gmb-client-id') || '';
+    if (!clientId) { UI.toast('Save your Client ID first', 'error'); return; }
+    var redirect = window.location.origin + window.location.pathname;
+    var scope = encodeURIComponent('https://www.googleapis.com/auth/business.manage');
+    var state = Math.random().toString(36).slice(2);
+    localStorage.setItem('bm-gmb-oauth-state', state);
+    var url = 'https://accounts.google.com/o/oauth2/v2/auth'
+      + '?client_id=' + encodeURIComponent(clientId)
+      + '&redirect_uri=' + encodeURIComponent(redirect)
+      + '&response_type=token'
+      + '&scope=' + scope
+      + '&state=' + state
+      + '&prompt=consent';
+    window.location.href = url;
+  },
+
+  // GMB OAuth callback handler — runs on page load if access_token is in URL hash
+  _gmbCheckCallback: function() {
+    if (!window.location.hash || window.location.hash.indexOf('access_token=') < 0) return;
+    try {
+      var params = {};
+      window.location.hash.substring(1).split('&').forEach(function(kv) {
+        var p = kv.split('='); params[decodeURIComponent(p[0])] = decodeURIComponent(p[1] || '');
+      });
+      if (params.access_token) {
+        localStorage.setItem('bm-gmb-access-token', params.access_token);
+        localStorage.setItem('bm-gmb-token-expires', String(Date.now() + (parseInt(params.expires_in || '3600') * 1000)));
+        history.replaceState({}, '', window.location.pathname);
+        if (typeof UI !== 'undefined' && UI.toast) UI.toast('✅ Google Business connected');
+      }
+    } catch (e) { console.warn('GMB OAuth callback parse failed', e); }
   },
 
   _collapseAll: function(collapse) {

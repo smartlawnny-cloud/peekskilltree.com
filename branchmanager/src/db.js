@@ -159,7 +159,7 @@ var DB = (function() {
       if (!table) return;
       // If a full cloud pull is in progress, defer the push so it can't be overwritten
       if (window._bmSyncLock) {
-        console.log('[DB push] sync lock active, deferring', table, record.id);
+        console.debug('[DB push] sync lock active, deferring', table, record.id);
         setTimeout(function() { _pushToCloud(key, record, method); }, 500);
         return;
       }

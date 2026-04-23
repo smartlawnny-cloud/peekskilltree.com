@@ -520,7 +520,7 @@ var AutomationsPage = {
       UI.showModal = origModal;
     }
     AutomationsPage._logActivity('Auto-run complete — ' + today);
-    console.log('[Automations] Daily run complete:', today);
+    console.debug('[Automations] Daily run complete:', today);
   },
 
   // Poll Supabase for new quote approvals (every 5 min while app is open)

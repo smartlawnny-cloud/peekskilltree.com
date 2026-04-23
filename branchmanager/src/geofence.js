@@ -26,10 +26,10 @@ var Geofence = {
     if (navigator.geolocation) {
       Geofence.watchId = navigator.geolocation.watchPosition(
         Geofence._onPosition,
-        function(err) { console.log('Geofence: GPS error', err.message); },
+        function(err) { console.debug('Geofence: GPS error', err.message); },
         { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
       );
-      console.log('Geofence: watching position');
+      console.debug('Geofence: watching position');
     }
 
     // Check for upcoming job reminders every minute
@@ -218,7 +218,7 @@ var Geofence = {
         // Auto-close after 30 seconds
         setTimeout(function() { n.close(); }, 30000);
       } catch(e) {
-        console.log('Notification error:', e);
+        console.debug('Notification error:', e);
       }
     }
   },

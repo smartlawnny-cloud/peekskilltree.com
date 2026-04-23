@@ -645,7 +645,7 @@ var ClientsPage = {
   },
 
   _showDetailImpl: function(id) {
-    console.log('[ClientsPage.showDetail] called with id:', id);
+    console.debug('[ClientsPage.showDetail] called with id:', id);
     if (window.bmRememberDetail) window.bmRememberDetail('clients', id);
     var c = DB.clients.getById(id);
     if (!c) {

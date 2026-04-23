@@ -417,7 +417,7 @@ var CrewView = {
       current_job_name: currentJobName || null,
       updated_at: new Date().toISOString()
     }, { onConflict: 'user_id' }).then(function() {
-      if (SupabaseDB._debug) console.log('GPS ping sent:', status);
+      if (SupabaseDB._debug) console.debug('GPS ping sent:', status);
     }).catch(function(e) {
       if (SupabaseDB._debug) console.warn('GPS ping failed:', e);
     });

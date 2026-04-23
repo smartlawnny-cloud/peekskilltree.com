@@ -1,5 +1,5 @@
 {
-  "version": 343,
+  "version": 344,
   "released": "2026-04-22",
-  "notes": "Removed 'Website' from sidebar nav — was just a link to peekskilltree.com, not a real app page. Still accessible from the top-right account menu (View Website)."
+  "notes": "Round 1 safety pass — (#5) bmSafeCall helper + unhandledrejection safety net in supabase.js, visible toasts on CloudSync update/delete failures (previously silent). (#12) All 34 console.log calls → console.debug (hidden by default in Chrome/Safari devtools unless verbose is on, still available when debugging)."
 }

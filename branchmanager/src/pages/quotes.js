@@ -750,7 +750,7 @@ var QuotesPage = {
     });
     try {
       localStorage.setItem(QuotesPage._autoSaveKey, JSON.stringify(data));
-      console.log('[autoSave] ' + data.lineItems.length + ' line items saved, key=' + QuotesPage._autoSaveKey);
+      console.debug('[autoSave] ' + data.lineItems.length + ' line items saved, key=' + QuotesPage._autoSaveKey);
       // Live status line so user can SEE that saves are happening
       var statusEl = document.getElementById('q-save-status');
       if (statusEl) {
@@ -778,7 +778,7 @@ var QuotesPage = {
       }
       if (!data) { UI.toast('Nothing to restore', 'error'); return; }
       var liCount = (data.lineItems && data.lineItems.length) || 0;
-      console.log('[restore] saved data has ' + liCount + ' line items', data.lineItems);
+      console.debug('[restore] saved data has ' + liCount + ' line items', data.lineItems);
       UI.toast('Restoring ' + liCount + ' line item(s)...');
 
       // If a client was previously picked, trigger the full _selectClient flow so

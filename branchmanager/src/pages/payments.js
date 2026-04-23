@@ -70,7 +70,7 @@ var Payments = {
     var url = localStorage.getItem('bm-supabase-url') || 'https://ltpivkqahvplapyagljt.supabase.co';
     var key = localStorage.getItem('bm-supabase-key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cGl2a3FhaHZwbGFweWFnbGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTgxNzIsImV4cCI6MjA4OTY3NDE3Mn0.bQ-wAx4Uu-FyA2ZwsTVfFoU2ZPbeWCmupqV-6ZR9uFI';
     if (!url || !key) { Payments._syncing = false; return; }
-    console.log('[Payments] Fetching from', url);
+    console.debug('[Payments] Fetching from', url);
     fetch(url + '/rest/v1/payments?select=*&order=date.desc&limit=5000', {
       headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
     }).then(function(r) {

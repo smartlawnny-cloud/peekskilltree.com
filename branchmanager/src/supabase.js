@@ -24,6 +24,55 @@ window.bmClaudeKey = function() {
   return localStorage.getItem('bm-claude-key') || '';
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// bmSafeCall — unified Supabase error handling.
+//
+// Supabase JS returns { data, error } without rejecting on PostgREST errors.
+// Network failures DO reject. Both cases need handling; silent failures were
+// the root cause of the Paulette-not-saving class of bugs.
+//
+//   bmSafeCall(SupabaseDB.client.from('clients').insert(row), 'save client')
+//     .then(res => { /* res.data */ })  // errors already toasted + logged
+//
+// Pass suppressToast=true for high-frequency background calls (pings, sync).
+// ─────────────────────────────────────────────────────────────────────────
+window.bmSafeCall = function(promise, label, suppressToast) {
+  return promise.then(function(res) {
+    if (res && res.error) {
+      var msg = '[' + (label || 'supabase') + '] ' + (res.error.message || res.error.toString());
+      console.warn(msg, res.error);
+      if (!suppressToast && typeof UI !== 'undefined' && UI.toast) {
+        UI.toast('⚠️ ' + (label || 'Operation') + ' failed: ' + res.error.message, 'error');
+      }
+    }
+    return res;
+  }).catch(function(err) {
+    var msg = '[' + (label || 'supabase') + '] NETWORK ' + (err && err.message || String(err));
+    console.warn(msg, err);
+    if (!suppressToast && typeof UI !== 'undefined' && UI.toast) {
+      UI.toast('🌐 Network error — ' + (label || 'operation') + ' may not have saved', 'error');
+    }
+    // Re-throw so callers can chain additional .catch if they want
+    throw err;
+  });
+};
+
+// Global safety net — catches any promise rejection that slipped through a
+// missing .catch handler. Logs to console AND surfaces to the user if the
+// error looks relevant (not a routine network hiccup).
+window.addEventListener('unhandledrejection', function(e) {
+  try {
+    var reason = e.reason;
+    var msg = reason && (reason.message || reason.error_description || String(reason)) || 'Unknown error';
+    console.warn('[unhandledrejection]', reason);
+    // Don't spam users for routine network hiccups or aborts
+    if (/AbortError|cancel|aborted|NetworkError when attempting/i.test(msg)) return;
+    if (typeof UI !== 'undefined' && UI.toast && msg.length < 200) {
+      UI.toast('⚠️ Background error: ' + msg, 'error');
+    }
+  } catch(err) { /* don't let the error handler itself throw */ }
+});
+
 var SupabaseDB = {
   client: null,
   ready: false,
@@ -58,7 +107,7 @@ var SupabaseDB = {
     try {
       SupabaseDB.client = window.supabase.createClient(url, key);
       SupabaseDB.ready = true;
-      if (SupabaseDB._debug) console.log('Supabase connected:', url);
+      if (SupabaseDB._debug) console.debug('Supabase connected:', url);
 
       // Check if RLS policies are properly configured
       SupabaseDB._checkRLS();
@@ -82,7 +131,7 @@ var SupabaseDB = {
         console.warn('Run migrate-rls.sql in your Supabase SQL Editor to fix this.');
         console.warn('See: https://supabase.com/dashboard/project/ltpivkqahvplapyagljt/sql');
       } else if (res.error && res.error.code === '42501') {
-        if (SupabaseDB._debug) console.log('✅ Supabase RLS policies are active — anon key is restricted.');
+        if (SupabaseDB._debug) console.debug('✅ Supabase RLS policies are active — anon key is restricted.');
       }
     }).catch(function() {});
   },
@@ -92,7 +141,7 @@ var SupabaseDB = {
     // CloudSync handles pulling data from Supabase into localStorage
     // CloudSync.wrapWrites() handles pushing writes to Supabase
     // This keeps the entire app working with synchronous DB calls
-    if (SupabaseDB._debug) console.log('SupabaseDB: reads stay local (sync), writes push to cloud (async)');
+    if (SupabaseDB._debug) console.debug('SupabaseDB: reads stay local (sync), writes push to cloud (async)');
   },
 
   _initialSync: async function() {
@@ -105,13 +154,13 @@ var SupabaseDB = {
     if (_initTid) _countQ = _countQ.eq('tenant_id', _initTid);
     var { count } = await _countQ;
     if (count > 0) {
-      if (SupabaseDB._debug) console.log('Supabase has ' + count + ' clients — pulling cloud data to local');
+      if (SupabaseDB._debug) console.debug('Supabase has ' + count + ' clients — pulling cloud data to local');
       await SupabaseDB._pullFromCloud();
       return;
     }
 
     // No cloud data — push local data up
-    if (SupabaseDB._debug) console.log('Syncing local data to Supabase...');
+    if (SupabaseDB._debug) console.debug('Syncing local data to Supabase...');
     var tables = [
       { local: 'bm-clients', remote: 'clients' },
       { local: 'bm-requests', remote: 'requests' },
@@ -163,14 +212,14 @@ var SupabaseDB = {
           if (error) {
             console.warn('Sync error for ' + t.remote + ':', error.message);
           } else {
-            if (SupabaseDB._debug) console.log('Synced ' + converted.length + ' rows to ' + t.remote);
+            if (SupabaseDB._debug) console.debug('Synced ' + converted.length + ' rows to ' + t.remote);
           }
         }
       } catch (e) {
         console.warn('Sync failed for ' + t.remote + ':', e);
       }
     }
-    if (SupabaseDB._debug) console.log('Initial sync complete');
+    if (SupabaseDB._debug) console.debug('Initial sync complete');
     UI.toast('Data synced to cloud!');
     SupabaseDB.startPaymentPolling();
     SupabaseDB.startLiveSync();
@@ -178,7 +227,7 @@ var SupabaseDB = {
 
   _pullFromCloud: async function() {
     if (!SupabaseDB.ready) return;
-    if (SupabaseDB._pulling) { console.log('[Pull] already in progress, skipping'); return; }
+    if (SupabaseDB._pulling) { console.debug('[Pull] already in progress, skipping'); return; }
     SupabaseDB._pulling = true;
     window._bmSyncLock = true; // DB.js will check this before pushing
     var sb = SupabaseDB.client;
@@ -235,8 +284,8 @@ var SupabaseDB = {
           var merged = converted.concat(localOnly);
           localStorage.setItem(t.local, JSON.stringify(merged));
           totalPulled += converted.length;
-          if (localOnly.length > 0) console.log('[Pull merge] kept ' + localOnly.length + ' unsynced local ' + t.remote);
-          if (SupabaseDB._debug) console.log('Pulled ' + converted.length + ' rows from ' + t.remote);
+          if (localOnly.length > 0) console.debug('[Pull merge] kept ' + localOnly.length + ' unsynced local ' + t.remote);
+          if (SupabaseDB._debug) console.debug('Pulled ' + converted.length + ' rows from ' + t.remote);
         }
       } catch (e) {
         console.warn('Pull failed for ' + t.remote + ':', e);
@@ -246,7 +295,7 @@ var SupabaseDB = {
     SupabaseDB.startPaymentPolling();
     SupabaseDB.startLiveSync();
     if (totalPulled > 0) {
-      if (SupabaseDB._debug) console.log('Cloud sync complete: ' + totalPulled + ' total records');
+      if (SupabaseDB._debug) console.debug('Cloud sync complete: ' + totalPulled + ' total records');
       UI.toast(totalPulled + ' records synced from cloud');
       // Refresh current page — but never wipe an open form
       var hasOpenForm = document.getElementById('inv-form') || document.getElementById('quote-form')
@@ -370,7 +419,7 @@ var SupabaseDB = {
       });
 
       ch.subscribe(function(status) {
-        if (SupabaseDB._debug) console.log('[Realtime] channel status:', status);
+        if (SupabaseDB._debug) console.debug('[Realtime] channel status:', status);
       });
       SupabaseDB._realtimeChannel = ch;
     } catch (e) { console.warn('[Realtime] failed to subscribe:', e); }

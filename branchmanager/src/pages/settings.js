@@ -1482,7 +1482,7 @@ var SettingsPage = {
     var { data: quotes, error } = await SupabaseDB.client.from('quotes').select('id, tenant_id, line_items');
     if (error) { UI.toast('Fetch failed: ' + error.message, 'error'); return; }
     if (!quotes || !quotes.length) { UI.toast('No quotes returned from Supabase — check RLS', 'error'); return; }
-    console.log('[MigrateJobber] Fetched ' + quotes.length + ' quotes');
+    console.debug('[MigrateJobber] Fetched ' + quotes.length + ' quotes');
     var withPhotos = quotes.filter(function(q) {
       if (!q.line_items || !q.line_items.length) return false;
       return q.line_items.some(function(it) {
@@ -1491,7 +1491,7 @@ var SettingsPage = {
       });
     });
     UI.toast('Found ' + withPhotos.length + ' quote(s) with base64 photos to migrate');
-    console.log('[MigrateJobber] ' + withPhotos.length + ' quotes have base64 photos');
+    console.debug('[MigrateJobber] ' + withPhotos.length + ' quotes have base64 photos');
     if (!withPhotos.length) { UI.toast('Nothing to migrate — all photos already URLs ✓'); return; }
 
     var quotesTouched = 0, photosMigrated = 0, photosFailed = 0;

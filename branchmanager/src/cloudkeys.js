@@ -66,7 +66,7 @@ var CloudKeys = {
           }
         });
         CloudKeys._suppressPush = false;
-        if (imported > 0) console.log('[CloudKeys] pulled ' + imported + ' settings from cloud');
+        if (imported > 0) console.debug('[CloudKeys] pulled ' + imported + ' settings from cloud');
       }
     } catch (e) {
       console.warn('CloudKeys.init failed:', e);

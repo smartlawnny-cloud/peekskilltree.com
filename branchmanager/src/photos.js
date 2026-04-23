@@ -244,7 +244,7 @@ var Photos = {
       Object.keys(groups).forEach(function(k) {
         localStorage.setItem(k, JSON.stringify(groups[k]));
       });
-      if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('Photos.syncFromCloud: cached ' + data.length + ' photos across ' + Object.keys(groups).length + ' records');
+      if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.debug('Photos.syncFromCloud: cached ' + data.length + ' photos across ' + Object.keys(groups).length + ' records');
     } catch (e) {
       console.warn('Photos.syncFromCloud failed:', e);
     }

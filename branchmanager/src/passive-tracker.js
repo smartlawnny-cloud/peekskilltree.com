@@ -271,7 +271,7 @@ var PassiveTracker = (function() {
         });
       }).then(function(watcherId) {
         state.watchId = watcherId;
-        console.log('[PassiveTracker] native BG tracking started, watcher', watcherId);
+        console.debug('[PassiveTracker] native BG tracking started, watcher', watcherId);
       }).catch(function(err) {
         console.warn('[PassiveTracker] native BG failed, falling back to watchPosition:', err);
         state.watchId = navigator.geolocation.watchPosition(onPosition, onError, {
@@ -287,7 +287,7 @@ var PassiveTracker = (function() {
     }
 
     state.flushInterval = setInterval(flush, S().flushIntervalMs);
-    console.log('[PassiveTracker] started (' + (isNative() ? 'native' : 'PWA') + '), session', state.sessionId);
+    console.debug('[PassiveTracker] started (' + (isNative() ? 'native' : 'PWA') + '), session', state.sessionId);
   }
 
   function stop() {
@@ -305,7 +305,7 @@ var PassiveTracker = (function() {
     flush(); // drain
     state.running = false;
     state.cluster = null;
-    console.log('[PassiveTracker] stopped');
+    console.debug('[PassiveTracker] stopped');
   }
 
   function applySettings() {
@@ -335,7 +335,7 @@ var PassiveTracker = (function() {
       if (ready) {
         clearInterval(iv);
         if (localStorage.getItem('bm-passive-track') === 'true') {
-          console.log('[PassiveTracker] auto-start from settings');
+          console.debug('[PassiveTracker] auto-start from settings');
           start();
         }
       } else if (tries > 30) {

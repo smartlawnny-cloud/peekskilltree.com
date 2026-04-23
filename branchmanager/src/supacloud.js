@@ -65,7 +65,7 @@ var CloudSync = {
 
           localStorage.setItem(localKey, JSON.stringify(converted));
           totalRows += converted.length;
-          if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: loaded ' + converted.length + ' ' + table);
+          if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.debug('CloudSync: loaded ' + converted.length + ' ' + table);
         }
       } catch (e) {
         console.warn('CloudSync: failed ' + table + ':', e);
@@ -74,7 +74,7 @@ var CloudSync = {
 
     CloudSync.syncing = false;
     CloudSync.lastSync = Date.now();
-    if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: done — ' + totalRows + ' total rows cached');
+    if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.debug('CloudSync: done — ' + totalRows + ' total rows cached');
 
     // Don't blow away an open form/detail when sync ticks. Only redirect on
     // INITIAL boot (when window._currentPage isn't set yet).
@@ -138,8 +138,16 @@ var CloudSync = {
           var record = all.find(function(r) { return r.id === id; });
           if (record && record.id) {
             sb.from(table).update(cloudChanges).eq('id', record.id).then(function(res) {
-              if (res.error) { console.warn('Cloud update error (' + table + '):', res.error.message); CloudSync._markUnsynced(); }
-            }).catch(function() { CloudSync._markUnsynced(); });
+              if (res.error) {
+                console.warn('Cloud update error (' + table + '):', res.error.message);
+                CloudSync._markUnsynced();
+                if (typeof UI !== 'undefined' && UI.toast) UI.toast('⚠ Cloud update failed (' + table + '): ' + res.error.message.slice(0, 80), 'error');
+              }
+            }).catch(function(e) {
+              CloudSync._markUnsynced();
+              console.warn('Cloud update network error (' + table + '):', e);
+              if (typeof UI !== 'undefined' && UI.toast) UI.toast('🌐 ' + table + ' update may not have saved (offline)', 'error');
+            });
           }
           return result;
         };
@@ -150,14 +158,21 @@ var CloudSync = {
         dbSection.remove = function(id) {
           var result = origRemove.call(dbSection, id);
           sb.from(table).delete().eq('id', id).then(function(res) {
-            if (res.error) { console.warn('Cloud delete error (' + table + '):', res.error.message); CloudSync._markUnsynced(); }
-          }).catch(function() { CloudSync._markUnsynced(); });
+            if (res.error) {
+              console.warn('Cloud delete error (' + table + '):', res.error.message);
+              CloudSync._markUnsynced();
+              if (typeof UI !== 'undefined' && UI.toast) UI.toast('⚠ Cloud delete failed (' + table + '): ' + res.error.message.slice(0, 80), 'error');
+            }
+          }).catch(function(e) {
+            CloudSync._markUnsynced();
+            console.warn('Cloud delete network error (' + table + '):', e);
+          });
           return result;
         };
       }
     });
 
-    if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: write methods wrapped');
+    if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.debug('CloudSync: write methods wrapped');
   },
 
   // Show unsynced indicator in topbar
@@ -223,7 +238,7 @@ var CloudSync = {
       CloudSync.wrapWrites();
       if (typeof Photos !== 'undefined' && Photos.syncFromCloud) Photos.syncFromCloud();
       if (typeof Photos !== 'undefined' && Photos.flushQueue) Photos.flushQueue();
-      if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.log('CloudSync: using cached data (' + JSON.parse(localClients).length + ' clients)');
+      if (typeof SupabaseDB !== 'undefined' && SupabaseDB._debug) console.debug('CloudSync: using cached data (' + JSON.parse(localClients).length + ' clients)');
     }
   } else if (attempts > 0) {
     setTimeout(function() { waitForSupabase(attempts - 1); }, 1000);

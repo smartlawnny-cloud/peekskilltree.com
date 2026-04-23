@@ -1,5 +1,5 @@
 {
-  "version": 353,
+  "version": 354,
   "released": "2026-04-23",
-  "notes": "Settings: added SocialPilot card (webhook OR API key), Google Business Profile card (OAuth Client ID + Connect flow). Helper functions _testSocialPilot, _gmbConnect, _gmbCheckCallback. Both collapsible with the rest of the settings."
+  "notes": "SocialBranch — native social-media suite. Dashboard/Compose/Calendar/Accounts/Analytics/Inbox tabs. Publishes via Zapier webhook today; direct GMB/Meta/YouTube as OAuth completes. 60s scheduler. Added to left nav."
 }

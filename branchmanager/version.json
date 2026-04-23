@@ -1,5 +1,5 @@
 {
-  "version": 340,
+  "version": 341,
   "released": "2026-04-22",
-  "notes": "Lucide icon migration — Settings section headers (8 collapsible summaries) swapped from emoji to Lucide icons: Business Info (building-2), Quote & Invoice Defaults (file-text), Services & Products (wrench), API Keys & Integrations (plug), Database & Storage (database), Data Import (download), Security + Admin (lock), Templates & Automation (file-edit). Added .li-hdr CSS class so inline Lucide icons in headers scale to match text. Emoji stays for toasts, status badges, and decorative/celebratory context (warmth fits the tree-service brand). Directional sample — tell me to sweep the rest if it looks right."
+  "notes": "FIX: the 'app resets every so often' problem. The SW update check runs every 15 min and USED to silently reload you within 500ms of detecting a new version — so every time I shipped (4 ships in the last hour), anyone with BM open got auto-reloaded. Now replaced with a non-intrusive bottom toast '🎉 New Branch Manager version ready · Refresh now · Later'. If a form is open, the prompt defers 2 min and retries. Tapping Later postpones 30 min. You stay in control of when to reload. Cold-load self-healing (on stale bundle detection) is unchanged — that one IS a reload, but only runs once per stale bundle."
 }

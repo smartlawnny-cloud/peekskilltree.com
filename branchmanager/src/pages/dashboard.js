@@ -426,7 +426,41 @@ var DashboardPage = {
       html += '</div>';
     }
 
-    // Lead Sources moved to Marketing page
+    // Lead Sources — small widget showing where new clients have been coming from (last 90 days)
+    try {
+      var _90ago = Date.now() - 90 * 86400000;
+      var _recentClients = DB.clients.getAll().filter(function(c) {
+        return c.createdAt && new Date(c.createdAt).getTime() >= _90ago;
+      });
+      if (_recentClients.length > 0) {
+        var _srcMap = {};
+        _recentClients.forEach(function(c) {
+          var s = (c.source && c.source.trim()) || '(unknown)';
+          _srcMap[s] = (_srcMap[s] || 0) + 1;
+        });
+        var _sorted = Object.keys(_srcMap).sort(function(a, b) { return _srcMap[b] - _srcMap[a]; });
+        var _max = _srcMap[_sorted[0]] || 1;
+        html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">'
+          +   '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+          +     '<h3 style="margin:0;font-size:16px;">📍 Lead Sources — last 90 days</h3>'
+          +     '<span style="font-size:12px;color:var(--text-light);">' + _recentClients.length + ' new client' + (_recentClients.length !== 1 ? 's' : '') + '</span>'
+          +   '</div>';
+        _sorted.slice(0, 8).forEach(function(src) {
+          var cnt = _srcMap[src];
+          var pct = Math.round((cnt / _max) * 100);
+          var isUnknown = src === '(unknown)';
+          html += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;">'
+            + '<div style="flex:0 0 140px;' + (isUnknown ? 'color:var(--text-light);font-style:italic;' : '') + '">' + UI.esc(src) + '</div>'
+            + '<div style="flex:1;background:var(--bg);height:8px;border-radius:4px;overflow:hidden;"><div style="height:100%;background:' + (isUnknown ? '#cbd5e1' : 'var(--green-dark)') + ';width:' + pct + '%;"></div></div>'
+            + '<div style="flex:0 0 32px;text-align:right;font-weight:700;">' + cnt + '</div>'
+            + '</div>';
+        });
+        if (_srcMap['(unknown)']) {
+          html += '<div style="font-size:11px;color:var(--text-light);margin-top:8px;font-style:italic;">💡 ' + _srcMap['(unknown)'] + ' new client' + (_srcMap['(unknown)'] !== 1 ? 's are' : ' is') + ' missing a Lead Source. Open the client and tag them to improve this chart.</div>';
+        }
+        html += '</div>';
+      }
+    } catch(e) { /* optional widget */ }
 
     return html;
   },

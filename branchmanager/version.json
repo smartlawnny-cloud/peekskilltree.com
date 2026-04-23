@@ -1,5 +1,5 @@
 {
-  "version": 346,
+  "version": 347,
   "released": "2026-04-22",
-  "notes": "AI Assistant voice — tap the 🎙 mic button to dictate your question (Web Speech API, same engine as Voice-to-Quote). Auto-restarts on silence so you can pause mid-sentence. Interim results show in the input as you speak. NEW: checkbox '🔊 Speak replies' reads Claude's answers back aloud via SpeechSynthesis — perfect for hands-free/driving. Toggle persists in localStorage (bm-ai-speak-replies)."
+  "notes": "Lead Source tracking fix. (1) book.html: 'source' field was mislabeled as the service type — now captures the REAL source: UTM params (utm_source/utm_campaign/utm_medium), referrer domain (Google/Facebook/Yelp/etc.), or 'Website form' as fallback. Service type moves to its own 'service' field. (2) Client form in BM now has a Lead Source dropdown (Google, Referral, Repeat, Yard sign, Website form, Facebook, Instagram, NextDoor, Yelp, Angi, Thumbtack, Drive-by, Phone, Other). (3) Dashboard: '📍 Lead Sources — last 90 days' bar chart widget. Highlights how many clients lack a source so you know who to tag."
 }

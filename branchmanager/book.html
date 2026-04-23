@@ -256,7 +256,35 @@ function submitRequest(e) {
         email: data.email,
         phone: data.phone,
         property: data.address,
-        source: data.service,
+        // Real lead source — parse UTM params + referrer. Falls back to "Website form".
+        source: (function() {
+          try {
+            var p = new URLSearchParams(location.search);
+            var u = p.get('utm_source');
+            if (u) {
+              var c = p.get('utm_campaign');
+              var m = p.get('utm_medium');
+              return 'utm:' + u + (c ? '/' + c : '') + (m ? ' (' + m + ')' : '');
+            }
+            var ref = document.referrer || '';
+            if (ref) {
+              var host = '';
+              try { host = new URL(ref).hostname; } catch(e) {}
+              if (host && host.indexOf('peekskilltree.com') < 0) {
+                if (/google/.test(host))   return 'Google (organic)';
+                if (/facebook|fb\./i.test(host)) return 'Facebook';
+                if (/instagram/.test(host)) return 'Instagram';
+                if (/yelp/.test(host))     return 'Yelp';
+                if (/bing/.test(host))     return 'Bing';
+                if (/duck|ddg/.test(host)) return 'DuckDuckGo';
+                return 'Referrer: ' + host;
+              }
+            }
+            return 'Website form';
+          } catch(e) { return 'Website form'; }
+        })(),
+        // Service type separately so we can see BOTH: where they came from AND what they want.
+        service: data.service,
         notes: data.details,
         status: 'new',
         created_at: data.submitted,

@@ -582,7 +582,26 @@ var ClientsPage = {
       + UI.formField('Email', 'email', 'c-email', c.email, { placeholder: 'email@example.com' })
       + '</div>'
       + UI.formField('Address', 'text', 'c-address', c.address, { placeholder: 'Street, City, State ZIP' })
-      + UI.formField('Status', 'select', 'c-status', c.status || 'lead', { options: [{value:'lead',label:'Lead'},{value:'active',label:'Active'}] })
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+      +   UI.formField('Status', 'select', 'c-status', c.status || 'lead', { options: [{value:'lead',label:'Lead'},{value:'active',label:'Active'}] })
+      +   UI.formField('Lead Source', 'select', 'c-source', c.source || '', { options: [
+            { value: '',             label: '— Select where they came from —' },
+            { value: 'Google',       label: 'Google (search / GBP)' },
+            { value: 'Referral',     label: 'Word of mouth / Referral' },
+            { value: 'Repeat',       label: 'Repeat customer' },
+            { value: 'Yard sign',    label: 'Yard sign / Truck signage' },
+            { value: 'Website form', label: 'Website booking form' },
+            { value: 'Facebook',     label: 'Facebook' },
+            { value: 'Instagram',    label: 'Instagram' },
+            { value: 'NextDoor',     label: 'NextDoor' },
+            { value: 'Yelp',         label: 'Yelp' },
+            { value: 'Angie',        label: 'Angi / HomeAdvisor' },
+            { value: 'Thumbtack',    label: 'Thumbtack' },
+            { value: 'Drive-by',     label: 'Drive-by (saw us working)' },
+            { value: 'Phone',        label: 'Direct call' },
+            { value: 'Other',        label: 'Other' }
+          ] })
+      + '</div>'
       + UI.formField('Tags', 'text', 'c-tags', (c.tags || []).join(', '), { placeholder: 'residential, commercial (comma separated)' })
       + UI.formField('Notes', 'textarea', 'c-notes', c.notes, { placeholder: 'Internal notes...' })
       + '</form>';
@@ -608,6 +627,7 @@ var ClientsPage = {
       email: document.getElementById('c-email').value.trim(),
       address: document.getElementById('c-address').value.trim(),
       status: document.getElementById('c-status').value,
+      source: (document.getElementById('c-source') || {}).value || '',
       tags: document.getElementById('c-tags').value.split(',').map(function(t) { return t.trim(); }).filter(Boolean),
       notes: document.getElementById('c-notes').value.trim()
     };

@@ -48,6 +48,11 @@ var SocialBranch = {
 
   render: function() {
     var self = SocialBranch;
+    // Auto-import SocialPilot history on first-ever visit (no UI prompt)
+    if (!localStorage.getItem('bm-sb-sp-imported')) {
+      localStorage.setItem('bm-sb-sp-imported', '1');
+      setTimeout(function() { SocialBranch.importFromSocialPilot(true); }, 800);
+    }
     var tab = self._tab || 'dashboard';
     var html = '';
 
@@ -236,7 +241,21 @@ var SocialBranch = {
       + '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">Leave empty to publish immediately.</div>'
       + '</div>';
 
-    html += '<div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">'
+    // Hashtag groups + AI + library row
+    var hgroups = SocialBranch._getHashtagGroups();
+    html += '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+      + '<button id="sb-ai-btn" type="button" onclick="SocialBranch._aiCaption()" style="background:var(--white);border:1px solid var(--border);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;">AI Caption</button>'
+      + '<button type="button" onclick="SocialBranch._saveToContentLib()" style="background:var(--white);border:1px solid var(--border);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;">Save to Library</button>'
+      + '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">'
+      +   '<span style="font-size:11px;color:var(--text-light);">Hashtags:</span>'
+      +   (hgroups.length
+            ? hgroups.map(function(g){ return '<button type="button" onclick="SocialBranch._insertHashtagGroup(\'' + g.id + '\')" title="Insert ' + UI.esc(g.tags) + '" style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:11px;cursor:pointer;">' + UI.esc(g.name) + '</button>'; }).join('')
+            : '<span style="font-size:11px;color:var(--text-light);">none yet</span>')
+      +   '<button type="button" onclick="SocialBranch._createHashtagGroup()" style="background:none;border:1px dashed var(--border);padding:4px 10px;border-radius:14px;font-size:11px;cursor:pointer;color:var(--text-light);">+ New</button>'
+      + '</div>'
+      + '</div>';
+
+    html += '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="SocialBranch._savePost(\'post\')" class="btn btn-primary" style="font-size:14px;">Publish / Schedule</button>'
       + '<button onclick="SocialBranch._savePost(\'draft\')" style="background:var(--white);border:1px solid var(--border);padding:10px 16px;border-radius:8px;font-size:14px;cursor:pointer;">Save draft</button>'
       + '<button onclick="SocialBranch._clearDraft()" style="background:none;border:none;color:var(--text-light);padding:10px;cursor:pointer;font-size:13px;">Cancel</button>'
@@ -632,12 +651,42 @@ var SocialBranch = {
 
     // GMB row
     html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">'
-      + '<div><div style="font-weight:700;font-size:14px;">🔵 Google Business Profile</div>'
+      + '<div><div style="font-weight:700;font-size:14px;">Google Business Profile</div>'
       + '<div style="font-size:12px;color:var(--text-light);">' + (gmbToken ? 'Connected' : 'Not connected') + '</div></div>'
       + '<button onclick="loadPage(\'settings\')" style="background:var(--white);border:1px solid var(--border);padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;">Configure</button>'
       + '</div>';
 
     html += '</div>';
+
+    // SocialPilot Import + Content Library panel
+    var allPosts = SocialBranch._getPosts();
+    var spImported = allPosts.filter(function(p){ return p.import_source === 'socialpilot-html-scrape'; }).length;
+    var libItems = SocialBranch._getContentLib();
+    var hGroups = SocialBranch._getHashtagGroups();
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;">'
+      + '<h3 style="margin:0 0 12px;font-size:16px;">Tools</h3>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">'
+      // SP Import
+      +   '<div style="padding:12px;border:1px solid var(--border);border-radius:8px;">'
+      +     '<div style="font-weight:700;font-size:14px;margin-bottom:4px;">Import SocialPilot History</div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">57 posts scraped Apr 23. ' + (spImported > 0 ? spImported + ' already imported.' : 'Not imported yet.') + '</div>'
+      +     '<button id="sb-sp-import-btn" onclick="SocialBranch.importFromSocialPilot()" ' + (spImported > 0 ? 'disabled' : '') + ' class="btn btn-outline" style="font-size:12px;">' + (spImported > 0 ? 'Already imported' : 'Import now') + '</button>'
+      +   '</div>'
+      // Content Library summary
+      +   '<div style="padding:12px;border:1px solid var(--border);border-radius:8px;">'
+      +     '<div style="font-weight:700;font-size:14px;margin-bottom:4px;">Content Library</div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">' + libItems.length + ' saved caption' + (libItems.length === 1 ? '' : 's') + '. Use "Save to Library" in Compose to add.</div>'
+      +     (libItems.length ? '<div style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;">' + libItems.map(function(it) { return '<div style="display:flex;gap:6px;align-items:center;padding:4px 6px;font-size:12px;"><button onclick="SocialBranch._insertFromContentLib(\'' + it.id + '\')" style="flex:1;text-align:left;background:none;border:none;cursor:pointer;font-size:12px;">' + UI.esc(it.label) + '</button><button onclick="SocialBranch._deleteFromContentLib(\'' + it.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:11px;">remove</button></div>'; }).join('') + '</div>' : '')
+      +   '</div>'
+      // Hashtag Groups summary
+      +   '<div style="padding:12px;border:1px solid var(--border);border-radius:8px;">'
+      +     '<div style="font-weight:700;font-size:14px;margin-bottom:4px;">Hashtag Groups</div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">' + hGroups.length + ' group' + (hGroups.length === 1 ? '' : 's') + '. Insert with one click from Compose.</div>'
+      +     (hGroups.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + hGroups.map(function(g){ return '<span style="display:inline-flex;gap:4px;align-items:center;background:var(--bg);border-radius:12px;padding:3px 8px;font-size:11px;">' + UI.esc(g.name) + '<button onclick="SocialBranch._deleteHashtagGroup(\'' + g.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:11px;">×</button></span>'; }).join('') + '</div>' : '')
+      +     '<button onclick="SocialBranch._createHashtagGroup()" style="margin-top:6px;background:none;border:1px dashed var(--border);padding:4px 10px;border-radius:14px;font-size:11px;cursor:pointer;color:var(--text-light);">+ New group</button>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
 
     // Network map
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;">'
@@ -755,8 +804,8 @@ var SocialBranch = {
   // SOCIALPILOT IMPORT — reads public/sp_scrape_initial.json
   // and merges into bm-social-posts with import_source tag.
   // ─────────────────────────────────────────────────────────
-  importFromSocialPilot: function() {
-    if (!confirm('Import SocialPilot history into BM?\n\nThis will add any posts not already present (dedup by caption). Your existing posts are untouched.')) return;
+  importFromSocialPilot: function(silent) {
+    if (!silent && !confirm('Import SocialPilot history into BM?\n\nThis will add any posts not already present (dedup by caption). Your existing posts are untouched.')) return;
     var btn = document.getElementById('sb-sp-import-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Importing…'; }
     fetch('sp_scrape_initial.json', { cache: 'no-cache' })

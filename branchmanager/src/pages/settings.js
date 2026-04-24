@@ -403,6 +403,78 @@ var SettingsPage = {
       + '<div><strong style="font-size:13px;">Auto-Send Review Requests</strong><div style="font-size:11px;color:var(--text-light);">Automatically email clients after job/payment (requires SendGrid)</div></div></label>'
       + '</div>';
 
+    // ── Email & SMS Templates ────────────────────────────────────────────────
+    // Lets Doug customize the *content* of automated customer comms without
+    // editing code. Stored in localStorage as `bm-comm-templates` (JSON).
+    // Supported tokens in bodies: {firstName} {name} {service} {address}
+    // {phone} {quoteTotal} {invoiceTotal} {jobDate} {reviewUrl}
+    var _tpl = (function(){
+      try { return JSON.parse(localStorage.getItem('bm-comm-templates') || '{}') || {}; } catch(e){ return {}; }
+    })();
+    var _defaultTpl = {
+      bookingConfirm_email_subject:   'We got your request — {company}',
+      bookingConfirm_email_body:      'Hi {firstName},\n\nThanks for reaching out! We got your request for {service} at {address}.\n\nWe\'ll reach out at {phone} within 2 business hours to schedule a free estimate.\n\n— Doug & Catherine\n{company}',
+      bookingConfirm_sms:             'Hi {firstName}, got your request for {service}. We\'ll text/call at {phone} within 2 business hours. — {company}',
+      visitReminder_sms_1hr:          'Hi {firstName}, {company} is heading to {address} in about an hour for your {service}. Call/text (914) 391-5233 with any questions.',
+      visitReminder_email_1day:       'Hi {firstName},\n\nReminder: we\'re scheduled at {address} tomorrow for {service}. Please clear any fragile items and ensure access.\n\n— {company}',
+      quoteFollowUp_5day:             'Hi {firstName}, just checking in on the {service} quote we sent. Any questions? Happy to walk through it. — {company}',
+      quoteFollowUp_10day:            'Hi {firstName}, your quote expires soon. Give us a shout if you want to move forward or have questions. — {company}',
+      invoiceReminder_1day_overdue:   'Hi {firstName}, friendly reminder that invoice #{invoiceNum} for {invoiceTotal} is past due. Pay online: {payUrl}. Thanks! — {company}',
+      invoiceReminder_4day_overdue:   'Hi {firstName}, invoice #{invoiceNum} is 4 days overdue. Please pay at {payUrl} or reach out if there\'s an issue. — {company}',
+      reviewRequest_email:            'Hi {firstName},\n\nThanks for trusting us with your {service}! If you were happy with our work, a Google review would mean the world: {reviewUrl}\n\n— Doug & Catherine\n{company}'
+    };
+    function _tpv(k){ return (_tpl[k] != null) ? _tpl[k] : _defaultTpl[k]; }
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      + '<h3 style="margin:0;">Emails & Text Messages</h3>'
+      + '<button onclick="SettingsPage._saveCommTemplates()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<p style="font-size:12px;color:var(--text-light);margin:0 0 14px;">Edit the automated messages customers receive. Tokens like <code>{firstName}</code>, <code>{service}</code>, <code>{address}</code>, <code>{phone}</code>, <code>{invoiceTotal}</code>, <code>{reviewUrl}</code>, <code>{company}</code> are filled at send time.</p>';
+    [
+      ['bookingConfirm_email_subject', 'Booking confirmation — email subject', 'input'],
+      ['bookingConfirm_email_body',    'Booking confirmation — email body',    'textarea'],
+      ['bookingConfirm_sms',           'Booking confirmation — SMS',           'textarea'],
+      ['visitReminder_sms_1hr',        'Visit reminder — SMS (1 hour before)', 'textarea'],
+      ['visitReminder_email_1day',     'Visit reminder — email (1 day before)','textarea'],
+      ['quoteFollowUp_5day',           'Quote follow-up — 5 days after sent',  'textarea'],
+      ['quoteFollowUp_10day',          'Quote follow-up — 10 days after sent', 'textarea'],
+      ['invoiceReminder_1day_overdue', 'Invoice reminder — 1 day past due',    'textarea'],
+      ['invoiceReminder_4day_overdue', 'Invoice reminder — 4 days past due',   'textarea'],
+      ['reviewRequest_email',          'Review request — email',               'textarea']
+    ].forEach(function(t){
+      var id = 'tpl-' + t[0];
+      var val = _tpv(t[0]);
+      html += '<div style="margin-bottom:12px;">'
+        +   '<label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">' + t[1] + '</label>'
+        +   (t[2] === 'textarea'
+              ? '<textarea id="' + id + '" rows="' + Math.max(3, (val.match(/\n/g)||[]).length + 2) + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:vertical;">' + UI.esc(val) + '</textarea>'
+              : '<input type="text" id="' + id + '" value="' + UI.esc(val) + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;">')
+        + '</div>';
+    });
+    html += '<div style="font-size:11px;color:var(--text-light);margin-top:8px;">Leave a field blank to fall back to the built-in default. Automation engines (request-notify, visit-reminders, review-send) read from these at send time.</div>'
+      + '</div>';
+
+    // ── Client Hub — portal branding ───────────────────────────────────────
+    var _hub = (function(){ try { return JSON.parse(localStorage.getItem('bm-client-hub') || '{}') || {}; } catch(e){ return {}; } })();
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      + '<h3 style="margin:0;">Client Hub</h3>'
+      + '<button onclick="SettingsPage._saveClientHub()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<p style="font-size:12px;color:var(--text-light);margin:0 0 14px;">Branding + copy for the public client portal at <code>client.html?id=CLIENT_UUID</code>.</p>'
+      + '<div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Welcome Headline</label>'
+      +   '<input type="text" id="hub-headline" value="' + UI.esc(_hub.headline || 'Hello, {firstName}!') + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Subheading</label>'
+      +   '<input type="text" id="hub-sub" value="' + UI.esc(_hub.sub || 'Your client portal — quotes, appointments & invoices') + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">'
+      + [['showQuotes', 'Show Pending Quotes'], ['showInvoices', 'Show Invoices Due'], ['showUpcoming', 'Show Upcoming Appointments'], ['showHistory', 'Show Service History'], ['showPhotos', 'Show Property Photos'], ['showDocs', 'Show Documents'], ['showContact', 'Show Contact Card']].map(function(x){
+          var on = _hub[x[0]] !== false;
+          return '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">'
+            + '<input type="checkbox" id="hub-' + x[0] + '"' + (on ? ' checked' : '') + '> ' + x[1] + '</label>';
+        }).join('')
+      + '</div>'
+      + '</div>';
+
     // ── Regional Settings ──
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin:0 0 16px;">Regional Settings</h3>'
@@ -1987,6 +2059,30 @@ var SettingsPage = {
     localStorage.setItem('bm-quote-validity', document.getElementById('qd-validity').value);
     localStorage.setItem('bm-show-line-prices', document.getElementById('qd-show-prices').checked ? 'true' : 'false');
     UI.toast('Quote & invoice defaults saved');
+  },
+
+  _saveCommTemplates: function() {
+    var keys = ['bookingConfirm_email_subject','bookingConfirm_email_body','bookingConfirm_sms','visitReminder_sms_1hr','visitReminder_email_1day','quoteFollowUp_5day','quoteFollowUp_10day','invoiceReminder_1day_overdue','invoiceReminder_4day_overdue','reviewRequest_email'];
+    var out = {};
+    keys.forEach(function(k){
+      var el = document.getElementById('tpl-' + k);
+      if (el && el.value.trim()) out[k] = el.value;
+    });
+    localStorage.setItem('bm-comm-templates', JSON.stringify(out));
+    UI.toast('Message templates saved');
+  },
+
+  _saveClientHub: function() {
+    var out = {
+      headline: (document.getElementById('hub-headline').value || '').trim(),
+      sub:      (document.getElementById('hub-sub').value || '').trim()
+    };
+    ['showQuotes','showInvoices','showUpcoming','showHistory','showPhotos','showDocs','showContact'].forEach(function(k){
+      var el = document.getElementById('hub-' + k);
+      out[k] = el ? !!el.checked : true;
+    });
+    localStorage.setItem('bm-client-hub', JSON.stringify(out));
+    UI.toast('Client Hub settings saved');
   },
 
   _saveBookingSettings: function() {

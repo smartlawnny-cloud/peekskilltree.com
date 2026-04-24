@@ -121,6 +121,19 @@ async function init() {
   }
 }
 
+// Read Client Hub settings from localStorage (set in app Settings). Falls back
+// to sensible defaults so this works even when the hub is opened in a browser
+// that's never run the main app.
+function _hubPrefs() {
+  try { return JSON.parse(localStorage.getItem('bm-client-hub') || '{}') || {}; } catch(e){ return {}; }
+}
+function _hubBool(key, dflt) { var p = _hubPrefs(); return p[key] == null ? dflt : !!p[key]; }
+function _hubText(key, dflt) { var p = _hubPrefs(); return p[key] || dflt; }
+function _tokens(s, client) {
+  var first = ((client.name || client.first_name || '').split(' ')[0]) || 'there';
+  return (s || '').replace(/\{firstName\}/g, first).replace(/\{company\}/g, BM_CONFIG.companyName);
+}
+
 function render(client, quotes, jobs, invoices, photos) {
   var name = client.name || (client.first_name + ' ' + client.last_name).trim();
   var pendingQuotes = quotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
@@ -129,11 +142,13 @@ function render(client, quotes, jobs, invoices, photos) {
 
   var html = '';
 
-  // Header
+  // Header — honors Client Hub settings for headline + sub
+  var headline = _tokens(_hubText('headline', 'Hello, {firstName}!'), client);
+  var subline  = _tokens(_hubText('sub',       'Your client portal — quotes, appointments & invoices'), client);
   html += '<div class="header">'
     + '<div style="font-size:13px;opacity:.75;margin-bottom:6px;">' + BM_CONFIG.companyName + '</div>'
-    + '<h1>Hello, ' + (name.split(' ')[0] || 'there') + '!</h1>'
-    + '<p>Your client portal — quotes, appointments & invoices</p>'
+    + '<h1>' + headline + '</h1>'
+    + '<p>' + subline + '</p>'
     + '</div>';
 
   // Alert: pending quotes
@@ -154,7 +169,7 @@ function render(client, quotes, jobs, invoices, photos) {
   }
 
   // Pending Quotes
-  if (pendingQuotes.length > 0) {
+  if (pendingQuotes.length > 0 && _hubBool('showQuotes', true)) {
     html += '<div class="card"><h3>Quotes Awaiting Approval</h3>';
     pendingQuotes.forEach(function(q) {
       html += '<div class="row">'
@@ -172,7 +187,7 @@ function render(client, quotes, jobs, invoices, photos) {
   }
 
   // Upcoming Appointments
-  if (upcomingJobs.length > 0) {
+  if (upcomingJobs.length > 0 && _hubBool('showUpcoming', true)) {
     html += '<div class="card"><h3>Upcoming Appointments</h3>';
     upcomingJobs.forEach(function(j) {
       html += '<div class="row">'
@@ -185,7 +200,7 @@ function render(client, quotes, jobs, invoices, photos) {
   }
 
   // Unpaid Invoices
-  if (unpaidInvoices.length > 0) {
+  if (unpaidInvoices.length > 0 && _hubBool('showInvoices', true)) {
     html += '<div class="card"><h3>Invoices Due</h3>';
     unpaidInvoices.forEach(function(i) {
       html += '<div class="row">'
@@ -203,7 +218,7 @@ function render(client, quotes, jobs, invoices, photos) {
 
   // Job History
   var pastJobs = jobs.filter(function(j) { return j.status === 'completed'; }).slice(0, 5);
-  if (pastJobs.length > 0) {
+  if (pastJobs.length > 0 && _hubBool('showHistory', true)) {
     html += '<div class="card"><h3>Service History</h3>';
     pastJobs.forEach(function(j) {
       html += '<div class="row">'
@@ -216,7 +231,7 @@ function render(client, quotes, jobs, invoices, photos) {
   }
 
   // Photos — from past quotes + jobs
-  if (photos && photos.length) {
+  if (photos && photos.length && _hubBool('showPhotos', true)) {
     html += '<div class="card"><h3>Property Photos</h3>'
       + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">';
     photos.slice(0, 24).forEach(function(p){
@@ -230,7 +245,7 @@ function render(client, quotes, jobs, invoices, photos) {
   // Documents — quote PDFs + invoice PDFs via existing approve/pay pages
   var allQuotes = quotes.filter(function(q){ return q.status !== 'draft'; });
   var allInvoices = invoices.filter(function(i){ return i.status !== 'draft'; });
-  if (allQuotes.length || allInvoices.length) {
+  if ((allQuotes.length || allInvoices.length) && _hubBool('showDocs', true)) {
     html += '<div class="card"><h3>Documents</h3>';
     allQuotes.slice(0, 10).forEach(function(q){
       html += '<div class="row">'
@@ -248,6 +263,7 @@ function render(client, quotes, jobs, invoices, photos) {
   }
 
   // Contact & new request
+  if (_hubBool('showContact', true))
   html += '<div class="card"><h3>Get in Touch</h3>'
     + '<p style="font-size:13px;color:#666;margin-bottom:12px;">Need a new estimate or have a question? Reach out anytime.</p>'
     + '<div class="contact-bar">'

@@ -13,15 +13,32 @@
 var SocialBranch = {
   _tab: 'dashboard',
   STATUS: { DRAFT: 'draft', SCHEDULED: 'scheduled', POSTING: 'posting', POSTED: 'posted', FAILED: 'failed' },
+  // accepts: 'image' | 'video' | 'both'
   NETWORKS: [
-    { id: 'gmb',       name: 'Google Business',  icon: '🔵', color: '#4285F4' },
-    { id: 'facebook',  name: 'Facebook',         icon: '📘', color: '#1877F2' },
-    { id: 'instagram', name: 'Instagram',        icon: '📸', color: '#E4405F' },
-    { id: 'youtube',   name: 'YouTube',          icon: '📹', color: '#FF0000' },
-    { id: 'linkedin',  name: 'LinkedIn',         icon: '💼', color: '#0A66C2' },
-    { id: 'tiktok',    name: 'TikTok',           icon: '🎵', color: '#000000' },
-    { id: 'x',         name: 'X (Twitter)',      icon: '𝕏', color: '#000000' }
+    { id: 'gmb',       name: 'Google Business',  icon: '🔵', color: '#4285F4', accepts: 'image' },
+    { id: 'facebook',  name: 'Facebook',         icon: '📘', color: '#1877F2', accepts: 'both'  },
+    { id: 'instagram', name: 'Instagram',        icon: '📸', color: '#E4405F', accepts: 'both'  },
+    { id: 'youtube',   name: 'YouTube',          icon: '📹', color: '#FF0000', accepts: 'video' },
+    { id: 'linkedin',  name: 'LinkedIn',         icon: '💼', color: '#0A66C2', accepts: 'both'  },
+    { id: 'tiktok',    name: 'TikTok',           icon: '🎵', color: '#000000', accepts: 'video' },
+    { id: 'x',         name: 'X (Twitter)',      icon: '𝕏',  color: '#000000', accepts: 'both'  }
   ],
+
+  // Detect media type from a data URL or http URL extension
+  _detectMediaType: function(src) {
+    if (!src) return 'none';
+    if (/^data:video\//i.test(src)) return 'video';
+    if (/^data:image\//i.test(src)) return 'image';
+    if (/\.(mp4|mov|webm|m4v)($|\?)/i.test(src)) return 'video';
+    if (/\.(jpe?g|png|webp|gif|heic)($|\?)/i.test(src)) return 'image';
+    return 'image'; // default
+  },
+  _detectBatchMediaType: function(list) {
+    if (!list || !list.length) return 'none';
+    var types = list.map(SocialBranch._detectMediaType);
+    if (types.some(function(t){ return t === 'video'; })) return 'video';
+    return 'image';
+  },
 
   render: function() {
     var self = SocialBranch;
@@ -190,16 +207,23 @@ var SocialBranch = {
     html += '<div style="margin-top:16px;"><label style="display:block;font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Post to networks</label>'
       + '<div style="display:flex;flex-wrap:wrap;gap:8px;" id="sb-networks">';
     var connected = SocialBranch._getConnectedNetworks();
+    var draftMediaType = SocialBranch._detectBatchMediaType(draft.media || []);
     SocialBranch.NETWORKS.forEach(function(n) {
       var isConnected = connected.indexOf(n.id) >= 0;
       var checked = (draft.networks || []).indexOf(n.id) >= 0;
-      html += '<label style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;border:2px solid ' + (checked ? n.color : 'var(--border)') + ';background:' + (checked ? n.color + '14' : (isConnected ? 'var(--white)' : '#f9fafb')) + ';cursor:' + (isConnected ? 'pointer' : 'not-allowed') + ';opacity:' + (isConnected ? 1 : 0.5) + ';font-size:13px;font-weight:600;">'
-        + '<input type="checkbox" value="' + n.id + '" ' + (checked ? 'checked' : '') + ' ' + (isConnected ? '' : 'disabled') + ' style="margin:0;">'
+      // Media compatibility gate: hide network if it can't accept the attached media type
+      var compat = n.accepts === 'both' || draftMediaType === 'none' || n.accepts === draftMediaType;
+      var disabled = !isConnected || !compat;
+      var reason = !isConnected ? '(not connected)' : (!compat ? (n.accepts === 'video' ? '(needs video)' : '(photo only)') : '');
+      html += '<label data-net="' + n.id + '" data-accepts="' + n.accepts + '" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;border:2px solid ' + (checked ? n.color : 'var(--border)') + ';background:' + (checked ? n.color + '14' : (disabled ? '#f9fafb' : 'var(--white)')) + ';cursor:' + (disabled ? 'not-allowed' : 'pointer') + ';opacity:' + (disabled ? 0.45 : 1) + ';font-size:13px;font-weight:600;">'
+        + '<input type="checkbox" value="' + n.id + '" ' + (checked && !disabled ? 'checked' : '') + ' ' + (disabled ? 'disabled' : '') + ' style="margin:0;">'
         + n.icon + ' ' + n.name
-        + (isConnected ? '' : ' <span style="font-size:10px;color:var(--text-light);">(not connected)</span>')
+        + (reason ? ' <span style="font-size:10px;color:var(--text-light);">' + reason + '</span>' : '')
         + '</label>';
     });
-    html += '</div></div>';
+    html += '</div>'
+      + '<div id="sb-media-type-hint" style="font-size:11px;color:var(--text-light);margin-top:6px;">' + (draftMediaType === 'video' ? '🎥 Video detected — GMB excluded (no video support).' : draftMediaType === 'image' ? '🖼 Photo detected — YouTube/TikTok hidden.' : 'Attach media to enable more networks.') + '</div>'
+      + '</div>';
 
     html += '<div style="margin-top:16px;"><label style="display:block;font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Schedule (optional)</label>'
       + '<input type="datetime-local" id="sb-schedule" value="' + (draft.scheduledAt ? new Date(draft.scheduledAt).toISOString().slice(0,16) : '') + '" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
@@ -248,11 +272,23 @@ var SocialBranch = {
     SocialBranch._draftMedia = media.slice();
     if (media.length === 0) { host.innerHTML = '<div style="color:var(--text-light);font-size:12px;padding:12px;">No media attached yet.</div>'; return; }
     host.innerHTML = media.map(function(src, i) {
+      var type = SocialBranch._detectMediaType(src);
+      var preview = type === 'video'
+        ? '<video src="' + UI.esc(src) + '" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video><div style="position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;">🎥</div>'
+        : '<img src="' + UI.esc(src) + '" style="width:100%;height:100%;object-fit:cover;">';
       return '<div style="position:relative;width:84px;height:84px;border-radius:6px;overflow:hidden;background:var(--bg);">'
-        + '<img src="' + UI.esc(src) + '" style="width:100%;height:100%;object-fit:cover;">'
+        + preview
         + '<button onclick="SocialBranch._removeMedia(' + i + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;">×</button>'
         + '</div>';
     }).join('');
+    // Re-render compose network checkboxes when media type changes
+    if (document.getElementById('sb-networks') && SocialBranch._tab === 'compose') {
+      // Trigger re-render to recompute compat state
+      var ta = document.getElementById('sb-caption');
+      var captionBefore = ta ? ta.value : '';
+      SocialBranch._editingPost = Object.assign({}, SocialBranch._editingPost || {}, { caption: captionBefore, media: media });
+      loadPage('socialbranch');
+    }
   },
 
   _removeMedia: function(i) {
@@ -363,13 +399,19 @@ var SocialBranch = {
     // Instagram/GMB/Meta APIs require PUBLIC image URLs, not base64. Upload any
     // data-URL media to Supabase Storage → public URL → send that to webhook.
     SocialBranch._uploadMediaToPublicUrls(post.media || []).then(function(publicMedia) {
+      var mediaType = SocialBranch._detectBatchMediaType(publicMedia);
       var payload = {
         id: post.id,
         caption: post.caption,
-        imageUrl: publicMedia[0] || '',
+        imageUrl: mediaType === 'image' ? (publicMedia[0] || '') : '',
+        videoUrl: mediaType === 'video' ? (publicMedia[0] || '') : '',
+        mediaUrl: publicMedia[0] || '',
+        mediaType: mediaType,
         media: publicMedia,
         platforms: post.networks,
-        scheduledAt: post.scheduledAt || ''
+        scheduledAt: post.scheduledAt || '',
+        // YouTube-specific: first 100 chars of caption as title
+        youtubeTitle: (post.caption || '').substring(0, 100)
       };
 
       if (webhook) {

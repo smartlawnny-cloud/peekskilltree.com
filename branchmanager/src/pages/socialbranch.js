@@ -359,45 +359,88 @@ var SocialBranch = {
   // ─────────────────────────────────────────────────────────
   _publishNow: function(post) {
     var webhook = localStorage.getItem('bm-socialpilot-webhook') || '';
-    var gmbToken = localStorage.getItem('bm-gmb-access-token') || '';
 
-    var payload = {
-      id: post.id,
-      caption: post.caption,
-      imageUrl: (post.media || [])[0] || '',
-      media: post.media || [],
-      platforms: post.networks,
-      scheduledAt: post.scheduledAt || ''
-    };
+    // Instagram/GMB/Meta APIs require PUBLIC image URLs, not base64. Upload any
+    // data-URL media to Supabase Storage → public URL → send that to webhook.
+    SocialBranch._uploadMediaToPublicUrls(post.media || []).then(function(publicMedia) {
+      var payload = {
+        id: post.id,
+        caption: post.caption,
+        imageUrl: publicMedia[0] || '',
+        media: publicMedia,
+        platforms: post.networks,
+        scheduledAt: post.scheduledAt || ''
+      };
 
-    // For v1: if ANY webhook is set, use it for all. When direct APIs are wired,
-    // we'll route per-network here.
-    if (webhook) {
-      fetch(webhook, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
-        .then(function(r) {
-          post.status = r.ok ? 'posted' : 'failed';
-          post.postedAt = new Date().toISOString();
-          post.results = { httpStatus: r.status, backend: 'webhook' };
-          SocialBranch._upsertPost(post);
-          UI.toast(r.ok ? '✅ Post sent' : '⚠️ Post failed — check webhook', r.ok ? 'success' : 'error');
-          SocialBranch._goTab('dashboard');
-        })
-        .catch(function(e) {
-          post.status = 'failed';
-          post.results = { error: String(e.message || e), backend: 'webhook' };
-          SocialBranch._upsertPost(post);
-          UI.toast('❌ Network error', 'error');
-          SocialBranch._goTab('dashboard');
-        });
-      return;
-    }
+      if (webhook) {
+        fetch(webhook, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+          .then(function(r) {
+            post.status = r.ok ? 'posted' : 'failed';
+            post.postedAt = new Date().toISOString();
+            post.results = { httpStatus: r.status, backend: 'webhook', publicMedia: publicMedia };
+            SocialBranch._upsertPost(post);
+            UI.toast(r.ok ? '✅ Post sent' : '⚠️ Post failed — check webhook', r.ok ? 'success' : 'error');
+            SocialBranch._goTab('dashboard');
+          })
+          .catch(function(e) {
+            post.status = 'failed';
+            post.results = { error: String(e.message || e), backend: 'webhook' };
+            SocialBranch._upsertPost(post);
+            UI.toast('❌ Network error', 'error');
+            SocialBranch._goTab('dashboard');
+          });
+        return;
+      }
 
-    // No webhook, no direct APIs yet — save as draft with a note
-    post.status = 'draft';
-    post.results = { note: 'No backend configured. Connect a webhook in Accounts or wait for direct APIs.' };
-    SocialBranch._upsertPost(post);
-    UI.toast('⚠️ Saved as draft — connect a backend in Accounts tab', 'warn');
-    SocialBranch._goTab('accounts');
+      // No webhook, no direct APIs yet — save as draft
+      post.status = 'draft';
+      post.results = { note: 'No backend configured. Connect a webhook in Accounts or wait for direct APIs.' };
+      SocialBranch._upsertPost(post);
+      UI.toast('⚠️ Saved as draft — connect a backend in Accounts tab', 'warn');
+      SocialBranch._goTab('accounts');
+    }).catch(function(err) {
+      post.status = 'failed';
+      post.results = { error: 'Media upload failed: ' + String(err.message || err) };
+      SocialBranch._upsertPost(post);
+      UI.toast('❌ Couldn\'t upload media: ' + String(err.message || err), 'error');
+      SocialBranch._goTab('dashboard');
+    });
+  },
+
+  // Upload any base64/data-URL media to Supabase Storage and return an array
+  // of public URLs. If an item is already a public URL, pass it through.
+  _uploadMediaToPublicUrls: function(media) {
+    if (!media || !media.length) return Promise.resolve([]);
+    var url = localStorage.getItem('bm-supabase-url') || '';
+    var key = localStorage.getItem('bm-supabase-key') || '';
+    if (!url || !key) return Promise.reject(new Error('Supabase not configured'));
+    var bucket = 'social-media';
+    return Promise.all(media.map(function(src, i) {
+      // Already a public URL? pass through.
+      if (/^https?:\/\//i.test(src)) return Promise.resolve(src);
+      if (!/^data:/.test(src)) return Promise.reject(new Error('Unsupported media source at index ' + i));
+      // Parse data URL
+      var match = /^data:([^;]+);base64,(.+)$/.exec(src);
+      if (!match) return Promise.reject(new Error('Bad data URL at index ' + i));
+      var contentType = match[1];
+      var b64 = match[2];
+      var ext = (contentType.split('/')[1] || 'bin').replace(/\+.+$/, '');
+      var filename = 'sb_' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '.' + ext;
+      // Decode base64 to Blob
+      var bin = atob(b64);
+      var bytes = new Uint8Array(bin.length);
+      for (var j = 0; j < bin.length; j++) bytes[j] = bin.charCodeAt(j);
+      var blob = new Blob([bytes], { type: contentType });
+      var uploadUrl = url.replace(/\/$/, '') + '/storage/v1/object/' + bucket + '/' + filename;
+      return fetch(uploadUrl, {
+        method: 'POST',
+        headers: { 'apikey': key, 'Authorization': 'Bearer ' + key, 'Content-Type': contentType, 'x-upsert': 'true' },
+        body: blob
+      }).then(function(r) {
+        if (!r.ok) return r.text().then(function(t) { throw new Error('Upload ' + r.status + ': ' + t.slice(0,120)); });
+        return url.replace(/\/$/, '') + '/storage/v1/object/public/' + bucket + '/' + filename;
+      });
+    }));
   },
 
   // ─────────────────────────────────────────────────────────

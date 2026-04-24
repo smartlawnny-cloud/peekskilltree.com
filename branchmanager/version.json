@@ -1,5 +1,5 @@
 {
-  "version": 357,
+  "version": 358,
   "released": "2026-04-23",
-  "notes": "Anti-fabrication guardrails after 5 hallucinated Jobber-client rows were deleted. DB-layer: added import_source and created_by_agent columns on clients/quotes/jobs/invoices; CHECK constraint on import_source allowlist; trigger rejects inserts where notes claim 'pulled from/imported from' but import_source is NULL. UI-layer: new 'Audit AI-Created Data' button in Settings → Data Management lists every row any Claude session has added. Memory: added NEVER-fabricate rule at top of MEMORY.md so future sessions read it first."
+  "notes": "SocialBranch: auto-upload base64 media to Supabase Storage before sending to webhook. New bucket 'social-media' (public, 10MB limit, image+video only). Instagram/Meta APIs require public image URLs — base64 wouldn't work. _uploadMediaToPublicUrls(media) decodes data URLs, POSTs to storage.v1/object/social-media/{file}, returns public URL list. Pass-through for URLs that are already public. _publishNow() now awaits upload before firing webhook."
 }

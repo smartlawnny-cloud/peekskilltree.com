@@ -1,5 +1,5 @@
 {
-  "version": 359,
+  "version": 360,
   "released": "2026-04-23",
-  "notes": "SocialBranch video support + smart network gating. Added accepts:'image|video|both' to each NETWORK; auto-detects mediaType from data URL / file extension; compose now gates network checkboxes by media compatibility (video hides GMB, photo hides YouTube/TikTok). Preview shows <video> tag with 🎥 badge for video items. Webhook payload now includes mediaType, videoUrl, mediaUrl, youtubeTitle fields for Make router to key off of."
+  "notes": "Mode selector: added SocialBranch + Marketing + Reviews + Media Center + Chat&Tasks + Reports to Sales mode whitelist; added SocialBranch + Media Center to Crew mode. This ensures these items show in every role-based mode, not just Owner."
 }

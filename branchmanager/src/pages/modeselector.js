@@ -61,8 +61,8 @@ var ModeSelector = {
     var allNavItems = document.querySelectorAll('.nav-item[data-page]');
     if (!allNavItems.length) return;
 
-    var salesPages = ['dashboard','requests','quotes','clients','schedule','teamchat','settings'];
-    var crewPages = ['crewview','dispatch','teamchat','schedule'];
+    var salesPages = ['dashboard','requests','quotes','clients','schedule','teamchat','settings','marketing','socialbranch','reviews','mediacenter','comms','messaging','taskreminders','reports'];
+    var crewPages = ['crewview','dispatch','teamchat','schedule','socialbranch','mediacenter'];
 
     allNavItems.forEach(function(btn) {
       var page = btn.dataset.page;

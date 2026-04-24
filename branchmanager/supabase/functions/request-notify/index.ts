@@ -26,8 +26,36 @@ const RESEND_API_KEY    = Deno.env.get('RESEND_API_KEY')     ?? '';
 const TWILIO_SID        = Deno.env.get('TWILIO_ACCOUNT_SID') ?? '';
 const TWILIO_TOKEN      = Deno.env.get('TWILIO_AUTH_TOKEN')  ?? '';
 const TWILIO_FROM       = Deno.env.get('TWILIO_FROM')        ?? '';
+const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')       ?? '';
+const SERVICE_ROLE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const DEFAULT_TENANT_ID = '93af4348-8bba-4045-ac3e-5e71ec1cc8c5'; // Second Nature
 const NOTIFY_PHONE      = '+19143915233'; // Doug
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' };
+
+// ── DB insert via PostgREST (service-role bypasses RLS) ────────────────────
+async function insertRequest(row: Record<string, unknown>) {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    console.warn('Supabase env missing; skipping DB insert');
+    return { ok: false, reason: 'env' };
+  }
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/requests`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SERVICE_ROLE_KEY,
+      'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(row)
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    console.warn('requests insert failed (' + r.status + '):', t.slice(0, 300));
+    return { ok: false, reason: 'insert', status: r.status, body: t.slice(0, 300) };
+  }
+  const d = await r.json();
+  return { ok: true, id: Array.isArray(d) ? d[0]?.id : d?.id };
+}
 
 // ── SMS via Twilio ─────────────────────────────────────────────────────────
 async function sendSMS(to: string, body: string) {
@@ -75,8 +103,29 @@ serve(async (req: Request) => {
 
   try {
     const data = await req.json();
-    const { name, phone, email, address, service, details } = data;
+    const { name, phone, email, address, service, details, source } = data;
     const firstName = (name || '').split(' ')[0] || 'Someone';
+
+    // 0. Persist to `requests` table FIRST (service-role bypasses RLS).
+    //    Column map — real schema: client_name, client_phone, email, property,
+    //    source, status, notes, title, tenant_id, priority, created_at, updated_at.
+    //    Service type lives in `title` (no `service` column). Message lives in `notes`.
+    const nowIso = new Date().toISOString();
+    const insertResult = await insertRequest({
+      client_name: name || 'Unknown',
+      client_phone: phone || null,
+      phone: phone || null,
+      email: email || null,
+      property: address || null,
+      title: service || 'Service request',
+      notes: details || null,
+      source: source || 'Website form',
+      status: 'new',
+      priority: 'normal',
+      tenant_id: DEFAULT_TENANT_ID,
+      created_at: nowIso,
+      updated_at: nowIso
+    });
 
     // 1. SMS to Doug
     const smsBody = `🌳 New request!\n${name || '—'} · ${service || 'Tree service'}\n📍 ${address || '—'}\n📞 ${phone || '—'}\nOpen BM: peekskilltree.com/branchmanager/`;
@@ -114,7 +163,7 @@ serve(async (req: Request) => {
       await sendEmail(email, firstName, custSubject, custText, custHtml);
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({ ok: true, inserted: insertResult }), {
       headers: { ...CORS, 'Content-Type': 'application/json' }
     });
   } catch (err) {

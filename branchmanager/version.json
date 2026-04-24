@@ -1,5 +1,5 @@
 {
-  "version": 361,
+  "version": 362,
   "released": "2026-04-23",
-  "notes": "Mode system disabled. SocialBranch icons → Lucide. Calendar week/month/day toggle."
+  "notes": "Nav fix (force-kill mode filter), plus SocialBranch feature build: drag-to-reschedule on calendar (day cells have data-day-key, scheduled chips are draggable), SocialPilot import button (loads public/sp_scrape_initial.json), hashtag groups + content library, AI caption writer via ai-chat edge function, inline reschedule for calendar chips."
 }

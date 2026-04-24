@@ -56,8 +56,16 @@ var ModeSelector = {
       + '</div></div>';
   },
 
-  // Apply sidebar nav based on mode
+  // Apply sidebar nav based on mode — DISABLED v362 (was hiding items).
+  // Kept as a stub so any stray callers don't error. No-op + resets visibility.
   _applySidebar: function(mode) {
+    try {
+      document.querySelectorAll('.nav-item[data-page]').forEach(function(btn) { btn.style.display = ''; });
+      document.querySelectorAll('.nav-section').forEach(function(sec) { sec.style.display = ''; });
+    } catch (e) {}
+    return;
+  },
+  _applySidebar_disabled_original: function(mode) {
     var allNavItems = document.querySelectorAll('.nav-item[data-page]');
     if (!allNavItems.length) return;
 

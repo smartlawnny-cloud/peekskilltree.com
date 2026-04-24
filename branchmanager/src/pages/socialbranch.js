@@ -534,7 +534,8 @@ var SocialBranch = {
           var n = SocialBranch.NETWORKS.find(function(x){ return x.id === nId; });
           return n ? '<span style="color:' + n.color + ';">' + SocialBranch._netIcon(n.icon, 10) + '</span>' : '';
         }).join('');
-        out += '<div onclick="SocialBranch._editPost(\'' + p.id + '\')" style="background:var(--bg);border-radius:4px;padding:3px 5px;margin-bottom:2px;font-size:10px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;gap:4px;align-items:center;">' + nets + '<span>' + UI.esc((p.caption || '').substring(0, 22)) + '</span></div>';
+        var draggable = p.status === 'scheduled' ? ' data-post-id="' + UI.esc(p.id) + '" style="cursor:grab;' : ' style="cursor:pointer;';
+        out += '<div onclick="SocialBranch._editPost(\'' + p.id + '\')"' + draggable + 'background:var(--bg);border-radius:4px;padding:3px 5px;margin-bottom:2px;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;gap:4px;align-items:center;" title="' + (p.status === 'scheduled' ? 'Drag to reschedule, or click to edit' : 'Click to view') + '">' + nets + '<span>' + UI.esc((p.caption || '').substring(0, 22)) + '</span></div>';
       });
       if (dayPosts.length > 6) out += '<div style="font-size:10px;color:var(--text-light);">+' + (dayPosts.length - 6) + ' more</div>';
       return out;
@@ -555,7 +556,8 @@ var SocialBranch = {
       for (var d = 1; d <= daysInMonth; d++) {
         var dayDate = new Date(first.getFullYear(), first.getMonth(), d);
         var isToday = dayDate.toDateString() === now.toDateString();
-        html += '<div style="min-height:80px;padding:6px;border:1px solid ' + (isToday ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:6px;background:' + (isToday ? 'var(--green-bg)' : 'var(--white)') + ';">'
+        var dayKey = dayDate.toISOString().slice(0,10);
+        html += '<div data-day-key="' + dayKey + '" style="min-height:80px;padding:6px;border:1px solid ' + (isToday ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:6px;background:' + (isToday ? 'var(--green-bg)' : 'var(--white)') + ';">'
           + '<div style="font-size:11px;font-weight:700;color:' + (isToday ? 'var(--green-dark)' : 'var(--text-light)') + ';margin-bottom:4px;">' + d + '</div>'
           + renderDayCellContent(dayPostsFor(dayDate))
           + '</div>';
@@ -572,7 +574,8 @@ var SocialBranch = {
       for (var wd = 0; wd < 7; wd++) {
         var dayDate = new Date(weekStart); dayDate.setDate(weekStart.getDate() + wd);
         var isToday = dayDate.toDateString() === now.toDateString();
-        html += '<div style="min-height:260px;padding:8px;border:1px solid ' + (isToday ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;background:' + (isToday ? 'var(--green-bg)' : 'var(--white)') + ';">'
+        var dayKey = dayDate.toISOString().slice(0,10);
+        html += '<div data-day-key="' + dayKey + '" style="min-height:260px;padding:8px;border:1px solid ' + (isToday ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;background:' + (isToday ? 'var(--green-bg)' : 'var(--white)') + ';">'
           + '<div style="font-size:11px;font-weight:700;color:' + (isToday ? 'var(--green-dark)' : 'var(--text-light)') + ';text-transform:uppercase;margin-bottom:4px;">' + dayNames[dayDate.getDay()] + ' ' + dayDate.getDate() + '</div>'
           + renderDayCellContent(dayPostsFor(dayDate))
           + '</div>';
@@ -706,6 +709,206 @@ var SocialBranch = {
     var idx = posts.findIndex(function(p){ return p.id === post.id; });
     if (idx >= 0) posts[idx] = post; else posts.unshift(post);
     SocialBranch._setPosts(posts);
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // DRAG-TO-RESCHEDULE on calendar (week + month views)
+  // Attach after render. Dragging a post chip onto a day cell
+  // updates its scheduledAt to that day (same time-of-day preserved).
+  // ─────────────────────────────────────────────────────────
+  _initCalendarDnD: function() {
+    var chips = document.querySelectorAll('[data-post-id]');
+    var cells = document.querySelectorAll('[data-day-key]');
+    chips.forEach(function(chip) {
+      chip.draggable = true;
+      chip.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', chip.getAttribute('data-post-id'));
+        e.dataTransfer.effectAllowed = 'move';
+        chip.style.opacity = '0.4';
+      });
+      chip.addEventListener('dragend', function() { chip.style.opacity = ''; });
+    });
+    cells.forEach(function(cell) {
+      cell.addEventListener('dragover', function(e) { e.preventDefault(); cell.style.outline = '2px dashed var(--green-dark)'; });
+      cell.addEventListener('dragleave', function() { cell.style.outline = ''; });
+      cell.addEventListener('drop', function(e) {
+        e.preventDefault(); cell.style.outline = '';
+        var pid = e.dataTransfer.getData('text/plain'); if (!pid) return;
+        var newDay = cell.getAttribute('data-day-key');
+        if (!newDay) return;
+        var posts = SocialBranch._getPosts();
+        var p = posts.find(function(x){ return x.id === pid; });
+        if (!p || p.status !== 'scheduled') { UI.toast('Only scheduled posts can be dragged', 'warn'); return; }
+        var oldDate = new Date(p.scheduledAt);
+        // Preserve H:M of existing schedule onto new day
+        var nd = new Date(newDay + 'T00:00:00');
+        nd.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0);
+        p.scheduledAt = nd.toISOString();
+        SocialBranch._upsertPost(p);
+        UI.toast('Rescheduled to ' + nd.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+        loadPage('socialbranch');
+      });
+    });
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // SOCIALPILOT IMPORT — reads public/sp_scrape_initial.json
+  // and merges into bm-social-posts with import_source tag.
+  // ─────────────────────────────────────────────────────────
+  importFromSocialPilot: function() {
+    if (!confirm('Import SocialPilot history into BM?\n\nThis will add any posts not already present (dedup by caption). Your existing posts are untouched.')) return;
+    var btn = document.getElementById('sb-sp-import-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Importing…'; }
+    fetch('sp_scrape_initial.json', { cache: 'no-cache' })
+      .then(function(r) { if (!r.ok) throw new Error('Import file not found (status ' + r.status + ')'); return r.json(); })
+      .then(function(data) {
+        var existing = SocialBranch._getPosts();
+        var existingCaptions = existing.map(function(p){ return (p.caption || '').trim().toLowerCase().slice(0,120); });
+        var added = 0, skipped = 0;
+        function parseDate(s) {
+          if (!s) return '';
+          var m = String(s).match(/([A-Z][a-z]{2})\s+(\d{1,2}),\s+(\d{4})\s+(\d{1,2}):(\d{2})\s*([AP]M)/);
+          if (!m) return '';
+          var months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+          var h = parseInt(m[4],10); if (m[6]==='PM' && h<12) h+=12; if (m[6]==='AM' && h===12) h=0;
+          return new Date(parseInt(m[3],10), months[m[1]], parseInt(m[2],10), h, parseInt(m[5],10)).toISOString();
+        }
+        ['queued','delivered','drafts','failed'].forEach(function(bucket) {
+          (data[bucket] || []).forEach(function(p) {
+            var capKey = (p.caption || '').trim().toLowerCase().slice(0,120);
+            if (!capKey) { skipped++; return; }
+            if (existingCaptions.indexOf(capKey) >= 0) { skipped++; return; }
+            var post = {
+              id: 'sp_' + (p.id || Math.random().toString(36).slice(2,10)),
+              caption: p.caption || '',
+              media: p.media || [],
+              networks: p.networks || ['gmb'],
+              scheduledAt: parseDate(p.dateText) || '',
+              status: p.status || 'draft',
+              postedAt: p.status === 'posted' ? parseDate(p.dateText) : '',
+              createdAt: new Date().toISOString(),
+              import_source: 'socialpilot-html-scrape'
+            };
+            existing.unshift(post);
+            existingCaptions.push(capKey);
+            added++;
+          });
+        });
+        SocialBranch._setPosts(existing);
+        UI.toast('Imported ' + added + ' posts from SocialPilot (' + skipped + ' duplicates skipped).');
+        loadPage('socialbranch');
+      })
+      .catch(function(e) {
+        UI.toast('Import failed: ' + String(e.message || e), 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Import from SocialPilot'; }
+      });
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // HASHTAG GROUPS — saved bundles you can insert into captions
+  // ─────────────────────────────────────────────────────────
+  _getHashtagGroups: function() {
+    try { return JSON.parse(localStorage.getItem('bm-sb-hashtags') || '[]'); } catch(e){ return []; }
+  },
+  _setHashtagGroups: function(groups) { localStorage.setItem('bm-sb-hashtags', JSON.stringify(groups)); },
+  _createHashtagGroup: function() {
+    var name = prompt('Hashtag group name (e.g. "Peekskill default"):'); if (!name) return;
+    var tags = prompt('Paste hashtags (space or comma separated):\n\nExample: #treeservice #peekskill #arborist'); if (!tags) return;
+    var groups = SocialBranch._getHashtagGroups();
+    groups.push({ id: 'hg_' + Date.now(), name: name.trim(), tags: tags.trim() });
+    SocialBranch._setHashtagGroups(groups);
+    UI.toast('Hashtag group saved.');
+    loadPage('socialbranch');
+  },
+  _deleteHashtagGroup: function(id) {
+    if (!confirm('Delete this hashtag group?')) return;
+    SocialBranch._setHashtagGroups(SocialBranch._getHashtagGroups().filter(function(g){ return g.id !== id; }));
+    loadPage('socialbranch');
+  },
+  _insertHashtagGroup: function(id) {
+    var g = SocialBranch._getHashtagGroups().find(function(x){ return x.id === id; });
+    if (!g) return;
+    var ta = document.getElementById('sb-caption'); if (!ta) return;
+    ta.value = (ta.value ? ta.value.replace(/\s+$/, '') + '\n\n' : '') + g.tags;
+    ta.dispatchEvent(new Event('input'));
+    ta.focus();
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // CONTENT LIBRARY — saved captions for reuse
+  // ─────────────────────────────────────────────────────────
+  _getContentLib: function() {
+    try { return JSON.parse(localStorage.getItem('bm-sb-content-lib') || '[]'); } catch(e){ return []; }
+  },
+  _setContentLib: function(items) { localStorage.setItem('bm-sb-content-lib', JSON.stringify(items)); },
+  _saveToContentLib: function() {
+    var cap = (document.getElementById('sb-caption') || {}).value || '';
+    if (!cap.trim()) { UI.toast('Write a caption first.', 'warn'); return; }
+    var label = prompt('Save caption as (short label):', cap.slice(0, 40)); if (!label) return;
+    var items = SocialBranch._getContentLib();
+    items.unshift({ id: 'cl_' + Date.now(), label: label.trim(), caption: cap, media: (SocialBranch._draftMedia || []).slice(), createdAt: new Date().toISOString() });
+    SocialBranch._setContentLib(items);
+    UI.toast('Saved to Content Library.');
+  },
+  _insertFromContentLib: function(id) {
+    var it = SocialBranch._getContentLib().find(function(x){ return x.id === id; });
+    if (!it) return;
+    SocialBranch._editingPost = Object.assign({}, SocialBranch._editingPost || {}, { caption: it.caption, media: (it.media || []).slice() });
+    SocialBranch._draftMedia = (it.media || []).slice();
+    SocialBranch._goTab('compose');
+  },
+  _deleteFromContentLib: function(id) {
+    if (!confirm('Delete this saved caption?')) return;
+    SocialBranch._setContentLib(SocialBranch._getContentLib().filter(function(x){ return x.id !== id; }));
+    loadPage('socialbranch');
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // AI CAPTION WRITER — uses existing Claude integration
+  // ─────────────────────────────────────────────────────────
+  _aiCaption: function() {
+    var ta = document.getElementById('sb-caption'); if (!ta) return;
+    var seed = prompt('Describe the post in a few words (e.g. "80ft oak removal in Yorktown, crane, sunny day"):');
+    if (!seed) return;
+    var btn = document.getElementById('sb-ai-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Writing…'; }
+    var prompt_ = 'Write a social-media caption for Second Nature Tree Service in Peekskill NY. The subject is: "' + seed + '". Tone: friendly, direct, local-pride. Under 200 words. End with: "Call for a free estimate: (914) 391-5233 · peekskilltree.com". No emojis. Two or three short paragraphs.';
+    // Use bmClaudeKey helper (server-managed or local). Call Anthropic via Supabase edge function if available, else direct.
+    var edgeUrl = (localStorage.getItem('bm-supabase-url') || '') + '/functions/v1/ai-chat';
+    var key = localStorage.getItem('bm-supabase-key') || '';
+    fetch(edgeUrl, {
+      method: 'POST',
+      headers: { 'apikey': key, 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt_, max_tokens: 400 })
+    }).then(function(r) { return r.json(); })
+      .then(function(d) {
+        var text = d.text || d.response || d.completion || (d.content && d.content[0] && d.content[0].text) || '';
+        if (!text) throw new Error('No text in response');
+        ta.value = text.trim();
+        ta.dispatchEvent(new Event('input'));
+        UI.toast('Caption written. Edit as needed.');
+      })
+      .catch(function(e) { UI.toast('AI caption failed: ' + String(e.message || e), 'error'); })
+      .finally(function() { if (btn) { btn.disabled = false; btn.textContent = 'AI Caption'; } });
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // EDIT scheduled post — _editPost already exists.
+  // Add _rescheduleInline for quick time tweak without opening compose.
+  // ─────────────────────────────────────────────────────────
+  _rescheduleInline: function(postId) {
+    var p = SocialBranch._getPosts().find(function(x){ return x.id === postId; });
+    if (!p) return;
+    var current = p.scheduledAt ? new Date(p.scheduledAt).toISOString().slice(0,16) : '';
+    var v = prompt('New date/time (YYYY-MM-DDTHH:MM, 24h):\n\nExample: 2026-05-15T14:30', current);
+    if (!v) return;
+    var d = new Date(v);
+    if (isNaN(d.getTime())) { UI.toast('Invalid date.', 'error'); return; }
+    p.scheduledAt = d.toISOString();
+    p.status = 'scheduled';
+    SocialBranch._upsertPost(p);
+    UI.toast('Rescheduled for ' + d.toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'}));
+    loadPage('socialbranch');
   },
 
   _getConnectedNetworks: function() {

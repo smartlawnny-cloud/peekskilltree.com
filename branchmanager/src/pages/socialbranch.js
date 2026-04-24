@@ -48,9 +48,9 @@ var SocialBranch = {
 
   render: function() {
     var self = SocialBranch;
-    // Auto-import SocialPilot history on first-ever visit (no UI prompt)
+    // Auto-import SocialPilot history on first-ever visit. Only set the "imported"
+    // flag AFTER a successful import — otherwise the next visit retries.
     if (!localStorage.getItem('bm-sb-sp-imported')) {
-      localStorage.setItem('bm-sb-sp-imported', '1');
       setTimeout(function() { SocialBranch.importFromSocialPilot(true); }, 800);
     }
     var tab = self._tab || 'dashboard';
@@ -89,10 +89,24 @@ var SocialBranch = {
       default:          html += self._renderDashboard();
     }
 
+    // Post-render hooks (Lucide + DnD) — fire after DOM paints.
+    setTimeout(function() {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      if (self._tab === 'calendar') self._initCalendarDnD();
+    }, 80);
+
     return html;
   },
 
-  _goTab: function(id) { SocialBranch._tab = id; loadPage('socialbranch'); setTimeout(function(){ if(typeof lucide!=='undefined')lucide.createIcons(); }, 50); },
+  _goTab: function(id) {
+    SocialBranch._tab = id;
+    loadPage('socialbranch');
+    setTimeout(function() {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      // Wire drag-to-reschedule after calendar renders
+      if (id === 'calendar' && SocialBranch._initCalendarDnD) SocialBranch._initCalendarDnD();
+    }, 80);
+  },
 
   // ─────────────────────────────────────────────────────────
   // DASHBOARD
@@ -306,13 +320,21 @@ var SocialBranch = {
         + '<button onclick="SocialBranch._removeMedia(' + i + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;">×</button>'
         + '</div>';
     }).join('');
-    // Re-render compose network checkboxes when media type changes
+    // Update network compat in place (don't full-page-reload or we lose caption scroll/cursor)
     if (document.getElementById('sb-networks') && SocialBranch._tab === 'compose') {
-      // Trigger re-render to recompute compat state
-      var ta = document.getElementById('sb-caption');
-      var captionBefore = ta ? ta.value : '';
-      SocialBranch._editingPost = Object.assign({}, SocialBranch._editingPost || {}, { caption: captionBefore, media: media });
-      loadPage('socialbranch');
+      var mediaType = SocialBranch._detectBatchMediaType(media);
+      document.querySelectorAll('#sb-networks label[data-net]').forEach(function(lbl) {
+        var accepts = lbl.getAttribute('data-accepts') || 'both';
+        var compat = accepts === 'both' || mediaType === 'none' || accepts === mediaType;
+        var cb = lbl.querySelector('input[type="checkbox"]');
+        var isConnected = SocialBranch._getConnectedNetworks().indexOf(lbl.getAttribute('data-net')) >= 0;
+        var disabled = !isConnected || !compat;
+        if (cb) { cb.disabled = disabled; if (disabled) cb.checked = false; }
+        lbl.style.opacity = disabled ? 0.45 : 1;
+        lbl.style.cursor = disabled ? 'not-allowed' : 'pointer';
+      });
+      var hint = document.getElementById('sb-media-type-hint');
+      if (hint) hint.textContent = mediaType === 'video' ? 'Video detected — GMB excluded (no video support).' : mediaType === 'image' ? 'Photo detected — YouTube/TikTok hidden.' : 'Attach media to enable more networks.';
     }
   },
 
@@ -708,27 +730,82 @@ var SocialBranch = {
   // ANALYTICS (placeholder — real data once direct APIs connect)
   // ─────────────────────────────────────────────────────────
   _renderAnalytics: function() {
-    var posts = SocialBranch._getPosts().filter(function(p){ return p.status === 'posted'; });
-    var total = posts.length;
+    var all = SocialBranch._getPosts();
+    var posted = all.filter(function(p){ return p.status === 'posted'; });
+    var scheduled = all.filter(function(p){ return p.status === 'scheduled'; });
+    var failed = all.filter(function(p){ return p.status === 'failed'; });
+    var drafts = all.filter(function(p){ return p.status === 'draft'; });
     var byNetwork = {};
-    posts.forEach(function(p) {
-      (p.networks || []).forEach(function(n) { byNetwork[n] = (byNetwork[n] || 0) + 1; });
-    });
+    posted.forEach(function(p){ (p.networks||[]).forEach(function(n){ byNetwork[n]=(byNetwork[n]||0)+1; }); });
 
-    var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;">'
-      + '<h3 style="margin:0 0 12px;font-size:16px;">Posting Volume</h3>'
-      + '<div style="font-size:36px;font-weight:800;color:var(--green-dark);margin-bottom:4px;">' + total + '</div>'
-      + '<div style="font-size:13px;color:var(--text-light);margin-bottom:20px;">total posts shipped</div>'
+    // Day-of-week distribution for posted (when are you posting most?)
+    var dayOfWeek = [0,0,0,0,0,0,0];
+    posted.forEach(function(p) {
+      var t = p.postedAt || p.scheduledAt; if (!t) return;
+      dayOfWeek[new Date(t).getDay()]++;
+    });
+    var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var maxDay = Math.max.apply(null, dayOfWeek.concat([1]));
+
+    // Hour of day distribution (clustered into 4-hr buckets)
+    var buckets = [0,0,0,0,0,0];
+    var bucketLabels = ['12a-4a','4a-8a','8a-12p','12p-4p','4p-8p','8p-12a'];
+    posted.forEach(function(p) {
+      var t = p.postedAt || p.scheduledAt; if (!t) return;
+      buckets[Math.floor(new Date(t).getHours()/4)]++;
+    });
+    var maxBucket = Math.max.apply(null, buckets.concat([1]));
+
+    var html = '';
+    // Top KPI row
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px;">'
+      + SocialBranch._statCard('Posted', posted.length, 'check-circle', 'var(--green-dark)')
+      + SocialBranch._statCard('Scheduled', scheduled.length, 'calendar', 'var(--accent)')
+      + SocialBranch._statCard('Drafts', drafts.length, 'file-text', 'var(--text-light)')
+      + SocialBranch._statCard('Failed', failed.length, 'alert-triangle', 'var(--red)')
+      + '</div>';
+
+    // Per-network
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;">'
+      + '<h3 style="margin:0 0 12px;font-size:16px;">Posts per network</h3>'
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">';
     SocialBranch.NETWORKS.forEach(function(n) {
       var c = byNetwork[n.id] || 0;
       html += '<div style="padding:14px;border:1px solid var(--border);border-radius:10px;">'
-        + '<div style="font-size:12px;color:var(--text-light);">' + SocialBranch._netIcon(n.icon) + ' ' + n.name + '</div>'
+        + '<div style="font-size:12px;color:var(--text-light);display:flex;align-items:center;gap:6px;"><span style="color:' + n.color + ';">' + SocialBranch._netIcon(n.icon, 14) + '</span>' + n.name + '</div>'
         + '<div style="font-size:22px;font-weight:700;color:' + n.color + ';">' + c + '</div></div>';
     });
-    html += '</div>'
-      + '<div style="margin-top:20px;padding:12px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text-light);">Engagement metrics (likes, reach, clicks) arrive once direct APIs are wired per network. Webhook-only posting can\'t report back.</div>'
-      + '</div>';
+    html += '</div></div>';
+
+    // Day-of-week bar chart
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;">'
+      + '<h3 style="margin:0 0 12px;font-size:16px;">Posts by day of week</h3>'
+      + '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:140px;">';
+    dayOfWeek.forEach(function(n, i) {
+      var h = Math.round((n / maxDay) * 100);
+      html += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">'
+        + '<div style="font-size:11px;font-weight:700;margin-bottom:4px;">' + n + '</div>'
+        + '<div style="width:100%;background:var(--green-dark);height:' + h + '%;border-radius:4px 4px 0 0;min-height:2px;"></div>'
+        + '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">' + dayNames[i] + '</div>'
+        + '</div>';
+    });
+    html += '</div></div>';
+
+    // Hour-of-day bar chart
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;">'
+      + '<h3 style="margin:0 0 12px;font-size:16px;">Posts by time of day</h3>'
+      + '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;align-items:end;height:120px;">';
+    buckets.forEach(function(n, i) {
+      var h = Math.round((n / maxBucket) * 100);
+      html += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">'
+        + '<div style="font-size:11px;font-weight:700;margin-bottom:4px;">' + n + '</div>'
+        + '<div style="width:100%;background:var(--accent);height:' + h + '%;border-radius:4px 4px 0 0;min-height:2px;"></div>'
+        + '<div style="font-size:10px;color:var(--text-light);margin-top:4px;">' + bucketLabels[i] + '</div>'
+        + '</div>';
+    });
+    html += '</div></div>';
+
+    html += '<div style="padding:12px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text-light);">Engagement metrics (likes, reach, clicks) require direct API access. They turn on once Meta + GMB API approvals complete (we already submitted GMB; Meta pending your sign-off on docs/meta-app-submission.md).</div>';
     return html;
   },
 
@@ -736,11 +813,80 @@ var SocialBranch = {
   // INBOX (placeholder)
   // ─────────────────────────────────────────────────────────
   _renderInbox: function() {
-    return '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;">'
-      + '<div style="margin-bottom:10px;color:var(--text-light);"><i data-lucide="inbox" style="width:42px;height:42px;"></i></div>'
-      + '<h3 style="margin:0 0 8px;">Unified Inbox coming next</h3>'
-      + '<p style="color:var(--text-light);font-size:13px;max-width:420px;margin:0 auto;">Once FB/IG/GMB OAuth is connected, all DMs, comments, and reviews land here. Currently they live in each network\'s own app.</p>'
+    // Pulls GMB reviews from the OAuth token we already have. FB/IG DMs + comments
+    // require separate Meta Graph webhook infrastructure — deferred until Meta app
+    // review is approved.
+    var gmbToken = localStorage.getItem('bm-gmb-access-token') || '';
+    var html = '<div style="display:grid;gap:12px;">';
+    // GMB reviews column
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      +   '<h3 style="margin:0;font-size:16px;">Google Business Profile — Reviews</h3>'
+      +   '<button onclick="SocialBranch._refreshGmbReviews()" style="background:var(--white);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Refresh</button>'
       + '</div>';
+    if (!gmbToken) {
+      html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">GMB not connected. Go to Settings → Google Business Profile → Connect Google.</div>';
+    } else {
+      var cached = [];
+      try { cached = JSON.parse(localStorage.getItem('bm-gmb-reviews-cache') || '[]'); } catch (e) {}
+      if (!cached.length) {
+        html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px;">No reviews fetched yet. Click Refresh.</div>';
+      } else {
+        cached.slice(0, 20).forEach(function(r) {
+          var stars = '\u2605'.repeat(r.rating || 0) + '\u2606'.repeat(5 - (r.rating || 0));
+          html += '<div style="border-bottom:1px solid var(--border);padding:10px 0;">'
+            + '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">'
+            +   '<strong>' + UI.esc(r.reviewer || 'Anonymous') + '</strong>'
+            +   '<span style="color:#f59e0b;">' + stars + '</span>'
+            + '</div>'
+            + '<div style="font-size:13px;color:var(--text);line-height:1.4;">' + UI.esc(r.comment || '(no text)') + '</div>'
+            + '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">' + UI.esc(r.updateTime || '') + '</div>'
+            + '</div>';
+        });
+      }
+    }
+    html += '</div>';
+
+    // FB/IG placeholder with honest status
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;">'
+      + '<h3 style="margin:0 0 8px;font-size:16px;">Facebook + Instagram DMs &amp; Comments</h3>'
+      + '<p style="color:var(--text-light);font-size:13px;margin:0;">Needs Meta Graph webhook infrastructure + App Review approval (~2 weeks after submission). Currently: reply in the native FB/IG apps.</p>'
+      + '</div>';
+    html += '</div>';
+    return html;
+  },
+
+  _refreshGmbReviews: function() {
+    var token = localStorage.getItem('bm-gmb-access-token') || '';
+    if (!token) { UI.toast('Connect Google Business Profile first.', 'warn'); return; }
+    UI.toast('Fetching reviews\u2026');
+    // Try a known location lookup first. GMB v4 endpoint:
+    // accounts/{accountId}/locations/{locationId}/reviews
+    // Account + location IDs are stored after Connect flow succeeds. If missing, guide user.
+    var accountId = localStorage.getItem('bm-gmb-account-id') || '';
+    var locationId = localStorage.getItem('bm-gmb-location-id') || '';
+    if (!accountId || !locationId) {
+      UI.toast('GMB account/location IDs not stored. Use Settings → Connect Google to complete the OAuth flow.', 'warn');
+      return;
+    }
+    fetch('https://mybusiness.googleapis.com/v4/accounts/' + accountId + '/locations/' + locationId + '/reviews', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.error) throw new Error(d.error.message || 'API error');
+        var reviews = (d.reviews || []).map(function(r) {
+          return {
+            reviewer: (r.reviewer && r.reviewer.displayName) || '',
+            rating: ['ZERO','ONE','TWO','THREE','FOUR','FIVE'].indexOf(r.starRating),
+            comment: r.comment || '',
+            updateTime: r.updateTime || ''
+          };
+        });
+        localStorage.setItem('bm-gmb-reviews-cache', JSON.stringify(reviews));
+        UI.toast('Loaded ' + reviews.length + ' reviews.');
+        loadPage('socialbranch');
+      })
+      .catch(function(e) { UI.toast('Fetch failed: ' + String(e.message || e), 'error'); });
   },
 
   // ─────────────────────────────────────────────────────────
@@ -808,7 +954,15 @@ var SocialBranch = {
     if (!silent && !confirm('Import SocialPilot history into BM?\n\nThis will add any posts not already present (dedup by caption). Your existing posts are untouched.')) return;
     var btn = document.getElementById('sb-sp-import-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Importing…'; }
-    fetch('sp_scrape_initial.json', { cache: 'no-cache' })
+    // Try app-root path first, fall back to /public path (legacy).
+    var tryFetch = function(path) {
+      return fetch(path, { cache: 'no-cache' }).then(function(r) {
+        if (!r.ok) throw new Error('status ' + r.status);
+        return r.json();
+      });
+    };
+    tryFetch('./sp_scrape_initial.json')
+      .catch(function() { return tryFetch('./public/sp_scrape_initial.json'); })
       .then(function(r) { if (!r.ok) throw new Error('Import file not found (status ' + r.status + ')'); return r.json(); })
       .then(function(data) {
         var existing = SocialBranch._getPosts();
@@ -844,6 +998,8 @@ var SocialBranch = {
           });
         });
         SocialBranch._setPosts(existing);
+        // Only set imported flag on success so future visits retry if something went wrong.
+        localStorage.setItem('bm-sb-sp-imported', '1');
         UI.toast('Imported ' + added + ' posts from SocialPilot (' + skipped + ' duplicates skipped).');
         loadPage('socialbranch');
       })
@@ -902,7 +1058,14 @@ var SocialBranch = {
   _insertFromContentLib: function(id) {
     var it = SocialBranch._getContentLib().find(function(x){ return x.id === id; });
     if (!it) return;
-    SocialBranch._editingPost = Object.assign({}, SocialBranch._editingPost || {}, { caption: it.caption, media: (it.media || []).slice() });
+    // Preserve any in-progress draft's id so we keep working on the same post
+    // rather than spawning a new record on each library insert.
+    var existing = SocialBranch._editingPost || {};
+    SocialBranch._editingPost = Object.assign({}, existing, {
+      id: existing.id || '',
+      caption: it.caption,
+      media: (it.media || []).slice()
+    });
     SocialBranch._draftMedia = (it.media || []).slice();
     SocialBranch._goTab('compose');
   },

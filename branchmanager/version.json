@@ -1,5 +1,5 @@
 {
-  "version": 363,
+  "version": 364,
   "released": "2026-04-23",
-  "notes": "Nav: !important CSS force-shows SocialBranch+Marketing+Reports regardless of any legacy filter. SocialPilot auto-imports on first SocialBranch visit (no button). Compose UI adds AI Caption, Save to Library, Hashtag group chips. Accounts tab gets Tools panel (SP Import status, Content Library, Hashtag Groups)."
+  "notes": "Fix 4 audit bugs + analytics upgrade + inbox GMB reviews viewer. Drag-to-reschedule now actually wires up. SP import retries on failure + tries root path. Compose re-render no longer loses cursor. Content-lib insert preserves draft id. Analytics: 4-KPI row, per-network, day-of-week + hour-of-day bar charts. Inbox: real GMB reviews with Refresh button."
 }

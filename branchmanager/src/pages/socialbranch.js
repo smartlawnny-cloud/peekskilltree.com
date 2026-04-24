@@ -48,8 +48,13 @@ var SocialBranch = {
 
   render: function() {
     var self = SocialBranch;
-    // Auto-import SocialPilot history on first-ever visit. Only set the "imported"
-    // flag AFTER a successful import — otherwise the next visit retries.
+    // Auto-import SocialPilot history. Previous versions (v363) could set the
+    // flag without actually importing, so we self-heal: if the flag is set but
+    // we have zero SP-tagged posts, clear the flag and retry.
+    var hasSpPosts = SocialBranch._getPosts().some(function(p){ return p.import_source === 'socialpilot-html-scrape'; });
+    if (localStorage.getItem('bm-sb-sp-imported') && !hasSpPosts) {
+      localStorage.removeItem('bm-sb-sp-imported');
+    }
     if (!localStorage.getItem('bm-sb-sp-imported')) {
       setTimeout(function() { SocialBranch.importFromSocialPilot(true); }, 800);
     }
@@ -539,13 +544,53 @@ var SocialBranch = {
   _calOffset: 0,       // months (if month view), weeks (if week), days (if day)
 
   _renderCalendar: function() {
-    var posts = SocialBranch._getPosts().filter(function(p) { return p.status === 'scheduled' || p.status === 'posted'; });
+    var allPosts = SocialBranch._getPosts();
+    var posts = allPosts.filter(function(p) { return p.status === 'scheduled' || p.status === 'posted'; });
+    // Unscheduled = drafts + scheduled-with-no-date + SP imports with no date
+    var unscheduled = allPosts.filter(function(p) {
+      if (p.status === 'draft') return true;
+      if (p.status === 'scheduled' && !p.scheduledAt) return true;
+      return false;
+    });
     var view = SocialBranch._calView || 'month';
     var now = new Date();
     var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-    // Toolbar — view switcher + prev/next + today
-    var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;">';
+    // Two-column layout: Unscheduled tray on left + calendar on right
+    var html = '<div style="display:grid;grid-template-columns:260px 1fr;gap:12px;" class="sb-cal-grid">';
+
+    // LEFT — Unscheduled tray (draggable chips)
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;max-height:720px;overflow-y:auto;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      +   '<h3 style="margin:0;font-size:14px;">Unscheduled (' + unscheduled.length + ')</h3>'
+      +   '<button onclick="SocialBranch._goTab(\'compose\')" style="background:none;border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">+ New</button>'
+      + '</div>'
+      + '<p style="font-size:11px;color:var(--text-light);margin:0 0 10px;">Drag any of these onto a date to schedule.</p>';
+    if (unscheduled.length === 0) {
+      html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:12px;">All caught up — no unscheduled posts.</div>';
+    } else {
+      unscheduled.forEach(function(p) {
+        var nets = (p.networks || []).slice(0, 4).map(function(nId) {
+          var n = SocialBranch.NETWORKS.find(function(x){ return x.id === nId; });
+          return n ? '<span style="color:' + n.color + ';">' + SocialBranch._netIcon(n.icon, 10) + '</span>' : '';
+        }).join('');
+        var caption = UI.esc((p.caption || '(no caption)').substring(0, 90));
+        var thumb = (p.media && p.media[0] && /^https?:|^data:image/.test(p.media[0]))
+          ? '<img src="' + UI.esc(p.media[0]) + '" style="width:34px;height:34px;border-radius:4px;object-fit:cover;flex-shrink:0;">'
+          : '';
+        html += '<div data-post-id="' + UI.esc(p.id) + '" draggable="true" onclick="SocialBranch._editPost(\'' + p.id + '\')" style="display:flex;gap:8px;align-items:flex-start;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:6px;cursor:grab;font-size:12px;line-height:1.3;">'
+          + thumb
+          + '<div style="flex:1;min-width:0;">'
+          +   '<div style="display:flex;gap:4px;margin-bottom:2px;">' + nets + '</div>'
+          +   '<div style="overflow:hidden;text-overflow:ellipsis;">' + caption + '</div>'
+          + '</div>'
+          + '</div>';
+      });
+    }
+    html += '</div>';
+
+    // RIGHT — calendar proper
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">';
     html += '<div style="display:flex;align-items:center;gap:8px;">'
       +   '<button onclick="SocialBranch._calOffset--;loadPage(\'socialbranch\');" style="background:var(--white);border:1px solid var(--border);width:32px;height:32px;border-radius:6px;cursor:pointer;">&larr;</button>'
@@ -648,7 +693,8 @@ var SocialBranch = {
         });
       }
     }
-    html += '</div>';
+    html += '</div>'; // close right column (calendar)
+    html += '</div>'; // close two-column grid
     return html;
   },
 
@@ -933,14 +979,20 @@ var SocialBranch = {
         if (!newDay) return;
         var posts = SocialBranch._getPosts();
         var p = posts.find(function(x){ return x.id === pid; });
-        if (!p || p.status !== 'scheduled') { UI.toast('Only scheduled posts can be dragged', 'warn'); return; }
-        var oldDate = new Date(p.scheduledAt);
-        // Preserve H:M of existing schedule onto new day
+        if (!p) return;
         var nd = new Date(newDay + 'T00:00:00');
-        nd.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0);
+        if (p.status === 'scheduled' && p.scheduledAt) {
+          // Preserve existing time-of-day when rescheduling
+          var oldDate = new Date(p.scheduledAt);
+          nd.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0);
+        } else {
+          // Converting unscheduled → scheduled. Default 10am.
+          nd.setHours(10, 0, 0, 0);
+        }
         p.scheduledAt = nd.toISOString();
+        p.status = 'scheduled';
         SocialBranch._upsertPost(p);
-        UI.toast('Rescheduled to ' + nd.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+        UI.toast('Scheduled for ' + nd.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' at ' + nd.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}));
         loadPage('socialbranch');
       });
     });

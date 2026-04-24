@@ -1,5 +1,5 @@
 {
-  "version": 364,
+  "version": 365,
   "released": "2026-04-23",
-  "notes": "Fix 4 audit bugs + analytics upgrade + inbox GMB reviews viewer. Drag-to-reschedule now actually wires up. SP import retries on failure + tries root path. Compose re-render no longer loses cursor. Content-lib insert preserves draft id. Analytics: 4-KPI row, per-network, day-of-week + hour-of-day bar charts. Inbox: real GMB reviews with Refresh button."
+  "notes": "v365: Unscheduled posts tray on calendar + SP import self-heal"
 }

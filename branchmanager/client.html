@@ -50,7 +50,7 @@
 <div class="page">
   <div id="root">
     <div class="loader">
-      <div class="icon">🌳</div>
+      <div class="icon"></div>
       <div>Loading your portal...</div>
     </div>
   </div>
@@ -106,13 +106,22 @@ async function init() {
       return;
     }
 
-    render(client, quotes || [], jobs || [], invoices || []);
+    // Fetch any photos tied to this client's quotes or jobs (post-migration table)
+    var recordIds = []
+      .concat((quotes || []).map(function(q){ return q.id; }))
+      .concat((jobs   || []).map(function(j){ return j.id; }));
+    var photos = [];
+    if (recordIds.length) {
+      photos = await api('photos?record_id=in.(' + recordIds.map(encodeURIComponent).join(',') + ')&select=id,record_type,record_id,url,label,taken_at&order=taken_at.desc.nullslast,created_at.desc&limit=60');
+    }
+
+    render(client, quotes || [], jobs || [], invoices || [], photos || []);
   } catch (e) {
     showError('Unable to load portal. Please call us at ' + BM_CONFIG.phone + '.');
   }
 }
 
-function render(client, quotes, jobs, invoices) {
+function render(client, quotes, jobs, invoices, photos) {
   var name = client.name || (client.first_name + ' ' + client.last_name).trim();
   var pendingQuotes = quotes.filter(function(q) { return q.status === 'sent' || q.status === 'awaiting'; });
   var unpaidInvoices = invoices.filter(function(i) { return i.status !== 'paid' && i.status !== 'draft' && (i.balance || i.total) > 0; });
@@ -122,7 +131,7 @@ function render(client, quotes, jobs, invoices) {
 
   // Header
   html += '<div class="header">'
-    + '<div style="font-size:13px;opacity:.75;margin-bottom:6px;">🌳 ' + BM_CONFIG.companyName + '</div>'
+    + '<div style="font-size:13px;opacity:.75;margin-bottom:6px;">' + BM_CONFIG.companyName + '</div>'
     + '<h1>Hello, ' + (name.split(' ')[0] || 'there') + '!</h1>'
     + '<p>Your client portal — quotes, appointments & invoices</p>'
     + '</div>';
@@ -130,7 +139,7 @@ function render(client, quotes, jobs, invoices) {
   // Alert: pending quotes
   if (pendingQuotes.length > 0) {
     html += '<div style="background:#fff3e0;border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid #ffe0b2;">'
-      + '<strong style="color:#e65100;">📋 ' + pendingQuotes.length + ' quote' + (pendingQuotes.length > 1 ? 's' : '') + ' waiting for your approval</strong>'
+      + '<strong style="color:#e65100;">' + pendingQuotes.length + ' quote' + (pendingQuotes.length > 1 ? 's' : '') + ' waiting for your approval</strong>'
       + '<div style="font-size:13px;color:#666;margin-top:4px;">Review and approve below to schedule your service.</div>'
       + '</div>';
   }
@@ -139,14 +148,14 @@ function render(client, quotes, jobs, invoices) {
   if (unpaidInvoices.length > 0) {
     var unpaidTotal = unpaidInvoices.reduce(function(s, i) { return s + (i.balance || i.total || 0); }, 0);
     html += '<div style="background:#ffebee;border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid #ffcdd2;">'
-      + '<strong style="color:#c62828;">💰 ' + money(unpaidTotal) + ' balance due</strong>'
+      + '<strong style="color:#c62828;">' + money(unpaidTotal) + ' balance due</strong>'
       + '<div style="font-size:13px;color:#666;margin-top:4px;">Pay securely online via card.</div>'
       + '</div>';
   }
 
   // Pending Quotes
   if (pendingQuotes.length > 0) {
-    html += '<div class="card"><h3>📋 Quotes Awaiting Approval</h3>';
+    html += '<div class="card"><h3>Quotes Awaiting Approval</h3>';
     pendingQuotes.forEach(function(q) {
       html += '<div class="row">'
         + '<div><div class="row-label">Quote #' + (q.quote_number || '') + '</div>'
@@ -164,7 +173,7 @@ function render(client, quotes, jobs, invoices) {
 
   // Upcoming Appointments
   if (upcomingJobs.length > 0) {
-    html += '<div class="card"><h3>📅 Upcoming Appointments</h3>';
+    html += '<div class="card"><h3>Upcoming Appointments</h3>';
     upcomingJobs.forEach(function(j) {
       html += '<div class="row">'
         + '<div><div class="row-label">' + (j.description || j.title || 'Scheduled Service') + '</div>'
@@ -177,7 +186,7 @@ function render(client, quotes, jobs, invoices) {
 
   // Unpaid Invoices
   if (unpaidInvoices.length > 0) {
-    html += '<div class="card"><h3>💰 Invoices Due</h3>';
+    html += '<div class="card"><h3>Invoices Due</h3>';
     unpaidInvoices.forEach(function(i) {
       html += '<div class="row">'
         + '<div><div class="row-label">Invoice #' + (i.invoice_number || '') + '</div>'
@@ -195,7 +204,7 @@ function render(client, quotes, jobs, invoices) {
   // Job History
   var pastJobs = jobs.filter(function(j) { return j.status === 'completed'; }).slice(0, 5);
   if (pastJobs.length > 0) {
-    html += '<div class="card"><h3>🌳 Service History</h3>';
+    html += '<div class="card"><h3>Service History</h3>';
     pastJobs.forEach(function(j) {
       html += '<div class="row">'
         + '<div><div class="row-label">' + (j.description || 'Service') + '</div>'
@@ -206,12 +215,44 @@ function render(client, quotes, jobs, invoices) {
     html += '</div>';
   }
 
+  // Photos — from past quotes + jobs
+  if (photos && photos.length) {
+    html += '<div class="card"><h3>Property Photos</h3>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">';
+    photos.slice(0, 24).forEach(function(p){
+      html += '<a href="' + p.url + '" target="_blank" rel="noopener" style="display:block;aspect-ratio:1;background:#eee url(\'' + p.url + '\') center/cover no-repeat;border-radius:10px;" title="' + (p.label || '').replace(/"/g,'&quot;') + '"></a>';
+    });
+    html += '</div>';
+    if (photos.length > 24) html += '<p style="font-size:12px;color:#888;margin-top:10px;">Showing 24 of ' + photos.length + '.</p>';
+    html += '</div>';
+  }
+
+  // Documents — quote PDFs + invoice PDFs via existing approve/pay pages
+  var allQuotes = quotes.filter(function(q){ return q.status !== 'draft'; });
+  var allInvoices = invoices.filter(function(i){ return i.status !== 'draft'; });
+  if (allQuotes.length || allInvoices.length) {
+    html += '<div class="card"><h3>Documents</h3>';
+    allQuotes.slice(0, 10).forEach(function(q){
+      html += '<div class="row">'
+        + '<div><div class="row-label">Quote #' + (q.quote_number || '') + '</div>'
+        + '<div class="row-sub">' + (q.description || q.property || '') + ' · ' + dateShort(q.created_at) + '</div></div>'
+        + '<div class="row-right"><a href="approve.html?id=' + q.id + '" class="btn btn-outline btn-sm">View</a></div></div>';
+    });
+    allInvoices.slice(0, 10).forEach(function(i){
+      html += '<div class="row">'
+        + '<div><div class="row-label">Invoice #' + (i.invoice_number || '') + '</div>'
+        + '<div class="row-sub">' + (i.subject || 'For Services Rendered') + ' · ' + dateShort(i.issued_date || i.created_at) + '</div></div>'
+        + '<div class="row-right"><a href="pay.html?id=' + i.id + '" class="btn btn-outline btn-sm">View</a></div></div>';
+    });
+    html += '</div>';
+  }
+
   // Contact & new request
-  html += '<div class="card"><h3>📞 Get in Touch</h3>'
+  html += '<div class="card"><h3>Get in Touch</h3>'
     + '<p style="font-size:13px;color:#666;margin-bottom:12px;">Need a new estimate or have a question? Reach out anytime.</p>'
     + '<div class="contact-bar">'
-    + '<a href="tel:' + BM_CONFIG.phoneDigits + '" class="btn btn-primary" style="text-decoration:none;">📞 Call Us</a>'
-    + '<a href="book.html" class="btn btn-outline" style="text-decoration:none;">📥 New Request</a>'
+    + '<a href="tel:' + BM_CONFIG.phoneDigits + '" class="btn btn-primary" style="text-decoration:none;">Call Us</a>'
+    + '<a href="book.html" class="btn btn-outline" style="text-decoration:none;">New Request</a>'
     + '</div></div>';
 
   document.getElementById('root').innerHTML = html;
@@ -219,7 +260,7 @@ function render(client, quotes, jobs, invoices) {
 
 function showError(msg) {
   document.getElementById('root').innerHTML = '<div class="card error-card">'
-    + '<div class="icon">🌳</div>'
+    + '<div class="icon"></div>'
     + '<h2 style="color:#1a3c12;margin-bottom:8px;">' + BM_CONFIG.companyName + '</h2>'
     + '<p style="color:#888;margin-bottom:20px;">' + msg + '</p>'
     + '<a href="tel:' + BM_CONFIG.phoneDigits + '" class="btn btn-primary" style="display:inline-flex;">' + BM_CONFIG.phone + '</a>'

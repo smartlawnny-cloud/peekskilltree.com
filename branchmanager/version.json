@@ -1,5 +1,5 @@
 {
-  "version": 360,
+  "version": 361,
   "released": "2026-04-23",
-  "notes": "Mode selector: added SocialBranch + Marketing + Reviews + Media Center + Chat&Tasks + Reports to Sales mode whitelist; added SocialBranch + Media Center to Crew mode. This ensures these items show in every role-based mode, not just Owner."
+  "notes": "Mode system disabled. SocialBranch icons → Lucide. Calendar week/month/day toggle."
 }

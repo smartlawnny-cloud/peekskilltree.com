@@ -13,16 +13,22 @@
 var SocialBranch = {
   _tab: 'dashboard',
   STATUS: { DRAFT: 'draft', SCHEDULED: 'scheduled', POSTING: 'posting', POSTED: 'posted', FAILED: 'failed' },
-  // accepts: 'image' | 'video' | 'both'
+  // accepts: 'image' | 'video' | 'both'. icon = Lucide icon name rendered via <i data-lucide="...">.
   NETWORKS: [
-    { id: 'gmb',       name: 'Google Business',  icon: '🔵', color: '#4285F4', accepts: 'image' },
-    { id: 'facebook',  name: 'Facebook',         icon: '📘', color: '#1877F2', accepts: 'both'  },
-    { id: 'instagram', name: 'Instagram',        icon: '📸', color: '#E4405F', accepts: 'both'  },
-    { id: 'youtube',   name: 'YouTube',          icon: '📹', color: '#FF0000', accepts: 'video' },
-    { id: 'linkedin',  name: 'LinkedIn',         icon: '💼', color: '#0A66C2', accepts: 'both'  },
-    { id: 'tiktok',    name: 'TikTok',           icon: '🎵', color: '#000000', accepts: 'video' },
-    { id: 'x',         name: 'X (Twitter)',      icon: '𝕏',  color: '#000000', accepts: 'both'  }
+    { id: 'gmb',       name: 'Google Business', icon: 'store',     color: '#4285F4', accepts: 'image' },
+    { id: 'facebook',  name: 'Facebook',        icon: 'facebook',  color: '#1877F2', accepts: 'both'  },
+    { id: 'instagram', name: 'Instagram',       icon: 'instagram', color: '#E4405F', accepts: 'both'  },
+    { id: 'youtube',   name: 'YouTube',         icon: 'youtube',   color: '#FF0000', accepts: 'video' },
+    { id: 'linkedin',  name: 'LinkedIn',        icon: 'linkedin',  color: '#0A66C2', accepts: 'both'  },
+    { id: 'tiktok',    name: 'TikTok',          icon: 'music',     color: '#000000', accepts: 'video' },
+    { id: 'x',         name: 'X (Twitter)',     icon: 'twitter',   color: '#000000', accepts: 'both'  }
   ],
+
+  // Helper: render a network icon (inline svg via Lucide)
+  _netIcon: function(name, size) {
+    size = size || 14;
+    return '<i data-lucide="' + name + '" style="width:' + size + 'px;height:' + size + 'px;display:inline-block;vertical-align:middle;"></i>';
+  },
 
   // Detect media type from a data URL or http URL extension
   _detectMediaType: function(src) {
@@ -47,24 +53,24 @@ var SocialBranch = {
 
     // Header
     html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">'
-      +   '<div><h2 style="margin:0;font-size:24px;font-weight:800;">🌿 SocialBranch</h2>'
+      +   '<div><h2 style="margin:0;font-size:24px;font-weight:800;">SocialBranch</h2>'
       +   '<div style="font-size:13px;color:var(--text-light);margin-top:2px;">Post to every network from Branch Manager</div></div>'
-      +   '<button onclick="SocialBranch._goTab(\'compose\')" class="btn btn-primary" style="font-size:14px;">✏️ New Post</button>'
+      +   '<button onclick="SocialBranch._goTab(\'compose\')" class="btn btn-primary" style="font-size:14px;">New Post</button>'
       + '</div>';
 
     // Tabs
     var tabs = [
-      { id:'dashboard', label:'Dashboard',  icon:'📊' },
-      { id:'compose',   label:'Compose',    icon:'✏️' },
-      { id:'calendar',  label:'Calendar',   icon:'🗓️' },
-      { id:'accounts',  label:'Accounts',   icon:'🔗' },
-      { id:'analytics', label:'Analytics',  icon:'📈' },
-      { id:'inbox',     label:'Inbox',      icon:'💬' }
+      { id:'dashboard', label:'Dashboard',  icon:'layout-dashboard' },
+      { id:'compose',   label:'Compose',    icon:'pencil' },
+      { id:'calendar',  label:'Calendar',   icon:'calendar' },
+      { id:'accounts',  label:'Accounts',   icon:'link' },
+      { id:'analytics', label:'Analytics',  icon:'bar-chart-3' },
+      { id:'inbox',     label:'Inbox',      icon:'inbox' }
     ];
     html += '<div style="display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:18px;overflow-x:auto;white-space:nowrap;">';
     tabs.forEach(function(t) {
       var active = tab === t.id;
-      html += '<button onclick="SocialBranch._goTab(\'' + t.id + '\')" style="background:none;border:none;padding:10px 16px;font-size:13px;font-weight:' + (active ? '700' : '500') + ';color:' + (active ? 'var(--green-dark)' : 'var(--text-light)') + ';cursor:pointer;border-bottom:3px solid ' + (active ? 'var(--green-dark)' : 'transparent') + ';margin-bottom:-2px;transition:color .15s;">' + t.icon + ' ' + t.label + '</button>';
+      html += '<button onclick="SocialBranch._goTab(\'' + t.id + '\')" style="background:none;border:none;padding:10px 16px;font-size:13px;font-weight:' + (active ? '700' : '500') + ';color:' + (active ? 'var(--green-dark)' : 'var(--text-light)') + ';cursor:pointer;border-bottom:3px solid ' + (active ? 'var(--green-dark)' : 'transparent') + ';margin-bottom:-2px;transition:color .15s;display:inline-flex;align-items:center;gap:6px;">' + SocialBranch._netIcon(t.icon) + t.label + '</button>';
     });
     html += '</div>';
 
@@ -81,7 +87,7 @@ var SocialBranch = {
     return html;
   },
 
-  _goTab: function(id) { SocialBranch._tab = id; loadPage('socialbranch'); },
+  _goTab: function(id) { SocialBranch._tab = id; loadPage('socialbranch'); setTimeout(function(){ if(typeof lucide!=='undefined')lucide.createIcons(); }, 50); },
 
   // ─────────────────────────────────────────────────────────
   // DASHBOARD
@@ -94,10 +100,10 @@ var SocialBranch = {
     var connected = SocialBranch._getConnectedNetworks();
 
     var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:20px;">';
-    html += SocialBranch._statCard('Scheduled',  scheduled.length,                '📅', 'var(--accent)');
-    html += SocialBranch._statCard('Posted (all-time)', posts.filter(function(p){return p.status==='posted';}).length, '✅', 'var(--green-dark)');
-    html += SocialBranch._statCard('Drafts',     posts.filter(function(p){return p.status==='draft';}).length,   '📝', 'var(--text-light)');
-    html += SocialBranch._statCard('Connected',  connected.length + ' networks',  '🔗', '#8b5cf6');
+    html += SocialBranch._statCard('Scheduled',  scheduled.length,                'calendar', 'var(--accent)');
+    html += SocialBranch._statCard('Posted (all-time)', posts.filter(function(p){return p.status==='posted';}).length, 'check-circle', 'var(--green-dark)');
+    html += SocialBranch._statCard('Drafts',     posts.filter(function(p){return p.status==='draft';}).length,   'file-text', 'var(--text-light)');
+    html += SocialBranch._statCard('Connected',  connected.length + ' networks',  'link', '#8b5cf6');
     html += '</div>';
 
     // Upcoming queue
@@ -129,7 +135,7 @@ var SocialBranch = {
   _statCard: function(label, value, icon, color) {
     return '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;">'
       + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">'
-      + '<div style="width:32px;height:32px;border-radius:8px;background:' + color + '20;color:' + color + ';display:flex;align-items:center;justify-content:center;font-size:16px;">' + icon + '</div>'
+      + '<div style="width:32px;height:32px;border-radius:8px;background:' + color + '20;color:' + color + ';display:flex;align-items:center;justify-content:center;"><i data-lucide="' + icon + '" style="width:16px;height:16px;"></i></div>'
       + '<div style="font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;">' + label + '</div>'
       + '</div>'
       + '<div style="font-size:24px;font-weight:800;color:var(--text);">' + value + '</div>'
@@ -143,10 +149,10 @@ var SocialBranch = {
     var statusBadge = SocialBranch._statusBadge(p.status);
     var nets = (p.networks || []).map(function(n) {
       var net = SocialBranch.NETWORKS.find(function(x){ return x.id === n; });
-      return net ? '<span title="' + net.name + '" style="margin-right:4px;">' + net.icon + '</span>' : '';
+      return net ? '<span title="' + net.name + '" style="margin-right:4px;color:' + net.color + ';">' + SocialBranch._netIcon(net.icon, 12) + '</span>' : '';
     }).join('');
     var preview = (p.caption || '').substring(0, 80) + ((p.caption || '').length > 80 ? '…' : '');
-    var thumb = (p.media && p.media[0]) ? '<img src="' + UI.esc(p.media[0]) + '" style="width:42px;height:42px;border-radius:6px;object-fit:cover;">' : '<div style="width:42px;height:42px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--text-light);">📝</div>';
+    var thumb = (p.media && p.media[0]) ? '<img src="' + UI.esc(p.media[0]) + '" style="width:42px;height:42px;border-radius:6px;object-fit:cover;">' : '<div style="width:42px;height:42px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--text-light);"><i data-lucide="file-text" style="width:18px;height:18px;"></i></div>';
     return '<div onclick="SocialBranch._editPost(\'' + p.id + '\')" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);cursor:pointer;">'
       + thumb
       + '<div style="flex:1;min-width:0;">'
@@ -200,8 +206,8 @@ var SocialBranch = {
     html += '<div style="margin-top:16px;"><label style="display:block;font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Media</label>'
       + '<div id="sb-media-preview" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:60px;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      +   '<button type="button" onclick="SocialBranch._pickFromMediaCenter()" style="background:var(--bg);border:1px dashed var(--border);padding:10px 14px;border-radius:8px;font-size:13px;cursor:pointer;">📂 Pick from Media Center</button>'
-      +   '<label style="background:var(--bg);border:1px dashed var(--border);padding:10px 14px;border-radius:8px;font-size:13px;cursor:pointer;display:inline-block;">📤 Upload<input type="file" accept="image/*,video/*" multiple onchange="SocialBranch._uploadMedia(event)" style="display:none;"></label>'
+      +   '<button type="button" onclick="SocialBranch._pickFromMediaCenter()" style="background:var(--bg);border:1px dashed var(--border);padding:10px 14px;border-radius:8px;font-size:13px;cursor:pointer;">Pick from Media Center</button>'
+      +   '<label style="background:var(--bg);border:1px dashed var(--border);padding:10px 14px;border-radius:8px;font-size:13px;cursor:pointer;display:inline-block;">Upload<input type="file" accept="image/*,video/*" multiple onchange="SocialBranch._uploadMedia(event)" style="display:none;"></label>'
       + '</div></div>';
 
     html += '<div style="margin-top:16px;"><label style="display:block;font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Post to networks</label>'
@@ -222,7 +228,7 @@ var SocialBranch = {
         + '</label>';
     });
     html += '</div>'
-      + '<div id="sb-media-type-hint" style="font-size:11px;color:var(--text-light);margin-top:6px;">' + (draftMediaType === 'video' ? '🎥 Video detected — GMB excluded (no video support).' : draftMediaType === 'image' ? '🖼 Photo detected — YouTube/TikTok hidden.' : 'Attach media to enable more networks.') + '</div>'
+      + '<div id="sb-media-type-hint" style="font-size:11px;color:var(--text-light);margin-top:6px;">' + (draftMediaType === 'video' ? 'Video detected — GMB excluded (no video support).' : draftMediaType === 'image' ? 'Photo detected — YouTube/TikTok hidden.' : 'Attach media to enable more networks.') + '</div>'
       + '</div>';
 
     html += '<div style="margin-top:16px;"><label style="display:block;font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Schedule (optional)</label>'
@@ -231,8 +237,8 @@ var SocialBranch = {
       + '</div>';
 
     html += '<div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">'
-      + '<button onclick="SocialBranch._savePost(\'post\')" class="btn btn-primary" style="font-size:14px;">🚀 Publish / Schedule</button>'
-      + '<button onclick="SocialBranch._savePost(\'draft\')" style="background:var(--white);border:1px solid var(--border);padding:10px 16px;border-radius:8px;font-size:14px;cursor:pointer;">💾 Save draft</button>'
+      + '<button onclick="SocialBranch._savePost(\'post\')" class="btn btn-primary" style="font-size:14px;">Publish / Schedule</button>'
+      + '<button onclick="SocialBranch._savePost(\'draft\')" style="background:var(--white);border:1px solid var(--border);padding:10px 16px;border-radius:8px;font-size:14px;cursor:pointer;">Save draft</button>'
       + '<button onclick="SocialBranch._clearDraft()" style="background:none;border:none;color:var(--text-light);padding:10px;cursor:pointer;font-size:13px;">Cancel</button>'
       + '</div>';
 
@@ -274,7 +280,7 @@ var SocialBranch = {
     host.innerHTML = media.map(function(src, i) {
       var type = SocialBranch._detectMediaType(src);
       var preview = type === 'video'
-        ? '<video src="' + UI.esc(src) + '" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video><div style="position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;">🎥</div>'
+        ? '<video src="' + UI.esc(src) + '" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video><div style="position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;letter-spacing:.5px;font-weight:700;">VIDEO</div>'
         : '<img src="' + UI.esc(src) + '" style="width:100%;height:100%;object-fit:cover;">';
       return '<div style="position:relative;width:84px;height:84px;border-radius:6px;overflow:hidden;background:var(--bg);">'
         + preview
@@ -371,7 +377,7 @@ var SocialBranch = {
     if (post.status === 'posting') {
       SocialBranch._publishNow(post);
     } else {
-      UI.toast(post.status === 'scheduled' ? '📅 Scheduled!' : '💾 Draft saved');
+      UI.toast(post.status === 'scheduled' ? 'Scheduled.' : 'Draft saved.');
       SocialBranch._goTab('dashboard');
     }
   },
@@ -421,14 +427,14 @@ var SocialBranch = {
             post.postedAt = new Date().toISOString();
             post.results = { httpStatus: r.status, backend: 'webhook', publicMedia: publicMedia };
             SocialBranch._upsertPost(post);
-            UI.toast(r.ok ? '✅ Post sent' : '⚠️ Post failed — check webhook', r.ok ? 'success' : 'error');
+            UI.toast(r.ok ? 'Post sent.' : 'Post failed — check webhook.', r.ok ? 'success' : 'error');
             SocialBranch._goTab('dashboard');
           })
           .catch(function(e) {
             post.status = 'failed';
             post.results = { error: String(e.message || e), backend: 'webhook' };
             SocialBranch._upsertPost(post);
-            UI.toast('❌ Network error', 'error');
+            UI.toast('Network error.', 'error');
             SocialBranch._goTab('dashboard');
           });
         return;
@@ -438,13 +444,13 @@ var SocialBranch = {
       post.status = 'draft';
       post.results = { note: 'No backend configured. Connect a webhook in Accounts or wait for direct APIs.' };
       SocialBranch._upsertPost(post);
-      UI.toast('⚠️ Saved as draft — connect a backend in Accounts tab', 'warn');
+      UI.toast('Saved as draft — connect a backend in Accounts tab.', 'warn');
       SocialBranch._goTab('accounts');
     }).catch(function(err) {
       post.status = 'failed';
       post.results = { error: 'Media upload failed: ' + String(err.message || err) };
       SocialBranch._upsertPost(post);
-      UI.toast('❌ Couldn\'t upload media: ' + String(err.message || err), 'error');
+      UI.toast('Couldn\'t upload media: ' + String(err.message || err), 'error');
       SocialBranch._goTab('dashboard');
     });
   },
@@ -488,44 +494,117 @@ var SocialBranch = {
   // ─────────────────────────────────────────────────────────
   // CALENDAR
   // ─────────────────────────────────────────────────────────
+  _calView: 'month',   // 'month' | 'week' | 'day'
+  _calOffset: 0,       // months (if month view), weeks (if week), days (if day)
+
   _renderCalendar: function() {
     var posts = SocialBranch._getPosts().filter(function(p) { return p.status === 'scheduled' || p.status === 'posted'; });
+    var view = SocialBranch._calView || 'month';
     var now = new Date();
-    var year = now.getFullYear(), month = now.getMonth();
-    var first = new Date(year, month, 1);
-    var daysInMonth = new Date(year, month+1, 0).getDate();
-    var startDay = first.getDay();
-    var title = first.toLocaleString('en-US', { month:'long', year:'numeric' });
+    var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-    var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><h3 style="margin:0;font-size:18px;">' + title + '</h3></div>'
-      + '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:6px;">'
-      + ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(function(d){ return '<div style="text-align:center;padding:6px 0;">'+d+'</div>'; }).join('')
-      + '</div>'
-      + '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+    // Toolbar — view switcher + prev/next + today
+    var html = '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">';
+    html += '<div style="display:flex;align-items:center;gap:8px;">'
+      +   '<button onclick="SocialBranch._calOffset--;loadPage(\'socialbranch\');" style="background:var(--white);border:1px solid var(--border);width:32px;height:32px;border-radius:6px;cursor:pointer;">&larr;</button>'
+      +   '<button onclick="SocialBranch._calOffset=0;loadPage(\'socialbranch\');" style="background:var(--white);border:1px solid var(--border);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Today</button>'
+      +   '<button onclick="SocialBranch._calOffset++;loadPage(\'socialbranch\');" style="background:var(--white);border:1px solid var(--border);width:32px;height:32px;border-radius:6px;cursor:pointer;">&rarr;</button>'
+      + '</div>';
+    // View toggle
+    html += '<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;">'
+      +   ['day','week','month'].map(function(v) {
+            var active = view === v;
+            return '<button onclick="SocialBranch._calView=\'' + v + '\';SocialBranch._calOffset=0;loadPage(\'socialbranch\');" style="background:' + (active ? 'var(--green-dark)' : 'var(--white)') + ';color:' + (active ? '#fff' : 'var(--text)') + ';border:none;padding:6px 14px;font-size:12px;font-weight:' + (active ? '700' : '500') + ';cursor:pointer;text-transform:capitalize;">' + v + '</button>';
+          }).join('')
+      + '</div>';
+    html += '</div>'; // close toolbar row
 
-    for (var i = 0; i < startDay; i++) html += '<div></div>';
-    for (var d = 1; d <= daysInMonth; d++) {
-      var dayDate = new Date(year, month, d);
-      var dayKey = dayDate.toISOString().slice(0, 10);
-      var dayPosts = posts.filter(function(p) {
+    function dayPostsFor(dateObj) {
+      var key = dateObj.toISOString().slice(0, 10);
+      return posts.filter(function(p) {
         var when = p.scheduledAt || p.postedAt;
-        return when && when.slice(0, 10) === dayKey;
+        return when && when.slice(0, 10) === key;
       });
-      var isToday = dayDate.toDateString() === now.toDateString();
-      html += '<div style="min-height:80px;padding:6px;border:1px solid ' + (isToday ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:6px;background:' + (isToday ? 'var(--green-bg)' : 'var(--white)') + ';">'
-        + '<div style="font-size:11px;font-weight:700;color:' + (isToday ? 'var(--green-dark)' : 'var(--text-light)') + ';margin-bottom:4px;">' + d + '</div>';
-      dayPosts.slice(0, 3).forEach(function(p) {
-        var nets = (p.networks || []).slice(0, 3).map(function(nId) {
-          var n = SocialBranch.NETWORKS.find(function(x){ return x.id === nId; });
-          return n ? n.icon : '';
-        }).join('');
-        html += '<div onclick="SocialBranch._editPost(\'' + p.id + '\')" style="background:var(--bg);border-radius:4px;padding:3px 5px;margin-bottom:2px;font-size:10px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + nets + ' ' + UI.esc((p.caption || '').substring(0, 20)) + '</div>';
-      });
-      if (dayPosts.length > 3) html += '<div style="font-size:10px;color:var(--text-light);">+' + (dayPosts.length - 3) + ' more</div>';
-      html += '</div>';
     }
-    html += '</div></div>';
+    function renderDayCellContent(dayPosts) {
+      var out = '';
+      dayPosts.slice(0, 6).forEach(function(p) {
+        var nets = (p.networks || []).slice(0, 4).map(function(nId) {
+          var n = SocialBranch.NETWORKS.find(function(x){ return x.id === nId; });
+          return n ? '<span style="color:' + n.color + ';">' + SocialBranch._netIcon(n.icon, 10) + '</span>' : '';
+        }).join('');
+        out += '<div onclick="SocialBranch._editPost(\'' + p.id + '\')" style="background:var(--bg);border-radius:4px;padding:3px 5px;margin-bottom:2px;font-size:10px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;gap:4px;align-items:center;">' + nets + '<span>' + UI.esc((p.caption || '').substring(0, 22)) + '</span></div>';
+      });
+      if (dayPosts.length > 6) out += '<div style="font-size:10px;color:var(--text-light);">+' + (dayPosts.length - 6) + ' more</div>';
+      return out;
+    }
+
+    if (view === 'month') {
+      var year = now.getFullYear(), month = now.getMonth() + SocialBranch._calOffset;
+      var first = new Date(year, month, 1);
+      var daysInMonth = new Date(year, month+1, 0).getDate();
+      var startDay = first.getDay();
+      var title = first.toLocaleString('en-US', { month:'long', year:'numeric' });
+      html += '<h3 style="margin:0 0 10px;font-size:18px;">' + title + '</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:6px;">'
+        + dayNames.map(function(d){ return '<div style="text-align:center;padding:6px 0;">'+d+'</div>'; }).join('')
+        + '</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+      for (var i = 0; i < startDay; i++) html += '<div></div>';
+      for (var d = 1; d <= daysInMonth; d++) {
+        var dayDate = new Date(first.getFullYear(), first.getMonth(), d);
+        var isToday = dayDate.toDateString() === now.toDateString();
+        html += '<div style="min-height:80px;padding:6px;border:1px solid ' + (isToday ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:6px;background:' + (isToday ? 'var(--green-bg)' : 'var(--white)') + ';">'
+          + '<div style="font-size:11px;font-weight:700;color:' + (isToday ? 'var(--green-dark)' : 'var(--text-light)') + ';margin-bottom:4px;">' + d + '</div>'
+          + renderDayCellContent(dayPostsFor(dayDate))
+          + '</div>';
+      }
+      html += '</div>';
+    } else if (view === 'week') {
+      // Find Sunday of the target week
+      var base = new Date(now.getTime() + SocialBranch._calOffset * 7 * 86400000);
+      var weekStart = new Date(base); weekStart.setDate(base.getDate() - base.getDay()); weekStart.setHours(0,0,0,0);
+      var weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+      var title = weekStart.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' – ' + weekEnd.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      html += '<h3 style="margin:0 0 10px;font-size:18px;">Week of ' + title + '</h3>';
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">';
+      for (var wd = 0; wd < 7; wd++) {
+        var dayDate = new Date(weekStart); dayDate.setDate(weekStart.getDate() + wd);
+        var isToday = dayDate.toDateString() === now.toDateString();
+        html += '<div style="min-height:260px;padding:8px;border:1px solid ' + (isToday ? 'var(--green-dark)' : 'var(--border)') + ';border-radius:8px;background:' + (isToday ? 'var(--green-bg)' : 'var(--white)') + ';">'
+          + '<div style="font-size:11px;font-weight:700;color:' + (isToday ? 'var(--green-dark)' : 'var(--text-light)') + ';text-transform:uppercase;margin-bottom:4px;">' + dayNames[dayDate.getDay()] + ' ' + dayDate.getDate() + '</div>'
+          + renderDayCellContent(dayPostsFor(dayDate))
+          + '</div>';
+      }
+      html += '</div>';
+    } else { // day
+      var dayDate = new Date(now.getTime() + SocialBranch._calOffset * 86400000);
+      var title = dayDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+      html += '<h3 style="margin:0 0 10px;font-size:18px;">' + title + '</h3>';
+      var dp = dayPostsFor(dayDate);
+      if (dp.length === 0) {
+        html += '<div style="padding:40px;text-align:center;color:var(--text-light);font-size:14px;">No posts scheduled or published on this day.</div>';
+      } else {
+        dp.forEach(function(p) {
+          var t = p.scheduledAt || p.postedAt;
+          var timeLabel = t ? new Date(t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '';
+          var nets = (p.networks || []).map(function(nId) {
+            var n = SocialBranch.NETWORKS.find(function(x){ return x.id === nId; });
+            return n ? '<span title="' + n.name + '" style="color:' + n.color + ';margin-right:6px;">' + SocialBranch._netIcon(n.icon, 14) + '</span>' : '';
+          }).join('');
+          html += '<div onclick="SocialBranch._editPost(\'' + p.id + '\')" style="display:flex;gap:12px;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;">'
+            +   '<div style="font-weight:700;color:var(--text-light);min-width:80px;">' + timeLabel + '</div>'
+            +   '<div style="flex:1;">'
+            +     '<div style="margin-bottom:4px;">' + nets + '</div>'
+            +     '<div style="font-size:13px;">' + UI.esc((p.caption || '(no caption)').substring(0, 200)) + '</div>'
+            +   '</div>'
+            +   SocialBranch._statusBadge(p.status)
+            + '</div>';
+        });
+      }
+    }
+    html += '</div>';
     return html;
   },
 
@@ -543,15 +622,15 @@ var SocialBranch = {
 
     // Webhook row
     html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">'
-      + '<div><div style="font-weight:700;font-size:14px;">🔗 Zapier / Make Webhook</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">' + (webhook ? '✅ Configured — ' + webhook.substring(0, 50) + '…' : '⚠️ Not set') + '</div></div>'
+      + '<div><div style="font-weight:700;font-size:14px;">Zapier / Make Webhook</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + (webhook ? 'Configured: ' + webhook.substring(0, 50) + '…' : 'Not set') + '</div></div>'
       + '<button onclick="loadPage(\'settings\')" style="background:var(--white);border:1px solid var(--border);padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;">Configure</button>'
       + '</div>';
 
     // GMB row
     html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">'
       + '<div><div style="font-weight:700;font-size:14px;">🔵 Google Business Profile</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">' + (gmbToken ? '✅ Connected' : '⚠️ Not connected') + '</div></div>'
+      + '<div style="font-size:12px;color:var(--text-light);">' + (gmbToken ? 'Connected' : 'Not connected') + '</div></div>'
       + '<button onclick="loadPage(\'settings\')" style="background:var(--white);border:1px solid var(--border);padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;">Configure</button>'
       + '</div>';
 
@@ -564,8 +643,8 @@ var SocialBranch = {
     SocialBranch.NETWORKS.forEach(function(n) {
       var isC = connected.indexOf(n.id) >= 0;
       html += '<div style="padding:14px;border:1px solid var(--border);border-radius:10px;background:' + (isC ? n.color + '10' : 'var(--white)') + ';">'
-        + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:20px;">' + n.icon + '</span><div style="font-weight:700;">' + n.name + '</div></div>'
-        + '<div style="font-size:12px;color:' + (isC ? 'var(--green-dark)' : 'var(--text-light)') + ';font-weight:600;">' + (isC ? '✅ Reachable' : '⚪ Awaiting backend') + '</div>'
+        + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="color:' + n.color + ';">' + SocialBranch._netIcon(n.icon, 20) + '</span><div style="font-weight:700;">' + n.name + '</div></div>'
+        + '<div style="font-size:12px;color:' + (isC ? 'var(--green-dark)' : 'var(--text-light)') + ';font-weight:600;">' + (isC ? 'Reachable' : 'Awaiting backend') + '</div>'
         + '</div>';
     });
     html += '</div></div>';
@@ -592,7 +671,7 @@ var SocialBranch = {
     SocialBranch.NETWORKS.forEach(function(n) {
       var c = byNetwork[n.id] || 0;
       html += '<div style="padding:14px;border:1px solid var(--border);border-radius:10px;">'
-        + '<div style="font-size:12px;color:var(--text-light);">' + n.icon + ' ' + n.name + '</div>'
+        + '<div style="font-size:12px;color:var(--text-light);">' + SocialBranch._netIcon(n.icon) + ' ' + n.name + '</div>'
         + '<div style="font-size:22px;font-weight:700;color:' + n.color + ';">' + c + '</div></div>';
     });
     html += '</div>'
@@ -606,7 +685,7 @@ var SocialBranch = {
   // ─────────────────────────────────────────────────────────
   _renderInbox: function() {
     return '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;">'
-      + '<div style="font-size:42px;margin-bottom:10px;">💬</div>'
+      + '<div style="margin-bottom:10px;color:var(--text-light);"><i data-lucide="inbox" style="width:42px;height:42px;"></i></div>'
       + '<h3 style="margin:0 0 8px;">Unified Inbox coming next</h3>'
       + '<p style="color:var(--text-light);font-size:13px;max-width:420px;margin:0 auto;">Once FB/IG/GMB OAuth is connected, all DMs, comments, and reviews land here. Currently they live in each network\'s own app.</p>'
       + '</div>';

@@ -85,11 +85,17 @@ var ModeSelector = {
     });
   },
 
-  // Restore mode on page load
+  // Restore mode on page load — DISABLED v360
+  // Mode system was hiding nav items unnecessarily while the app
+  // is in active development. Will re-enable once the app is
+  // feature-complete and role-based access is the priority.
   init: function() {
-    var mode = ModeSelector.getMode();
-    if (mode) {
-      ModeSelector._applySidebar(mode);
-    }
+    // Force-clear any leftover mode so every nav item renders.
+    localStorage.removeItem('bm-app-mode');
+    // Reset display on every nav item in case the filter previously ran.
+    try {
+      document.querySelectorAll('.nav-item[data-page]').forEach(function(btn) { btn.style.display = ''; });
+      document.querySelectorAll('.nav-section').forEach(function(sec) { sec.style.display = ''; });
+    } catch (e) {}
   }
 };

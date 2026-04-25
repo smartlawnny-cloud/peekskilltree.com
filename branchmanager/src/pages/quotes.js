@@ -2529,19 +2529,6 @@ var QuotesPage = {
     }, 150);
   },
 
-  _newClientInline: function() {
-    var inputEl = document.getElementById('q-client-search');
-    var typed = inputEl ? inputEl.value.trim() : '';
-    var name = typed || prompt('New client name:');
-    if (!name || !name.trim()) return;
-    var newClient = DB.clients.create({
-      name: name.trim(),
-      status: 'lead',
-      createdAt: new Date().toISOString()
-    });
-    QuotesPage._selectClient(newClient.id, newClient.name);
-  },
-
   _selectClient: function(id, name) {
     document.getElementById('q-clientId').value = id;
     document.getElementById('q-client-search').value = name;

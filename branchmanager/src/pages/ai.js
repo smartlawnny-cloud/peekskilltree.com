@@ -35,7 +35,7 @@ var AI = {
     // name bm-server-2026-04). The /functions/v1/ai-chat edge function holds
     // it. Default to server-managed across all devices/browsers (mobile too)
     // unless someone explicitly opted out by setting the flag to "false".
-    if (localStorage.getItem('bm-claude-server-managed') !== 'false') {
+    if (AIConfig.serverManaged()) {
       AI._serverManaged = true;
     }
 

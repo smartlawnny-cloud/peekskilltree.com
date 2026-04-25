@@ -85,9 +85,8 @@ var VideoQuote = {
     // Results area
     html += '<div id="vq-results"></div>';
 
-    // API key warning
-    var aiKey = localStorage.getItem('bm-claude-key');
-    if (!aiKey) {
+    // API key warning — only if user has explicitly opted out of server-managed Claude
+    if (!AIConfig.available()) {
       html += '<div style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:10px;padding:14px;margin-top:16px;text-align:center;">'
         + '<div style="font-size:14px;font-weight:600;color:#e65100;">AI Key Required</div>'
         + '<div style="font-size:13px;color:var(--text-light);margin-top:4px;">Go to Settings → Integrations → paste your Claude API key</div>'

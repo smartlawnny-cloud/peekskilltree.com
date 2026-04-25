@@ -20,8 +20,7 @@
 // function picks up ANTHROPIC_API_KEY from Supabase function secrets and the
 // key never needs to leave the server).
 window.bmClaudeKey = function() {
-  if (localStorage.getItem('bm-claude-server-managed') === 'true') return '';
-  return localStorage.getItem('bm-claude-key') || '';
+  return AIConfig.deviceKey();
 };
 
 // ─────────────────────────────────────────────────────────────────────────

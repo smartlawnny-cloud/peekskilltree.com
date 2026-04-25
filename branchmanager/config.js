@@ -49,6 +49,34 @@ var BM_CONFIG = {
  *   CompanyInfo.get('phoneDigits')   → '9143915233'
  *   CompanyInfo.all()                → entire object
  */
+/**
+ * AIConfig — single source of truth for "is Claude server-managed?".
+ *
+ * v406: Six callsites used to ask this question with three different defaults
+ * (`!== 'false'` default-on, `=== 'true'` default-off). Server-managed has
+ * been the intended default since v388 (works on mobile / fresh installs
+ * without prompting). This helper enforces the default-on semantics
+ * everywhere — flag is server-managed UNLESS explicitly set to 'false'.
+ */
+var AIConfig = {
+  serverManaged: function() {
+    try { return localStorage.getItem('bm-claude-server-managed') !== 'false'; }
+    catch(e) { return true; }
+  },
+  // Returns true if the AI is reachable — either via server proxy or a device key.
+  available: function() {
+    if (AIConfig.serverManaged()) return true;
+    try { return (localStorage.getItem('bm-claude-key') || '').trim().length > 0; }
+    catch(e) { return false; }
+  },
+  // Returns the device key, or '' if server-managed (server proxy doesn't need one).
+  deviceKey: function() {
+    if (AIConfig.serverManaged()) return '';
+    try { return localStorage.getItem('bm-claude-key') || ''; }
+    catch(e) { return ''; }
+  }
+};
+
 var CompanyInfo = (function() {
   // Maps CompanyInfo key → (localStorage key, BM_CONFIG key)
   var MAP = {

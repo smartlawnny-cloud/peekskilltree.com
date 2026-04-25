@@ -22,7 +22,7 @@ var VoiceQuote = {
 
   render: function() {
     var supported = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-    var apiKeyOk = (localStorage.getItem("bm-claude-server-managed") === "true" || !!(localStorage.getItem("bm-claude-key") || "").trim());
+    var apiKeyOk = AIConfig.available();
 
     var html = '<div style="max-width:680px;margin:0 auto;padding-bottom:80px;">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'

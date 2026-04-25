@@ -138,22 +138,8 @@ var SettingsPage = {
       +   _navRow('App (iOS / Android build)', 'Capacitor-wrapped native app', _appNav, '_setAppNav')
       + '</div>';
 
-    // ── PlantNet / AI Tree ID — personal API key, user setting ──
-    var _pnKey = localStorage.getItem('bm-plantnet-key') || '';
-    var _pnOk = _pnKey.length > 10;
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid ' + (_pnOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;overflow:hidden;">'
-      +   '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;">'
-      +     '<div style="width:32px;height:32px;background:#15803d;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:#fff;">AI</div>'
-      +     '<div style="flex:1;"><h3 style="margin:0;font-size:14px;">AI Tree Identification (PlantNet)</h3>'
-      +     '<div style="font-size:11px;color:' + (_pnOk ? 'var(--green-dark)' : 'var(--text-light)') + ';">' + (_pnOk ? 'Connected' : 'Not connected') + '</div></div>'
-      +     '<span style="font-size:11px;color:var(--text-light);">▾</span>'
-      +   '</summary>'
-      +   '<div style="padding:0 18px 16px;">'
-      +     '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
-      +     '<button onclick="var v=document.getElementById(\'plantnet-key-input\').value.trim();localStorage.setItem(\'bm-plantnet-key\',v);UI.toast(\'PlantNet key saved\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Key</button>'
-      +     '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 IDs/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">my.plantnet.org</a>. Used by the "2nd Opinion" button when identifying trees from photos.</p>'
-      +   '</div>'
-      + '</details>';
+    // v404: PlantNet moved back to Advanced → API Keys & Integrations
+    // (it's an API key, lives with the other integrations).
 
     html += groupClose();
 
@@ -180,11 +166,12 @@ var SettingsPage = {
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<h3 style="margin:0;">Company Info</h3>'
-      + '<button onclick="SettingsPage.saveCompany()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
-      + '</div>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Company Info</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Company Name</label><input id="co-name" value="' + UI.esc(co.name) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Phone</label><input id="co-phone" value="' + UI.esc(co.phone) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
@@ -196,7 +183,9 @@ var SettingsPage = {
       + '<input id="co-tax-rate" type="number" value="' + co.taxRate + '" step="0.001" min="0" max="100" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;">'
       + '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">Applied to new quotes & invoices (e.g. 8.375 for NYS)</div>'
       + '</div>'
-      + '</div></div>';
+      + '</div>'
+      + '<div style="margin-top:14px;text-align:right;"><button onclick="SettingsPage.saveCompany()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button></div>'
+      + '</div></details>';
 
     // ── Work Settings ──
     var ws = {
@@ -208,11 +197,12 @@ var SettingsPage = {
       minJobDuration: localStorage.getItem('bm-min-job-hrs') || '2',
       crewSeeClientInfo: localStorage.getItem('bm-crew-see-client') !== 'false'
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<h3 style="margin:0;">Work Settings</h3>'
-      + '<div style="margin-right:0;text-align:right;"><button onclick="SettingsPage._saveWorkSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
-      + '</div>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Work Settings</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Default Start Time</label>'
       + '<input type="time" id="ws-start" value="' + ws.defaultStart + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
@@ -251,17 +241,19 @@ var SettingsPage = {
     });
     html += '<div style="font-size:11px;color:var(--text-light);margin-top:6px;">Displayed on booking form and client communications. Type "Closed" for days off.</div>'
       + '</div>'
-      + '</div>';
+      + '<div style="margin-top:14px;text-align:right;"><button onclick="SettingsPage._saveWorkSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button></div>'
+      + '</div></details>';
 
     // ── Location Services ──
     var locTrack = localStorage.getItem('bm-gps-tracking') !== 'false';
     var locWorkOnly = localStorage.getItem('bm-gps-work-only') !== 'false';
     var locGeofence = localStorage.getItem('bm-geofence') === 'true';
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<h3 style="margin:0;">Location Services</h3>'
-      + '<div style="margin-right:0;text-align:right;"><button onclick="SettingsPage._saveLocationSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
-      + '</div>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Location Services</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<div style="display:flex;flex-direction:column;gap:12px;">'
       + '<label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">'
       + '<input type="checkbox" id="loc-tracking" style="width:18px;height:18px;"' + (locTrack ? ' checked' : '') + '>'
@@ -381,7 +373,9 @@ var SettingsPage = {
 
       + '</div>'
 
-      + '</div>';
+      + '<div style="margin-top:14px;text-align:right;"><button onclick="SettingsPage._saveLocationSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button></div>'
+
+      + '</div></details>';
 
     // ═══ /GROUP: Business Info ═══
     html += '</div></details>';
@@ -576,8 +570,12 @@ var SettingsPage = {
 
     // ── Regional Settings ──
     var _zip = localStorage.getItem('bm-zip') || '10566';
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<h3 style="margin:0 0 16px;">Regional Settings</h3>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Regional Settings</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Country</label>'
       + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">United States</div></div>'
@@ -588,12 +586,16 @@ var SettingsPage = {
       + '</div>'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Date Format</label>'
       + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">Jan 31, 2026</div></div>'
-      + '</div></div>';
+      + '</div></div></details>';
 
     // — T&M Pricing Rates (moved here from standalone section at the bottom) —
     var _tmRates = (typeof QuotesPage !== 'undefined' && QuotesPage.getTMRates) ? QuotesPage.getTMRates() : {};
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<h3 style="margin:0 0 6px;">🛠 T&M Pricing Rates</h3>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-top:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>🛠 T&M Pricing Rates</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Used by the Price Check on every quote. Override per your crew + equipment costs.</p>'
       + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Crew (hourly)</div>'
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;">'
@@ -623,7 +625,7 @@ var SettingsPage = {
       +   '<button onclick="SettingsPage._saveTMRates()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Rates</button>'
       +   '<button onclick="if(confirm(\'Reset all T&amp;M rates to defaults?\')){localStorage.removeItem(\'bm-tm-rates\');loadPage(\'settings\');UI.toast(\'Rates reset to defaults\');}" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 18px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">Reset to Defaults</button>'
       + '</div>'
-      + '</div>';
+      + '</div></details>';
 
     // ═══ /GROUP: Quote & Invoice Defaults ═══
     html += '</div></details>';
@@ -640,11 +642,14 @@ var SettingsPage = {
 
     // Products & Services Catalog
     var allServices = DB.services.getAll();
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<div><h3 style="margin:0;">Products &amp; Services</h3>'
-      + '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">' + allServices.length + ' items — used in quotes and invoices</div>'
-      + '</div>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Products & Services</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+      + '<div style="font-size:12px;color:var(--text-light);">' + allServices.length + ' items — used in quotes and invoices</div>'
       + '<button onclick="SettingsPage.addService()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">+ Add Item</button>'
       + '</div>'
       + '<div id="services-list">';
@@ -657,17 +662,21 @@ var SettingsPage = {
         + '<button onclick="SettingsPage.editService(\'' + svc.id + '\')" style="background:none;border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-size:12px;cursor:pointer;">Edit</button>'
         + '</div>';
     });
-    html += '</div></div>';
+    html += '</div></div></details>';
 
     // Data Summary
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<h3 style="margin-bottom:16px;">Data Summary</h3>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Data Summary</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<div class="stat-grid" style="margin-bottom:0;">'
       + '<div class="stat-card"><div class="stat-label">Clients</div><div class="stat-value">' + stats.totalClients + '</div></div>'
       + '<div class="stat-card"><div class="stat-label">Jobs</div><div class="stat-value">' + DB.jobs.count() + '</div></div>'
       + '<div class="stat-card"><div class="stat-label">Invoices</div><div class="stat-value">' + DB.invoices.count() + '</div></div>'
       + '<div class="stat-card"><div class="stat-label">Quotes</div><div class="stat-value">' + DB.quotes.count() + '</div></div>'
-      + '</div></div>';
+      + '</div></div></details>';
 
     // ═══ /GROUP: Services & Products (Data Summary included) ═══
     html += '</div></details>';
@@ -747,7 +756,7 @@ var SettingsPage = {
 
     // AI Assistant
     var aiKey = localStorage.getItem('bm-claude-key') || '';
-    var aiServerManaged = localStorage.getItem('bm-claude-server-managed') === 'true';
+    var aiServerManaged = AIConfig.serverManaged();
     var aiOk = aiServerManaged || aiKey.length > 10;
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
       + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
@@ -844,7 +853,22 @@ var SettingsPage = {
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Sign up at <a href="https://gusto.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">gusto.com</a> ($40/mo + $6/employee). API token is optional — BM Payroll page exports CSV you upload to Gusto manually each pay period. Get token from Gusto Dev Portal.</p>'
       + '</div>';
 
-    // v398: PlantNet moved to USER meta-group above (it's a personal API key).
+    // ── PlantNet / AI Tree ID — API key, lives with other integrations ──
+    var _pnKey = localStorage.getItem('bm-plantnet-key') || '';
+    var _pnOk = _pnKey.length > 10;
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (_pnOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+      + '<div style="width:40px;height:40px;background:#15803d;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🌿</div>'
+      + '<div><h3 style="margin:0;">PlantNet (AI Tree ID)</h3>'
+      + '<div style="font-size:12px;color:' + (_pnOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (_pnOk ? '✅ Connected — 2nd Opinion button uses this' : '⚠️ Not connected — add a key for AI tree ID 2nd Opinion') + '</div>'
+      + '</div></div>'
+      + '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
+      + '<div style="display:flex;gap:8px;">'
+      + '<button onclick="var v=document.getElementById(\'plantnet-key-input\').value.trim();localStorage.setItem(\'bm-plantnet-key\',v);UI.toast(\'PlantNet key saved ✓\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
+      + (_pnOk ? '<button onclick="SettingsPage._removeKey(\'bm-plantnet-key\',\'PlantNet\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + '</div>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 IDs/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">my.plantnet.org</a>.</p>'
+      + '</div>';
 
     // ── SocialPilot (Webhook OR direct API key) ──
     var spWebhook = localStorage.getItem('bm-socialpilot-webhook') || '';
@@ -1929,7 +1953,7 @@ var SettingsPage = {
   _testClaudeKey: function() {
     var keyEl = document.getElementById('claude-ai-key');
     var resultEl = document.getElementById('claude-test-result');
-    var serverManaged = localStorage.getItem('bm-claude-server-managed') === 'true';
+    var serverManaged = AIConfig.serverManaged();
     var key = (keyEl && keyEl.value.trim()) || localStorage.getItem('bm-claude-key') || '';
     if (!serverManaged && !key) {
       if (resultEl) resultEl.innerHTML = '<span style="color:#dc3545;">⚠️ Paste a key first, or switch to Server-managed mode.</span>';

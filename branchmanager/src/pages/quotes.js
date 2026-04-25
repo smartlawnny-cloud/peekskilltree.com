@@ -192,7 +192,12 @@ var QuotesPage = {
   _getFiltered: function() {
     var self = QuotesPage;
     var all = DB.quotes.getAll();
-    if (self._filter !== 'all') {
+    // Default view hides archived quotes (status='archived' is reserved for
+    // bulk-cleaned old drafts that never converted). Explicit filter to
+    // 'archived' shows them again.
+    if (self._filter === 'all') {
+      all = all.filter(function(q) { return q.status !== 'archived'; });
+    } else {
       if (self._filter === 'stale') {
         var sevenAgo = new Date(Date.now() - 7 * 86400000);
         all = all.filter(function(q) {

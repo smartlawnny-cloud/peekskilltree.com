@@ -36,19 +36,21 @@ var SchedulePage = {
         + '</label>';
     }
 
-    // Calendar controls
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
-      + '<div style="display:flex;align-items:center;gap:8px;">'
-      + '<button class="btn btn-outline" onclick="SchedulePage.prev()" style="padding:6px 12px;">&larr;</button>'
-      + '<h3 id="cal-title" style="font-size:18px;min-width:200px;text-align:center;">' + self._getTitle() + '</h3>'
-      + '<button class="btn btn-outline" onclick="SchedulePage.next()" style="padding:6px 12px;">&rarr;</button>'
-      + '<button class="btn btn-outline" onclick="SchedulePage.goToday()" style="font-size:12px;">Today</button>'
+    // Calendar controls — single line on desktop, wraps on narrow.
+    // Title shrinks to natural width (was min-width:200px which forced a
+    // wrap even when there was room). Tighter button padding too.
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">'
+      + '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
+      +   '<button class="btn btn-outline" onclick="SchedulePage.prev()" style="padding:4px 10px;">&larr;</button>'
+      +   '<h3 id="cal-title" style="font-size:16px;font-weight:700;white-space:nowrap;margin:0 4px;">' + self._getTitle() + '</h3>'
+      +   '<button class="btn btn-outline" onclick="SchedulePage.next()" style="padding:4px 10px;">&rarr;</button>'
+      +   '<button class="btn btn-outline" onclick="SchedulePage.goToday()" style="font-size:12px;padding:4px 10px;">Today</button>'
       + '</div>'
-      + '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
       +   '<div style="display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:2px;">'
-      +     '<button class="btn ' + (self.view === 'day' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'day\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'day' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Day</button>'
-      +     '<button class="btn ' + (self.view === 'week' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'week\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'week' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Week</button>'
-      +     '<button class="btn ' + (self.view === 'month' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'month\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'month' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Month</button>'
+      +     '<button class="btn ' + (self.view === 'day' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'day\')" style="font-size:12px;padding:5px 12px;border-radius:6px;' + (self.view !== 'day' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Day</button>'
+      +     '<button class="btn ' + (self.view === 'week' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'week\')" style="font-size:12px;padding:5px 12px;border-radius:6px;' + (self.view !== 'week' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Week</button>'
+      +     '<button class="btn ' + (self.view === 'month' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'month\')" style="font-size:12px;padding:5px 12px;border-radius:6px;' + (self.view !== 'month' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Month</button>'
       +   '</div>'
       +   (typeof Weather !== 'undefined' ? toggleSwitch('Weather', wEnabled, 'Weather.toggle()') : '')
       +   toggleSwitch('Photos', pEnabled, 'SchedulePage._togglePhotos()')

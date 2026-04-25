@@ -152,23 +152,27 @@ function build() {
   console.log('Minified:     ' + minKB + ' KB (' + path.relative(ROOT, minOut) + ')');
 
   if (REWRITE_HTML) {
-    // Replace ALL local <script src=…> tags with a single bundle tag, in-place.
-    let newHtml = html;
-    // Remove every local script tag from the source order
+    if (isPostSwap) {
+      // In post-swap mode (manifest-driven), index.html already has exactly
+      // one bundle tag and bump.sh already updated its version reference.
+      // Nothing for --html to rewrite. Bail cleanly.
+      console.log('Post-swap: index.html already has single bundle ref; --html is a no-op.');
+      return;
+    }
+    // Pre-swap path: replace ALL local <script src=…> tags with one bundle tag.
+    // We use the in-memory `scripts` list (which has start/end positions from
+    // the live HTML), NOT a re-extracted list — that way nothing in newHtml
+    // shifts unexpectedly mid-rewrite.
     const bundleTag = '<script defer src="dist/bm.bundle.v' + version + '.min.js"></script>';
-    // Replace the FIRST local script with the bundle tag, then strip the rest.
-    if (scripts.length) {
-      const first = scripts[0];
-      newHtml = newHtml.slice(0, first.start) + bundleTag + newHtml.slice(first.end);
-      // Now remove every other local script tag — re-scan since indexes shifted
-      const rest = extractLocalScripts(newHtml).filter(s => !/dist\/bm\.bundle\./.test(s.cleanPath));
-      // Walk back-to-front so indexes don't shift mid-loop
-      for (let i = rest.length - 1; i >= 0; i--) {
-        const r = rest[i];
-        // Strip the trailing newline before the tag too, if present
-        const before = newHtml.slice(0, r.start).replace(/\n\s*$/, '\n');
-        newHtml = before + newHtml.slice(r.end);
-      }
+    let newHtml = html;
+    // Walk back-to-front: replace last script tag with empty, second-to-last
+    // empty, etc., until we get to the FIRST one which becomes the bundle.
+    for (let i = scripts.length - 1; i >= 0; i--) {
+      const s = scripts[i];
+      const replacement = (i === 0) ? bundleTag : '';
+      // Trim a trailing newline + whitespace before the tag if we're stripping
+      const trimBefore = (i === 0) ? newHtml.slice(0, s.start) : newHtml.slice(0, s.start).replace(/\n\s*$/, '\n');
+      newHtml = trimBefore + replacement + newHtml.slice(s.end);
     }
     fs.writeFileSync(INDEX, newHtml);
     console.log('index.html rewritten — ' + scripts.length + ' tags collapsed into 1.');

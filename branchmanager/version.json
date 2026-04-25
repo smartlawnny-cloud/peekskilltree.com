@@ -1,5 +1,5 @@
 {
-  "version": 385,
+  "version": 387,
   "released": "2026-04-25",
-  "notes": "v385: schedule weather/photos toggles inline with day/week/month"
+  "notes": "v387: schedule single-line + sticky red toasts + build-bundle post-swap fix"
 }

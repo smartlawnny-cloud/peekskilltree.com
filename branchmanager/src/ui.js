@@ -214,10 +214,33 @@ var UI = (function() {
     type = type || 'success';
     var t = document.createElement('div');
     t.className = 'toast toast-' + type;
-    t.textContent = message;
+    // Error toasts stay until the user dismisses them so they can copy the message.
+    // (v386: previous behavior auto-dismissed after 3s, which made cloud-save
+    // failures hard to debug — Doug couldn't read fast enough to copy them.)
+    var sticky = (type === 'error');
+    if (sticky) {
+      t.style.cursor = 'text';
+      t.title = 'Click X to dismiss';
+      var closeBtn = document.createElement('button');
+      closeBtn.textContent = '\u00d7';
+      closeBtn.setAttribute('aria-label', 'Dismiss');
+      closeBtn.style.cssText = 'background:none;border:none;color:inherit;font-size:18px;font-weight:700;cursor:pointer;margin-left:12px;padding:0 4px;line-height:1;opacity:.7;';
+      closeBtn.onmouseover = function(){ this.style.opacity = '1'; };
+      closeBtn.onmouseout  = function(){ this.style.opacity = '.7'; };
+      closeBtn.onclick = function(e){ e.stopPropagation(); t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 300); };
+      var msgEl = document.createElement('span');
+      msgEl.textContent = message;
+      msgEl.style.userSelect = 'text';
+      t.appendChild(msgEl);
+      t.appendChild(closeBtn);
+    } else {
+      t.textContent = message;
+    }
     document.body.appendChild(t);
     requestAnimationFrame(function() { t.classList.add('show'); });
-    setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 3000);
+    if (!sticky) {
+      setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 3000);
+    }
   }
 
   // ── Loading Spinner ──

@@ -1,5 +1,5 @@
 {
-  "version": 380,
-  "released": "2026-04-25",
-  "notes": "v380: archive feature + requests-page polish + bundle artifact + version-bump unified across BUNDLED_VERSION/version.json/sw.js/script tags"
+  "version": 381,
+  "released": "2026-04-24",
+  "notes": "v381: SocialBranch bulk upload + AI captions"
 }

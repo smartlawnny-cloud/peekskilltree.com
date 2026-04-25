@@ -72,6 +72,7 @@ var SocialBranch = {
     var tabs = [
       { id:'dashboard', label:'Dashboard',  icon:'layout-dashboard' },
       { id:'compose',   label:'Compose',    icon:'pencil' },
+      { id:'bulk',      label:'Bulk',       icon:'upload' },
       { id:'calendar',  label:'Calendar',   icon:'calendar' },
       { id:'library',   label:'Media',      icon:'camera' },
       { id:'accounts',  label:'Accounts',   icon:'link' },
@@ -88,6 +89,7 @@ var SocialBranch = {
     // Tab body
     switch (tab) {
       case 'compose':   html += self._renderCompose();   break;
+      case 'bulk':      html += self._renderBulk();      break;
       case 'calendar':  html += self._renderCalendar();  break;
       case 'library':   html += (typeof MediaCenter !== 'undefined' ? MediaCenter.render() : '<div style="padding:40px;text-align:center;color:var(--text-light);">Media library unavailable.</div>'); break;
       case 'accounts':  html += self._renderAccounts();  break;
@@ -1128,6 +1130,415 @@ var SocialBranch = {
     if (!confirm('Delete this saved caption?')) return;
     SocialBranch._setContentLib(SocialBranch._getContentLib().filter(function(x){ return x.id !== id; }));
     loadPage('socialbranch');
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // BULK UPLOAD — drop a folder, AI captions everything,
+  // review & schedule. Two-step wizard.
+  // State lives on SocialBranch._bulk so it survives a re-render.
+  // ─────────────────────────────────────────────────────────
+  _bulk: { step: 1, files: [] },
+  // file: { id, name, size, type ('image'|'video'), dataUrl, caption, captionLoading,
+  //         captionError, networks, scheduledAt }
+
+  _renderBulk: function() {
+    var b = SocialBranch._bulk || (SocialBranch._bulk = { step: 1, files: [] });
+    if (b.step === 2) return SocialBranch._renderBulkReview();
+    return SocialBranch._renderBulkDrop();
+  },
+
+  _renderBulkDrop: function() {
+    var b = SocialBranch._bulk;
+    var has = b.files.length > 0;
+    var html = '';
+
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+      + '<div><h3 style="margin:0;font-size:16px;display:flex;align-items:center;gap:8px;">' + SocialBranch._netIcon('upload', 16) + 'Bulk Upload</h3>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Drop a folder of images or videos. AI writes captions. Review and schedule across networks.</div></div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Step 1 of 2</div>'
+      + '</div>';
+
+    // Drop zone
+    html += '<div id="sb-bulk-drop" '
+      + 'ondragover="event.preventDefault();this.style.borderColor=\'var(--accent)\';this.style.background=\'#f0f9ff\';" '
+      + 'ondragleave="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--bg)\';" '
+      + 'ondrop="event.preventDefault();this.style.borderColor=\'var(--border)\';this.style.background=\'var(--bg)\';SocialBranch._bulkOnDrop(event);" '
+      + 'style="border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;background:var(--bg);cursor:pointer;transition:all .15s;" '
+      + 'onclick="document.getElementById(\'sb-bulk-input\').click()">'
+      + '<div style="font-size:36px;margin-bottom:8px;color:var(--text-light);">' + SocialBranch._netIcon('upload-cloud', 36) + '</div>'
+      + '<div style="font-size:15px;font-weight:600;margin-bottom:4px;">Drop a folder or files here</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">or click to browse · images and videos · up to 10MB each</div>'
+      + '<input id="sb-bulk-input" type="file" multiple accept="image/*,video/*" webkitdirectory directory style="display:none;" onchange="SocialBranch._bulkOnPick(event)">'
+      + '<input id="sb-bulk-input-files" type="file" multiple accept="image/*,video/*" style="display:none;" onchange="SocialBranch._bulkOnPick(event)">'
+      + '<div style="margin-top:14px;font-size:12px;"><a href="#" onclick="event.stopPropagation();document.getElementById(\'sb-bulk-input-files\').click();return false;" style="color:var(--accent);">Pick individual files instead</a></div>'
+      + '</div>';
+
+    html += '</div>';
+
+    // Thumbnail strip
+    if (has) {
+      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+        + '<h3 style="margin:0;font-size:14px;">' + b.files.length + ' file' + (b.files.length === 1 ? '' : 's') + ' ready</h3>'
+        + '<button onclick="SocialBranch._bulkClear()" style="background:none;border:none;color:var(--text-light);font-size:12px;cursor:pointer;">Clear all</button>'
+        + '</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+      var visible = b.files.slice(0, 24);
+      visible.forEach(function(f) {
+        var thumb = f.type === 'video'
+          ? '<div style="width:88px;height:88px;border-radius:8px;background:#000;display:flex;align-items:center;justify-content:center;color:#fff;">' + SocialBranch._netIcon('video', 28) + '</div>'
+          : '<img src="' + UI.esc(f.dataUrl) + '" style="width:88px;height:88px;border-radius:8px;object-fit:cover;">';
+        html += '<div style="position:relative;" title="' + UI.esc(f.name) + ' · ' + SocialBranch._fmtSize(f.size) + '">'
+          + thumb
+          + '<button onclick="SocialBranch._bulkRemove(\'' + f.id + '\')" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#dc2626;color:#fff;border:none;cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>'
+          + '<div style="position:absolute;bottom:2px;left:2px;right:2px;font-size:10px;color:#fff;background:rgba(0,0,0,.6);padding:2px 4px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(f.name) + '</div>'
+          + '</div>';
+      });
+      if (b.files.length > 24) {
+        html += '<div style="width:88px;height:88px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text-light);">+' + (b.files.length - 24) + '</div>';
+      }
+      html += '</div>';
+
+      // Action buttons
+      html += '<div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;">'
+        + '<button onclick="SocialBranch._bulkAiCaptionAll()" class="btn btn-primary" style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">' + SocialBranch._netIcon('sparkles', 14) + 'Generate captions with AI</button>'
+        + '<button onclick="SocialBranch._bulkProceed(false)" style="background:var(--white);border:1px solid var(--border);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;">Continue without captions</button>'
+        + '</div>';
+      html += '</div>';
+    }
+
+    return html;
+  },
+
+  _renderBulkReview: function() {
+    var b = SocialBranch._bulk;
+    var html = '';
+
+    // Header + actions
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">'
+      + '<div><h3 style="margin:0;font-size:16px;">Review &amp; schedule (' + b.files.length + ')</h3>'
+      + '<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Edit captions, pick networks, set times. Defaults: 1/day starting tomorrow 10am.</div></div>'
+      + '<div style="font-size:12px;color:var(--text-light);">Step 2 of 2</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button onclick="SocialBranch._bulkScheduleAll()" class="btn btn-primary" style="font-size:13px;">Schedule all (' + b.files.length + ')</button>'
+      + '<button onclick="SocialBranch._bulkSaveAllDrafts()" style="background:var(--white);border:1px solid var(--border);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;">Save all as drafts</button>'
+      + '<button onclick="SocialBranch._bulkBack()" style="background:none;border:none;color:var(--text-light);font-size:13px;cursor:pointer;">← Back to step 1</button>'
+      + '</div>'
+      + '</div>';
+
+    // Rows
+    html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+    b.files.forEach(function(f) {
+      html += SocialBranch._renderBulkRow(f);
+    });
+    html += '</div>';
+
+    return html;
+  },
+
+  _renderBulkRow: function(f) {
+    var thumb = f.type === 'video'
+      ? '<div style="width:120px;height:120px;border-radius:8px;background:#000;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;">' + SocialBranch._netIcon('video', 36) + '</div>'
+      : '<img src="' + UI.esc(f.dataUrl) + '" style="width:120px;height:120px;border-radius:8px;object-fit:cover;flex-shrink:0;">';
+
+    // Networks chip row — default to networks that accept this media type
+    var netChips = SocialBranch.NETWORKS.filter(function(n) {
+      if (f.type === 'video') return n.accepts === 'video' || n.accepts === 'both';
+      return n.accepts === 'image' || n.accepts === 'both';
+    }).map(function(n) {
+      var on = (f.networks || []).indexOf(n.id) >= 0;
+      return '<button type="button" onclick="SocialBranch._bulkToggleNet(\'' + f.id + '\',\'' + n.id + '\')" style="padding:5px 10px;border-radius:14px;border:1px solid ' + (on ? n.color : 'var(--border)') + ';background:' + (on ? n.color + '20' : 'var(--white)') + ';color:' + (on ? n.color : 'var(--text-light)') + ';font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-weight:' + (on ? '700' : '500') + ';">' + SocialBranch._netIcon(n.icon, 11) + n.name + '</button>';
+    }).join(' ');
+
+    var dtVal = f.scheduledAt ? new Date(f.scheduledAt).toISOString().slice(0,16) : '';
+
+    var captionArea;
+    if (f.captionLoading) {
+      captionArea = '<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text-light);">' + SocialBranch._netIcon('loader-2', 14) + 'Writing caption…</div>';
+    } else {
+      var placeholder = f.captionError ? 'AI failed — write manually' : 'Caption for this post…';
+      captionArea = '<textarea oninput="SocialBranch._bulkSetCaption(\'' + f.id + '\',this.value)" placeholder="' + placeholder + '" style="width:100%;min-height:70px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;">' + UI.esc(f.caption || '') + '</textarea>';
+    }
+
+    return '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;gap:14px;align-items:flex-start;">'
+      + thumb
+      + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;">'
+      +   '<div style="font-size:11px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(f.name) + ' · ' + SocialBranch._fmtSize(f.size) + '</div>'
+      +   captionArea
+      +   '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + netChips + '</div>'
+      +   '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+      +     '<label style="font-size:11px;color:var(--text-light);">When:</label>'
+      +     '<input type="datetime-local" value="' + dtVal + '" onchange="SocialBranch._bulkSetWhen(\'' + f.id + '\',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">'
+      +     '<button onclick="SocialBranch._bulkRemove(\'' + f.id + '\')" style="margin-left:auto;background:none;border:none;color:#dc2626;font-size:12px;cursor:pointer;">Remove</button>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  },
+
+  _fmtSize: function(b) {
+    if (b < 1024) return b + 'B';
+    if (b < 1024*1024) return (b/1024).toFixed(0) + 'KB';
+    return (b/1024/1024).toFixed(1) + 'MB';
+  },
+
+  // ── Drop / pick handlers ────────────────────────────────
+  _bulkOnDrop: function(ev) {
+    var dt = ev.dataTransfer;
+    var files = [];
+    // Prefer items API if folders dropped
+    if (dt.items && dt.items.length) {
+      var entries = [];
+      for (var i = 0; i < dt.items.length; i++) {
+        var entry = dt.items[i].webkitGetAsEntry && dt.items[i].webkitGetAsEntry();
+        if (entry) entries.push(entry);
+      }
+      if (entries.length) {
+        SocialBranch._bulkWalkEntries(entries).then(function(fs) { SocialBranch._bulkAddFiles(fs); });
+        return;
+      }
+    }
+    if (dt.files) for (var j = 0; j < dt.files.length; j++) files.push(dt.files[j]);
+    SocialBranch._bulkAddFiles(files);
+  },
+
+  _bulkWalkEntries: function(entries) {
+    var collected = [];
+    function walk(entry) {
+      return new Promise(function(resolve) {
+        if (entry.isFile) {
+          entry.file(function(f) { collected.push(f); resolve(); }, function(){ resolve(); });
+        } else if (entry.isDirectory) {
+          var reader = entry.createReader();
+          reader.readEntries(function(children) {
+            Promise.all(children.map(walk)).then(function(){ resolve(); });
+          }, function(){ resolve(); });
+        } else { resolve(); }
+      });
+    }
+    return Promise.all(entries.map(walk)).then(function(){ return collected; });
+  },
+
+  _bulkOnPick: function(ev) {
+    var files = [];
+    for (var i = 0; i < ev.target.files.length; i++) files.push(ev.target.files[i]);
+    SocialBranch._bulkAddFiles(files);
+    ev.target.value = '';
+  },
+
+  _bulkAddFiles: function(rawFiles) {
+    if (!rawFiles || !rawFiles.length) return;
+    // Filter to images/videos only, drop oversized
+    var MAX = 10 * 1024 * 1024;
+    var keep = rawFiles.filter(function(f) {
+      if (!f.type) return false;
+      if (!/^(image|video)\//.test(f.type)) return false;
+      if (f.size > MAX) { UI.toast('Skipped (>10MB): ' + f.name, 'error'); return false; }
+      return true;
+    });
+    if (!keep.length) { UI.toast('No usable files.', 'error'); return; }
+    // Read each as data URL
+    var b = SocialBranch._bulk;
+    var promises = keep.map(function(f) {
+      return new Promise(function(resolve) {
+        var reader = new FileReader();
+        reader.onload = function() {
+          resolve({
+            id: 'bf_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
+            name: f.name,
+            size: f.size,
+            type: /^video\//.test(f.type) ? 'video' : 'image',
+            dataUrl: reader.result,
+            caption: '',
+            captionLoading: false,
+            captionError: false,
+            networks: [],
+            scheduledAt: null
+          });
+        };
+        reader.onerror = function(){ resolve(null); };
+        reader.readAsDataURL(f);
+      });
+    });
+    Promise.all(promises).then(function(items) {
+      items.filter(Boolean).forEach(function(it) { b.files.push(it); });
+      UI.toast('Added ' + items.filter(Boolean).length + ' file' + (items.length === 1 ? '' : 's') + '.');
+      loadPage('socialbranch');
+    });
+  },
+
+  _bulkRemove: function(id) {
+    var b = SocialBranch._bulk;
+    b.files = b.files.filter(function(f){ return f.id !== id; });
+    if (b.step === 2 && !b.files.length) b.step = 1;
+    loadPage('socialbranch');
+  },
+
+  _bulkClear: function() {
+    if (!confirm('Clear all files?')) return;
+    SocialBranch._bulk = { step: 1, files: [] };
+    loadPage('socialbranch');
+  },
+
+  _bulkBack: function() {
+    SocialBranch._bulk.step = 1;
+    loadPage('socialbranch');
+  },
+
+  // Default each file: tomorrow 10am + index*1day, networks = those that accept its type
+  _bulkApplyDefaults: function() {
+    var b = SocialBranch._bulk;
+    var base = new Date();
+    base.setDate(base.getDate() + 1);
+    base.setHours(10, 0, 0, 0);
+    b.files.forEach(function(f, i) {
+      if (!f.scheduledAt) {
+        var d = new Date(base.getTime());
+        d.setDate(d.getDate() + i);
+        f.scheduledAt = d.toISOString();
+      }
+      if (!f.networks || !f.networks.length) {
+        f.networks = SocialBranch.NETWORKS.filter(function(n) {
+          if (f.type === 'video') return n.accepts === 'video' || n.accepts === 'both';
+          return n.accepts === 'image' || n.accepts === 'both';
+        }).map(function(n){ return n.id; });
+      }
+    });
+  },
+
+  _bulkProceed: function(_skipAi) {
+    if (!SocialBranch._bulk.files.length) { UI.toast('Add some files first.', 'error'); return; }
+    SocialBranch._bulkApplyDefaults();
+    SocialBranch._bulk.step = 2;
+    loadPage('socialbranch');
+  },
+
+  // ── Per-row state setters ───────────────────────────────
+  _bulkSetCaption: function(id, val) {
+    var f = SocialBranch._bulk.files.find(function(x){ return x.id === id; });
+    if (f) { f.caption = val; f.captionError = false; }
+  },
+  _bulkSetWhen: function(id, val) {
+    var f = SocialBranch._bulk.files.find(function(x){ return x.id === id; });
+    if (!f) return;
+    if (!val) { f.scheduledAt = null; return; }
+    var d = new Date(val);
+    if (!isNaN(d.getTime())) f.scheduledAt = d.toISOString();
+  },
+  _bulkToggleNet: function(id, netId) {
+    var f = SocialBranch._bulk.files.find(function(x){ return x.id === id; });
+    if (!f) return;
+    f.networks = f.networks || [];
+    var i = f.networks.indexOf(netId);
+    if (i >= 0) f.networks.splice(i, 1); else f.networks.push(netId);
+    loadPage('socialbranch');
+  },
+
+  // ── AI captioning ───────────────────────────────────────
+  _bulkAiCaptionAll: function() {
+    var b = SocialBranch._bulk;
+    if (!b.files.length) return;
+    SocialBranch._bulkApplyDefaults();
+    b.step = 2;
+    // Mark all loading and render
+    b.files.forEach(function(f){ if (!f.caption) f.captionLoading = true; });
+    loadPage('socialbranch');
+    // Run with concurrency cap of 5
+    var queue = b.files.filter(function(f){ return f.captionLoading; }).slice();
+    var active = 0;
+    function next() {
+      if (!queue.length) return;
+      while (active < 5 && queue.length) {
+        var f = queue.shift();
+        active++;
+        SocialBranch._bulkAiCaptionOne(f).finally(function() {
+          active--;
+          // Re-render incrementally so spinners clear
+          loadPage('socialbranch');
+          next();
+        });
+      }
+    }
+    next();
+  },
+
+  _bulkAiCaptionOne: function(f) {
+    var hint = f.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ');
+    var promptText = 'Write a short, friendly social caption for a tree-service company\'s Facebook/Instagram post showing "' + hint + '". Include 2-3 relevant hashtags. 100-180 chars. No emojis. Return JUST the caption text, no preamble.';
+    var url = (localStorage.getItem('bm-supabase-url') || '') + '/functions/v1/ai-chat';
+    var key = localStorage.getItem('bm-supabase-key') || '';
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'apikey': key, 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: promptText, max_tokens: 220 })
+    }).then(function(r){ return r.json(); }).then(function(d) {
+      var text = d.text || d.response || d.completion || (d.content && d.content[0] && d.content[0].text) || '';
+      if (!text) throw new Error('no text');
+      f.caption = String(text).trim().replace(/^["']|["']$/g,'');
+      f.captionLoading = false;
+      f.captionError = false;
+    }).catch(function() {
+      f.captionLoading = false;
+      f.captionError = true;
+      f.caption = '';
+    });
+  },
+
+  // ── Schedule / save ─────────────────────────────────────
+  _bulkScheduleAll: function() {
+    var b = SocialBranch._bulk;
+    if (!b.files.length) return;
+    // Validate: each file needs at least 1 network and a date
+    var missing = b.files.filter(function(f){ return !f.networks || !f.networks.length || !f.scheduledAt; });
+    if (missing.length) {
+      if (!confirm(missing.length + ' post(s) are missing networks or a date. Continue and skip those?')) return;
+    }
+    var ready = b.files.filter(function(f){ return f.networks && f.networks.length && f.scheduledAt; });
+    if (!ready.length) { UI.toast('Nothing to schedule.', 'error'); return; }
+    SocialBranch._bulkProcess(ready, 'scheduled');
+  },
+
+  _bulkSaveAllDrafts: function() {
+    var b = SocialBranch._bulk;
+    if (!b.files.length) return;
+    SocialBranch._bulkProcess(b.files.slice(), 'draft');
+  },
+
+  _bulkProcess: function(files, status) {
+    UI.toast('Uploading ' + files.length + ' file' + (files.length === 1 ? '' : 's') + '…');
+    // Upload all media in parallel (already capped by Supabase API behavior)
+    var uploads = files.map(function(f) {
+      return SocialBranch._uploadMediaToPublicUrls([f.dataUrl]).then(function(urls) {
+        return { f: f, url: urls[0] };
+      });
+    });
+    Promise.all(uploads).then(function(results) {
+      var posts = SocialBranch._getPosts();
+      var added = 0;
+      results.forEach(function(r) {
+        var p = {
+          id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
+          caption: r.f.caption || '',
+          media: [r.url],
+          networks: r.f.networks || [],
+          scheduledAt: r.f.scheduledAt || null,
+          status: status,
+          createdAt: new Date().toISOString()
+        };
+        posts.unshift(p);
+        added++;
+      });
+      SocialBranch._setPosts(posts);
+      UI.toast((status === 'scheduled' ? 'Scheduled ' : 'Saved ') + added + ' post' + (added === 1 ? '' : 's') + '.');
+      // Reset + jump
+      SocialBranch._bulk = { step: 1, files: [] };
+      SocialBranch._tab = (status === 'scheduled' ? 'calendar' : 'dashboard');
+      loadPage('socialbranch');
+    }).catch(function(e) {
+      UI.toast('Upload failed: ' + (e.message || e), 'error');
+    });
   },
 
   // ─────────────────────────────────────────────────────────

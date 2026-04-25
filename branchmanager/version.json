@@ -1,5 +1,5 @@
 {
-  "version": 401,
+  "version": 402,
   "released": "2026-04-25",
-  "notes": "v401: VideoQuote narration (text + Web Speech dictation)"
+  "notes": "v402: Branch Cam tool tab removed; ZIP moved to Settings Regional"
 }

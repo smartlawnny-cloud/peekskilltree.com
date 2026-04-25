@@ -563,6 +563,7 @@ var SettingsPage = {
       + '</div>';
 
     // ── Regional Settings ──
+    var _zip = localStorage.getItem('bm-zip') || '10566';
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<h3 style="margin:0 0 16px;">Regional Settings</h3>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
@@ -570,10 +571,11 @@ var SettingsPage = {
       + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">United States</div></div>'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Timezone</label>'
       + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">(GMT-05:00) America/New_York</div></div>'
+      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Default ZIP <span style="font-weight:400;">(species &amp; pricing region)</span></label>'
+      + '<input type="text" id="reg-zip" maxlength="5" value="' + _zip + '" onchange="localStorage.setItem(\'bm-zip\',this.value);UI.toast(\'Default ZIP saved\');" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;">'
+      + '</div>'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Date Format</label>'
       + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">Jan 31, 2026</div></div>'
-      + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Time Format</label>'
-      + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">12 Hour (1:30 PM)</div></div>'
       + '</div></div>';
 
     // — T&M Pricing Rates (moved here from standalone section at the bottom) —

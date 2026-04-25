@@ -45,13 +45,8 @@ var VideoQuote = {
       + '<div>&#x2022; Good lighting, avoid backlighting</div>'
       + '</div></div>';
 
-    // ZIP code
-    var zip = localStorage.getItem('bm-zip') || '10566';
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:var(--text-light);">'
-      + '<span>ZIP:</span>'
-      + '<input type="text" id="vq-zip" value="' + zip + '" maxlength="5" style="width:60px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;" onchange="localStorage.setItem(\'bm-zip\',this.value)">'
-      + '<span style="font-size:11px;">(for species/pricing region)</span>'
-      + '</div>';
+    // v402: ZIP input removed — uses default ZIP from Settings → Regional.
+    // Same Westchester/Putnam region every time, no per-walkthrough override.
 
     // v401: Narration — what Doug says while walking. Optional but very
     // useful for the AI prompt (catches details the camera can\'t show:

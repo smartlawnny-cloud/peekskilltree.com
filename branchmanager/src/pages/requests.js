@@ -248,18 +248,16 @@ var RequestsPage = {
     var filters = [['all','All'],['new','New'],['quoted','Quoted'],['converted','Converted'],['archived','Archived']];
     filters.forEach(function(f) {
       var isActive = self._filter === f[0];
-      html += '<button onclick="RequestsPage._setFilter(\'' + f[0] + '\')" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid '
-        + (isActive ? '#1565c0' : 'var(--border)') + ';background:' + (isActive ? '#1565c0' : 'var(--white)') + ';color:'
-        + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '700' : '500') + ';">' + f[1] + '</button>';
+      html += '<button onclick="RequestsPage._setFilter(\'' + f[0] + '\')" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid '
+        + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:'
+        + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';">' + f[1] + '</button>';
     });
     html += '</div>';
 
     // Search input
-    html += '<div style="position:relative;">'
-      + '<input type="text" placeholder="Search requests..." value="' + UI.esc(self._search) + '" '
-      + 'oninput="RequestsPage._search=this.value;loadPage(\'requests\')" '
-      + 'style="font-size:13px;padding:7px 12px 7px 32px;border:1px solid var(--border);border-radius:8px;width:220px;background:var(--white);">'
-      + '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text-light);">&#128269;</span>'
+    html += '<div class="search-box" style="min-width:200px;max-width:280px;">'
+      + '<span style="color:var(--text-light);">🔍</span>'
+      + '<input type="text" placeholder="Search requests..." value="' + UI.esc(self._search) + '" oninput="RequestsPage._search=this.value;loadPage(\'requests\')">'
       + '</div>';
 
     html += '</div>';

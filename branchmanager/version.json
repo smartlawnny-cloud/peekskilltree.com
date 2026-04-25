@@ -1,5 +1,5 @@
 {
-  "version": 403,
+  "version": 404,
   "released": "2026-04-25",
-  "notes": "v403: Mentor Tools rename + Robbins/Hormozi sections + calculator moves + settings collapse"
+  "notes": "v404: list-page UI consistency (clients + requests filter pills)"
 }

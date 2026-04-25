@@ -90,15 +90,20 @@ var ClientsPage = {
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
       + '<h3 style="font-size:16px;font-weight:700;margin:0;">Clients</h3>'
       + '<span style="font-size:13px;color:var(--text-light);">(' + clients.length + ' results)</span>'
-      + '<button class="filter-btn' + (self._filter==='all'?' active':'') + '" onclick="ClientsPage.setFilter(\'all\')" style="font-size:12px;padding:5px 12px;">All</button>'
-      + '<button class="filter-btn' + (self._filter==='active'?' active':'') + '" onclick="ClientsPage.setFilter(\'active\')" style="font-size:12px;padding:5px 12px;">Active</button>'
-      + '<button class="filter-btn' + (self._filter==='lead'?' active':'') + '" onclick="ClientsPage.setFilter(\'lead\')" style="font-size:12px;padding:5px 12px;">Lead</button>'
-      + '<button class="filter-btn' + (self._filter==='archived'?' active':'') + '" onclick="ClientsPage.setFilter(\'archived\')" style="font-size:12px;padding:5px 12px;">Archived</button>'
-      + '<button class="filter-btn' + (self._filter==='no-email'?' active':'') + '" onclick="ClientsPage.setFilter(\'no-email\')" style="font-size:12px;padding:5px 12px;" title="Clients missing email">📧 Missing email</button>'
-      + (self._tagFilter ? '<button class="filter-btn active" onclick="ClientsPage._tagFilter=\'\';ClientsPage._page=0;loadPage(\'clients\')" style="font-size:12px;padding:5px 12px;">Tag: ' + UI.esc(self._tagFilter) + ' ✕</button>' : '<button class="filter-btn" onclick="ClientsPage.showTagFilter()" style="font-size:12px;padding:5px 12px;">Filter by tag +</button>')
+      + (function() {
+        var chips = [['all','All'],['active','Active'],['lead','Lead'],['archived','Archived'],['no-email','📧 Missing email']];
+        var out = '';
+        for (var ci = 0; ci < chips.length; ci++) {
+          var val = chips[ci][0], label = chips[ci][1];
+          var isActive = self._filter === val;
+          out += '<button onclick="ClientsPage.setFilter(\'' + val + '\')" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid ' + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:' + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';">' + label + '</button>';
+        }
+        return out;
+      })()
+      + (self._tagFilter ? '<button onclick="ClientsPage._tagFilter=\'\';ClientsPage._page=0;loadPage(\'clients\')" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid #2e7d32;background:#2e7d32;color:#fff;cursor:pointer;font-weight:600;">Tag: ' + UI.esc(self._tagFilter) + ' ✕</button>' : '<button onclick="ClientsPage.showTagFilter()" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--white);color:var(--text);cursor:pointer;font-weight:500;">Filter by tag +</button>')
       + '</div>'
       + '<div style="display:flex;align-items:center;gap:8px;">'
-      + '<div class="search-box" style="min-width:200px;max-width:260px;">'
+      + '<div class="search-box" style="min-width:200px;max-width:280px;">'
       + '<span style="color:var(--text-light);">🔍</span>'
       + '<input type="text" id="client-search" placeholder="Search clients..." value="' + UI.esc(self._search) + '" oninput="ClientsPage.setSearch(this.value)">'
       + '</div>'

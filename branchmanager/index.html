@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 392; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 393; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -938,7 +938,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v392.min.js"></script>
+<script defer src="dist/bm.bundle.v393.min.js"></script>
 
 
 
@@ -2405,7 +2405,7 @@ if (window.location.hash && window.location.hash.length > 1) {
 </nav>
 
 <!-- v391: Ask-AI floating pill — visible on every page, opens AI panel with current page context. -->
-<button id="bm-ai-fab" type="button" aria-label="Ask AI"
+<button id="bm-ai-fab" type="button" aria-label="Ask Claude"
   onclick="(function(){
     if (typeof AI === 'undefined' || !AI.show) return;
     AI.init && AI.init();
@@ -2420,7 +2420,7 @@ if (window.location.hash && window.location.hash.length > 1) {
   onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(26,60,18,.45)';"
   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(26,60,18,.35)';">
   <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
-  <span>Ask AI</span>
+  <span>Ask Claude</span>
 </button>
 <style>
   /* Hide the FAB on the AI page itself (already inline there) and on the login screen. */

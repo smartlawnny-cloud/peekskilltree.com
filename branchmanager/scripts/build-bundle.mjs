@@ -78,12 +78,36 @@ function readVersionFromHTML(html) {
   return 'dev';
 }
 
+// After --html swap, index.html no longer has the 90 individual <script> tags
+// to extract from — only the single bundle reference. Persist the manifest the
+// first time we successfully see a multi-script index.html, then reuse it.
+const MANIFEST = path.join(ROOT, 'scripts', 'bundle-manifest.json');
+
 function build() {
   const html = fs.readFileSync(INDEX, 'utf8');
-  const scripts = extractLocalScripts(html);
+  let scripts = extractLocalScripts(html);
   const version = readVersionFromHTML(html);
 
-  console.log('Found ' + scripts.length + ' local scripts to bundle (v' + version + ')');
+  // If we just see the bundle itself (1 entry), fall back to the persisted
+  // manifest so post-swap rebuilds still pull from src/. If the manifest is
+  // missing AND we're in single-bundle mode, hard-error so the user knows to
+  // run from a pre-swap state once first.
+  const isPostSwap = scripts.length <= 1;
+  if (isPostSwap) {
+    if (!fs.existsSync(MANIFEST)) {
+      throw new Error('Post-swap index.html and no bundle-manifest.json — re-run before swapping, or restore manifest from git.');
+    }
+    const saved = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
+    scripts = saved.scripts.map(p => ({ cleanPath: p }));
+    console.log('Loaded ' + scripts.length + ' scripts from manifest (post-swap mode, v' + version + ')');
+  } else {
+    // Save the freshly-extracted manifest so future post-swap rebuilds work.
+    fs.writeFileSync(MANIFEST, JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      scripts: scripts.map(s => s.cleanPath)
+    }, null, 2));
+    console.log('Found ' + scripts.length + ' local scripts to bundle (v' + version + ', manifest written)');
+  }
 
   if (!fs.existsSync(DIST)) fs.mkdirSync(DIST, { recursive: true });
 

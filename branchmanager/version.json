@@ -1,5 +1,5 @@
 {
-  "version": 383,
-  "released": "2026-04-25",
-  "notes": "v383: request_number column + R-prefix display"
+  "version": 384,
+  "released": "2026-04-24",
+  "notes": "v384: Marketing merged into SocialBranch (renamed Marketing in sidebar)"
 }

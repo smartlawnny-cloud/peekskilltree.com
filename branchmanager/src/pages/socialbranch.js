@@ -77,7 +77,12 @@ var SocialBranch = {
       { id:'library',   label:'Media',      icon:'camera' },
       { id:'accounts',  label:'Accounts',   icon:'link' },
       { id:'analytics', label:'Analytics',  icon:'bar-chart-3' },
-      { id:'inbox',     label:'Inbox',      icon:'inbox' }
+      { id:'inbox',     label:'Inbox',      icon:'inbox' },
+      // v384: Marketing-area pages folded in as tabs
+      { id:'campaigns', label:'Campaigns',    icon:'megaphone' },
+      { id:'reviews',   label:'Reviews',      icon:'star' },
+      { id:'referrals', label:'Referrals',    icon:'users-round' },
+      { id:'leads',     label:'Lead Sources', icon:'pie-chart' }
     ];
     html += '<div style="display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:18px;overflow-x:auto;white-space:nowrap;">';
     tabs.forEach(function(t) {
@@ -95,6 +100,12 @@ var SocialBranch = {
       case 'accounts':  html += self._renderAccounts();  break;
       case 'analytics': html += self._renderAnalytics(); break;
       case 'inbox':     html += self._renderInbox();     break;
+      // v384: Marketing-area tabs delegate to their existing page modules.
+      case 'campaigns': html += (typeof Campaigns       !== 'undefined' ? Campaigns.render()       : '<div style="padding:40px;text-align:center;color:var(--text-light);">Campaigns module unavailable.</div>'); break;
+      case 'reviews':   html += (typeof ReviewsPage     !== 'undefined' ? ReviewsPage.render()     : '<div style="padding:40px;text-align:center;color:var(--text-light);">Reviews module unavailable.</div>')
+                              + (typeof ReviewTools     !== 'undefined' ? ReviewTools.render()     : ''); break;
+      case 'referrals': html += (typeof Referrals       !== 'undefined' ? Referrals.render()       : '<div style="padding:40px;text-align:center;color:var(--text-light);">Referrals module unavailable.</div>'); break;
+      case 'leads':     html += (typeof MarketingPage   !== 'undefined' ? MarketingPage.render()   : '<div style="padding:40px;text-align:center;color:var(--text-light);">Lead-source analytics unavailable.</div>'); break;
       default:          html += self._renderDashboard();
     }
 

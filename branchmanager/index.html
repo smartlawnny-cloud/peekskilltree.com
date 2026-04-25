@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 383; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 384; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -264,7 +264,6 @@
   .nav-item.active { background:transparent; color:var(--accent); font-weight:600; }
   /* v362 defensive — force SocialBranch + other essentials visible regardless of any legacy filter */
   .nav-item[data-page="socialbranch"],
-  .nav-item[data-page="marketing"],
   .nav-item[data-page="reports"] { display:flex !important; }
   /* v365 SocialBranch calendar two-column → single column on narrow screens */
   @media (max-width: 800px) {
@@ -854,8 +853,8 @@
 
       <div style="border-top:1px solid var(--sidebar-border);margin:8px 10px 4px;"></div>
       <button class="nav-item" data-page="reports"><span class="icon"><i data-lucide="pie-chart" class="li"></i></span> Reports</button>
-      <button class="nav-item" data-page="marketing"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Marketing</button>
-      <button class="nav-item" data-page="socialbranch"><span class="icon"><i data-lucide="share-2" class="li"></i></span> SocialBranch</button>
+      <!-- v384: marketing / campaigns / referrals / reviews / reviewtools merged into SocialBranch (renamed "Marketing" in the sidebar). Deep links #marketing #campaigns #referrals #reviews #reviewtools still resolve to their standalone page modules. -->
+      <button class="nav-item" data-page="socialbranch"><span class="icon"><i data-lucide="megaphone" class="li"></i></span> Marketing</button>
       <button class="nav-item" data-page="payroll"><span class="icon"><i data-lucide="wallet" class="li"></i></span> Payroll</button>
       <!-- v383: My Pay (employeecenter) merged under Payroll — link at bottom of payroll page. Deep link via #employeecenter still works. -->
 
@@ -940,7 +939,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v383.min.js"></script>
+<script defer src="dist/bm.bundle.v384.min.js"></script>
 
 
 

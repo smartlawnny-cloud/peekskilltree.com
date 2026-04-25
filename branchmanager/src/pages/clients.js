@@ -746,6 +746,25 @@ var ClientsPage = {
       +   '</div>'
       + '</div>'
 
+      // ── Review banner (only when needs_review flag is set; e.g. after a merge) ──
+      + (c.needsReview ? (
+          '<div id="review-banner-' + id + '" style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">'
+          + '<input type="checkbox" id="review-check-' + id + '" onchange="ClientsPage._toggleReview(\'' + id + '\', this.checked)" style="width:18px;height:18px;flex-shrink:0;cursor:pointer;">'
+          + '<div style="flex:1;">'
+          +   '<strong style="color:#e65100;font-size:13px;display:block;margin-bottom:2px;">Review needed</strong>'
+          +   '<div style="font-size:12px;color:#666;">Check the box once you\'ve reviewed the merge notes below.</div>'
+          + '</div></div>'
+        ) : '')
+
+      // ── Notes (free-form, editable, syncs to Supabase) ──
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;">'
+      +   '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+      +     '<strong style="font-size:13px;color:var(--text);">Notes</strong>'
+      +     '<span id="notes-status-' + id + '" style="font-size:11px;color:var(--text-light);"></span>'
+      +   '</div>'
+      +   '<textarea id="client-notes-' + id + '" placeholder="Anything Doug or future-Doug should know about this client. Saves on blur." onblur="ClientsPage._saveNotes(\'' + id + '\', this.value)" rows="' + Math.max(3, ((c.notes || '').match(/\n/g) || []).length + 2) + '" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;line-height:1.5;resize:vertical;box-sizing:border-box;">' + UI.esc(c.notes || '') + '</textarea>'
+      + '</div>'
+
       // ── Primary action row ──
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;">'
       +   (phoneTel ? '<button class="btn" style="background:var(--green-dark);color:#fff;font-size:13px;padding:10px;" onclick="Dialpad.call(\'' + phoneTel + '\',\'' + id + '\',\'' + nameJs + '\')">📞 Call</button>' : '')
@@ -1260,6 +1279,31 @@ var ClientsPage = {
     ids.forEach(function(id){ DB.clients.update(id, { status: status }); });
     UI.toast(ids.length + ' client(s) marked ' + status);
     loadPage('clients');
+  },
+
+  // ── Notes + review checkbox (added v371) ────────────────────────────────
+  // Both fields live on the clients table (`notes` text + `needs_review` bool)
+  // so they sync via SupabaseDB just like every other client field.
+  _saveNotes: function(id, val) {
+    var c = DB.clients.getById(id);
+    if (!c) return;
+    var trimmed = (val || '').replace(/\s+$/g, '');
+    if ((c.notes || '') === trimmed) return; // no-op
+    DB.clients.update(id, { notes: trimmed });
+    var status = document.getElementById('notes-status-' + id);
+    if (status) {
+      status.textContent = 'Saved';
+      setTimeout(function(){ if (status.textContent === 'Saved') status.textContent = ''; }, 1500);
+    }
+  },
+
+  _toggleReview: function(id, checked) {
+    DB.clients.update(id, { needsReview: !checked });
+    if (checked) {
+      var banner = document.getElementById('review-banner-' + id);
+      if (banner) banner.style.display = 'none';
+      if (typeof UI !== 'undefined' && UI.toast) UI.toast('Review acknowledged', 'success');
+    }
   },
 
   _bulkExport: function() {

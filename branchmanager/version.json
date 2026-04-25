@@ -1,5 +1,5 @@
 {
-  "version": 389,
+  "version": 390,
   "released": "2026-04-25",
-  "notes": "v389: Pre-Trip folded into Operations"
+  "notes": "v390: fix Cloud save failed (requests) - bogus supabaseId field"
 }

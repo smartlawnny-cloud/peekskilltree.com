@@ -72,14 +72,14 @@ var RequestsPage = {
       var added = 0;
       rows.forEach(function(row) {
         var dup = existing.find(function(e) {
-          return (e.supabaseId && e.supabaseId === row.id) ||
+          return (e.id && e.id === row.id) ||
                  (e.clientName && row.client_name && e.clientName.toLowerCase() === row.client_name.toLowerCase() &&
                   e.property && row.property && e.property.substring(0,8) === row.property.substring(0,8));
         });
         if (!dup) {
           var matched = RequestsPage._matchClient(row.phone, row.email, row.client_name);
           DB.requests.create({
-            supabaseId: row.id,
+            id: row.id,
             clientId: matched ? matched.id : undefined,
             clientName: (matched && matched.name) || row.client_name || '',
             email: row.email || (matched && matched.email) || '',
@@ -119,14 +119,14 @@ var RequestsPage = {
       var added = 0;
       rows.forEach(function(row) {
         var dup = existing.find(function(e) {
-          return (e.supabaseId && e.supabaseId === row.id) ||
+          return (e.id && e.id === row.id) ||
                  (e.clientName && row.client_name && e.clientName.toLowerCase() === row.client_name.toLowerCase() &&
                   e.property && row.property && e.property.substring(0,8) === row.property.substring(0,8));
         });
         if (!dup) {
           var matched = RequestsPage._matchClient(row.phone, row.email, row.client_name);
           DB.requests.create({
-            supabaseId: row.id,
+            id: row.id,
             clientId: matched ? matched.id : undefined,
             clientName: (matched && matched.name) || row.client_name || '',
             email: row.email || (matched && matched.email) || '',

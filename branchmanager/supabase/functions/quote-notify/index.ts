@@ -31,8 +31,9 @@ async function sendEmail(to: string, _toName: string, subject: string, text: str
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      // Until peekskilltree.com is verified in Resend (DNS), use onboarding@resend.dev.
-      from: 'Second Nature Tree <onboarding@resend.dev>',
+      // Set RESEND_FROM_EMAIL secret post-Resend-verification to flip:
+      //   supabase secrets set RESEND_FROM_EMAIL="Second Nature Tree <info@peekskilltree.com>"
+      from: Deno.env.get('RESEND_FROM_EMAIL') ?? 'Second Nature Tree <onboarding@resend.dev>',
       to: [to],
       subject,
       text,

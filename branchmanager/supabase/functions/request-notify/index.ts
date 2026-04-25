@@ -79,9 +79,12 @@ async function sendEmail(to: string, _toName: string, subject: string, text: str
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      // IMPORTANT: until Resend verifies peekskilltree.com, use onboarding@resend.dev.
-      // After Wix DNS verification, switch to info@peekskilltree.com.
-      from: 'Second Nature Tree <onboarding@resend.dev>',
+      // RESEND_FROM_EMAIL env var lets us flip the From address without redeploy.
+      // Default = onboarding@resend.dev (shared sandbox sender, works without
+      // domain verification). After GoDaddy transfer + Cloudflare DNS + Resend
+      // domain verification (Apr 25 2026 plan), run:
+      //   supabase secrets set RESEND_FROM_EMAIL="Second Nature Tree <info@peekskilltree.com>"
+      from: Deno.env.get('RESEND_FROM_EMAIL') ?? 'Second Nature Tree <onboarding@resend.dev>',
       to: [to],
       subject,
       text,

@@ -77,7 +77,9 @@ async function sendOne(to: string, firstName: string) {
     method: 'POST',
     headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'Second Nature Tree <onboarding@resend.dev>',
+      // RESEND_FROM_EMAIL secret to flip post-Resend-verification:
+      //   supabase secrets set RESEND_FROM_EMAIL="Second Nature Tree <info@peekskilltree.com>"
+      from: Deno.env.get('RESEND_FROM_EMAIL') ?? 'Second Nature Tree <onboarding@resend.dev>',
       to: [to],
       subject: 'A quick heads-up — Second Nature Tree has a new client portal',
       text,

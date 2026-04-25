@@ -40,9 +40,12 @@ serve(async (req) => {
       })
     }
 
-    // Until peekskilltree.com is verified in Resend (DNS), the From must be onboarding@resend.dev.
-    // Once verified, the caller can pass `from: "info@peekskilltree.com"` to override.
-    const fromAddr = from && from.includes('@') ? from : 'Second Nature Tree <onboarding@resend.dev>'
+    // Default from-address resolution order:
+    //   1. Caller-supplied `from` (if it has an @)
+    //   2. RESEND_FROM_EMAIL env var (set post-Resend-verification: `supabase secrets set RESEND_FROM_EMAIL="..."`)
+    //   3. onboarding@resend.dev sandbox sender (works without verified domain)
+    const defaultFrom = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Second Nature Tree <onboarding@resend.dev>'
+    const fromAddr = from && from.includes('@') ? from : defaultFrom
     const recipients = Array.isArray(to) ? to : [to]
 
     const r = await fetch('https://api.resend.com/emails', {

@@ -870,6 +870,7 @@
       <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> AI Assistant</button>
       <button class="nav-item" data-page="tools"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Tools</button>
       <div style="border-top:1px solid var(--sidebar-border);margin:8px 10px 4px;"></div>
+      <button class="nav-item" data-page="archive"><span class="icon"><i data-lucide="archive" class="li"></i></span> Archive</button>
       <button class="nav-item" data-page="settings"><span class="icon"><i data-lucide="settings" class="li"></i></span> Settings</button>
     </div>
 
@@ -944,7 +945,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v378.min.js"></script>
+<script defer src="dist/bm.bundle.v380.min.js"></script>
 
 <script>
 // Auto-configure Supabase connection
@@ -1045,6 +1046,7 @@ var pageConfigs = {
   import: { title: 'Import Data', action: null },
   backup: { title: 'Backup & Restore', action: null },
   settings: { title: 'Settings', action: null },
+  archive: { title: 'Archive', action: null },
   crewperformance: { title: 'Crew Performance', action: null },
   materials: { title: 'Materials & Inventory', action: '+ Add Material', actionFn: 'Materials.showAddMaterial()' },
   beforeafter: { title: 'Before & After', action: null },
@@ -1241,6 +1243,7 @@ var pageRenderers = {
   import: function() { return ImportPage.render(); },
   backup: function() { return BackupPage.render(); },
   settings: function() { return SettingsPage.render(); },
+  archive: function() { return ArchivePage.render(); },
   aitreeid: function() { return AITreeID.render(); },
   videoquote: function() { return VideoQuote.render(); },
   voicequote: function() { setTimeout(function(){ VoiceQuote.render(); }, 0); return '<div id="voicequote-placeholder">Loading…</div>'; },

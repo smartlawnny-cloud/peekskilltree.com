@@ -1,5 +1,5 @@
 {
-  "version": 397,
+  "version": 398,
   "released": "2026-04-25",
-  "notes": "v397: editable timing on each automation rule"
+  "notes": "v398: Settings page starts fully collapsed (all 4 meta-groups closed)"
 }

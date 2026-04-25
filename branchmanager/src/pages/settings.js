@@ -63,7 +63,7 @@ var SettingsPage = {
     // ════════════════════════════════════════════════════════════════════════
     // META-GROUP 1 / 4: USER (per-device, this user only) — default OPEN
     // ════════════════════════════════════════════════════════════════════════
-    html += groupOpen('User', true);
+    html += groupOpen('User', false);
 
     // ── Notification Preferences — instant emails TO Doug.
     // Distinct from Business → Emails & Text Messages, which is the
@@ -151,7 +151,7 @@ var SettingsPage = {
     // ════════════════════════════════════════════════════════════════════════
     // META-GROUP 2 / 4: BUSINESS (company-wide, syncs across devices) — OPEN
     // ════════════════════════════════════════════════════════════════════════
-    html += groupOpen('Business', true);
+    html += groupOpen('Business', false);
 
     // Company Info — editable, saved to localStorage
     var co = {
@@ -684,7 +684,7 @@ var SettingsPage = {
     // ════════════════════════════════════════════════════════════════════════
     // META-GROUP 3 / 4: INTEGRATIONS (API keys + connected apps) — OPEN
     // ════════════════════════════════════════════════════════════════════════
-    html += groupOpen('Integrations', true);
+    html += groupOpen('Integrations', false);
 
     // ═══ API Keys & Integrations (collapsible group) ═══
     // Wraps SendGrid, AI, Stripe, Dialpad, Gusto, PlantNet in one foldable section

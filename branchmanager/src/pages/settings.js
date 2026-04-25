@@ -48,6 +48,107 @@ var SettingsPage = {
         + '</div>';
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // META-GROUP HELPERS (v393) — wrap the existing inner-GROUP collapsibles
+    // into 4 top-level banners: USER / BUSINESS / INTEGRATIONS / ADVANCED.
+    // ════════════════════════════════════════════════════════════════════════
+    function groupOpen(label, defaultOpen) {
+      return '<details ' + (defaultOpen ? 'open' : '') + ' class="setting-group" style="margin:18px 0 14px;border:none;background:none;">'
+        +   '<summary style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);padding:6px 0;cursor:pointer;list-style:none;border-bottom:1px solid var(--border);margin-bottom:14px;">'
+        +     label + ' <span style="float:right;font-weight:500;">▾</span>'
+        +   '</summary>';
+    }
+    function groupClose() { return '</details>'; }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // META-GROUP 1 / 4: USER (per-device, this user only) — default OPEN
+    // ════════════════════════════════════════════════════════════════════════
+    html += groupOpen('User', true);
+
+    // ── Notification Preferences (moved from Quote & Invoice Defaults group) ──
+    var notif = {
+      quoteApproved: localStorage.getItem('bm-notif-quote-approved') !== 'false',
+      paymentReceived: localStorage.getItem('bm-notif-payment') !== 'false',
+      newRequest: localStorage.getItem('bm-notif-new-request') !== 'false',
+      overdueInvoice: localStorage.getItem('bm-notif-overdue') !== 'false',
+      dailySummary: localStorage.getItem('bm-notif-daily-summary') === 'true',
+      jobCompleted: localStorage.getItem('bm-notif-job-completed') !== 'false'
+    };
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;">Notifications</h3>'
+      + '<button onclick="SettingsPage._saveNotifSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:10px;">';
+    [
+      ['notif-quote-approved', notif.quoteApproved, 'Quote Approved', 'Email when a client approves a quote'],
+      ['notif-payment', notif.paymentReceived, 'Payment Received', 'Email when a client pays an invoice'],
+      ['notif-new-request', notif.newRequest, 'New Request', 'Email when a new booking request comes in'],
+      ['notif-overdue', notif.overdueInvoice, 'Overdue Invoice', 'Email when an invoice becomes overdue'],
+      ['notif-job-completed', notif.jobCompleted, 'Job Completed', 'Email when crew marks a job complete'],
+      ['notif-daily-summary', notif.dailySummary, 'Daily Summary', 'Morning email with today\'s schedule + action items']
+    ].forEach(function(n) {
+      html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
+        + '<input type="checkbox" id="' + n[0] + '" style="width:18px;height:18px;"' + (n[1] ? ' checked' : '') + '>'
+        + '<div><strong style="font-size:13px;">' + n[2] + '</strong><div style="font-size:11px;color:var(--text-light);">' + n[3] + '</div></div></label>';
+    });
+    html += '</div></div>';
+
+    // ── Dark Mode (moved from below Database & Storage group) ──
+    var _dark = (document.documentElement.getAttribute('data-theme') === 'dark') || localStorage.getItem('bm-dark-mode') === 'dark';
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:700;color:var(--text);">🌓 Dark Mode</div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Toggle dark theme app-wide.</div>'
+      +   '</div>'
+      +   '<label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;flex-shrink:0;">'
+      +     '<input type="checkbox" onchange="toggleDarkMode()"' + (_dark ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'
+      +     '<span style="position:absolute;inset:0;background:' + (_dark ? 'var(--green-dark)' : '#cbd5e1') + ';border-radius:26px;transition:.2s;"></span>'
+      +     '<span style="position:absolute;top:3px;left:' + (_dark ? '25px' : '3px') + ';width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
+      +   '</label>'
+      + '</div>';
+
+    // ── Navigation Style (moved from below Database & Storage group) ──
+    var _pwaNav = localStorage.getItem('bm-pwa-nav') || 'top';
+    var _appNav = localStorage.getItem('bm-app-nav') || 'top';
+    var _pillBase = 'flex:1;padding:8px 0;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;';
+    var _pillOn = 'background:var(--green-dark);color:#fff;';
+    var _pillOff = 'background:transparent;color:var(--text-light);';
+    function _navRow(label, sub, currentVal, handlerName) {
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--green-light);">'
+        +   '<div style="flex:1;min-width:180px;">'
+        +     '<div style="font-size:13px;font-weight:700;color:var(--text);">' + label + '</div>'
+        +     '<div style="font-size:11px;color:var(--text-light);margin-top:1px;">' + sub + '</div>'
+        +   '</div>'
+        +   '<div style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:220px;background:var(--white);">'
+        +     '<button onclick="SettingsPage.' + handlerName + '(\'top\')" style="' + _pillBase + (currentVal === 'top' ? _pillOn : _pillOff) + '">Top</button>'
+        +     '<button onclick="SettingsPage.' + handlerName + '(\'bottom\')" style="' + _pillBase + (currentVal === 'bottom' ? _pillOn : _pillOff) + '">Bottom</button>'
+        +     '<button onclick="SettingsPage.' + handlerName + '(\'both\')" style="' + _pillBase + (currentVal === 'both' ? _pillOn : _pillOff) + '">Both</button>'
+        +   '</div>'
+        + '</div>';
+    }
+    html += '<div style="background:var(--green-bg);border:2px solid var(--green-light);border-radius:12px;padding:14px 18px 8px;margin-bottom:16px;">'
+      +   '<div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px;">📱 Navigation Style</div>'
+      +   '<div style="font-size:11px;color:var(--text-light);margin-bottom:6px;">Pick how the nav bar shows. You can set PWA and the native App independently.</div>'
+      +   _navRow('PWA (home-screen install)', 'Safari → Add to Home Screen', _pwaNav, '_setPwaNav')
+      +   _navRow('App (iOS / Android build)', 'Capacitor-wrapped native app', _appNav, '_setAppNav')
+      + '</div>';
+
+    // ── Crew Performance link (moved from Database & Storage group) ──
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+      + '<div><h3 style="margin-bottom:4px;">Crew Performance</h3>'
+      + '<p style="font-size:13px;color:var(--text-light);margin:0;">View crew metrics, leaderboards, and productivity stats</p></div>'
+      + '<button class="btn btn-outline" onclick="loadPage(\'crewperformance\')">View Dashboard →</button>'
+      + '</div></div>';
+
+    html += groupClose();
+
+    // ════════════════════════════════════════════════════════════════════════
+    // META-GROUP 2 / 4: BUSINESS (company-wide, syncs across devices) — OPEN
+    // ════════════════════════════════════════════════════════════════════════
+    html += groupOpen('Business', true);
+
     // Company Info — editable, saved to localStorage
     var co = {
       name: CompanyInfo.get('name'),
@@ -280,34 +381,7 @@ var SettingsPage = {
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
-    // ── Notification Preferences ──
-    var notif = {
-      quoteApproved: localStorage.getItem('bm-notif-quote-approved') !== 'false',
-      paymentReceived: localStorage.getItem('bm-notif-payment') !== 'false',
-      newRequest: localStorage.getItem('bm-notif-new-request') !== 'false',
-      overdueInvoice: localStorage.getItem('bm-notif-overdue') !== 'false',
-      dailySummary: localStorage.getItem('bm-notif-daily-summary') === 'true',
-      jobCompleted: localStorage.getItem('bm-notif-job-completed') !== 'false'
-    };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<h3 style="margin:0;">Notifications</h3>'
-      + '<button onclick="SettingsPage._saveNotifSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
-      + '</div>'
-      + '<div style="display:flex;flex-direction:column;gap:10px;">';
-    [
-      ['notif-quote-approved', notif.quoteApproved, 'Quote Approved', 'Email when a client approves a quote'],
-      ['notif-payment', notif.paymentReceived, 'Payment Received', 'Email when a client pays an invoice'],
-      ['notif-new-request', notif.newRequest, 'New Request', 'Email when a new booking request comes in'],
-      ['notif-overdue', notif.overdueInvoice, 'Overdue Invoice', 'Email when an invoice becomes overdue'],
-      ['notif-job-completed', notif.jobCompleted, 'Job Completed', 'Email when crew marks a job complete'],
-      ['notif-daily-summary', notif.dailySummary, 'Daily Summary', 'Morning email with today\'s schedule + action items']
-    ].forEach(function(n) {
-      html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
-        + '<input type="checkbox" id="' + n[0] + '" style="width:18px;height:18px;"' + (n[1] ? ' checked' : '') + '>'
-        + '<div><strong style="font-size:13px;">' + n[2] + '</strong><div style="font-size:11px;color:var(--text-light);">' + n[3] + '</div></div></label>';
-    });
-    html += '</div></div>';
+    // ── Notifications moved to USER meta-group (top of page) ──
 
     // ── Default Quote & Invoice Settings ──
     var qd = {
@@ -571,6 +645,43 @@ var SettingsPage = {
     // ═══ /GROUP: Services & Products (Data Summary included) ═══
     html += '</div></details>';
 
+    // ═══ GROUP: Templates & Automation (moved up into BUSINESS meta-group) ═══
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span><i data-lucide="file-edit" class="li li-hdr"></i> Templates &amp; Automation</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
+      + '</summary>'
+      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
+
+    var _taRows = [
+      { page: 'onlinebooking',   icon: '🌐', title: 'Online Booking',    desc: 'Configure your public booking form and widget' },
+      { page: 'automations',     icon: '⚡', title: 'Automations',       desc: 'Rules for quote/invoice follow-ups and reminders' },
+      { page: 'checklists',      icon: '✅', title: 'Job Checklists',    desc: 'Reusable checklist templates for crews' },
+      { page: 'formbuilder',     icon: '🧩', title: 'Forms Builder',     desc: 'Build custom intake and inspection forms' },
+      { page: 'emailtemplates',  icon: '📧', title: 'Email Templates',   desc: 'Edit templates for quote / invoice / follow-up emails' },
+      { page: 'receptionist',    icon: '📞', title: 'AI Receptionist',   desc: 'Configure after-hours call answering and routing' }
+    ];
+    _taRows.forEach(function(r) {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fafafa;">'
+        + '<div>'
+        +   '<div style="font-size:13px;font-weight:600;">' + r.icon + ' ' + r.title + '</div>'
+        +   '<div style="font-size:11px;color:var(--text-light);">' + r.desc + '</div>'
+        + '</div>'
+        + '<button class="btn btn-outline" onclick="loadPage(\'' + r.page + '\')" style="font-size:12px;">Open →</button>'
+        + '</div>';
+    });
+
+    // ═══ /GROUP: Templates & Automation ═══
+    html += '</div></details>';
+
+    // ═══ close BUSINESS meta-group ═══
+    html += groupClose();
+
+    // ════════════════════════════════════════════════════════════════════════
+    // META-GROUP 3 / 4: INTEGRATIONS (API keys + connected apps) — OPEN
+    // ════════════════════════════════════════════════════════════════════════
+    html += groupOpen('Integrations', true);
+
     // ═══ API Keys & Integrations (collapsible group) ═══
     // Wraps SendGrid, AI, Stripe, Dialpad, Gusto, PlantNet in one foldable section
     // so the Settings page doesn't feel like a mile of cards.
@@ -763,6 +874,14 @@ var SettingsPage = {
     // ═══ close API Keys collapsible ═══
     html += '</div></details>';
 
+    // ═══ close INTEGRATIONS meta-group ═══
+    html += groupClose();
+
+    // ════════════════════════════════════════════════════════════════════════
+    // META-GROUP 4 / 4: ADVANCED (rare, default-collapsed)
+    // ════════════════════════════════════════════════════════════════════════
+    html += groupOpen('Advanced', false);
+
     // ═══ GROUP: Database & Storage (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
       + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
@@ -810,13 +929,7 @@ var SettingsPage = {
     // CustomFields / Checklists / EmailTemplates also removed — redundant with
     // the Templates & Automation collapsible further down.
 
-    // Crew Performance link
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-      + '<div><h3 style="margin-bottom:4px;">Crew Performance</h3>'
-      + '<p style="font-size:13px;color:var(--text-light);margin:0;">View crew metrics, leaderboards, and productivity stats</p></div>'
-      + '<button class="btn btn-outline" onclick="loadPage(\'crewperformance\')">View Dashboard →</button>'
-      + '</div></div>';
+    // Crew Performance link moved to USER meta-group (top of page).
 
     // Sync from Cloud
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
@@ -978,47 +1091,7 @@ var SettingsPage = {
         + '</div>';
     }
 
-    // === APPEARANCE (placed right under Database Connection per user) ===
-    var _dark = (document.documentElement.getAttribute('data-theme') === 'dark') || localStorage.getItem('bm-dark-mode') === 'dark';
-    if (true) {
-      html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
-        +   '<div>'
-        +     '<div style="font-size:14px;font-weight:700;color:var(--text);">🌓 Dark Mode</div>'
-        +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Toggle dark theme app-wide.</div>'
-        +   '</div>'
-        +   '<label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;flex-shrink:0;">'
-        +     '<input type="checkbox" onchange="toggleDarkMode()"' + (_dark ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">'
-        +     '<span style="position:absolute;inset:0;background:' + (_dark ? 'var(--green-dark)' : '#cbd5e1') + ';border-radius:26px;transition:.2s;"></span>'
-        +     '<span style="position:absolute;top:3px;left:' + (_dark ? '25px' : '3px') + ';width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
-        +   '</label>'
-        + '</div>';
-    }
-
-    // === NAVIGATION STYLE — separate settings for PWA (Safari home-screen install) and App (Capacitor iOS/Android build) ===
-    var _pwaNav = localStorage.getItem('bm-pwa-nav') || 'top';
-    var _appNav = localStorage.getItem('bm-app-nav') || 'top';
-    var _pillBase = 'flex:1;padding:8px 0;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;';
-    var _pillOn = 'background:var(--green-dark);color:#fff;';
-    var _pillOff = 'background:transparent;color:var(--text-light);';
-    function _navRow(label, sub, currentVal, handlerName) {
-      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--green-light);">'
-        +   '<div style="flex:1;min-width:180px;">'
-        +     '<div style="font-size:13px;font-weight:700;color:var(--text);">' + label + '</div>'
-        +     '<div style="font-size:11px;color:var(--text-light);margin-top:1px;">' + sub + '</div>'
-        +   '</div>'
-        +   '<div style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:220px;background:var(--white);">'
-        +     '<button onclick="SettingsPage.' + handlerName + '(\'top\')" style="' + _pillBase + (currentVal === 'top' ? _pillOn : _pillOff) + '">Top</button>'
-        +     '<button onclick="SettingsPage.' + handlerName + '(\'bottom\')" style="' + _pillBase + (currentVal === 'bottom' ? _pillOn : _pillOff) + '">Bottom</button>'
-        +     '<button onclick="SettingsPage.' + handlerName + '(\'both\')" style="' + _pillBase + (currentVal === 'both' ? _pillOn : _pillOff) + '">Both</button>'
-        +   '</div>'
-        + '</div>';
-    }
-    html += '<div style="background:var(--green-bg);border:2px solid var(--green-light);border-radius:12px;padding:14px 18px 8px;margin-bottom:16px;">'
-      +   '<div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px;">📱 Navigation Style</div>'
-      +   '<div style="font-size:11px;color:var(--text-light);margin-bottom:6px;">Pick how the nav bar shows. You can set PWA and the native App independently.</div>'
-      +   _navRow('PWA (home-screen install)', 'Safari → Add to Home Screen', _pwaNav, '_setPwaNav')
-      +   _navRow('App (iOS / Android build)', 'Capacitor-wrapped native app', _appNav, '_setAppNav')
-      + '</div>';
+    // Dark Mode + Navigation Style moved to USER meta-group (top of page).
 
     // ═══ GROUP: Data Import / Export / Backup (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
@@ -1138,34 +1211,10 @@ var SettingsPage = {
     // ═══ /GROUP: Security + Admin ═══
     html += '</div></details>';
 
-    // ═══ GROUP: Templates & Automation (collapsible) ═══
-    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
-      +   '<span><i data-lucide="file-edit" class="li li-hdr"></i> Templates &amp; Automation</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">tap to expand</span>'
-      + '</summary>'
-      + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
+    // Templates & Automation moved up into the BUSINESS meta-group.
 
-    var _taRows = [
-      { page: 'onlinebooking',   icon: '🌐', title: 'Online Booking',    desc: 'Configure your public booking form and widget' },
-      { page: 'automations',     icon: '⚡', title: 'Automations',       desc: 'Rules for quote/invoice follow-ups and reminders' },
-      { page: 'checklists',      icon: '✅', title: 'Job Checklists',    desc: 'Reusable checklist templates for crews' },
-      { page: 'formbuilder',     icon: '🧩', title: 'Forms Builder',     desc: 'Build custom intake and inspection forms' },
-      { page: 'emailtemplates',  icon: '📧', title: 'Email Templates',   desc: 'Edit templates for quote / invoice / follow-up emails' },
-      { page: 'receptionist',    icon: '📞', title: 'AI Receptionist',   desc: 'Configure after-hours call answering and routing' }
-    ];
-    _taRows.forEach(function(r) {
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fafafa;">'
-        + '<div>'
-        +   '<div style="font-size:13px;font-weight:600;">' + r.icon + ' ' + r.title + '</div>'
-        +   '<div style="font-size:11px;color:var(--text-light);">' + r.desc + '</div>'
-        + '</div>'
-        + '<button class="btn btn-outline" onclick="loadPage(\'' + r.page + '\')" style="font-size:12px;">Open →</button>'
-        + '</div>';
-    });
-
-    // ═══ /GROUP: Templates & Automation ═══
-    html += '</div></details>';
+    // ═══ close ADVANCED meta-group ═══
+    html += groupClose();
 
     // About
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'

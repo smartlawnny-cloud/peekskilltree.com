@@ -9,7 +9,10 @@ var SchedulePage = {
   render: function() {
     var self = SchedulePage;
     var html = '';
-    if (typeof AdminTasks !== 'undefined') AdminTasks.seedDefaults();
+    // v378: AdminTasks.seedDefaults() removed — was auto-injecting a recurring
+    // "Review media uploads & schedule social posts" task that became stale once
+    // Media Center moved into SocialBranch. If you want recurring admin reminders
+    // back, build them with explicit user opt-in instead of seeding on every render.
     var today = new Date().toISOString().split('T')[0];
     var allJobs = DB.jobs.getAll();
     var todayJobs = allJobs.filter(function(j) { return j.scheduledDate && j.scheduledDate.substring(0,10) === today; });
@@ -585,23 +588,6 @@ var AdminTasks = {
   getForWeek: function(startDateStr, endDateStr) {
     return this.getAll().filter(function(t) { return !t.completed && t.dueDate >= startDateStr && t.dueDate <= endDateStr; });
   },
-  seedDefaults: function() {
-    var all = this.getAll();
-    if (all.length === 0) {
-      // Find next Monday
-      var d = new Date();
-      var daysUntilMonday = (8 - d.getDay()) % 7 || 7;
-      d.setDate(d.getDate() + daysUntilMonday);
-      var dateStr = d.toISOString().split('T')[0];
-      this.add({
-        id: 'at_default_media',
-        title: 'Review media uploads & schedule social posts',
-        dueDate: dateStr,
-        completed: false,
-        recurrence: 'weekly',
-        category: 'media',
-        color: '#7b1fa2'
-      });
-    }
-  }
+  // v378: seedDefaults() removed — see render() for context.
+  seedDefaults: function() { /* no-op */ }
 };

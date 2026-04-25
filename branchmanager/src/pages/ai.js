@@ -31,15 +31,10 @@ var AI = {
       + '</div>'
       + '</div>';
 
-    // v388: Anthropic key lives server-side (Supabase secret ANTHROPIC_API_KEY,
-    // name bm-server-2026-04). The /functions/v1/ai-chat edge function holds
-    // it. Default to server-managed across all devices/browsers (mobile too)
-    // unless someone explicitly opted out by setting the flag to "false".
-    if (AIConfig.serverManaged()) {
-      AI._serverManaged = true;
-    }
-
-    if (!AI._apiKey && !AI._serverManaged) {
+    // v412: Use AIConfig.available() directly — no cached _serverManaged field
+    // to drift out of sync. Server-managed is default-on per v388 (key lives
+    // in Supabase function secret ANTHROPIC_API_KEY, edge fn /ai-chat reads it).
+    if (!AIConfig.available()) {
       html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;">'
         + '<div style="text-align:center;max-width:340px;">'
         + '<div style="font-size:48px;margin-bottom:16px;">🤖</div>'
@@ -210,8 +205,8 @@ var AI = {
       + '<button onclick="AI.hide()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-light);padding:4px 8px;">✕</button>'
       + '</div></div>';
 
-    // API key setup (if not set AND not running in server-managed mode)
-    if (!AI._apiKey && !AI._serverManaged) {
+    // API key setup — only show if AI is genuinely unreachable
+    if (!AIConfig.available()) {
       html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;">'
         + '<div style="text-align:center;max-width:320px;">'
         + '<div style="font-size:40px;margin-bottom:12px;">🤖</div>'

@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 411; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 412; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -938,7 +938,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v411.min.js"></script>
+<script defer src="dist/bm.bundle.v412.min.js"></script>
 
 
 
@@ -1370,7 +1370,7 @@ var pageRenderers = {
       + '<div class="stat-label">🧮 Job Estimator</div><div class="stat-value" style="font-size:18px;">Price a Job</div><div class="stat-sub">Crew + equipment + insurance + markup → instant quote</div></div>'
       + '<div class="stat-card" style="cursor:pointer;" onclick="loadPage(\'treemeasure\')">'
       + '<div class="stat-label">🌲 Tree Measure</div><div class="stat-value" style="font-size:18px;">Height & DBH</div><div class="stat-sub">Phone angle for height, tape for DBH → instant estimate</div></div>'
-      + '<a href="https://peekskilltree.com/sub.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
+      + '<a href="sub.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
       + '<div class="stat-label">💰 Full Rate Sheet</div><div class="stat-value" style="font-size:18px;">Detailed Rates</div><div class="stat-sub">All rates, tiers, industry comparison</div></a>'
       + '</div>';
   }

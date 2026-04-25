@@ -74,6 +74,36 @@ var SettingsPage = {
     }
     function cardClose() { return '</div></details>'; }
 
+    // v414: apiKeyHeader — common shell for the 8 API-key cards in the
+    // Integrations meta-group (AI / Resend / Stripe / Dialpad / Gusto / PlantNet
+    // / SocialPilot / GMB). Each card has its own unique body (input + buttons
+    // + help text) but the outer card-open + icon + title + status badge is
+    // identical. Replaces ~6 lines per card with a single function call.
+    //
+    // Pair with `</div>` at the end of each card to close the wrapper.
+    //
+    // opts:
+    //   ok       — boolean, drives green-vs-orange border + status color
+    //   title    — h3 text
+    //   emoji    — emoji char (rendered at 22px), OR pass `icon` for custom HTML
+    //   icon     — optional full inner HTML for the icon square (overrides emoji)
+    //   iconBg   — CSS `background` value for the 40×40 icon square
+    //   okText   — status line shown when ok=true
+    //   warnText — status line shown when ok=false (optional for always-on cards)
+    function apiKeyHeader(opts) {
+      var color = opts.ok ? 'var(--green-dark)' : '#e07c24';
+      var border = opts.ok ? 'var(--green-light)' : 'var(--border)';
+      var iconHTML = opts.icon || ('<span style="font-size:22px;">' + opts.emoji + '</span>');
+      var status = opts.ok ? opts.okText : (opts.warnText || opts.okText);
+      return '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + border + ';margin-bottom:16px;">'
+        + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+        +   '<div style="width:40px;height:40px;background:' + opts.iconBg + ';border-radius:8px;display:flex;align-items:center;justify-content:center;">' + iconHTML + '</div>'
+        +   '<div><h3 style="margin:0;">' + opts.title + '</h3>'
+        +     '<div style="font-size:12px;color:' + color + ';font-weight:600;">' + status + '</div>'
+        +   '</div>'
+        + '</div>';
+    }
+
     // ════════════════════════════════════════════════════════════════════════
     // META-GROUP 1 / 4: USER (per-device, this user only) — default OPEN
     // ════════════════════════════════════════════════════════════════════════
@@ -695,12 +725,13 @@ var SettingsPage = {
       + '<div style="padding:0 20px 16px;border-top:1px solid var(--border);margin-top:0;">';
 
     // Email (Resend) — server-keyed, no client config. v372 migrated off SendGrid.
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid var(--green-light);margin-top:16px;margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:#000;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;">RS</div>'
-      + '<div><h3 style="margin:0;">Resend Email</h3>'
-      + '<div style="font-size:12px;color:var(--green-dark);font-weight:600;">Connected (server-side key) — automated emails active</div>'
-      + '</div></div>'
+    html += apiKeyHeader({
+        ok: true,
+        title: 'Resend Email',
+        icon: '<span style="color:#fff;font-weight:800;font-size:13px;">RS</span>',
+        iconBg: '#000',
+        okText: 'Connected (server-side key) — automated emails active'
+      })
       + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Outbound email goes through Resend via the <code>send-email</code> Supabase edge function. Free at our volume. Migrated off SendGrid in v372 ahead of trial expiry.</p>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="if(typeof Email!==\'undefined\'){Email.send(\'info@peekskilltree.com\',\'Branch Manager Test\',\'Resend is connected and working!\').then(function(){UI.toast(\'Test sent! Check info@peekskilltree.com\');}).catch(function(e){UI.toast(\'Failed: \'+e.message,\'error\');});}else{UI.toast(\'Email module not loaded\',\'error\');}" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Send Test Email</button>'
@@ -712,17 +743,16 @@ var SettingsPage = {
     var aiKey = localStorage.getItem('bm-claude-key') || '';
     var aiServerManaged = AIConfig.serverManaged();
     var aiOk = aiServerManaged || aiKey.length > 10;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (aiOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:linear-gradient(135deg,#D4A574,#C4956A);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🤖</div>'
-      + '<div><h3 style="margin:0;">AI Assistant</h3>'
-      + '<div style="font-size:12px;color:' + (aiOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">'
-      +   (aiServerManaged ? '🔒 Server-managed key (secure — never leaves Supabase)'
-          : aiOk ? '✅ Connected — key stored on this device'
-          : '⚠️ Not connected — choose a mode below')
-      + '</div>'
-      + '</div></div>'
-
+    html += apiKeyHeader({
+        ok: aiOk,
+        title: 'AI Assistant',
+        emoji: '🤖',
+        iconBg: 'linear-gradient(135deg,#D4A574,#C4956A)',
+        okText: aiServerManaged
+          ? '🔒 Server-managed key (secure — never leaves Supabase)'
+          : '✅ Connected — key stored on this device',
+        warnText: '⚠️ Not connected — choose a mode below'
+      })
       // Mode picker
       + '<div style="display:flex;gap:6px;margin-bottom:12px;background:var(--bg);border-radius:8px;padding:4px;">'
       +   '<button onclick="localStorage.setItem(\'bm-claude-server-managed\',\'true\');UI.toast(\'Switched to server-managed key\');loadPage(\'settings\');" style="flex:1;padding:8px;border:none;background:' + (aiServerManaged ? 'var(--green-dark)' : 'transparent') + ';color:' + (aiServerManaged ? '#fff' : 'var(--text)') + ';border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">🔒 Server-managed <span style="font-weight:400;opacity:.8;">(recommended)</span></button>'
@@ -756,12 +786,14 @@ var SettingsPage = {
     // ── Stripe Payment Link ──
     var stripeLink = localStorage.getItem('bm-stripe-base-link') || '';
     var stripeOkNow = stripeLink.length > 20;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (stripeOkNow ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:#635BFF;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">💳</div>'
-      + '<div><h3 style="margin:0;">Stripe Payments</h3>'
-      + '<div style="font-size:12px;color:' + (stripeOkNow ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (stripeOkNow ? '✅ Connected — clients can pay invoices online' : '⚠️ Not connected — paste your Stripe payment link') + '</div>'
-      + '</div></div>'
+    html += apiKeyHeader({
+        ok: stripeOkNow,
+        title: 'Stripe Payments',
+        emoji: '💳',
+        iconBg: '#635BFF',
+        okText: '✅ Connected — clients can pay invoices online',
+        warnText: '⚠️ Not connected — paste your Stripe payment link'
+      })
       + '<div style="margin-bottom:8px;"><input type="text" id="stripe-link" value="' + stripeLink + '" placeholder="https://buy.stripe.com/xxxxxxxxxx" style="width:100%;padding:10px;border:2px solid ' + (stripeOkNow ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="var k=document.getElementById(\'stripe-link\').value.trim();if(!k){UI.toast(\'Paste your Stripe link first\',\'error\');return;}if(!/^https:\\/\\/buy\\.stripe\\.com\\//.test(k)){UI.toast(\'Must be a buy.stripe.com link\',\'error\');return;}localStorage.setItem(\'bm-stripe-base-link\',k);UI.toast(\'Stripe connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Link</button>'
@@ -773,12 +805,14 @@ var SettingsPage = {
     // ── Dialpad ──
     var dialpadKey = localStorage.getItem('bm-dialpad-key') || '';
     var dialpadOk = dialpadKey.length > 10;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (dialpadOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:#7A49D6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">📞</div>'
-      + '<div><h3 style="margin:0;">Dialpad Phone / SMS</h3>'
-      + '<div style="font-size:12px;color:' + (dialpadOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (dialpadOk ? '✅ Connected — calls & texts log automatically' : '⚠️ Not connected — paste your Dialpad API token') + '</div>'
-      + '</div></div>'
+    html += apiKeyHeader({
+        ok: dialpadOk,
+        title: 'Dialpad Phone / SMS',
+        emoji: '📞',
+        iconBg: '#7A49D6',
+        okText: '✅ Connected — calls & texts log automatically',
+        warnText: '⚠️ Not connected — paste your Dialpad API token'
+      })
       + '<div style="margin-bottom:8px;"><input type="password" id="dialpad-key" value="' + dialpadKey + '" placeholder="dp_api_xxxxxxxxxxxx" style="width:100%;padding:10px;border:2px solid ' + (dialpadOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="var k=document.getElementById(\'dialpad-key\').value.trim();if(!k){UI.toast(\'Paste your token first\',\'error\');return;}localStorage.setItem(\'bm-dialpad-key\',k);localStorage.setItem(\'bm-receptionist-settings\',JSON.stringify({connected:true}));if(typeof Dialpad!==\'undefined\'){Dialpad.apiKey=k;}UI.toast(\'Dialpad connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Token</button>'
@@ -792,12 +826,14 @@ var SettingsPage = {
     // ── Gusto ──
     var gustoKey = localStorage.getItem('bm-gusto-api-key') || '';
     var gustoOk = gustoKey.length > 10;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (gustoOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:#F45D22;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">💼</div>'
-      + '<div><h3 style="margin:0;">Gusto Payroll</h3>'
-      + '<div style="font-size:12px;color:' + (gustoOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (gustoOk ? '✅ Connected — payroll export enabled' : '⚠️ Not connected — API token optional, CSV export works without it') + '</div>'
-      + '</div></div>'
+    html += apiKeyHeader({
+        ok: gustoOk,
+        title: 'Gusto Payroll',
+        emoji: '💼',
+        iconBg: '#F45D22',
+        okText: '✅ Connected — payroll export enabled',
+        warnText: '⚠️ Not connected — API token optional, CSV export works without it'
+      })
       + '<div style="margin-bottom:8px;"><input type="password" id="gusto-key" value="' + gustoKey + '" placeholder="gst_access_token_xxxxxxx (optional)" style="width:100%;padding:10px;border:2px solid ' + (gustoOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       + '<button onclick="var k=document.getElementById(\'gusto-key\').value.trim();if(!k){UI.toast(\'Paste your token first\',\'error\');return;}localStorage.setItem(\'bm-gusto-api-key\',k);UI.toast(\'Gusto connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Token</button>'
@@ -810,12 +846,14 @@ var SettingsPage = {
     // ── PlantNet / AI Tree ID — API key, lives with other integrations ──
     var _pnKey = localStorage.getItem('bm-plantnet-key') || '';
     var _pnOk = _pnKey.length > 10;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (_pnOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:#15803d;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🌿</div>'
-      + '<div><h3 style="margin:0;">PlantNet (AI Tree ID)</h3>'
-      + '<div style="font-size:12px;color:' + (_pnOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (_pnOk ? '✅ Connected — 2nd Opinion button uses this' : '⚠️ Not connected — add a key for AI tree ID 2nd Opinion') + '</div>'
-      + '</div></div>'
+    html += apiKeyHeader({
+        ok: _pnOk,
+        title: 'PlantNet (AI Tree ID)',
+        emoji: '🌿',
+        iconBg: '#15803d',
+        okText: '✅ Connected — 2nd Opinion button uses this',
+        warnText: '⚠️ Not connected — add a key for AI tree ID 2nd Opinion'
+      })
       + '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
       + '<div style="display:flex;gap:8px;">'
       + '<button onclick="var v=document.getElementById(\'plantnet-key-input\').value.trim();localStorage.setItem(\'bm-plantnet-key\',v);UI.toast(\'PlantNet key saved ✓\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
@@ -828,12 +866,14 @@ var SettingsPage = {
     var spWebhook = localStorage.getItem('bm-socialpilot-webhook') || '';
     var spApiKey = localStorage.getItem('bm-socialpilot-key') || '';
     var spOk = spWebhook.length > 10 || spApiKey.length > 10;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (spOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:#FF6B35;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">📢</div>'
-      + '<div><h3 style="margin:0;">SocialPilot (Social Posting)</h3>'
-      + '<div style="font-size:12px;color:' + (spOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (spOk ? '✅ Connected — Media Center can push to social' : '⚠️ Not connected — add webhook or API key below') + '</div>'
-      + '</div></div>'
+    html += apiKeyHeader({
+        ok: spOk,
+        title: 'SocialPilot (Social Posting)',
+        emoji: '📢',
+        iconBg: '#FF6B35',
+        okText: '✅ Connected — Media Center can push to social',
+        warnText: '⚠️ Not connected — add webhook or API key below'
+      })
       + '<div style="font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:4px;">Option A — Zapier / Make Webhook URL <span style="color:var(--green-dark);">(works on any paid SocialPilot plan)</span></div>'
       + '<input type="text" id="sp-webhook" value="' + UI.esc(spWebhook) + '" placeholder="https://hooks.zapier.com/hooks/catch/..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;margin-bottom:10px;">'
       + '<div style="font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:4px;">Option B — SocialPilot API Key <span style="color:var(--text-light);font-weight:400;">(Agency plan only)</span></div>'
@@ -851,12 +891,14 @@ var SettingsPage = {
     var gmbClientId = localStorage.getItem('bm-gmb-client-id') || '';
     var gmbToken = localStorage.getItem('bm-gmb-access-token') || '';
     var gmbOk = gmbToken.length > 20;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (gmbOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:#4285F4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🔵</div>'
-      + '<div><h3 style="margin:0;">Google Business Profile</h3>'
-      + '<div style="font-size:12px;color:' + (gmbOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (gmbOk ? '✅ Connected — reviews, posts, hours can sync' : '⚠️ Not connected — needs OAuth setup') + '</div>'
-      + '</div></div>'
+    html += apiKeyHeader({
+        ok: gmbOk,
+        title: 'Google Business Profile',
+        emoji: '🔵',
+        iconBg: '#4285F4',
+        okText: '✅ Connected — reviews, posts, hours can sync',
+        warnText: '⚠️ Not connected — needs OAuth setup'
+      })
       + '<div style="background:#f0f7ff;border-left:3px solid #4285F4;padding:10px 12px;border-radius:0 6px 6px 0;font-size:12px;color:#1e3a5f;margin-bottom:12px;line-height:1.5;">'
       + '<strong>One-time Google Cloud setup (≈10 min):</strong><br>'
       + '1. Open <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style="color:#4285F4;font-weight:600;">Google Cloud → Credentials</a><br>'

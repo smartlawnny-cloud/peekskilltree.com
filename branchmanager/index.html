@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 388; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 389; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -847,7 +847,7 @@
       <button class="nav-item" data-page="requests"><span class="icon"><i data-lucide="inbox" class="li"></i></span> Requests <span class="badge" id="badge-requests"></span></button>
       <button class="nav-item" data-page="quotes"><span class="icon"><i data-lucide="file-text" class="li"></i></span> Quotes <span class="badge" id="badge-quotes"></span></button>
       <button class="nav-item" data-page="jobs"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Jobs <span class="badge" id="badge-jobs"></span></button>
-      <button class="nav-item" data-page="pretrip"><span class="icon"><i data-lucide="clipboard-check" class="li"></i></span> Pre-Trip</button>
+      <!-- v388: Pre-Trip folded into Operations as a tab. Deep link via #pretrip still works. -->
       <button class="nav-item" data-page="invoices"><span class="icon"><i data-lucide="receipt" class="li"></i></span> Invoices <span class="badge" id="badge-invoices"></span></button>
       <button class="nav-item" data-page="team"><span class="icon"><i data-lucide="hard-hat" class="li"></i></span> Team</button>
 
@@ -939,7 +939,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v388.min.js"></script>
+<script defer src="dist/bm.bundle.v389.min.js"></script>
 
 
 
@@ -1261,6 +1261,7 @@ var OperationsHub = {
     var tabs = [
       ['dispatch', 'Dispatch'],
       ['equipment', 'Equipment'],
+      ['pretrip', 'Pre-Trip'],
       ['chat', 'Chat & Tasks']
     ];
     var r = _renderHubTabs('_opsTab', tabs, 'dispatch');
@@ -1268,6 +1269,7 @@ var OperationsHub = {
     try {
       if (r.tab === 'dispatch') body = DispatchPage.render();
       else if (r.tab === 'equipment') body = EquipmentPage.render();
+      else if (r.tab === 'pretrip') body = (typeof DailyInspection !== 'undefined' ? DailyInspection.render() : '<div style="padding:16px;color:var(--text-light);">Pre-Trip module not loaded.</div>');
       else if (r.tab === 'chat') body = (typeof TaskReminders !== 'undefined' ? TaskReminders.render() : '<div style="padding:16px;color:var(--text-light);">Chat & Tasks module not loaded.</div>');
     } catch (e) { body = '<div style="padding:16px;color:var(--red);">Error loading tab: ' + e.message + '</div>'; }
     return r.html + body;

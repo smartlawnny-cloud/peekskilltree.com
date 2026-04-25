@@ -1,5 +1,5 @@
 {
-  "version": 388,
+  "version": 389,
   "released": "2026-04-25",
-  "notes": "v388: Chat&Tasks under Operations, calendar default month, AI key server-managed, 24 jobs status fix"
+  "notes": "v389: Pre-Trip folded into Operations"
 }

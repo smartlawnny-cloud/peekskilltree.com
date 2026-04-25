@@ -11,10 +11,16 @@ var ArchivePage = {
     var invoices = DB.invoices.getAll().filter(function(i) { return i.status === 'archived'; });
     var requests = DB.requests.getAll().filter(function(r) { return r.status === 'archived'; });
 
+    var totalCount = clients.length + quotes.length + jobs.length + invoices.length + requests.length;
     var html = '<div style="max-width:960px;margin:0 auto;">'
-      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:14px;">'
-      + '<h2 style="margin:0 0 4px;font-size:20px;font-weight:700;">Archive</h2>'
-      + '<div style="font-size:13px;color:var(--text-light);">Records hidden from default lists. Restore or delete permanently.</div>'
+      + '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">'
+      +   '<div>'
+      +     '<h2 style="margin:0 0 4px;font-size:20px;font-weight:700;">Archive <span style="font-size:13px;font-weight:500;color:var(--text-light);">· ' + totalCount + ' total</span></h2>'
+      +     '<div style="font-size:13px;color:var(--text-light);">Records hidden from default lists. Restore or delete permanently.</div>'
+      +   '</div>'
+      +   (totalCount > 0
+          ? '<button onclick="ArchivePage._deleteAll()" style="background:#dc3545;color:#fff;border:none;padding:9px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;">Delete all archived</button>'
+          : '')
       + '</div>';
 
     html += self._section('clients', 'Clients', clients, function(c) {
@@ -119,6 +125,27 @@ var ArchivePage = {
     else if (kind === 'invoices') DB.invoices.remove(id);
     else if (kind === 'requests') DB.requests.remove(id);
     UI.toast('Deleted');
+    loadPage('archive');
+  },
+
+  // Bulk wipe — only operates on rows already flagged archived. Two-confirm
+  // gate so a stray click can't nuke the entire archive.
+  _deleteAll: function() {
+    var clients  = DB.clients.getAll().filter(function(c){ return c.archived === true; });
+    var quotes   = DB.quotes.getAll().filter(function(q){ return q.status === 'archived'; });
+    var jobs     = DB.jobs.getAll().filter(function(j){ return j.status === 'archived'; });
+    var invoices = DB.invoices.getAll().filter(function(i){ return i.status === 'archived'; });
+    var requests = DB.requests.getAll().filter(function(r){ return r.status === 'archived'; });
+    var total = clients.length + quotes.length + jobs.length + invoices.length + requests.length;
+    if (total === 0) { UI.toast('Nothing archived to delete'); return; }
+    if (!confirm('Permanently delete ALL ' + total + ' archived records?\n\n  · ' + clients.length + ' clients\n  · ' + quotes.length + ' quotes\n  · ' + jobs.length + ' jobs\n  · ' + invoices.length + ' invoices\n  · ' + requests.length + ' requests\n\nThis cannot be undone.')) return;
+    if (!confirm('Final confirmation: DELETE ' + total + ' records permanently?')) return;
+    clients.forEach(function(c){ DB.clients.remove(c.id); });
+    quotes.forEach(function(q){ DB.quotes.remove(q.id); });
+    jobs.forEach(function(j){ DB.jobs.remove(j.id); });
+    invoices.forEach(function(i){ DB.invoices.remove(i.id); });
+    requests.forEach(function(r){ DB.requests.remove(r.id); });
+    UI.toast(total + ' archived records deleted', 'success');
     loadPage('archive');
   }
 };

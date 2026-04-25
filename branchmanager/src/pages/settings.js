@@ -138,13 +138,22 @@ var SettingsPage = {
       +   _navRow('App (iOS / Android build)', 'Capacitor-wrapped native app', _appNav, '_setAppNav')
       + '</div>';
 
-    // ── Crew Performance link (moved from Database & Storage group) ──
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-      + '<div><h3 style="margin-bottom:4px;">Crew Performance</h3>'
-      + '<p style="font-size:13px;color:var(--text-light);margin:0;">View crew metrics, leaderboards, and productivity stats</p></div>'
-      + '<button class="btn btn-outline" onclick="loadPage(\'crewperformance\')">View Dashboard →</button>'
-      + '</div></div>';
+    // ── PlantNet / AI Tree ID — personal API key, user setting ──
+    var _pnKey = localStorage.getItem('bm-plantnet-key') || '';
+    var _pnOk = _pnKey.length > 10;
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid ' + (_pnOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;overflow:hidden;">'
+      +   '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;">'
+      +     '<div style="width:32px;height:32px;background:#15803d;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:#fff;">AI</div>'
+      +     '<div style="flex:1;"><h3 style="margin:0;font-size:14px;">AI Tree Identification (PlantNet)</h3>'
+      +     '<div style="font-size:11px;color:' + (_pnOk ? 'var(--green-dark)' : 'var(--text-light)') + ';">' + (_pnOk ? 'Connected' : 'Not connected') + '</div></div>'
+      +     '<span style="font-size:11px;color:var(--text-light);">▾</span>'
+      +   '</summary>'
+      +   '<div style="padding:0 18px 16px;">'
+      +     '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
+      +     '<button onclick="var v=document.getElementById(\'plantnet-key-input\').value.trim();localStorage.setItem(\'bm-plantnet-key\',v);UI.toast(\'PlantNet key saved\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Key</button>'
+      +     '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 IDs/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">my.plantnet.org</a>. Used by the "2nd Opinion" button when identifying trees from photos.</p>'
+      +   '</div>'
+      + '</details>';
 
     html += groupClose();
 
@@ -679,12 +688,22 @@ var SettingsPage = {
     html += '</div></details>';
 
     // ═══ close BUSINESS meta-group ═══
+    // v398: Crew Performance — team metrics, lives at the bottom of Business
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;overflow:hidden;">'
+      +   '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+      +     '<span style="font-size:14px;font-weight:700;">Crew Performance</span>'
+      +     '<button onclick="event.stopPropagation();loadPage(\'crewperformance\');" class="btn btn-outline" style="font-size:12px;padding:5px 10px;">Open Dashboard &rarr;</button>'
+      +   '</summary>'
+      +   '<div style="padding:0 18px 14px;font-size:12px;color:var(--text-light);">View crew leaderboards, productivity stats, and time-on-job metrics. Same data as the standalone /#crewperformance page.</div>'
+      + '</details>';
+
     html += groupClose();
 
     // ════════════════════════════════════════════════════════════════════════
-    // META-GROUP 3 / 4: INTEGRATIONS (API keys + connected apps) — OPEN
+    // META-GROUP 3 / 3: ADVANCED (wraps Integrations + DB + admin) — closed
+    // v398: Integrations was its own meta-group; folded under Advanced now.
     // ════════════════════════════════════════════════════════════════════════
-    html += groupOpen('Integrations', false);
+    html += groupOpen('Advanced', false);
 
     // ═══ API Keys & Integrations (collapsible group) ═══
     // Wraps SendGrid, AI, Stripe, Dialpad, Gusto, PlantNet in one foldable section
@@ -811,19 +830,7 @@ var SettingsPage = {
       + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Sign up at <a href="https://gusto.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">gusto.com</a> ($40/mo + $6/employee). API token is optional — BM Payroll page exports CSV you upload to Gusto manually each pay period. Get token from Gusto Dev Portal.</p>'
       + '</div>';
 
-    // ── PlantNet (moved inside the API collapsible) ──
-    var _pnKey = localStorage.getItem('bm-plantnet-key') || '';
-    var _pnOk = _pnKey.length > 10;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (_pnOk ? 'var(--green-light)' : 'var(--border)') + ';margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:#15803d;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🌿</div>'
-      + '<div><h3 style="margin:0;">PlantNet (Tree ID 2nd Opinion)</h3>'
-      + '<div style="font-size:12px;color:' + (_pnOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (_pnOk ? '✅ Connected — 2nd Opinion button will use this' : '⚠️ Not connected — 2nd Opinion will prompt for key') + '</div>'
-      + '</div></div>'
-      + '<input type="text" id="plantnet-key-input" value="' + UI.esc(_pnKey) + '" placeholder="2b10..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;">'
-      + '<button onclick="var v=document.getElementById(\'plantnet-key-input\').value.trim();localStorage.setItem(\'bm-plantnet-key\',v);UI.toast(\'PlantNet key saved ✓\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save Key</button>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Free tier: 500 requests/day. Sign up at <a href="https://my.plantnet.org/account/doApiKey" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">my.plantnet.org</a></p>'
-      + '</div>';
+    // v398: PlantNet moved to USER meta-group above (it's a personal API key).
 
     // ── SocialPilot (Webhook OR direct API key) ──
     var spWebhook = localStorage.getItem('bm-socialpilot-webhook') || '';
@@ -878,13 +885,10 @@ var SettingsPage = {
     // ═══ close API Keys collapsible ═══
     html += '</div></details>';
 
-    // ═══ close INTEGRATIONS meta-group ═══
-    html += groupClose();
+    // v398: Integrations content (above) flows directly into Advanced now —
+    // no separate meta-group close. The line below opens Advanced.
 
-    // ════════════════════════════════════════════════════════════════════════
-    // META-GROUP 4 / 4: ADVANCED (rare, default-collapsed)
-    // ════════════════════════════════════════════════════════════════════════
-    html += groupOpen('Advanced', false);
+    // (Advanced is already open from above — this is the second cluster.)
 
     // v395: Archive entry — moved here from sidebar. Click to open the
     // archived-records page (clients/quotes/jobs/invoices/requests).
@@ -1230,17 +1234,18 @@ var SettingsPage = {
     // ═══ close ADVANCED meta-group ═══
     html += groupClose();
 
-    // About
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<h3 style="margin-bottom:12px;">About Branch Manager</h3>'
-      + '<div style="font-size:13px;color:var(--text-light);line-height:1.8;">'
-      + '<div><strong>Version:</strong> 2.0.0</div>'
-      + '<div><strong>Pages:</strong> 50 modules</div>'
-      + '<div><strong>Stack:</strong> Vanilla JS + Supabase + Stripe + MapLibre</div>'
-      + '<div><strong>Storage:</strong> localStorage + Supabase cloud sync</div>'
-      + '<div><strong>PWA:</strong> Installable, offline capable</div>'
-      + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;">Built for ' + BM_CONFIG.companyName + '. Replaces previous system ($50-130/mo) with a $0/mo custom solution.</div>'
-      + '</div></div>';
+    // About — collapsed by default
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;">'
+      +   '<span>About Branch Manager</span><span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 16px;font-size:13px;color:var(--text-light);line-height:1.8;">'
+      +   '<div><strong>Version:</strong> v' + (typeof BUNDLED_VERSION !== 'undefined' ? BUNDLED_VERSION : '?') + '</div>'
+      +   '<div><strong>Stack:</strong> Vanilla JS + Supabase + Stripe + MapLibre</div>'
+      +   '<div><strong>Storage:</strong> localStorage + Supabase cloud sync</div>'
+      +   '<div><strong>PWA:</strong> Installable, offline capable</div>'
+      +   '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;">Built for ' + BM_CONFIG.companyName + '. Replaces previous system ($50-130/mo) with a $0/mo custom solution.</div>'
+      + '</div></details>';
 
     html += '</div>';
     return html;

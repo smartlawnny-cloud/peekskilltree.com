@@ -1,5 +1,5 @@
 {
-  "version": 398,
+  "version": 399,
   "released": "2026-04-25",
-  "notes": "v398: Settings page starts fully collapsed (all 4 meta-groups closed)"
+  "notes": "v399: settings reorg + archive delete-all + about collapse"
 }

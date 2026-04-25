@@ -394,6 +394,13 @@ var DashboardPage = {
         +     '<span style="font-size:12px;font-weight:600;background:var(--green-bg);color:var(--green-dark);padding:2px 8px;border-radius:999px;">' + inboxItems.length + '</span></div>'
         +   '</div>';
       var TONE = { green:'var(--green-dark)', amber:'#e65100', blue:'#1565c0', red:'#c62828' };
+      // v417: sort by urgency before slicing — red first, then amber, blue, green.
+      // Stops urgent items (overdue invoices, stale-late jobs) from being hidden
+      // behind the 8-item cap when an inbox is full.
+      var TONE_PRIORITY = { red: 0, amber: 1, blue: 2, green: 3 };
+      inboxItems.sort(function(a, b) {
+        return (TONE_PRIORITY[a.tone] || 99) - (TONE_PRIORITY[b.tone] || 99);
+      });
       inboxItems.slice(0, 8).forEach(function(it) {
         var color = TONE[it.tone] || 'var(--text)';
         html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg);">'

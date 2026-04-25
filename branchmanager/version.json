@@ -1,5 +1,5 @@
 {
-  "version": 384,
-  "released": "2026-04-24",
-  "notes": "v384: Marketing merged into SocialBranch (renamed Marketing in sidebar)"
+  "version": 385,
+  "released": "2026-04-25",
+  "notes": "v385: schedule weather/photos toggles inline with day/week/month"
 }

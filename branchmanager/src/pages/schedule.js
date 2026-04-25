@@ -20,24 +20,21 @@ var SchedulePage = {
     // Today summary (compact — just count, no big card)
 
 
-    // Toggle row: Weather + Photos
+    // v384: Weather + Photos toggles moved inline with the Day/Week/Month
+    // toggle group instead of taking their own row above. Reclaims one row
+    // of vertical space without losing functionality.
     var wEnabled = typeof Weather !== 'undefined' && Weather.isEnabled();
-    var pEnabled = localStorage.getItem('bm-cal-photos') !== 'false'; // default ON
-    html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">';
-    if (typeof Weather !== 'undefined') {
-      html += '<div style="display:flex;align-items:center;gap:6px;">'
-        + '<span style="font-size:13px;color:var(--text-light);">Weather</span>'
-        + '<button onclick="Weather.toggle()" style="position:relative;width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;background:' + (wEnabled ? 'var(--accent)' : '#ccc') + ';transition:background .2s;">'
-        + '<span style="position:absolute;top:2px;' + (wEnabled ? 'left:18px' : 'left:2px') + ';width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span></button>'
-        + '</div>';
-      if (wEnabled) setTimeout(function() { Weather.fetch(); }, 100);
+    var pEnabled = localStorage.getItem('bm-cal-photos') !== 'false';
+    if (wEnabled) setTimeout(function() { Weather.fetch(); }, 100);
+
+    function toggleSwitch(label, on, onclick) {
+      return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-light);font-weight:500;">'
+        + label
+        + '<button onclick="' + onclick + '" style="position:relative;width:32px;height:18px;border-radius:9px;border:none;cursor:pointer;background:' + (on ? 'var(--accent)' : '#ccc') + ';transition:background .2s;">'
+        +   '<span style="position:absolute;top:2px;' + (on ? 'left:16px' : 'left:2px') + ';width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>'
+        + '</button>'
+        + '</label>';
     }
-    html += '<div style="display:flex;align-items:center;gap:6px;">'
-      + '<span style="font-size:13px;color:var(--text-light);">Photos</span>'
-      + '<button onclick="SchedulePage._togglePhotos()" style="position:relative;width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;background:' + (pEnabled ? 'var(--accent)' : '#ccc') + ';transition:background .2s;">'
-      + '<span style="position:absolute;top:2px;' + (pEnabled ? 'left:18px' : 'left:2px') + ';width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span></button>'
-      + '</div>'
-      + '</div>';
 
     // Calendar controls
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">'
@@ -47,10 +44,14 @@ var SchedulePage = {
       + '<button class="btn btn-outline" onclick="SchedulePage.next()" style="padding:6px 12px;">&rarr;</button>'
       + '<button class="btn btn-outline" onclick="SchedulePage.goToday()" style="font-size:12px;">Today</button>'
       + '</div>'
-      + '<div style="display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:2px;">'
-      + '<button class="btn ' + (self.view === 'day' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'day\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'day' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Day</button>'
-      + '<button class="btn ' + (self.view === 'week' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'week\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'week' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Week</button>'
-      + '<button class="btn ' + (self.view === 'month' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'month\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'month' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Month</button>'
+      + '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">'
+      +   '<div style="display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:2px;">'
+      +     '<button class="btn ' + (self.view === 'day' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'day\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'day' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Day</button>'
+      +     '<button class="btn ' + (self.view === 'week' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'week\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'week' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Week</button>'
+      +     '<button class="btn ' + (self.view === 'month' ? 'btn-primary' : '') + '" onclick="SchedulePage.setView(\'month\')" style="font-size:12px;padding:6px 14px;border-radius:6px;' + (self.view !== 'month' ? 'background:none;border:none;color:var(--text-light);' : '') + '">Month</button>'
+      +   '</div>'
+      +   (typeof Weather !== 'undefined' ? toggleSwitch('Weather', wEnabled, 'Weather.toggle()') : '')
+      +   toggleSwitch('Photos', pEnabled, 'SchedulePage._togglePhotos()')
       + '</div>'
       + '</div>';
 

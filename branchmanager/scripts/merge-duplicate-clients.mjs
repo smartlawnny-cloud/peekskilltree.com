@@ -70,12 +70,11 @@ const oldestScore = c => -new Date(c.created_at).getTime();
   console.log('Found ' + dupSets.length + ' duplicate sets');
 
   // Pre-fetch FK dependents for relation-count scoring
-  const [quotes, jobs, invoices, requests, photos] = await Promise.all([
+  const [quotes, jobs, invoices, requests] = await Promise.all([
     selectAll('quotes?select=id,client_id'),
     selectAll('jobs?select=id,client_id'),
     selectAll('invoices?select=id,client_id'),
-    selectAll('requests?select=id,client_id'),
-    selectAll('photos?select=id,record_id')
+    selectAll('requests?select=id,client_id')
   ]);
   const countByClient = new Map();
   [quotes, jobs, invoices, requests].forEach(arr => arr.forEach(r => {

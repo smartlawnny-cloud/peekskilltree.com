@@ -1651,7 +1651,7 @@ var SettingsPage = {
 
   // Build a base64 code of all relevant bm-* localStorage keys
   _exportKeys: function() {
-    var KEYS = [/* 'bm-sendgrid-key' removed v372 */ 'bm-claude-key','bm-stripe-base-link','bm-dialpad-key',
+    var KEYS = ['bm-claude-key','bm-stripe-base-link','bm-dialpad-key',
                 'bm-gusto-api-key','bm-plantnet-key','bm-tm-rates','bm-ai-enabled',
                 'bm-dark-mode','bm-co-name','bm-co-phone','bm-co-email','bm-co-address',
                 'bm-co-website','bm-tax-rate','bm-zip','bm-revenue-goals','bm-receptionist-settings'];
@@ -1894,7 +1894,6 @@ var SettingsPage = {
     if (!confirm('Remove your ' + label + ' API key?\n\nYou can re-add it anytime.')) return;
     localStorage.removeItem(storageKey);
     // Also clear in-memory reference on the module
-    if (storageKey === 'bm-sendgrid-key' && typeof Email !== 'undefined') Email.apiKey = null;
     if (storageKey === 'bm-claude-key' && typeof AI !== 'undefined') AI._apiKey = null;
     UI.toast(label + ' key removed ✓');
     loadPage('settings');

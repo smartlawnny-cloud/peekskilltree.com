@@ -1,7 +1,23 @@
 #!/usr/bin/env node
 /**
- * Build a single concatenated JS bundle from the 90 individual <script src=…>
- * files in index.html. Cuts cold-start HTTP from 90 round-trips to 1.
+ * ⚠ EXPERIMENTAL — DO NOT USE WITH --html ⚠
+ *
+ * v372 attempt: this script builds a single concatenated JS bundle from
+ * the 90 individual <script src=…> files in index.html. The build itself
+ * works, but the resulting bundle FREEZES THE RENDERER on load — naive
+ * concat doesn't preserve the per-script `defer` boot ordering that the
+ * codebase relies on. The parallel `index-bundled.html` test page
+ * confirmed this. Live `index.html` is unaffected.
+ *
+ * Real fix needs either (a) refactor every script to be import-safe and
+ * use real esbuild dep tracking, or (b) keep concat but add explicit boot
+ * wrappers per file. Either is 4-6 hours.
+ *
+ * Until that lands: don't run with --html. The default (dist-only) mode
+ * is harmless — it builds artifacts to dist/ without touching the live
+ * page.
+ *
+ * Original goal: cut cold-start HTTP from 90 round-trips to 1.
  *
  * Strategy: pure concatenation. These scripts are non-modular (each writes a
  * `var Foo = {…}` global), so we DON'T touch their contents — we just stitch

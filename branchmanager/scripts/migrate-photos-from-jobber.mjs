@@ -66,12 +66,6 @@ async function storageUpload(path, buf, contentType) {
   if (!r.ok) throw new Error('storage upload → ' + r.status + ' ' + (await r.text()).slice(0, 200));
   return SUPABASE_URL + '/storage/v1/object/public/' + BUCKET + '/' + path;
 }
-async function storageExists(path) {
-  const r = await fetch(SUPABASE_URL + '/storage/v1/object/info/public/' + BUCKET + '/' + path, {
-    headers: { Authorization: 'Bearer ' + SERVICE_KEY }
-  });
-  return r.ok;
-}
 
 // Extract stable-ish filename from Jobber CloudFront URL (base64-encoded JSON payload contains the key)
 function parseJobberUrl(url) {
@@ -132,16 +126,13 @@ async function processTable(table, parentIdKey) {
           console.log('  DRY ' + table + ' ' + row.id + ' item ' + idx + ' → ' + path);
           newItems.push(it); continue;
         }
-        const exists = await storageExists(path);
-        let publicUrl;
-        if (exists) {
-          publicUrl = SUPABASE_URL + '/storage/v1/object/public/' + BUCKET + '/' + path;
-          skipped++;
-        } else {
-          const { buf, ct } = await downloadBuf(url, meta.ext);
-          publicUrl = await storageUpload(path, buf, ct);
-          uploaded++;
-        }
+        // x-upsert is on, so re-uploading the same key is a no-op write —
+        // cheaper than the round-trip a HEAD pre-check would cost. The
+        // up-front "already migrated" guard above (line ~126) already
+        // skips rows whose photoUrl points at Supabase.
+        const { buf, ct } = await downloadBuf(url, meta.ext);
+        const publicUrl = await storageUpload(path, buf, ct);
+        uploaded++;
         it.photoUrl = publicUrl;
         it._originalPhotoUrl = url; // keep as audit trail
         changed = true;

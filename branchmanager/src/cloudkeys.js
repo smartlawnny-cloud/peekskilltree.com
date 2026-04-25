@@ -13,7 +13,7 @@
 var CloudKeys = {
   // Settings that should sync across devices
   TRACKED: [
-    /* 'bm-sendgrid-key' removed v372 — Resend is server-keyed */ 'bm-claude-key', 'bm-claude-server-managed',
+    'bm-claude-key', 'bm-claude-server-managed',
     'bm-stripe-base-link', 'bm-dialpad-key',
     'bm-gusto-api-key', 'bm-plantnet-key', 'bm-tm-rates', 'bm-ai-enabled',
     'bm-dark-mode', 'bm-co-name', 'bm-co-phone', 'bm-co-email', 'bm-co-address',

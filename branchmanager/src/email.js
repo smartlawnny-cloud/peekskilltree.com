@@ -6,22 +6,19 @@
  * Falls back to mailto: if the user is offline / function fails.
  */
 var Email = {
-  // Kept for backwards-compat with old code that calls Email.isConfigured().
-  // Always returns true now: send-email is server-keyed, no client config needed.
-  apiKey: null,
-
   init: function() {
-    // Migrate any legacy localStorage value out of the way (no longer used).
+    // One-shot migrate the legacy bm-sendgrid-key into a deprecated slot
+    // so it stops syncing across devices but isn't silently lost. Safe to
+    // delete this whole branch a few weeks after v372 ships.
     if (localStorage.getItem('bm-sendgrid-key')) {
       try { localStorage.setItem('bm-sendgrid-key-deprecated', localStorage.getItem('bm-sendgrid-key')); } catch(e){}
       try { localStorage.removeItem('bm-sendgrid-key'); } catch(e){}
     }
   },
 
-  isConfigured: function() {
-    // Resend key lives server-side. Always treat as configured.
-    return true;
-  },
+  // Kept as a stub so existing callers (jobs.js, requests.js, workflow.js,
+  // weeklysummary.js) don't need to change. Resend lives server-side.
+  isConfigured: function() { return true; },
 
   _isValidEmail: function(e) { return typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); },
 

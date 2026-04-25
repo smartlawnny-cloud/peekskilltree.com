@@ -65,32 +65,36 @@ var SettingsPage = {
     // ════════════════════════════════════════════════════════════════════════
     html += groupOpen('User', true);
 
-    // ── Notification Preferences (moved from Quote & Invoice Defaults group) ──
+    // ── Notification Preferences — instant emails TO Doug.
+    // Distinct from Business → Emails & Text Messages, which is the
+    // customer-facing template editor.
     var notif = {
-      quoteApproved: localStorage.getItem('bm-notif-quote-approved') !== 'false',
+      quoteApproved:   localStorage.getItem('bm-notif-quote-approved') !== 'false',
       paymentReceived: localStorage.getItem('bm-notif-payment') !== 'false',
-      newRequest: localStorage.getItem('bm-notif-new-request') !== 'false',
-      overdueInvoice: localStorage.getItem('bm-notif-overdue') !== 'false',
-      dailySummary: localStorage.getItem('bm-notif-daily-summary') === 'true',
-      jobCompleted: localStorage.getItem('bm-notif-job-completed') !== 'false'
+      newRequest:      localStorage.getItem('bm-notif-new-request') !== 'false',
+      overdueInvoice:  localStorage.getItem('bm-notif-overdue') !== 'false',
+      dailySummary:    localStorage.getItem('bm-notif-daily-summary') === 'true',
+      jobCompleted:    localStorage.getItem('bm-notif-job-completed') !== 'false'
     };
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<h3 style="margin:0;">Notifications</h3>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+      + '<h3 style="margin:0;">Notifications <span style="font-size:11px;font-weight:500;color:var(--text-light);">(emails to you, instant)</span></h3>'
       + '<button onclick="SettingsPage._saveNotifSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
       + '</div>'
-      + '<div style="display:flex;flex-direction:column;gap:10px;">';
+      + '<p style="font-size:11px;color:var(--text-light);margin:0 0 14px;">Alerts BM sends you when something happens. <em>Customer-facing email/SMS templates live under <strong>Business &rarr; Emails &amp; Text Messages</strong>.</em></p>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;">';
     [
-      ['notif-quote-approved', notif.quoteApproved, 'Quote Approved', 'Email when a client approves a quote'],
-      ['notif-payment', notif.paymentReceived, 'Payment Received', 'Email when a client pays an invoice'],
-      ['notif-new-request', notif.newRequest, 'New Request', 'Email when a new booking request comes in'],
-      ['notif-overdue', notif.overdueInvoice, 'Overdue Invoice', 'Email when an invoice becomes overdue'],
-      ['notif-job-completed', notif.jobCompleted, 'Job Completed', 'Email when crew marks a job complete'],
-      ['notif-daily-summary', notif.dailySummary, 'Daily Summary', 'Morning email with today\'s schedule + action items']
+      ['notif-quote-approved', notif.quoteApproved, 'Quote Approved', 'When a client approves a quote'],
+      ['notif-payment',        notif.paymentReceived, 'Payment Received', 'When a client pays an invoice'],
+      ['notif-new-request',    notif.newRequest, 'New Request', 'When a new booking request comes in'],
+      ['notif-overdue',        notif.overdueInvoice, 'Overdue Invoice', 'When an invoice becomes overdue'],
+      ['notif-job-completed',  notif.jobCompleted, 'Job Completed', 'When crew marks a job complete'],
+      ['notif-daily-summary',  notif.dailySummary, 'Daily Summary', 'Morning email with today\'s schedule + action items']
     ].forEach(function(n) {
-      html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
-        + '<input type="checkbox" id="' + n[0] + '" style="width:18px;height:18px;"' + (n[1] ? ' checked' : '') + '>'
-        + '<div><strong style="font-size:13px;">' + n[2] + '</strong><div style="font-size:11px;color:var(--text-light);">' + n[3] + '</div></div></label>';
+      html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0;">'
+        + '<input type="checkbox" id="' + n[0] + '" style="width:18px;height:18px;flex-shrink:0;"' + (n[1] ? ' checked' : '') + '>'
+        + '<div><strong style="font-size:13px;">' + n[2] + '</strong>'
+        +   '<div style="font-size:11px;color:var(--text-light);">' + n[3] + '</div></div></label>';
     });
     html += '</div></div>';
 

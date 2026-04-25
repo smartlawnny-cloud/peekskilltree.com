@@ -356,6 +356,37 @@ var DashboardPage = {
       });
     });
 
+    // 7. Jobs stuck `scheduled` with no date (fell off the calendar)
+    // v416: surfaces clients like Greg Ellson #279 / Denise Weber #175 — work
+    // marked scheduled but never assigned a date. Either work happened off-the-
+    // books OR customer ghosted; either way Doug needs to reconcile.
+    allJobs.filter(function(j) {
+      return j.status === 'scheduled' && !j.scheduledDate;
+    }).slice(0, 5).forEach(function(j) {
+      inboxItems.push({
+        icon: 'calendar-x', tone: 'amber',
+        label: 'Unscheduled job — ' + (j.clientName || 'client'),
+        sub: UI.money(j.total) + ' · #' + (j.jobNumber || j.id.substring(0,8)) + ' · status:scheduled, no date',
+        actionLabel: 'Open',
+        onclick: 'JobsPage.showDetail(\'' + j.id + '\')'
+      });
+    });
+
+    // 8. Jobs marked `late` with scheduled_date 30+ days past
+    var cutoff30dash = new Date(now.getTime() - 30 * 86400000).toISOString().split('T')[0];
+    allJobs.filter(function(j) {
+      return j.status === 'late' && j.scheduledDate && j.scheduledDate < cutoff30dash;
+    }).slice(0, 5).forEach(function(j) {
+      var monthsAgo = Math.round((now.getTime() - new Date(j.scheduledDate).getTime()) / (30 * 86400000));
+      inboxItems.push({
+        icon: 'clock-alert', tone: 'red',
+        label: 'Stale-late job — ' + (j.clientName || 'client'),
+        sub: UI.money(j.total) + ' · #' + (j.jobNumber || j.id.substring(0,8)) + ' · ' + monthsAgo + ' month' + (monthsAgo === 1 ? '' : 's') + ' overdue',
+        actionLabel: 'Open',
+        onclick: 'JobsPage.showDetail(\'' + j.id + '\')'
+      });
+    });
+
     if (inboxItems.length > 0) {
       html += '<div style="background:var(--white);border-radius:12px;padding:18px 20px;border:1px solid #c8e6c9;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:16px;">'
         +   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'

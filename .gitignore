@@ -1,0 +1,3 @@
+branchmanager/node_modules/
+branchmanager/dist/bm.bundle.v*.js
+!branchmanager/dist/bm.bundle.v*.min.js

@@ -1,5 +1,5 @@
 {
-  "version": 390,
+  "version": 391,
   "released": "2026-04-25",
-  "notes": "v390: fix Cloud save failed (requests) - bogus supabaseId field"
+  "notes": "v391: Ask-AI floating pill, Home removed, sidebar header navigates to dashboard, AI sidebar entry removed"
 }

@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 390; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 391; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -836,12 +836,11 @@
 
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
-    <div class="sidebar-header" onclick="toggleSidebar()">
+    <div class="sidebar-header" onclick="loadPage('dashboard'); if (window.innerWidth <= 768) toggleSidebar();" title="Go to dashboard">
       <h1>Branch Manager <span>Second Nature Tree Service</span></h1>
     </div>
     <div class="sidebar-nav">
-      <!-- Core nav — matches Jobber -->
-      <button class="nav-item active" data-page="dashboard"><span class="icon"><i data-lucide="layout-dashboard" class="li"></i></span> Home</button>
+      <!-- v391: "Home" sidebar entry removed — top-left header is the home button now. -->
       <button class="nav-item" data-page="schedule"><span class="icon"><i data-lucide="calendar" class="li"></i></span> Schedule</button>
       <button class="nav-item" data-page="clients"><span class="icon"><i data-lucide="users" class="li"></i></span> Clients <span class="badge" id="badge-clients"></span></button>
       <button class="nav-item" data-page="requests"><span class="icon"><i data-lucide="inbox" class="li"></i></span> Requests <span class="badge" id="badge-requests"></span></button>
@@ -861,7 +860,7 @@
       <!-- v388: Chat & Tasks folded into Operations as a tab. Deep link via #taskreminders still works. -->
       <button class="nav-item" data-page="operations"><span class="icon"><i data-lucide="truck" class="li"></i></span> Operations</button>
       <!-- Media Center merged into SocialBranch v376 — deep link still works (#mediacenter) -->
-      <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> AI Assistant</button>
+      <!-- v391: AI Assistant sidebar entry removed — accessible via the top-bar "AI" icon and the floating "Ask AI" pill (bottom-right). Deep link #ai still works. -->
       <button class="nav-item" data-page="tools"><span class="icon"><i data-lucide="wrench" class="li"></i></span> Tools</button>
       <div style="border-top:1px solid var(--sidebar-border);margin:8px 10px 4px;"></div>
       <button class="nav-item" data-page="archive"><span class="icon"><i data-lucide="archive" class="li"></i></span> Archive</button>
@@ -939,7 +938,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v390.min.js"></script>
+<script defer src="dist/bm.bundle.v391.min.js"></script>
 
 
 
@@ -2404,5 +2403,33 @@ if (window.location.hash && window.location.hash.length > 1) {
   <button data-bottom-page="search" onclick="loadPage('search')"><i data-lucide="search"></i><span>Search</span></button>
   <button data-bottom-page="_more" onclick="toggleSidebar()"><i data-lucide="menu"></i><span>More</span></button>
 </nav>
+
+<!-- v391: Ask-AI floating pill — visible on every page, opens AI panel with current page context. -->
+<button id="bm-ai-fab" type="button" aria-label="Ask AI"
+  onclick="(function(){
+    if (typeof AI === 'undefined' || !AI.show) return;
+    AI.init && AI.init();
+    AI._pendingContext = (function(){
+      var hash = (location.hash || '').replace('#','') || 'dashboard';
+      var name = (document.querySelector('.nav-item.active') || {}).textContent || hash;
+      return 'I am on the ' + name.trim() + ' page.';
+    })();
+    AI.show();
+  })()"
+  style="position:fixed;bottom:20px;right:20px;z-index:9000;display:flex;align-items:center;gap:8px;padding:10px 16px;border:none;border-radius:999px;background:linear-gradient(135deg,#1a3c12,#2e7d32);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(26,60,18,.35);transition:transform .12s, box-shadow .12s;"
+  onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(26,60,18,.45)';"
+  onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(26,60,18,.35)';">
+  <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
+  <span>Ask AI</span>
+</button>
+<style>
+  /* Hide the FAB on the AI page itself (already inline there) and on the login screen. */
+  body[data-page="ai"] #bm-ai-fab,
+  body.app-locked #bm-ai-fab { display:none !important; }
+  /* Bottom nav on mobile sits above 0 — push the FAB up so it doesn't overlap the More button */
+  @media (max-width: 768px) {
+    #bm-ai-fab { bottom: 78px; right: 14px; }
+  }
+</style>
 </body>
 </html>

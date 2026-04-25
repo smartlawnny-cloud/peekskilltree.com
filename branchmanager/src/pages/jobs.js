@@ -181,7 +181,7 @@ var JobsPage = {
           + '<td><strong>' + UI.esc(j.clientName || '—') + '</strong></td>'
           + '<td>#' + (j.jobNumber || '') + '</td>'
           + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + UI.esc(j.property || j.description || '') + '">' + UI.esc(j.property || j.description || '—') + '</td>'
-          + '<td style="white-space:nowrap;">' + UI.dateShort(j.scheduledDate) + '</td>'
+          + '<td style="white-space:nowrap;">' + UI.dateShort(j.scheduledDate || j.completedAt || j.createdAt) + '</td>'
           + '<td>' + UI.statusBadge(j.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(j.total)
           + (j.satisfaction && j.satisfaction.rating ? '<div style="font-size:10px;color:#ffc107;margin-top:2px;">' + Array(j.satisfaction.rating + 1).join('⭐') + '</div>' : '')
@@ -195,7 +195,10 @@ var JobsPage = {
     if (page.length > 0) {
       html += '<div class="q-mobile-only" style="display:none;">';
       page.forEach(function(j) {
-        var relSched = j.scheduledDate ? UI.dateShort(j.scheduledDate) : 'Unscheduled';
+        var relSched = j.scheduledDate ? UI.dateShort(j.scheduledDate)
+                      : j.completedAt ? UI.dateShort(j.completedAt)
+                      : j.createdAt ? UI.dateShort(j.createdAt)
+                      : 'Unscheduled';
         html += '<div data-jid="' + j.id + '" class="job-card" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;">'
           + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'
           +   '<div onclick="event.stopPropagation()" style="flex-shrink:0;padding-top:2px;"><input type="checkbox" class="job-check" value="' + j.id + '" onchange="JobsPage._updateBulk()" style="width:18px;height:18px;"></div>'

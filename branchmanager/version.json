@@ -1,5 +1,5 @@
 {
-  "version": 400,
+  "version": 401,
   "released": "2026-04-25",
-  "notes": "v400: removed Voice Quote tab (redundant with Video Walkthrough)"
+  "notes": "v401: VideoQuote narration (text + Web Speech dictation)"
 }

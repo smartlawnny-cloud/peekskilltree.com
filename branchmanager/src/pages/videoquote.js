@@ -47,10 +47,24 @@ var VideoQuote = {
 
     // ZIP code
     var zip = localStorage.getItem('bm-zip') || '10566';
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:13px;color:var(--text-light);">'
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:var(--text-light);">'
       + '<span>ZIP:</span>'
       + '<input type="text" id="vq-zip" value="' + zip + '" maxlength="5" style="width:60px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;" onchange="localStorage.setItem(\'bm-zip\',this.value)">'
       + '<span style="font-size:11px;">(for species/pricing region)</span>'
+      + '</div>';
+
+    // v401: Narration — what Doug says while walking. Optional but very
+    // useful for the AI prompt (catches details the camera can\'t show:
+    // "the leaning oak is dead", "owner wants this one removed", etc.).
+    // Web Speech Recognition for hands-free dictation, plain typing also fine.
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:20px;">'
+      +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">'
+      +     '<div><strong style="font-size:13px;">Narration notes <span style="font-weight:400;color:var(--text-light);">(optional)</span></strong>'
+      +       '<div style="font-size:11px;color:var(--text-light);">Describe what you see — Claude reads this with the frames.</div></div>'
+      +     '<button onclick="VideoQuote._toggleDictate()" id="vq-mic-btn" type="button" style="background:var(--white);color:var(--text);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;">'
+      +       '<i data-lucide="mic" style="width:14px;height:14px;"></i><span>Dictate</span></button>'
+      +   '</div>'
+      +   '<textarea id="vq-narration" rows="3" onblur="try{localStorage.setItem(\'bm-vq-last-narration\',this.value);}catch(e){}" placeholder="e.g. The big white oak by the driveway has a cavity at the base, owner wants it removed. Two dead pines at the back fence." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;line-height:1.5;resize:vertical;box-sizing:border-box;">' + (localStorage.getItem('bm-vq-last-narration') || '') + '</textarea>'
       + '</div>';
 
     // Processing area (hidden until video selected)
@@ -341,6 +355,14 @@ var VideoQuote = {
     var mediaType = 'image/jpeg';
     var zip = localStorage.getItem('bm-zip') || '10566';
 
+    // v401: pull narration from the textarea (or remembered fallback) so
+    // every frame's prompt has Doug's spoken context alongside the image.
+    var narrationEl = document.getElementById('vq-narration');
+    var narration = (narrationEl ? narrationEl.value : (localStorage.getItem('bm-vq-last-narration') || '')).trim();
+    var narrationLine = narration
+      ? '\n\nThe operator narrated this walkthrough as follows — use it to disambiguate species, condition, and what work the owner wants:\n"""\n' + narration + '\n"""\n'
+      : '';
+
     return fetch('https://ltpivkqahvplapyagljt.supabase.co/functions/v1/ai-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -352,7 +374,7 @@ var VideoQuote = {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: 'You are an ISA certified arborist. This is frame ' + frameNumber + ' (at ' + Math.round(timeSeconds) + 's) from a property walkthrough video in ZIP ' + zip + '.\n\nIdentify ALL trees visible in this frame. For each tree provide:\n- species: common name\n- dbh: estimated diameter at breast height in inches\n- condition: good, fair, poor, dead, or hazardous\n- service: one of "Tree Removal", "Tree Pruning", "Stump Removal", "Dead Wood Removal", "Crown Reduction", "Cabling", "Hazard Assessment"\n- price: suggested price in dollars (Westchester NY market rates, consider DBH x $100 for removals, radius x $10 for pruning)\n- notes: brief note about access, hazards, equipment needed\n\nRespond with ONLY a JSON array. Example:\n[{"species":"Red Oak","dbh":"24","condition":"fair","service":"Tree Pruning","price":800,"notes":"Near power lines, bucket truck needed"}]\n\nIf no trees are visible, respond with: []' }
+            { type: 'text', text: 'You are an ISA certified arborist. This is frame ' + frameNumber + ' (at ' + Math.round(timeSeconds) + 's) from a property walkthrough video in ZIP ' + zip + '.' + narrationLine + '\n\nIdentify ALL trees visible in this frame. For each tree provide:\n- species: common name\n- dbh: estimated diameter at breast height in inches\n- condition: good, fair, poor, dead, or hazardous\n- service: one of "Tree Removal", "Tree Pruning", "Stump Removal", "Dead Wood Removal", "Crown Reduction", "Cabling", "Hazard Assessment"\n- price: suggested price in dollars (Westchester NY market rates, consider DBH x $100 for removals, radius x $10 for pruning)\n- notes: brief note about access, hazards, equipment needed\n\nRespond with ONLY a JSON array. Example:\n[{"species":"Red Oak","dbh":"24","condition":"fair","service":"Tree Pruning","price":800,"notes":"Near power lines, bucket truck needed"}]\n\nIf no trees are visible, respond with: []' }
           ]
         }]
       })
@@ -578,6 +600,74 @@ var VideoQuote = {
   },
 
   // ── Reset for another video ──
+  // v401: hands-free narration via Web Speech Recognition. Free, browser-built-in,
+  // works on Chrome + Safari (iOS 14.5+ and macOS). No external transcription
+  // service or API key needed. Final transcripts get appended to the textarea
+  // as the user dictates so they can edit before generating quotes.
+  _recog: null,
+  _toggleDictate: function() {
+    var btn = document.getElementById('vq-mic-btn');
+    var ta  = document.getElementById('vq-narration');
+    if (!ta) return;
+
+    // Currently recording → stop
+    if (VideoQuote._recog) {
+      try { VideoQuote._recog.stop(); } catch(e){}
+      VideoQuote._recog = null;
+      if (btn) {
+        btn.style.background = 'var(--white)';
+        btn.style.color = 'var(--text)';
+        btn.querySelector('span').textContent = 'Dictate';
+      }
+      return;
+    }
+
+    // Browser support check
+    var Recog = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recog) {
+      UI.toast('Dictation not supported in this browser. Type your notes instead, or use your phone keyboard\'s mic button.', 'error');
+      return;
+    }
+
+    var r = new Recog();
+    r.lang = 'en-US';
+    r.continuous = true;
+    r.interimResults = false;
+    r.onresult = function(ev) {
+      for (var i = ev.resultIndex; i < ev.results.length; i++) {
+        if (ev.results[i].isFinal) {
+          var t = ev.results[i][0].transcript.trim();
+          if (t) {
+            ta.value = (ta.value ? ta.value + ' ' : '') + t;
+            // Persist as we go so a refresh doesn\'t lose the dictation
+            try { localStorage.setItem('bm-vq-last-narration', ta.value); } catch(e){}
+          }
+        }
+      }
+    };
+    r.onerror = function(ev) {
+      if (ev.error !== 'no-speech') UI.toast('Dictation error: ' + ev.error, 'error');
+    };
+    r.onend = function() {
+      // Auto-clean state if the engine stops unexpectedly
+      if (VideoQuote._recog) {
+        VideoQuote._recog = null;
+        if (btn) {
+          btn.style.background = 'var(--white)';
+          btn.style.color = 'var(--text)';
+          btn.querySelector('span').textContent = 'Dictate';
+        }
+      }
+    };
+    try { r.start(); } catch(e) { UI.toast('Could not start dictation: ' + e.message, 'error'); return; }
+    VideoQuote._recog = r;
+    if (btn) {
+      btn.style.background = '#dc2626';
+      btn.style.color = '#fff';
+      btn.querySelector('span').textContent = 'Stop';
+    }
+  },
+
   _reset: function() {
     VideoQuote._frames = [];
     VideoQuote._results = [];

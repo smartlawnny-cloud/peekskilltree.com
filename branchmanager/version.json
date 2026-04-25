@@ -1,5 +1,5 @@
 {
-  "version": 365,
-  "released": "2026-04-23",
-  "notes": "v365: Unscheduled posts tray on calendar + SP import self-heal"
+  "version": 380,
+  "released": "2026-04-25",
+  "notes": "v380: archive feature + requests-page polish + bundle artifact + version-bump unified across BUNDLED_VERSION/version.json/sw.js/script tags"
 }

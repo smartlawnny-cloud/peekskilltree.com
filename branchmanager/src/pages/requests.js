@@ -208,38 +208,9 @@ var RequestsPage = {
     newRequests.sort(function(a,b){ return new Date(b.createdAt||0) - new Date(a.createdAt||0); });
 
     var html = '';
-
-    // New request cards
-    if (newRequests.length > 0) {
-      html += '<div style="margin-bottom:20px;">';
-      newRequests.forEach(function(r) {
-        var ageMs = Date.now() - new Date(r.createdAt || 0).getTime();
-        var ageHrs = Math.floor(ageMs / 3600000);
-        var ageStr = ageHrs < 1 ? 'just now' : ageHrs < 24 ? ageHrs + ' hour' + (ageHrs !== 1 ? 's' : '') + ' ago' : Math.floor(ageHrs / 24) + ' day' + (Math.floor(ageHrs / 24) !== 1 ? 's' : '') + ' ago';
-
-        html += '<div onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="'
-          + 'background:#fffde7;border:1px solid #ffe082;border-left:4px solid #f9a825;'
-          + 'border-radius:10px;padding:14px 18px;margin-bottom:8px;cursor:pointer;'
-          + 'transition:transform .1s, box-shadow .1s;'
-          + '" onmouseenter="this.style.boxShadow=\'0 2px 8px rgba(249,168,37,.25)\'" onmouseleave="this.style.boxShadow=\'none\'">'
-          + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">'
-          + '<div style="flex:1;min-width:200px;">'
-          + '<div style="font-size:11px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">New Request'
-          + (r.clientId ? ' <span style="color:var(--green-dark);font-size:10px;background:#e8f5e9;padding:1px 6px;border-radius:4px;margin-left:6px;text-transform:none;letter-spacing:0;">Returning Client</span>' : '')
-          + '</div>'
-          + '<div style="font-size:15px;font-weight:700;color:var(--text);">' + UI.esc(r.clientName || 'Unknown')
-          + '<span style="font-weight:400;color:var(--text-light);font-size:13px;margin-left:8px;">'
-          + (r.property ? ' — ' + UI.esc(r.property) : '')
-          + ' — Received ' + ageStr
-          + '</span></div>'
-          + '</div>'
-          + '<button onclick="event.stopPropagation();RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId||'') + '\',\'' + UI.esc(r.clientName||'').replace(/'/g,"\\'") + '\')" '
-          + 'style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:1px solid #e65100;background:#fff3e0;color:#e65100;cursor:pointer;white-space:nowrap;">'
-          + 'Create Quote &rarr;</button>'
-          + '</div></div>';
-      });
-      html += '</div>';
-    }
+    // v379: yellow "New Request" cards strip removed — was redundant with the
+    // table below. Rows in the main list now get a subtle highlight when they
+    // need attention (status=new or overdue) so it's all in one place.
 
     // ── Stats row (3 cards like Jobber) ──
     html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;" class="detail-grid">';
@@ -324,13 +295,20 @@ var RequestsPage = {
       filtered.forEach(function(r) {
         var isOverdue = self._isOverdue(r);
         var displayStatus = isOverdue && r.status === 'new' ? 'overdue' : r.status;
+        // Highlight rows that need attention. Overdue → red-tinted, plain new → yellow-tinted.
+        var rowBg = isOverdue && r.status === 'new' ? '#fff5f5'
+                  : r.status === 'new' ? '#fffde7'
+                  : 'transparent';
+        var hoverBg = isOverdue && r.status === 'new' ? '#ffe5e5'
+                    : r.status === 'new' ? '#fff9c4'
+                    : 'var(--bg)';
         var desc = r.service || r.notes || '';
         if (desc.length > 50) desc = desc.substring(0, 50) + '...';
         var prop = r.property || '';
         if (prop.length > 35) prop = prop.substring(0, 35) + '...';
 
-        html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;" '
-          + 'onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'transparent\'">'
+        html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="cursor:pointer;border-bottom:1px solid var(--border);background:' + rowBg + ';transition:background .1s;" '
+          + 'onmouseenter="this.style.background=\'' + hoverBg + '\'" onmouseleave="this.style.background=\'' + rowBg + '\'">'
           + '<td onclick="event.stopPropagation()" style="padding:12px 8px;"><input type="checkbox" class="req-check" value="' + r.id + '" onchange="RequestsPage._updateBulk()" style="width:16px;height:16px;"></td>'
           + '<td style="padding:12px 14px;font-weight:600;">' + UI.esc(r.clientName || 'Unknown') + '</td>'
           + '<td style="padding:12px 14px;color:var(--text-light);">' + UI.esc(desc || '—') + '</td>'
@@ -347,10 +325,16 @@ var RequestsPage = {
       filtered.forEach(function(r) {
         var isOverdue = self._isOverdue(r);
         var displayStatus = isOverdue && r.status === 'new' ? 'overdue' : r.status;
+        var cardBg = isOverdue && r.status === 'new' ? '#fff5f5'
+                   : r.status === 'new' ? '#fffde7'
+                   : 'var(--white)';
+        var cardBorder = isOverdue && r.status === 'new' ? '#fca5a5'
+                       : r.status === 'new' ? '#ffe082'
+                       : 'var(--border)';
         var desc = r.service || r.notes || '';
         if (desc.length > 60) desc = desc.substring(0, 60) + '...';
         var returning = r.clientId ? '<span style="display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;background:#e8f0fe;color:#2b6cb0;margin-left:6px;font-weight:600;">Returning</span>' : '';
-        html += '<div data-rid="' + r.id + '" class="request-card" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;display:flex;align-items:flex-start;gap:10px;">'
+        html += '<div data-rid="' + r.id + '" class="request-card" style="background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04);-webkit-tap-highlight-color:transparent;display:flex;align-items:flex-start;gap:10px;">'
           + '<div onclick="event.stopPropagation()" style="flex-shrink:0;padding-top:2px;"><input type="checkbox" class="req-check" value="' + r.id + '" onchange="RequestsPage._updateBulk()" style="width:18px;height:18px;"></div>'
           + '<div style="flex:1;min-width:0;">'
           + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'

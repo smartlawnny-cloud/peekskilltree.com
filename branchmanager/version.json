@@ -1,5 +1,5 @@
 {
-  "version": 391,
+  "version": 392,
   "released": "2026-04-25",
-  "notes": "v391: Ask-AI floating pill, Home removed, sidebar header navigates to dashboard, AI sidebar entry removed"
+  "notes": "v392: trim auto-sync settings card (cloud-sync is automatic)"
 }

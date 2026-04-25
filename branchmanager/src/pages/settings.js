@@ -966,24 +966,17 @@ var SettingsPage = {
 
     // T&M Pricing Rates moved into the Quote & Invoice Defaults section above.
 
-    // === SYNC KEYS ACROSS DEVICES ===
-    // Export all bm-* settings as a base64 code; paste on another device to restore.
-    // Private — the code only works if you have it. No server changes needed.
+    // v391: Cloud sync runs automatically on every localStorage write of a
+    // TRACKED key + every app load (CloudKeys._wrap + realtime listener).
+    // The previous big card with Export/Import was legacy from before cloud
+    // sync existed — replaced with a quiet status row that only appears if
+    // sync is OFF (e.g. tenant_settings table missing).
     var ckOn = typeof CloudKeys !== 'undefined' && CloudKeys.ready;
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<h3 style="margin-bottom:6px;">🔄 Sync Settings Across Devices</h3>'
-      + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">'
-      + (ckOn
-          ? '<span style="color:var(--green-dark);font-weight:700;">✓ Cloud sync ON</span> — keys + preferences sync automatically when you log in. Tap below to force a refresh.'
-          : 'Manual sync: export a code from this device, paste it on another. (Cloud sync requires Supabase login + the tenant_settings table — see release notes.)')
-      + '</p>'
-      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      +   '<button onclick="if(typeof CloudKeys!==\'undefined\')CloudKeys.refresh();else UI.toast(\'Cloud sync not ready\',\'error\');" style="background:#1a3c12;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">☁ Sync from cloud now</button>'
-      +   '<button onclick="SettingsPage._exportKeys()" style="background:var(--green-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">📋 Export code</button>'
-      +   '<button onclick="SettingsPage._importKeys()" style="background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 18px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">📥 Import code</button>'
-      + '</div>'
-      + '<textarea id="sync-code-output" readonly placeholder="Your sync code will appear here after you tap Export…" style="width:100%;height:80px;margin-top:12px;padding:10px;border:1px solid var(--border);border-radius:6px;font-family:monospace;font-size:11px;box-sizing:border-box;"></textarea>'
-      + '</div>';
+    if (!ckOn) {
+      html += '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#92400e;">'
+        +   '<strong>Settings sync is off.</strong> Cloud sync requires Supabase + the <code>tenant_settings</code> table. Until it\'s on, settings stay on this device only.'
+        + '</div>';
+    }
 
     // === APPEARANCE (placed right under Database Connection per user) ===
     var _dark = (document.documentElement.getAttribute('data-theme') === 'dark') || localStorage.getItem('bm-dark-mode') === 'dark';

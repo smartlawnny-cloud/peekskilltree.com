@@ -10,31 +10,40 @@
  *   supabase functions deploy quote-notify --no-verify-jwt
  *
  * Set secrets:
- *   supabase secrets set SENDGRID_API_KEY=SG...
+ *   supabase secrets set RESEND_API_KEY=re_...
+ *
+ * v372: migrated SendGrid → Resend (SendGrid trial ends May 22, 2026; Resend
+ * is free at our volume and request-notify already uses it successfully).
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
-const SENDGRID_API_KEY = Deno.env.get('SENDGRID_API_KEY') ?? '';
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' };
 const APP_URL = 'https://peekskilltree.com/branchmanager/';
 
-async function sendEmail(to: string, toName: string, subject: string, text: string, html?: string) {
-  if (!SENDGRID_API_KEY) return;
-  const body: any = {
-    personalizations: [{ to: [{ email: to, name: toName }] }],
-    from: { email: 'info@peekskilltree.com', name: 'Second Nature Tree Service' },
-    reply_to: { email: 'info@peekskilltree.com', name: 'Second Nature Tree Service' },
-    subject,
-    content: [{ type: 'text/plain', value: text }]
-  };
-  if (html) body.content.push({ type: 'text/html', value: html });
-
-  await fetch('https://api.sendgrid.com/v3/mail/send', {
+async function sendEmail(to: string, _toName: string, subject: string, text: string, html?: string) {
+  if (!RESEND_API_KEY) { console.warn('RESEND_API_KEY not set; skipping email'); return; }
+  const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${SENDGRID_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    headers: {
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      // Until peekskilltree.com is verified in Resend (DNS), use onboarding@resend.dev.
+      from: 'Second Nature Tree <onboarding@resend.dev>',
+      to: [to],
+      subject,
+      text,
+      html: html || undefined,
+      reply_to: 'info@peekskilltree.com'
+    })
   });
+  if (!r.ok) {
+    const errTxt = await r.text();
+    console.warn('Resend failed (' + r.status + '):', errTxt.slice(0, 200));
+  }
 }
 
 function htmlWrap(headerBg: string, headerContent: string, bodyContent: string): string {

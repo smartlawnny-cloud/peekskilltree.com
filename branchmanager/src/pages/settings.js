@@ -18,7 +18,7 @@ var SettingsPage = {
       + '</div>';
 
     // === ONE-TIME SETUP CHECKLIST ===
-    var sgOk2 = (localStorage.getItem('bm-sendgrid-key') || '').length > 10;
+    var sgOk2 = true; // v372: Resend lives server-side; treat email as always configured
     var stripeOk = !!(localStorage.getItem('bm-stripe-base-link'));
     var supabaseOk = (typeof SupabaseDB !== 'undefined' && SupabaseDB.ready) || stats.totalClients > 100;
     var allDone = sgOk2 && stripeOk && supabaseOk;
@@ -27,7 +27,7 @@ var SettingsPage = {
         + '<div style="font-size:16px;font-weight:800;margin-bottom:12px;">🚀 Quick Setup</div>'
         + '<div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">'
         + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">' + (supabaseOk ? '✅' : '⬜') + '</span><span' + (supabaseOk ? ' style="text-decoration:line-through;opacity:.7;"' : '') + '>Supabase connected — your data is live</span></div>'
-        + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">' + (sgOk2 ? '✅' : '⬜') + '</span><span' + (sgOk2 ? ' style="text-decoration:line-through;opacity:.7;"' : '') + '>SendGrid key — enables automated emails</span></div>'
+        + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">' + (sgOk2 ? '✅' : '⬜') + '</span><span' + (sgOk2 ? ' style="text-decoration:line-through;opacity:.7;"' : '') + '>Resend email (server-keyed) — automated emails active</span></div>'
         + '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:16px;">' + (stripeOk ? '✅' : '⬜') + '</span><span' + (stripeOk ? ' style="text-decoration:line-through;opacity:.7;"' : '') + '>Stripe payment link — accept online payments</span></div>'
         + '</div>'
         + '<details style="margin-top:10px;">'
@@ -400,7 +400,7 @@ var SettingsPage = {
       + '</div>'
       + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
       + '<input type="checkbox" id="rev-auto" style="width:18px;height:18px;"' + (rev.autoSend ? ' checked' : '') + '>'
-      + '<div><strong style="font-size:13px;">Auto-Send Review Requests</strong><div style="font-size:11px;color:var(--text-light);">Automatically email clients after job/payment (requires SendGrid)</div></div></label>'
+      + '<div><strong style="font-size:13px;">Auto-Send Review Requests</strong><div style="font-size:11px;color:var(--text-light);">Automatically email clients after job/payment (uses Resend)</div></div></label>'
       + '</div>';
 
     // ── Email & SMS Templates ────────────────────────────────────────────────
@@ -574,7 +574,7 @@ var SettingsPage = {
     // ═══ API Keys & Integrations (collapsible group) ═══
     // Wraps SendGrid, AI, Stripe, Dialpad, Gusto, PlantNet in one foldable section
     // so the Settings page doesn't feel like a mile of cards.
-    var _intCount = ['bm-sendgrid-key','bm-claude-key','bm-stripe-base-link','bm-dialpad-key','bm-gusto-api-key','bm-plantnet-key']
+    var _intCount = ['bm-claude-key','bm-stripe-base-link','bm-dialpad-key','bm-gusto-api-key','bm-plantnet-key']
       .filter(function(k){ return (localStorage.getItem(k) || '').length > 5; }).length;
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<summary style="padding:16px 20px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'
@@ -583,22 +583,18 @@ var SettingsPage = {
       + '</summary>'
       + '<div style="padding:0 20px 16px;border-top:1px solid var(--border);margin-top:0;">';
 
-    // Email (SendGrid)
-    var sgKey = localStorage.getItem('bm-sendgrid-key') || '';
-    var sgOk = sgKey.length > 10;
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid ' + (sgOk ? 'var(--green-light)' : 'var(--border)') + ';margin-top:16px;margin-bottom:16px;">'
+    // Email (Resend) — server-keyed, no client config. v372 migrated off SendGrid.
+    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:2px solid var(--green-light);margin-top:16px;margin-bottom:16px;">'
       + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
-      + '<div style="width:40px;height:40px;background:#1a82e2;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;">SG</div>'
-      + '<div><h3 style="margin:0;">SendGrid Email</h3>'
-      + '<div style="font-size:12px;color:' + (sgOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (sgOk ? '✅ Connected — automated emails active' : '⚠️ Not connected — paste your key below') + '</div>'
+      + '<div style="width:40px;height:40px;background:#000;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;">RS</div>'
+      + '<div><h3 style="margin:0;">Resend Email</h3>'
+      + '<div style="font-size:12px;color:var(--green-dark);font-weight:600;">Connected (server-side key) — automated emails active</div>'
       + '</div></div>'
-      + '<div style="margin-bottom:8px;"><input type="password" id="sendgrid-key" value="' + sgKey + '" placeholder="SG.xxxxxxxxxxxxxxx..." style="width:100%;padding:10px;border:2px solid ' + (sgOk ? 'var(--green-light)' : 'var(--border)') + ';border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'
+      + '<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Outbound email goes through Resend via the <code>send-email</code> Supabase edge function. Free at our volume. Migrated off SendGrid in v372 ahead of trial expiry.</p>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      + '<button onclick="var k=document.getElementById(\'sendgrid-key\').value.trim();if(!k){UI.toast(\'Paste your key first\',\'error\');return;}localStorage.setItem(\'bm-sendgrid-key\',k);if(typeof Email!==\'undefined\'){Email.apiKey=k;}UI.toast(\'SendGrid connected! ✅\');loadPage(\'settings\');" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Save Key</button>'
-      + (sgOk ? '<button onclick="if(typeof Email!==\'undefined\'){Email.send(\'info@peekskilltree.com\',\'Branch Manager Test\',\'SendGrid is connected and working!\').then(function(){UI.toast(\'Test sent! Check info@peekskilltree.com\');}).catch(function(e){UI.toast(\'Failed: \'+e.message,\'error\');});}else{UI.toast(\'Email module not loaded\',\'error\');}" style="background:#1a82e2;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Send Test Email</button>' : '')
-      + (sgOk ? '<button onclick="SettingsPage._removeKey(\'bm-sendgrid-key\',\'SendGrid\')" style="background:none;border:1px solid var(--border);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;">Remove</button>' : '')
+      + '<button onclick="if(typeof Email!==\'undefined\'){Email.send(\'info@peekskilltree.com\',\'Branch Manager Test\',\'Resend is connected and working!\').then(function(){UI.toast(\'Test sent! Check info@peekskilltree.com\');}).catch(function(e){UI.toast(\'Failed: \'+e.message,\'error\');});}else{UI.toast(\'Email module not loaded\',\'error\');}" style="background:var(--green-dark);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">Send Test Email</button>'
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">Enables: automated quote follow-ups, invoice reminders, visit reminders, review requests. Free: 100 emails/day.</p>'
+      + '<p style="font-size:11px;color:var(--text-light);margin-top:8px;">From: <code>onboarding@resend.dev</code> until DNS verification on peekskilltree.com is complete. To switch to <code>info@peekskilltree.com</code>, add Resend\'s DKIM/SPF records in the Wix DNS panel and ping me.</p>'
       + '</div>';
 
     // AI Assistant

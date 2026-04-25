@@ -85,6 +85,115 @@ var MarketingPage = (function() {
     return card(inner);
   }
 
+  // ---------- Tag untagged lead sources (v415) ----------
+  // Surfaces clients without a `source` set, sorted by revenue (paid invoices),
+  // with an inline dropdown for one-click tagging. Top revenue first so Doug
+  // chips away at the highest-attribution-value entries.
+  var _tagShowMore = false;
+  var SOURCE_OPTIONS = [
+    { value: 'Google',       label: 'Google (search / GBP)' },
+    { value: 'Referral',     label: 'Referral / Word of mouth' },
+    { value: 'Repeat',       label: 'Repeat customer' },
+    { value: 'Yard sign',    label: 'Yard sign / Truck' },
+    { value: 'Website form', label: 'Website form' },
+    { value: 'Facebook',     label: 'Facebook' },
+    { value: 'Instagram',    label: 'Instagram' },
+    { value: 'NextDoor',     label: 'NextDoor' },
+    { value: 'Yelp',         label: 'Yelp' },
+    { value: 'Angie',        label: 'Angi / HomeAdvisor' },
+    { value: 'Thumbtack',    label: 'Thumbtack' },
+    { value: 'Drive-by',     label: 'Drive-by' },
+    { value: 'Phone',        label: 'Direct call' },
+    { value: 'Other',        label: 'Other' }
+  ];
+
+  function renderTagSources() {
+    var clients = getClients();
+    var untagged = clients.filter(function(c) {
+      return !c.source && c.status !== 'archived';
+    });
+
+    // Compute lifetime revenue per client from paid invoices
+    var invoices = (typeof DB !== 'undefined' && DB.invoices) ? DB.invoices.getAll() : [];
+    var revByClient = {};
+    invoices.forEach(function(inv) {
+      if (inv.clientId && inv.status === 'paid') {
+        revByClient[inv.clientId] = (revByClient[inv.clientId] || 0) + (inv.total || 0);
+      }
+    });
+
+    // Rank: revenue descending so top earners are first
+    var ranked = untagged.map(function(c) {
+      return { client: c, revenue: revByClient[c.id] || 0 };
+    }).sort(function(a, b) { return b.revenue - a.revenue; });
+
+    var totalUntagged = ranked.length;
+    var totalClients = clients.filter(function(c) { return c.status !== 'archived'; }).length;
+    var pct = totalClients > 0 ? Math.round((totalUntagged / totalClients) * 100) : 0;
+
+    var inner = '<h3 style="margin:0 0 4px;font-size:16px;">🏷️ Tag Untagged Lead Sources</h3>'
+      + '<div style="font-size:12px;color:#64748b;margin-bottom:12px;">'
+      +   totalUntagged + ' of ' + totalClients + ' active clients (' + pct + '%) have no source tagged. '
+      +   'Highest-revenue first — those are the ones you want attributed for ROI math.'
+      + '</div>';
+
+    if (totalUntagged === 0) {
+      inner += emptyState('🎯', 'All clients have a source tagged. Nice attribution discipline!', '');
+      return card(inner);
+    }
+
+    var perPage = _tagShowMore ? ranked.length : 10;
+    var pageItems = ranked.slice(0, perPage);
+
+    var optionsHtml = SOURCE_OPTIONS.map(function(s) {
+      return '<option value="' + s.value + '">' + s.label + '</option>';
+    }).join('');
+
+    inner += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    pageItems.forEach(function(item) {
+      var c = item.client;
+      var revStr = item.revenue > 0 ? '$' + Math.round(item.revenue).toLocaleString() : '—';
+      inner += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">'
+        +   '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:13px;cursor:pointer;" onclick="loadPage(\'clients\');setTimeout(function(){ClientsPage.showDetail(\'' + c.id + '\')},100)" title="Open client detail">' + UI.esc(c.name || 'Unnamed') + '</div>'
+        +   '<div style="font-size:12px;color:#475569;font-variant-numeric:tabular-nums;font-weight:600;min-width:60px;text-align:right;">' + revStr + '</div>'
+        +   '<select onchange="MarketingPage.tagSource(\'' + c.id + '\', this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;">'
+        +     '<option value="">— pick —</option>'
+        +     optionsHtml
+        +   '</select>'
+        + '</div>';
+    });
+    inner += '</div>';
+
+    if (ranked.length > perPage) {
+      inner += '<div style="text-align:center;margin-top:10px;">'
+        + '<button class="btn" onclick="MarketingPage.toggleTagShowMore()">Show all ' + ranked.length + '</button>'
+        + '</div>';
+    } else if (_tagShowMore && ranked.length > 10) {
+      inner += '<div style="text-align:center;margin-top:10px;">'
+        + '<button class="btn" onclick="MarketingPage.toggleTagShowMore()">Show top 10</button>'
+        + '</div>';
+    }
+
+    return card(inner);
+  }
+
+  function tagSource(clientId, source) {
+    if (!source || !clientId) return;
+    if (typeof DB === 'undefined' || !DB.clients || !DB.clients.update) {
+      UI.toast('DB.clients.update unavailable', 'error');
+      return;
+    }
+    DB.clients.update(clientId, { source: source });
+    UI.toast('Tagged ✓ ' + source);
+    // Re-render so the tagged client drops out of the untagged list
+    setTimeout(function() { loadPage('marketing'); }, 250);
+  }
+
+  function toggleTagShowMore() {
+    _tagShowMore = !_tagShowMore;
+    loadPage('marketing');
+  }
+
   // ---------- Conversion funnel ----------
   function renderFunnel() {
     var reqs = getRequests().filter(function(r) { return withinRange(r.createdAt || r.created_at || r.date, _range); });
@@ -333,6 +442,7 @@ var MarketingPage = (function() {
       + '</div>'
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;">'
       + renderLeadSources()
+      + renderTagSources()
       + renderFunnel()
       + renderResponseTime()
       + renderRevenueBySource()
@@ -411,6 +521,8 @@ var MarketingPage = (function() {
     filterBySource: filterBySource,
     connectSocial: connectSocial,
     disconnectSocial: disconnectSocial,
-    updateGBP: updateGBP
+    updateGBP: updateGBP,
+    tagSource: tagSource,
+    toggleTagShowMore: toggleTagShowMore
   };
 })();

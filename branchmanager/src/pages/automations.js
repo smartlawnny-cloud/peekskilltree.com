@@ -144,17 +144,44 @@ var AutomationsPage = {
   _rule: function(key, config) {
     var rule = config[key] || AutomationsPage._defaults[key];
     var channelIcon = rule.channel === 'sms' ? '📱' : '✉️';
-    var timing = rule.days ? rule.days + ' day' + (rule.days > 1 ? 's' : '') + ' after' : rule.hours ? rule.hours + ' hour' + (rule.hours > 1 ? 's' : '') + ' before' : 'Immediate';
+    // v396: timing is inline-editable. Each rule has either `days` (after-event)
+    // or `hours` (before-event); render a number input + unit label, save on
+    // change. Rules with neither (immediate) render no editor.
+    var timingEditor = '';
+    if (typeof rule.days === 'number') {
+      timingEditor = '<input type="number" min="0" max="180" value="' + rule.days
+        + '" onchange="AutomationsPage.setTiming(\'' + key + '\', \'days\', parseInt(this.value,10))" '
+        + 'style="width:54px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;"> '
+        + '<span style="font-size:11px;color:var(--text-light);">day' + (rule.days !== 1 ? 's' : '') + ' after</span>';
+    } else if (typeof rule.hours === 'number') {
+      timingEditor = '<input type="number" min="0" max="168" value="' + rule.hours
+        + '" onchange="AutomationsPage.setTiming(\'' + key + '\', \'hours\', parseInt(this.value,10))" '
+        + 'style="width:54px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;"> '
+        + '<span style="font-size:11px;color:var(--text-light);">hour' + (rule.hours !== 1 ? 's' : '') + ' before</span>';
+    } else {
+      timingEditor = '<span style="font-size:12px;color:var(--text-light);">Immediate</span>';
+    }
 
-    return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:' + (rule.enabled ? 'var(--green-bg)' : 'var(--bg)') + ';border-radius:8px;margin-bottom:8px;border-left:3px solid ' + (rule.enabled ? 'var(--green-dark)' : 'var(--border)') + ';">'
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:' + (rule.enabled ? 'var(--green-bg)' : 'var(--bg)') + ';border-radius:8px;margin-bottom:8px;border-left:3px solid ' + (rule.enabled ? 'var(--green-dark)' : 'var(--border)') + ';flex-wrap:wrap;">'
       + '<label style="display:flex;align-items:center;cursor:pointer;"><input type="checkbox" ' + (rule.enabled ? 'checked' : '') + ' onchange="AutomationsPage.toggle(\'' + key + '\', this.checked)" style="width:20px;height:20px;"></label>'
       + '<span style="font-size:18px;">' + channelIcon + '</span>'
-      + '<div style="flex:1;">'
+      + '<div style="flex:1;min-width:160px;">'
       + '<div style="font-weight:600;font-size:14px;">' + rule.label + '</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">' + timing + ' &bull; via ' + rule.channel + '</div>'
+      + '<div style="font-size:12px;color:var(--text-light);">via ' + rule.channel + '</div>'
       + '</div>'
-      + '<span style="font-size:12px;color:' + (rule.enabled ? 'var(--green-dark)' : 'var(--text-light)') + ';font-weight:600;">' + (rule.enabled ? 'ON' : 'OFF') + '</span>'
+      + '<div style="display:flex;align-items:center;gap:6px;">' + timingEditor + '</div>'
+      + '<span style="font-size:12px;color:' + (rule.enabled ? 'var(--green-dark)' : 'var(--text-light)') + ';font-weight:600;min-width:32px;text-align:right;">' + (rule.enabled ? 'ON' : 'OFF') + '</span>'
       + '</div>';
+  },
+
+  // v396: persist a single rule's timing change without re-rendering the page
+  setTiming: function(key, field, value) {
+    if (!isFinite(value) || value < 0) { UI.toast('Value must be 0 or higher', 'error'); return; }
+    var config = AutomationsPage.getConfig();
+    if (!config[key]) config[key] = Object.assign({}, AutomationsPage._defaults[key]);
+    config[key][field] = value;
+    localStorage.setItem('bm-automations', JSON.stringify(config));
+    UI.toast('Timing saved');
   },
 
   toggle: function(key, enabled) {

@@ -53,9 +53,8 @@ var AutomationsPage = {
         + '</div>';
     }
 
-    // Status bar
-    var sgKey = localStorage.getItem('bm-sendgrid-key');
-    var sgOk = sgKey && sgKey.length > 10;
+    // Status bar — v372: Resend is server-keyed, so email is always available.
+    var sgOk = true;
     var lastRun = localStorage.getItem('bm-automations-last-run');
     var today = new Date().toISOString().split('T')[0];
     var yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
@@ -64,8 +63,7 @@ var AutomationsPage = {
     html += '<div style="background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">'
       + '<div style="flex:1;min-width:180px;">'
       + '<div style="font-size:13px;margin-bottom:4px;">'
-      + '<span style="color:' + (sgOk ? 'var(--green-dark)' : '#e07c24') + ';font-weight:600;">' + (sgOk ? '✅ SendGrid connected' : '⚠️ SendGrid not connected') + '</span>'
-      + (!sgOk ? ' — <a href="#" onclick="loadPage(\'settings\');return false;" style="color:var(--green-dark);">Connect in Settings →</a>' : '')
+      + '<span style="color:var(--green-dark);font-weight:600;">Email connected (Resend)</span>'
       + '</div>'
       + '<div style="font-size:12px;color:var(--text-light);">Last auto-run: ' + lastRunLabel + ' &bull; Runs daily when app is open</div>'
       + '</div>'
@@ -375,8 +373,7 @@ var AutomationsPage = {
   },
 
   runAll: function() {
-    if (!localStorage.getItem('bm-sendgrid-key')) { UI.toast('Connect SendGrid in Settings first', 'error'); return; }
-    // Run all 4 automations and show a summary modal
+    // v372: email is always available (Resend server-keyed). Run all 4 automations.
     var results = [];
     // Temporarily intercept UI.toast to collect results
     var origToast = UI.toast;
@@ -467,11 +464,8 @@ var AutomationsPage = {
     if (rrSkip > 0) lines.push({ icon: '⚠️', label: 'Jobs missing email (reviews)', count: rrSkip, color: '#e07c24' });
 
     var totalToSend = qf1 + qf2 + if1 + if2 + vrCount + rrCount;
-    var sgConnected = !!localStorage.getItem('bm-sendgrid-key');
 
-    var html = (sgConnected
-      ? '<div style="padding:10px 14px;background:#e8f5e9;border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--green-dark);font-weight:600;">✅ SendGrid connected — ' + totalToSend + ' email' + (totalToSend !== 1 ? 's' : '') + ' would be sent now</div>'
-      : '<div style="padding:10px 14px;background:#fff3e0;border-radius:8px;margin-bottom:16px;font-size:13px;color:#e65100;font-weight:600;">⚠️ SendGrid not connected — connect in Settings to send these emails</div>')
+    var html = '<div style="padding:10px 14px;background:#e8f5e9;border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--green-dark);font-weight:600;">Email ready (Resend) — ' + totalToSend + ' email' + (totalToSend !== 1 ? 's' : '') + ' would be sent now</div>'
       + '<div style="font-size:13px;">'
       + lines.map(function(l) {
           return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">'
@@ -497,10 +491,7 @@ var AutomationsPage = {
     var lastRun = localStorage.getItem('bm-automations-last-run');
     if (lastRun === today) return; // Already ran today
 
-    // Only run if SendGrid is connected
-    var sgKey = localStorage.getItem('bm-sendgrid-key');
-    if (!sgKey || sgKey.length < 10) return;
-
+    // v372: Resend is server-keyed, always available — proceed.
     localStorage.setItem('bm-automations-last-run', today);
     AutomationsPage._logActivity('Auto-run started — ' + today);
 

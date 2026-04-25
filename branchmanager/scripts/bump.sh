@@ -59,6 +59,11 @@ fi
 sed -i '' "s/BUNDLED_VERSION = $CURRENT/BUNDLED_VERSION = $NEXT/" index.html
 sed -i '' "s/?v=$CURRENT/?v=$NEXT/g" index.html
 
+# 3b. bundle reference in index.html (only present after build-bundle --html ran).
+#     Same for the parallel test page index-bundled.html.
+sed -i '' "s|bm.bundle.v$CURRENT.min.js|bm.bundle.v$NEXT.min.js|g" index.html
+[ -f index-bundled.html ] && sed -i '' "s|bm.bundle.v$CURRENT.min.js|bm.bundle.v$NEXT.min.js|g" index-bundled.html
+
 # 4. sw.js
 sed -i '' "s/branch-manager-v$CURRENT/branch-manager-v$NEXT/" sw.js
 

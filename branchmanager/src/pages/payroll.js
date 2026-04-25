@@ -208,6 +208,13 @@ var PayrollPage = {
     // ── Weekly Review Panel ──
     html += PayrollPage._renderWeeklyReview(dates, employees, weekStart);
 
+    // v383: My Pay (employeecenter) folded under Payroll. Link at bottom for now;
+    // will pull out to its own page once Crew View ships and crew-vs-admin nav splits.
+    html += '<div style="margin-top:24px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+      +   '<div><strong style="font-size:13px;">My Pay & Hours</strong><div style="font-size:11px;color:var(--text-light);margin-top:2px;">Personal view: paystubs, hours worked, time off.</div></div>'
+      +   '<button onclick="loadPage(\'employeecenter\')" class="btn btn-outline" style="font-size:12px;">Open My Pay &rarr;</button>'
+      + '</div>';
+
     html += '</div>';
     return html;
   },

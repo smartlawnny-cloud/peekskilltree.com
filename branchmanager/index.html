@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 382; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 383; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -857,7 +857,8 @@
       <button class="nav-item" data-page="marketing"><span class="icon"><i data-lucide="bar-chart-3" class="li"></i></span> Marketing</button>
       <button class="nav-item" data-page="socialbranch"><span class="icon"><i data-lucide="share-2" class="li"></i></span> SocialBranch</button>
       <button class="nav-item" data-page="payroll"><span class="icon"><i data-lucide="wallet" class="li"></i></span> Payroll</button>
-      <button class="nav-item" data-page="employeecenter"><span class="icon"><i data-lucide="banknote" class="li"></i></span> My Pay</button>
+      <!-- v383: My Pay (employeecenter) merged under Payroll — link at bottom of payroll page. Deep link via #employeecenter still works. -->
+
       <button class="nav-item" data-page="taskreminders"><span class="icon"><i data-lucide="check-circle" class="li"></i></span> Chat &amp; Tasks</button>
       <button class="nav-item" data-page="operations"><span class="icon"><i data-lucide="truck" class="li"></i></span> Operations</button>
       <!-- Media Center merged into SocialBranch v376 — deep link still works (#mediacenter) -->
@@ -939,7 +940,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v382.min.js"></script>
+<script defer src="dist/bm.bundle.v383.min.js"></script>
 
 
 

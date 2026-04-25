@@ -1,5 +1,5 @@
 {
-  "version": 382,
+  "version": 383,
   "released": "2026-04-25",
-  "notes": "v382: bundle live in index.html, remove green sidebar logo, SB calendar unscheduled tray moved on top"
+  "notes": "v383: request_number column + R-prefix display"
 }

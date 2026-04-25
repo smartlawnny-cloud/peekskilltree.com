@@ -684,7 +684,7 @@ var RequestsPage = {
       + '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;">'
       + '<h4 style="font-size:13px;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Details</h4>'
       + '<table style="width:100%;font-size:12px;border-collapse:collapse;">'
-      + '<tr><td style="padding:4px 0;color:var(--text-light);">Request #</td><td style="padding:4px 0;text-align:right;font-weight:600;">' + (r.id||'').slice(-6).toUpperCase() + '</td></tr>'
+      + '<tr><td style="padding:4px 0;color:var(--text-light);">Request #</td><td style="padding:4px 0;text-align:right;font-weight:600;">' + (r.requestNumber ? 'R' + r.requestNumber : (r.id||'').slice(-6).toUpperCase()) + '</td></tr>'
       + '<tr><td style="padding:4px 0;color:var(--text-light);">Received</td><td style="padding:4px 0;text-align:right;">' + UI.dateShort(r.createdAt) + '</td></tr>'
       + '<tr><td style="padding:4px 0;color:var(--text-light);">Source</td><td style="padding:4px 0;text-align:right;font-weight:600;">' + (r.source || '—') + '</td></tr>'
       + (r.confirmationSentAt ? '<tr><td style="padding:4px 0;color:var(--text-light);">Confirmed</td><td style="padding:4px 0;text-align:right;">' + UI.dateShort(r.confirmationSentAt) + '</td></tr>' : '')

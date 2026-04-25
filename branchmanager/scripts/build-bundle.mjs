@@ -64,8 +64,18 @@ function extractLocalScripts(html) {
 }
 
 function readVersionFromHTML(html) {
-  const m = html.match(/\?v=(\d+)/);
-  return m ? m[1] : 'dev';
+  // Prefer ?v=N script-tag query string (pre-bundle layout). Fall back to
+  // the BUNDLED_VERSION constant (post-bundle layout, no ?v= strings left).
+  // Last-resort: version.json.
+  const m1 = html.match(/\?v=(\d+)/);
+  if (m1) return m1[1];
+  const m2 = html.match(/BUNDLED_VERSION\s*=\s*(\d+)/);
+  if (m2) return m2[1];
+  try {
+    const v = JSON.parse(fs.readFileSync(path.join(ROOT, 'version.json'), 'utf8'));
+    if (v && typeof v.version !== 'undefined') return String(v.version);
+  } catch (e) {}
+  return 'dev';
 }
 
 function build() {

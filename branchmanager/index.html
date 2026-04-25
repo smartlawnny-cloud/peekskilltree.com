@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 399; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 400; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -938,7 +938,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v399.min.js"></script>
+<script defer src="dist/bm.bundle.v400.min.js"></script>
 
 
 
@@ -1216,12 +1216,14 @@ var MarketingHub = {
 // ── Tools Hub ──
 var ToolsHub = {
   render: function() {
+    // v399: Voice Quote tab removed — video walkthrough already captures audio
+    // narration, so a separate audio-only path is redundant. Deep link
+    // #voicequote still works (page registry below kept).
     var tabs = [
       ['calculators', 'Calculators'],
       ['treemeasure', '📏 Measure'],
       ['cardone', '10X Tools'],
-      ['voicequote', '🎙️ Voice Quote'],
-      ['videoquote', 'Video Quote'],
+      ['videoquote', 'Video Walkthrough'],
       ['branchcam', '📸 Branch Cam']
     ];
     var r = _renderHubTabs('_toolsTab', tabs, 'calculators');
@@ -1230,7 +1232,6 @@ var ToolsHub = {
       if (r.tab === 'calculators') body = pageRenderers.calculators();
       else if (r.tab === 'treemeasure') body = TreeMeasure.render();
       else if (r.tab === 'cardone') body = CardoneTools.render();
-      else if (r.tab === 'voicequote') { setTimeout(function(){ VoiceQuote.render(); }, 0); body = '<div id="voicequote-placeholder"></div>'; }
       else if (r.tab === 'videoquote') body = VideoQuote.render();
       else if (r.tab === 'branchcam') { setTimeout(function(){ Photos.openLibrary(); }, 0); body = '<div id="page-content"></div>'; }
     } catch (e) { body = '<div style="padding:16px;color:var(--red);">Error loading tab: ' + e.message + '</div>'; }

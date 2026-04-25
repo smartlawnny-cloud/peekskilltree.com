@@ -1,5 +1,5 @@
 {
-  "version": 399,
+  "version": 400,
   "released": "2026-04-25",
-  "notes": "v399: settings reorg + archive delete-all + about collapse"
+  "notes": "v400: removed Voice Quote tab (redundant with Video Walkthrough)"
 }

@@ -1,5 +1,5 @@
 {
-  "version": 387,
+  "version": 388,
   "released": "2026-04-25",
-  "notes": "v387: schedule single-line + sticky red toasts + build-bundle post-swap fix"
+  "notes": "v388: Chat&Tasks under Operations, calendar default month, AI key server-managed, 24 jobs status fix"
 }

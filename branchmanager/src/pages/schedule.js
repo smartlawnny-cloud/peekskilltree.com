@@ -3,7 +3,7 @@
  * Jobber-style with Today agenda, Week, and Month views
  */
 var SchedulePage = {
-  view: 'week',
+  view: 'month', // v388: default to month view (was week)
   currentDate: new Date(),
 
   render: function() {

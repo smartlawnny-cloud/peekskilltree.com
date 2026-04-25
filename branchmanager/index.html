@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 387; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 388; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -858,7 +858,7 @@
       <button class="nav-item" data-page="payroll"><span class="icon"><i data-lucide="wallet" class="li"></i></span> Payroll</button>
       <!-- v383: My Pay (employeecenter) merged under Payroll — link at bottom of payroll page. Deep link via #employeecenter still works. -->
 
-      <button class="nav-item" data-page="taskreminders"><span class="icon"><i data-lucide="check-circle" class="li"></i></span> Chat &amp; Tasks</button>
+      <!-- v388: Chat & Tasks folded into Operations as a tab. Deep link via #taskreminders still works. -->
       <button class="nav-item" data-page="operations"><span class="icon"><i data-lucide="truck" class="li"></i></span> Operations</button>
       <!-- Media Center merged into SocialBranch v376 — deep link still works (#mediacenter) -->
       <button class="nav-item" data-page="ai"><span class="icon"><i data-lucide="bot" class="li"></i></span> AI Assistant</button>
@@ -939,7 +939,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v387.min.js"></script>
+<script defer src="dist/bm.bundle.v388.min.js"></script>
 
 
 
@@ -1260,13 +1260,15 @@ var OperationsHub = {
   render: function() {
     var tabs = [
       ['dispatch', 'Dispatch'],
-      ['equipment', 'Equipment']
+      ['equipment', 'Equipment'],
+      ['chat', 'Chat & Tasks']
     ];
     var r = _renderHubTabs('_opsTab', tabs, 'dispatch');
     var body = '';
     try {
       if (r.tab === 'dispatch') body = DispatchPage.render();
       else if (r.tab === 'equipment') body = EquipmentPage.render();
+      else if (r.tab === 'chat') body = (typeof TaskReminders !== 'undefined' ? TaskReminders.render() : '<div style="padding:16px;color:var(--text-light);">Chat & Tasks module not loaded.</div>');
     } catch (e) { body = '<div style="padding:16px;color:var(--red);">Error loading tab: ' + e.message + '</div>'; }
     return r.html + body;
   }

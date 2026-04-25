@@ -560,16 +560,18 @@ var SocialBranch = {
     var now = new Date();
     var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-    // Two-column layout: Unscheduled tray on left + calendar on right
-    var html = '<div style="display:grid;grid-template-columns:260px 1fr;gap:12px;" class="sb-cal-grid">';
+    // Stacked layout (v382): Unscheduled tray on top + calendar below.
+    // Was 2-column (260px | 1fr) — too narrow for the tray, ate calendar width.
+    var html = '<div style="display:flex;flex-direction:column;gap:12px;" class="sb-cal-grid">';
 
-    // LEFT — Unscheduled tray (draggable chips)
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;max-height:720px;overflow-y:auto;">'
+    // TOP — Unscheduled tray (draggable chips, horizontal scroll if many)
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
       +   '<h3 style="margin:0;font-size:14px;">Unscheduled (' + unscheduled.length + ')</h3>'
       +   '<button onclick="SocialBranch._goTab(\'compose\')" style="background:none;border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">+ New</button>'
       + '</div>'
-      + '<p style="font-size:11px;color:var(--text-light);margin:0 0 10px;">Drag any of these onto a date to schedule.</p>';
+      + '<p style="font-size:11px;color:var(--text-light);margin:0 0 10px;">Drag any of these onto a date to schedule.</p>'
+      + '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">';
     if (unscheduled.length === 0) {
       html += '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:12px;">All caught up — no unscheduled posts.</div>';
     } else {
@@ -582,7 +584,8 @@ var SocialBranch = {
         var thumb = (p.media && p.media[0] && /^https?:|^data:image/.test(p.media[0]))
           ? '<img src="' + UI.esc(p.media[0]) + '" style="width:34px;height:34px;border-radius:4px;object-fit:cover;flex-shrink:0;">'
           : '';
-        html += '<div data-post-id="' + UI.esc(p.id) + '" draggable="true" onclick="SocialBranch._editPost(\'' + p.id + '\')" style="display:flex;gap:8px;align-items:flex-start;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:6px;cursor:grab;font-size:12px;line-height:1.3;">'
+        // Horizontal card (v382): min-width keeps each chip readable in the strip.
+        html += '<div data-post-id="' + UI.esc(p.id) + '" draggable="true" onclick="SocialBranch._editPost(\'' + p.id + '\')" style="display:flex;gap:8px;align-items:flex-start;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;cursor:grab;font-size:12px;line-height:1.3;min-width:220px;max-width:260px;flex-shrink:0;">'
           + thumb
           + '<div style="flex:1;min-width:0;">'
           +   '<div style="display:flex;gap:4px;margin-bottom:2px;">' + nets + '</div>'
@@ -591,9 +594,9 @@ var SocialBranch = {
           + '</div>';
       });
     }
-    html += '</div>';
+    html += '</div></div>'; // close horizontal-strip + tray
 
-    // RIGHT — calendar proper
+    // BELOW — calendar proper
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">';
     html += '<div style="display:flex;align-items:center;gap:8px;">'

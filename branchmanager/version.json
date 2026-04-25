@@ -1,5 +1,5 @@
 {
-  "version": 386,
+  "version": 385,
   "released": "2026-04-25",
-  "notes": "v386: schedule controls fit on one line"
+  "notes": "v385: schedule weather/photos toggles inline with day/week/month"
 }

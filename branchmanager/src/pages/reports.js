@@ -362,6 +362,17 @@ var ReportsPage = {
     html += '</tbody></table>'
       + '</div>';
 
+    // v403: Break-Even calculator (was in Tools → Calculators). Reports is
+    // its proper home — it's a financial planning surface.
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-top:20px;overflow:hidden;">'
+      +   '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +     '<div><strong style="font-size:14px;">Break-Even Calculator</strong>'
+      +       '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Fixed costs, job-by-job tracking, monthly P&amp;L view.</div></div>'
+      +     '<a href="https://peekskilltree.com/be.html" target="_blank" rel="noopener" onclick="event.stopPropagation();" class="btn btn-outline" style="font-size:12px;padding:5px 10px;">Open &rarr;</a>'
+      +   '</summary>'
+      +   '<div style="padding:0 18px 14px;font-size:12px;color:var(--text-light);">Public planning tool at <code>peekskilltree.com/be.html</code>. Links from Tools → Calculators have moved here.</div>'
+      + '</details>';
+
     return html;
   },
 

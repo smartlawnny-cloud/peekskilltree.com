@@ -338,6 +338,17 @@ var MarketingPage = (function() {
       + renderRevenueBySource()
       + renderSocial()
       + renderGBP()
+      // v403: Future planning — Ad Performance calculator (was in Tools →
+      // Calculators). Marketing is its proper home — forward-looking spend
+      // math sits next to the backward-looking lead-source analytics.
+      + '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-top:20px;overflow:hidden;">'
+      +   '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;">'
+      +     '<div><strong style="font-size:14px;">Future Planning · Ad Performance</strong>'
+      +       '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Per-channel spend, ROAS, target CAC. Pair with Lead Sources to forecast next quarter.</div></div>'
+      +     '<a href="https://peekskilltree.com/ads.html" target="_blank" rel="noopener" onclick="event.stopPropagation();" class="btn btn-outline" style="font-size:12px;padding:5px 10px;">Open &rarr;</a>'
+      +   '</summary>'
+      +   '<div style="padding:0 18px 14px;font-size:12px;color:var(--text-light);">Public planning tool at <code>peekskilltree.com/ads.html</code>. Links from Tools → Calculators have moved here.</div>'
+      + '</details>'
       + '</div>'
       + '</div>';
     return html;

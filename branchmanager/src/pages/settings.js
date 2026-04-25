@@ -79,7 +79,7 @@ var SettingsPage = {
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
       + '<h3 style="margin:0;">Notifications <span style="font-size:11px;font-weight:500;color:var(--text-light);">(emails to you, instant)</span></h3>'
-      + '<button onclick="SettingsPage._saveNotifSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '<div style="margin-right:0;text-align:right;"><button onclick="SettingsPage._saveNotifSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
       + '</div>'
       + '<p style="font-size:11px;color:var(--text-light);margin:0 0 14px;">Alerts BM sends you when something happens. <em>Customer-facing email/SMS templates live under <strong>Business &rarr; Emails &amp; Text Messages</strong>.</em></p>'
       + '<div style="display:flex;flex-direction:column;gap:8px;">';
@@ -211,7 +211,7 @@ var SettingsPage = {
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Work Settings</h3>'
-      + '<button onclick="SettingsPage._saveWorkSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '<div style="margin-right:0;text-align:right;"><button onclick="SettingsPage._saveWorkSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
       + '</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Default Start Time</label>'
@@ -260,7 +260,7 @@ var SettingsPage = {
     html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;">Location Services</h3>'
-      + '<button onclick="SettingsPage._saveLocationSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
+      + '<div style="margin-right:0;text-align:right;"><button onclick="SettingsPage._saveLocationSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
       + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:12px;">'
       + '<label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">'
@@ -404,11 +404,12 @@ var SettingsPage = {
       showLineItemPrices: localStorage.getItem('bm-show-line-prices') !== 'false',
       companyLogo: localStorage.getItem('bm-company-logo') || ''
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<h3 style="margin:0;">Quote & Invoice Defaults</h3>'
-      + '<button onclick="SettingsPage._saveQuoteDefaults()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
-      + '</div>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Quote & Invoice Defaults</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Payment Terms</label>'
       + '<select id="qd-terms" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
@@ -428,7 +429,9 @@ var SettingsPage = {
       + '<label style="font-size:13px;">Show line item prices to client</label>'
       + '</div>'
       + '</div>'
-      + '</div>';
+      + '<div style="margin-top:14px;text-align:right;margin-right:0;"><button onclick="SettingsPage._saveQuoteDefaults()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
+      + '</div>'
+      + '</details>';
 
     // ── Booking Form Settings ──
     var bf = {
@@ -438,11 +441,12 @@ var SettingsPage = {
       requireAddress: localStorage.getItem('bm-booking-require-address') !== 'false',
       showServices: localStorage.getItem('bm-booking-show-services') !== 'false'
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<h3 style="margin:0;">Online Booking</h3>'
-      + '<button onclick="SettingsPage._saveBookingSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
-      + '</div>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Online Booking</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<div style="display:flex;flex-direction:column;gap:10px;">'
       + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
       + '<input type="checkbox" id="bf-enabled" style="width:18px;height:18px;"' + (bf.enabled ? ' checked' : '') + '>'
@@ -459,7 +463,9 @@ var SettingsPage = {
       + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
       + '<input type="checkbox" id="bf-show-services" style="width:18px;height:18px;"' + (bf.showServices ? ' checked' : '') + '>'
       + '<div><strong style="font-size:13px;">Show Service Picker</strong><div style="font-size:11px;color:var(--text-light);">Let clients select the type of service they need</div></div></label>'
-      + '</div></div>';
+      + '</div>'
+      + '<div style="margin-top:14px;text-align:right;margin-right:0;"><button onclick="SettingsPage._saveBookingSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
+      + '</div></details>';
 
     // ── Review Settings ──
     var rev = {
@@ -468,11 +474,12 @@ var SettingsPage = {
       delayDays: localStorage.getItem('bm-review-delay') || '1',
       autoSend: localStorage.getItem('bm-review-auto') === 'true'
     };
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-      + '<h3 style="margin:0;">Review Requests</h3>'
-      + '<button onclick="SettingsPage._saveReviewSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
-      + '</div>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Review Requests</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Google Review Link</label>'
       + '<input type="url" id="rev-google-url" value="' + UI.esc(rev.googleUrl) + '" placeholder="https://g.page/r/your-business/review" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;">'
       + '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Get this from Google Business Profile → Share review link</div></div>'
@@ -488,7 +495,8 @@ var SettingsPage = {
       + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
       + '<input type="checkbox" id="rev-auto" style="width:18px;height:18px;"' + (rev.autoSend ? ' checked' : '') + '>'
       + '<div><strong style="font-size:13px;">Auto-Send Review Requests</strong><div style="font-size:11px;color:var(--text-light);">Automatically email clients after job/payment (uses Resend)</div></div></label>'
-      + '</div>';
+      + '<div style="margin-top:14px;text-align:right;margin-right:0;"><button onclick="SettingsPage._saveReviewSettings()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
+      + '</div></details>';
 
     // ── Email & SMS Templates ────────────────────────────────────────────────
     // Lets Doug customize the *content* of automated customer comms without
@@ -511,11 +519,12 @@ var SettingsPage = {
       reviewRequest_email:            'Hi {firstName},\n\nThanks for trusting us with your {service}! If you were happy with our work, a Google review would mean the world: {reviewUrl}\n\n— Doug & Catherine\n{company}'
     };
     function _tpv(k){ return (_tpl[k] != null) ? _tpl[k] : _defaultTpl[k]; }
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
-      + '<h3 style="margin:0;">Emails & Text Messages</h3>'
-      + '<button onclick="SettingsPage._saveCommTemplates()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
-      + '</div>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Emails & Text Messages</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<p style="font-size:12px;color:var(--text-light);margin:0 0 14px;">Edit the automated messages customers receive. Tokens like <code>{firstName}</code>, <code>{service}</code>, <code>{address}</code>, <code>{phone}</code>, <code>{invoiceTotal}</code>, <code>{reviewUrl}</code>, <code>{company}</code> are filled at send time.</p>';
     [
       ['bookingConfirm_email_subject', 'Booking confirmation — email subject', 'input'],
@@ -539,15 +548,17 @@ var SettingsPage = {
         + '</div>';
     });
     html += '<div style="font-size:11px;color:var(--text-light);margin-top:8px;">Leave a field blank to fall back to the built-in default. Automation engines (request-notify, visit-reminders, review-send) read from these at send time.</div>'
-      + '</div>';
+      + '<div style="margin-top:14px;text-align:right;margin-right:0;"><button onclick="SettingsPage._saveCommTemplates()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
+      + '</div></details>';
 
     // ── Client Hub — portal branding ───────────────────────────────────────
     var _hub = (function(){ try { return JSON.parse(localStorage.getItem('bm-client-hub') || '{}') || {}; } catch(e){ return {}; } })();
-    html += '<div style="background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
-      + '<h3 style="margin:0;">Client Hub</h3>'
-      + '<button onclick="SettingsPage._saveClientHub()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>'
-      + '</div>'
+    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+      +   '<span>Client Hub</span>'
+      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+      + '</summary>'
+      + '<div style="padding:0 18px 18px;">'
       + '<p style="font-size:12px;color:var(--text-light);margin:0 0 14px;">Branding + copy for the public client portal at <code>client.html?id=CLIENT_UUID</code>.</p>'
       + '<div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Welcome Headline</label>'
       +   '<input type="text" id="hub-headline" value="' + UI.esc(_hub.headline || 'Hello, {firstName}!') + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
@@ -560,7 +571,8 @@ var SettingsPage = {
             + '<input type="checkbox" id="hub-' + x[0] + '"' + (on ? ' checked' : '') + '> ' + x[1] + '</label>';
         }).join('')
       + '</div>'
-      + '</div>';
+      + '<div style="margin-top:14px;text-align:right;margin-right:0;"><button onclick="SettingsPage._saveClientHub()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;margin-right:0;">Save</button></div>'
+      + '</div></details>';
 
     // ── Regional Settings ──
     var _zip = localStorage.getItem('bm-zip') || '10566';

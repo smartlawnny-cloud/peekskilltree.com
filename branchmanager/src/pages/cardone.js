@@ -58,12 +58,23 @@ var CardoneTools = {
     var html = ''
       + '<div style="max-width:1100px;margin:0 auto;padding:0 4px;">'
 
-      // ── hero ──
-      + '<div style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);color:#fff;border-radius:16px;padding:28px;margin-bottom:20px;position:relative;overflow:hidden;">'
-      +   '<div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#f97316;font-weight:700;margin-bottom:6px;">10X Tools for Tree-Service Owners</div>'
-      +   '<h2 style="margin:0 0 8px;font-size:28px;font-weight:800;">Don\'t think like a small business. Think 10X.</h2>'
-      +   '<div style="font-size:14px;opacity:.85;max-width:700px;line-height:1.5;">Grant Cardone\'s premise: whatever goal you think you can hit, multiply it by 10. Then work backward. These calculators help you find the gap between where you are and where obsession would take you.</div>'
-      + '</div>';
+      // ── Mentor Tools page header ──
+      + '<div style="margin-bottom:18px;">'
+      +   '<h2 style="margin:0 0 4px;font-size:22px;font-weight:800;">Mentor Tools</h2>'
+      +   '<div style="font-size:13px;color:var(--text-light);">Frameworks from business mentors, applied to a tree-service P&amp;L. Click a mentor to expand their tools.</div>'
+      + '</div>'
+
+      // ── Grant Cardone (10X) — collapsed by default ──
+      + '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;">'
+      +   '<summary style="padding:16px 20px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);color:#fff;">'
+      +     '<div>'
+      +       '<div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#f97316;font-weight:700;">Grant Cardone · 10X</div>'
+      +       '<div style="font-size:16px;font-weight:800;margin-top:2px;">Don\'t think like a small business. Think 10X.</div>'
+      +     '</div>'
+      +     '<span style="font-size:14px;opacity:.7;">▾</span>'
+      +   '</summary>'
+      +   '<div style="padding:18px;">'
+      +     '<div style="font-size:13px;color:var(--text-light);max-width:700px;line-height:1.5;margin-bottom:18px;">Whatever goal you think you can hit, multiply it by 10 and work backward. These calculators surface the gap between where you are and where obsession would take you.</div>';
 
     // ── 1. 10X Revenue Target ──
     var revCurrent = Number(d.revCurrent) || 0;
@@ -406,6 +417,54 @@ var CardoneTools = {
         })(inputs[i]);
       }
     }, 0);
+
+    // close the Cardone <details>
+    html += '</div></details>';
+
+    // ── Alex Hormozi — Acquisition / Value Equation ──
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;">'
+      +   '<summary style="padding:16px 20px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;">'
+      +     '<div>'
+      +       '<div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#22d3ee;font-weight:700;">Alex Hormozi · Acquisition</div>'
+      +       '<div style="font-size:16px;font-weight:800;margin-top:2px;">Make your offer so good people feel stupid saying no.</div>'
+      +     '</div>'
+      +     '<span style="font-size:14px;opacity:.7;">▾</span>'
+      +   '</summary>'
+      +   '<div style="padding:18px;font-size:13px;line-height:1.6;color:var(--text);">'
+      +     '<p style="margin:0 0 12px;color:var(--text-light);">The Value Equation:</p>'
+      +     '<div style="background:#f8fafc;border-left:3px solid #22d3ee;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px;font-family:monospace;font-size:14px;">'
+      +       'Value = (Dream Outcome × Perceived Likelihood) / (Time Delay × Effort &amp; Sacrifice)'
+      +     '</div>'
+      +     '<p style="margin:0 0 8px;"><strong>Apply to a tree quote:</strong></p>'
+      +     '<ul style="margin:0 0 16px 18px;padding:0;color:var(--text-light);">'
+      +       '<li><strong>Dream Outcome ↑</strong> — paint the result: clean property, no power-line risk, photos before/after.</li>'
+      +       '<li><strong>Likelihood ↑</strong> — license/insurance, reviews on the quote PDF, named-guarantee.</li>'
+      +       '<li><strong>Time Delay ↓</strong> — "we can be there next Tuesday" beats "in a few weeks."</li>'
+      +       '<li><strong>Effort ↓</strong> — they don\'t lift a finger; we handle permits, debris, follow-up.</li>'
+      +     '</ul>'
+      +     '<p style="margin:0;color:var(--text-light);font-size:12px;font-style:italic;">Calculators coming — score your current quote against the equation. For now, use this lens when you write the description.</p>'
+      +   '</div>'
+      + '</details>';
+
+    // ── Tony Robbins — Decisions / RPM ──
+    html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;">'
+      +   '<summary style="padding:16px 20px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#7c2d12 0%,#9a3412 100%);color:#fff;">'
+      +     '<div>'
+      +       '<div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#fbbf24;font-weight:700;">Tony Robbins · RPM</div>'
+      +       '<div style="font-size:16px;font-weight:800;margin-top:2px;">Result · Purpose · Massive Action.</div>'
+      +     '</div>'
+      +     '<span style="font-size:14px;opacity:.7;">▾</span>'
+      +   '</summary>'
+      +   '<div style="padding:18px;font-size:13px;line-height:1.6;color:var(--text);">'
+      +     '<p style="margin:0 0 12px;color:var(--text-light);">RPM flips the order most to-do lists use. Don\'t start with the action. Start with the <strong>specific result</strong>, anchor the <strong>purpose</strong> (why it matters), then write a <strong>massive action plan</strong>.</p>'
+      +     '<div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:16px;">'
+      +       '<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px 14px;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:#92400e;">Result</div><textarea placeholder="e.g. Hit $750k revenue by Dec 31, 2026 (specific, measurable, dated)" rows="2" style="width:100%;margin-top:6px;padding:8px;border:1px solid #fbbf24;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;"></textarea></div>'
+      +       '<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px 14px;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:#92400e;">Purpose</div><textarea placeholder="Why does this result matter? (Bigger reasons → bigger persistence)" rows="2" style="width:100%;margin-top:6px;padding:8px;border:1px solid #fbbf24;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;"></textarea></div>'
+      +       '<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px 14px;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:#92400e;">Massive Action Plan</div><textarea placeholder="Top 3-5 actions, in priority order. Schedule them this week." rows="4" style="width:100%;margin-top:6px;padding:8px;border:1px solid #fbbf24;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;"></textarea></div>'
+      +     '</div>'
+      +     '<p style="margin:0;color:var(--text-light);font-size:12px;font-style:italic;">Save-on-blur + history coming. For now, keep this open as a thinking tool.</p>'
+      +   '</div>'
+      + '</details>';
 
     return html;
   },

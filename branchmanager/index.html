@@ -8,7 +8,7 @@
 // what's bundled here, we unregister all SWs, blow away all caches, and reload.
 // This breaks the iOS "stale SW holds cached SW" deadlock permanently.
 (function() {
-  var BUNDLED_VERSION = 402; // bump with every deploy (must match version.json)
+  var BUNDLED_VERSION = 403; // bump with every deploy (must match version.json)
   window.BUNDLED_VERSION = BUNDLED_VERSION;
   try { localStorage.setItem('bm-last-bundled-version', String(BUNDLED_VERSION)); } catch(e){}
   // Skip version check if user explicitly passed ?reset=1 (handled later in the file)
@@ -938,7 +938,7 @@
 </div>
 
 <!-- Module scripts -->
-<script defer src="dist/bm.bundle.v402.min.js"></script>
+<script defer src="dist/bm.bundle.v403.min.js"></script>
 
 
 
@@ -1092,7 +1092,7 @@ var pageConfigs = {
   timesheet: { title: 'Timesheet', action: null },
   automations: { title: 'Automations', action: null },
   calculators: { title: 'Calculators', action: null },
-  cardone: { title: 'X Tools', action: null },
+  cardone: { title: 'Mentor Tools', action: null },
   estimator: { title: 'Job Estimator', action: null },
   aitreeid: { title: 'AI Tree ID', action: null },
   videoquote: { title: 'Video Quote', action: null },
@@ -1226,7 +1226,7 @@ var ToolsHub = {
     var tabs = [
       ['calculators', 'Calculators'],
       ['treemeasure', '📏 Measure'],
-      ['cardone', '10X Tools'],
+      ['cardone', 'Mentor Tools'],
       ['videoquote', 'Video Walkthrough']
     ];
     var r = _renderHubTabs('_toolsTab', tabs, 'calculators');
@@ -1361,6 +1361,9 @@ var pageRenderers = {
   estimator: function() { return Estimator.render(); },
   cardone: function() { return CardoneTools.render(); },
   calculators: function() {
+    // v403: Break-Even moved to Reports; Ad Performance moved to Marketing
+    // (as a future-planning section). Both still reachable via their public
+    // peekskilltree.com pages — links live in their new homes.
     return '<div class="stat-grid">'
       + '<div class="stat-card" style="cursor:pointer;" onclick="loadPage(\'estimator\')">'
       + '<div class="stat-label">🧮 Job Estimator</div><div class="stat-value" style="font-size:18px;">Price a Job</div><div class="stat-sub">Crew + equipment + insurance + markup → instant quote</div></div>'
@@ -1368,10 +1371,6 @@ var pageRenderers = {
       + '<div class="stat-label">🌲 Tree Measure</div><div class="stat-value" style="font-size:18px;">Height & DBH</div><div class="stat-sub">Phone angle for height, tape for DBH → instant estimate</div></div>'
       + '<a href="https://peekskilltree.com/sub.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
       + '<div class="stat-label">💰 Full Rate Sheet</div><div class="stat-value" style="font-size:18px;">Detailed Rates</div><div class="stat-sub">All rates, tiers, industry comparison</div></a>'
-      + '<a href="https://peekskilltree.com/be.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
-      + '<div class="stat-label">📈 Break-Even</div><div class="stat-value" style="font-size:18px;">Monthly P&L</div><div class="stat-sub">Fixed costs, job-by-job tracking</div></a>'
-      + '<a href="https://peekskilltree.com/ads.html" target="_blank" class="stat-card" style="text-decoration:none;cursor:pointer;">'
-      + '<div class="stat-label">📊 Ad ROI</div><div class="stat-value" style="font-size:18px;">Ad Performance</div><div class="stat-sub">Per-channel spend & returns</div></a>'
       + '</div>';
   }
 };

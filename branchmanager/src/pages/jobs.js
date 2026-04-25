@@ -180,7 +180,7 @@ var JobsPage = {
           + '<td onclick="event.stopPropagation()"><input type="checkbox" class="job-check" value="' + j.id + '" onchange="JobsPage._updateBulk()" style="width:16px;height:16px;"></td>'
           + '<td><strong>' + UI.esc(j.clientName || '—') + '</strong></td>'
           + '<td>#' + (j.jobNumber || '') + '</td>'
-          + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + UI.esc(j.description || '—') + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + UI.esc(j.property || j.description || '') + '">' + UI.esc(j.property || j.description || '—') + '</td>'
           + '<td style="white-space:nowrap;">' + UI.dateShort(j.scheduledDate) + '</td>'
           + '<td>' + UI.statusBadge(j.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;">' + UI.money(j.total)

@@ -1,5 +1,5 @@
 {
-  "version": 394,
+  "version": 395,
   "released": "2026-04-25",
-  "notes": "v394: Settings page 4-group reorg (User/Business/Integrations/Advanced)"
+  "notes": "v395: Archive moved from sidebar to Settings → Advanced"
 }

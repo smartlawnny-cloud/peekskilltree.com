@@ -882,6 +882,16 @@ var SettingsPage = {
     // ════════════════════════════════════════════════════════════════════════
     html += groupOpen('Advanced', false);
 
+    // v395: Archive entry — moved here from sidebar. Click to open the
+    // archived-records page (clients/quotes/jobs/invoices/requests).
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:700;color:var(--text);">Archive</div>'
+      +     '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">Browse archived records (clients, quotes, jobs, invoices, requests). Restore or delete permanently.</div>'
+      +   '</div>'
+      +   '<button onclick="loadPage(\'archive\')" class="btn btn-outline" style="font-size:12px;flex-shrink:0;">Open Archive &rarr;</button>'
+      + '</div>';
+
     // ═══ GROUP: Database & Storage (collapsible) ═══
     html += '<details style="background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
       + '<summary style="padding:14px 18px;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;">'

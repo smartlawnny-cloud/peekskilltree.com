@@ -1013,9 +1013,10 @@ var SocialBranch = {
         return r.json();
       });
     };
+    // tryFetch already returns the parsed JSON; the previous .then double-parsed
+    // and threw on every call. Removed v376.
     tryFetch('./sp_scrape_initial.json')
       .catch(function() { return tryFetch('./public/sp_scrape_initial.json'); })
-      .then(function(r) { if (!r.ok) throw new Error('Import file not found (status ' + r.status + ')'); return r.json(); })
       .then(function(data) {
         var existing = SocialBranch._getPosts();
         var existingCaptions = existing.map(function(p){ return (p.caption || '').trim().toLowerCase().slice(0,120); });

@@ -73,6 +73,7 @@ var SocialBranch = {
       { id:'dashboard', label:'Dashboard',  icon:'layout-dashboard' },
       { id:'compose',   label:'Compose',    icon:'pencil' },
       { id:'calendar',  label:'Calendar',   icon:'calendar' },
+      { id:'library',   label:'Media',      icon:'camera' },
       { id:'accounts',  label:'Accounts',   icon:'link' },
       { id:'analytics', label:'Analytics',  icon:'bar-chart-3' },
       { id:'inbox',     label:'Inbox',      icon:'inbox' }
@@ -88,6 +89,7 @@ var SocialBranch = {
     switch (tab) {
       case 'compose':   html += self._renderCompose();   break;
       case 'calendar':  html += self._renderCalendar();  break;
+      case 'library':   html += (typeof MediaCenter !== 'undefined' ? MediaCenter.render() : '<div style="padding:40px;text-align:center;color:var(--text-light);">Media library unavailable.</div>'); break;
       case 'accounts':  html += self._renderAccounts();  break;
       case 'analytics': html += self._renderAnalytics(); break;
       case 'inbox':     html += self._renderInbox();     break;

@@ -266,43 +266,116 @@ var DashboardPage = {
 
     html += '</div>';
 
-    // Quick conversions — approved quotes → jobs, completed jobs → invoices
-    var dashApproved = allQuotes.filter(function(q) { return q.status === 'approved' && !q.convertedJobId; });
+    // ── Inbox — unified "what needs your attention" surface ────────────────
+    // Replaces the old two-card Ready-to-Convert / Ready-to-Invoice strip
+    // with one richer feed. Pulls from quotes, jobs, invoices, requests,
+    // clients (needs_review), and chat unread (if available).
+    var inboxItems = [];
     var cutoff60dash = new Date(now.getTime() - 60 * 86400000).toISOString().split('T')[0];
-    var cutoff7dash = new Date(now.getTime() - 7 * 86400000).toISOString();
-    var dashNeedsInv = allJobs.filter(function(j) {
+    var cutoff7dash  = new Date(now.getTime() - 7  * 86400000).toISOString();
+    var cutoff5dash  = new Date(now.getTime() - 5  * 86400000).toISOString();
+    var todayStrIb   = now.toISOString().substring(0, 10);
+
+    // 1. Approved quotes ready to convert to jobs
+    allQuotes.filter(function(q) { return q.status === 'approved' && !q.convertedJobId; })
+      .forEach(function(q) {
+        inboxItems.push({
+          icon: 'check-circle', tone: 'green',
+          label: 'Approved quote — ' + (q.clientName || 'client'),
+          sub: UI.money(q.total) + ' · ready to schedule',
+          actionLabel: '+ Job',
+          onclick: 'var j=Workflow.quoteToJob(\'' + q.id + '\');if(j){loadPage(\'dashboard\');}'
+        });
+      });
+
+    // 2. Completed jobs without an invoice
+    allJobs.filter(function(j) {
       if (j.status !== 'completed' || j.invoiceId) return false;
       return (j.scheduledDate && j.scheduledDate >= cutoff60dash)
           || (!j.scheduledDate && (j.createdAt || '') > cutoff7dash);
+    }).forEach(function(j) {
+      inboxItems.push({
+        icon: 'receipt', tone: 'amber',
+        label: 'Bill the job — ' + (j.clientName || 'client'),
+        sub: UI.money(j.total) + ' · ' + (j.scheduledDate || 'recent'),
+        actionLabel: '+ Invoice',
+        onclick: 'var inv=Workflow.jobToInvoice(\'' + j.id + '\');if(inv){loadPage(\'dashboard\');}'
+      });
     });
-    if (dashApproved.length > 0 || dashNeedsInv.length > 0) {
-      // auto-fit so a single card stretches full-width instead of hugging the left
-      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:16px;">';
-      if (dashApproved.length > 0) {
-        html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid #c8e6c9;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-          + '<div style="font-size:12px;font-weight:700;color:var(--green-dark);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Ready to Convert (' + dashApproved.length + ')</div>';
-        dashApproved.slice(0, 3).forEach(function(q) {
-          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">'
-            + '<div style="min-width:0;flex:1;"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(q.clientName || '') + '</div>'
-            + '<div style="font-size:11px;color:var(--text-light);">' + UI.money(q.total) + '</div></div>'
-            + '<button onclick="var j=Workflow.quoteToJob(\'' + q.id + '\');if(j){loadPage(\'dashboard\');}" style="background:var(--green-dark);color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:8px;">→ Job</button>'
-            + '</div>';
-        });
-        if (dashApproved.length > 3) html += '<div style="font-size:11px;color:var(--text-light);margin-top:6px;text-align:center;">+ ' + (dashApproved.length - 3) + ' more</div>';
-        html += '</div>';
-      }
-      if (dashNeedsInv.length > 0) {
-        html += '<div style="background:var(--white);border-radius:12px;padding:16px;border:1px solid #ffe0b2;box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
-          + '<div style="font-size:12px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Ready to Invoice (' + dashNeedsInv.length + ')</div>';
-        dashNeedsInv.slice(0, 3).forEach(function(j) {
-          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">'
-            + '<div style="min-width:0;flex:1;"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(j.clientName || '') + '</div>'
-            + '<div style="font-size:11px;color:var(--text-light);">' + UI.money(j.total) + '</div></div>'
-            + '<button onclick="var inv=Workflow.jobToInvoice(\'' + j.id + '\');if(inv){loadPage(\'dashboard\');}" style="background:#e65100;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:8px;">→ Invoice</button>'
-            + '</div>';
-        });
-        if (dashNeedsInv.length > 3) html += '<div style="font-size:11px;color:var(--text-light);margin-top:6px;text-align:center;">+ ' + (dashNeedsInv.length - 3) + ' more</div>';
-        html += '</div>';
+
+    // 3. Clients flagged needs_review (manual merges, etc.)
+    (typeof DB !== 'undefined' && DB.clients ? DB.clients.getAll() : []).filter(function(c) {
+      return c.needsReview === true;
+    }).forEach(function(c) {
+      inboxItems.push({
+        icon: 'user-search', tone: 'amber',
+        label: 'Review client — ' + (c.name || c.firstName || 'unnamed'),
+        sub: 'Open the client to confirm the merge notes',
+        actionLabel: 'Review',
+        onclick: 'ClientsPage.showDetail(\'' + c.id + '\')'
+      });
+    });
+
+    // 4. New requests (last 7 days, status='new')
+    var allReqs = (typeof DB !== 'undefined' && DB.requests ? DB.requests.getAll() : []);
+    allReqs.filter(function(r) {
+      return r.status === 'new' && r.createdAt && r.createdAt > cutoff7dash;
+    }).slice(0, 5).forEach(function(r) {
+      inboxItems.push({
+        icon: 'inbox', tone: 'blue',
+        label: 'New request — ' + (r.clientName || r.client_name || r.email || r.phone || 'website'),
+        sub: (r.title || r.service || 'Service request') + ' · ' + (r.property || ''),
+        actionLabel: 'Open',
+        onclick: 'loadPage(\'requests\')'
+      });
+    });
+
+    // 5. Overdue invoices
+    allInvoices.filter(function(i) {
+      return i.status !== 'paid' && i.status !== 'draft' && i.dueDate && i.dueDate < todayStrIb && (i.balance || i.total) > 0;
+    }).slice(0, 5).forEach(function(i) {
+      inboxItems.push({
+        icon: 'alert-circle', tone: 'red',
+        label: 'Overdue — ' + (i.clientName || 'client'),
+        sub: UI.money(i.balance || i.total) + ' · due ' + (i.dueDate || ''),
+        actionLabel: 'Open',
+        onclick: 'InvoicesPage.showDetail(\'' + i.id + '\')'
+      });
+    });
+
+    // 6. Quotes sent 5+ days ago with no response
+    allQuotes.filter(function(q) {
+      return q.status === 'sent' && q.sentAt && q.sentAt < cutoff5dash;
+    }).slice(0, 5).forEach(function(q) {
+      inboxItems.push({
+        icon: 'mail-question', tone: 'amber',
+        label: 'Stale quote — ' + (q.clientName || 'client'),
+        sub: UI.money(q.total) + ' · sent ' + (q.sentAt || '').substring(0, 10),
+        actionLabel: 'Follow up',
+        onclick: 'QuotesPage.showDetail(\'' + q.id + '\')'
+      });
+    });
+
+    if (inboxItems.length > 0) {
+      html += '<div style="background:var(--white);border-radius:12px;padding:18px 20px;border:1px solid #c8e6c9;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:16px;">'
+        +   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+        +     '<div style="display:flex;align-items:center;gap:8px;"><i data-lucide="inbox" style="width:18px;height:18px;color:var(--green-dark);"></i><strong style="font-size:15px;color:var(--green-dark);">Needs your attention</strong>'
+        +     '<span style="font-size:12px;font-weight:600;background:var(--green-bg);color:var(--green-dark);padding:2px 8px;border-radius:999px;">' + inboxItems.length + '</span></div>'
+        +   '</div>';
+      var TONE = { green:'var(--green-dark)', amber:'#e65100', blue:'#1565c0', red:'#c62828' };
+      inboxItems.slice(0, 8).forEach(function(it) {
+        var color = TONE[it.tone] || 'var(--text)';
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg);">'
+          +     '<i data-lucide="' + it.icon + '" style="width:18px;height:18px;color:' + color + ';flex-shrink:0;"></i>'
+          +     '<div style="min-width:0;flex:1;">'
+          +       '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(it.label) + '</div>'
+          +       '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + UI.esc(it.sub) + '</div>'
+          +     '</div>'
+          +     '<button onclick="' + it.onclick + '" style="background:' + color + ';color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">' + it.actionLabel + '</button>'
+          +   '</div>';
+      });
+      if (inboxItems.length > 8) {
+        html += '<div style="font-size:12px;color:var(--text-light);margin-top:8px;text-align:center;">+ ' + (inboxItems.length - 8) + ' more</div>';
       }
       html += '</div>';
     }

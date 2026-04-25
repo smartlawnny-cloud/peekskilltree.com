@@ -42,6 +42,21 @@ var RequestsPage = {
   },
 
   _search: '', _filter: 'all',
+  _sortCol: 'createdAt', _sortDir: 'desc',
+  _page: 0, _perPage: 50, _showAll: false,
+
+  _sortTh: function(label, col, extraStyle) {
+    var self = RequestsPage;
+    var arrow = self._sortCol === col ? (self._sortDir === 'asc' ? ' &#9650;' : ' &#9660;') : '';
+    return '<th onclick="RequestsPage._setSort(\'' + col + '\')" style="cursor:pointer;user-select:none;' + (extraStyle || '') + '"' + (self._sortCol === col ? ' class="sort-active"' : '') + '>' + label + arrow + '</th>';
+  },
+  _setSort: function(col) {
+    if (RequestsPage._sortCol === col) { RequestsPage._sortDir = RequestsPage._sortDir === 'asc' ? 'desc' : 'asc'; }
+    else { RequestsPage._sortCol = col; RequestsPage._sortDir = 'asc'; }
+    RequestsPage._page = 0; loadPage('requests');
+  },
+  _goPage: function(p) { var t = Math.ceil(RequestsPage._getFiltered().length / RequestsPage._perPage); RequestsPage._page = Math.max(0, Math.min(p, t - 1)); loadPage('requests'); },
+  _toggleShowAll: function() { RequestsPage._showAll = !RequestsPage._showAll; RequestsPage._page = 0; loadPage('requests'); },
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   _isOverdue: function(r) {
@@ -212,39 +227,43 @@ var RequestsPage = {
     // table below. Rows in the main list now get a subtle highlight when they
     // need attention (status=new or overdue) so it's all in one place.
 
-    // ── Stats row (3 cards like Jobber) ──
-    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;" class="detail-grid">';
-
-    // Card 1: Overview
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;">'
-      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Overview</div>'
-      + '<div style="display:flex;gap:16px;flex-wrap:wrap;">'
-      + '<div><div style="font-size:22px;font-weight:800;color:#1565c0;">' + newCount + '</div><div style="font-size:11px;color:var(--text-light);">New</div></div>'
-      + '<div><div style="font-size:22px;font-weight:800;color:#7b1fa2;">' + quotedCount + '</div><div style="font-size:11px;color:var(--text-light);">Quoted</div></div>'
-      + '<div><div style="font-size:22px;font-weight:800;color:' + (overdueCount > 0 ? '#c62828' : 'var(--text)') + ';">' + overdueCount + '</div><div style="font-size:11px;color:var(--text-light);">Overdue</div></div>'
-      + '</div></div>';
-
-    // Card 2: New Requests (30 days)
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;">'
-      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">New Requests</div>'
-      + '<div style="font-size:28px;font-weight:800;color:var(--text);">' + recentNewCount + '</div>'
-      + '<div style="font-size:11px;color:var(--text-light);">Past 30 days</div>'
+    // ── Stats row (4-cell bordered grid — matches Jobs page shape) ──
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
+      // Overview — clickable mini-rows that filter the list
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      +   '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
+      +   '<div onclick="RequestsPage._setFilter(\'new\')" style="display:flex;justify-content:space-between;font-size:12px;cursor:pointer;padding:2px 0;"><span><span style="color:#1565c0;">●</span> New</span><span>' + newCount + '</span></div>'
+      +   '<div onclick="RequestsPage._setFilter(\'quoted\')" style="display:flex;justify-content:space-between;font-size:12px;cursor:pointer;padding:2px 0;"><span><span style="color:#7b1fa2;">●</span> Quoted</span><span>' + quotedCount + '</span></div>'
+      +   '<div onclick="RequestsPage._setFilter(\'overdue\')" style="display:flex;justify-content:space-between;font-size:12px;cursor:pointer;padding:2px 0;"><span><span style="color:#c62828;">●</span> Overdue</span><span>' + overdueCount + '</span></div>'
+      + '</div>'
+      // New requests (past 30d)
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      +   '<div style="font-size:14px;font-weight:700;">New requests</div>'
+      +   '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      +   '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + recentNewCount + '</div>'
+      + '</div>'
+      // Converted (past 30d)
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      +   '<div style="font-size:14px;font-weight:700;">Converted</div>'
+      +   '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      +   '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + recentConverted + '</div>'
+      + '</div>'
+      // Conversion rate
+      + '<div style="padding:14px 16px;">'
+      +   '<div style="font-size:14px;font-weight:700;">Conversion rate</div>'
+      +   '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      +   '<div style="font-size:28px;font-weight:700;margin-top:4px;color:' + (convRate >= 50 ? 'var(--green-dark)' : convRate >= 25 ? '#e07c24' : '#c62828') + ';">' + convRate + '%</div>'
+      + '</div>'
       + '</div>';
 
-    // Card 3: Conversion Rate (30 days)
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;">'
-      + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Conversion Rate</div>'
-      + '<div style="font-size:28px;font-weight:800;color:' + (convRate >= 50 ? '#2e7d32' : convRate >= 25 ? '#e07c24' : '#c62828') + ';">' + convRate + '%</div>'
-      + '<div style="font-size:11px;color:var(--text-light);">Past 30 days</div>'
-      + '</div>';
+    var filtered = self._getFiltered();
 
-    html += '</div>';
+    // ── Header: title + count + chips on left, search on right ──
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      +   '<h3 style="font-size:16px;font-weight:700;margin:0;">Requests</h3>'
+      +   '<span style="font-size:13px;color:var(--text-light);">(' + filtered.length + ' results)</span>';
 
-    // ── Filter chips + search ──
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">';
-
-    // Filter chips
-    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
     var filters = [['all','All'],['new','New'],['quoted','Quoted'],['converted','Converted'],['archived','Archived']];
     filters.forEach(function(f) {
       var isActive = self._filter === f[0];
@@ -252,75 +271,66 @@ var RequestsPage = {
         + (isActive ? '#2e7d32' : 'var(--border)') + ';background:' + (isActive ? '#2e7d32' : 'var(--white)') + ';color:'
         + (isActive ? '#fff' : 'var(--text)') + ';cursor:pointer;font-weight:' + (isActive ? '600' : '500') + ';">' + f[1] + '</button>';
     });
-    html += '</div>';
 
-    // Search input
-    html += '<div class="search-box" style="min-width:200px;max-width:280px;">'
-      + '<span style="color:var(--text-light);">🔍</span>'
-      + '<input type="text" placeholder="Search requests..." value="' + UI.esc(self._search) + '" oninput="RequestsPage._search=this.value;loadPage(\'requests\')">'
+    html += '</div>'
+      + '<div class="search-box" style="min-width:200px;max-width:280px;">'
+      +   '<span style="color:var(--text-light);">🔍</span>'
+      +   '<input type="text" placeholder="Search requests..." value="' + UI.esc(self._search) + '" oninput="RequestsPage._search=this.value;RequestsPage._page=0;loadPage(\'requests\')">'
+      + '</div>'
       + '</div>';
 
-    html += '</div>';
+    var page = self._showAll ? filtered : filtered.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
-    // ── Table ──
-    var filtered = self._getFiltered();
+    // Floating bulk bar (always rendered — hidden via display:none until selection)
+    html += '<div id="req-bulk-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);">'
+      + '<span id="req-bulk-count" style="font-weight:700;font-size:14px;">0 selected</span>'
+      + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+      +   '<button onclick="RequestsPage._bulkConvert()" style="background:#2e7d32;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">➜ Convert to Quote</button>'
+      +   '<button onclick="RequestsPage._bulkIgnore()" style="background:#455a64;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🙈 Ignore</button>'
+      +   '<button onclick="RequestsPage._bulkDelete()" style="background:#c62828;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🗑 Delete</button>'
+      +   '<button onclick="RequestsPage._bulkClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
+      + '</div></div>';
 
-    if (filtered.length === 0) {
-      html += UI.emptyState('&#128229;', 'No requests found', self._search ? 'Try a different search term.' : 'New requests from your website form will appear here.');
+    // ── DESKTOP table (matches Jobs page shape: data-table + sortable headers) ──
+    html += '<div class="q-desktop-only" style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
+      + '<table class="data-table"><thead><tr>'
+      + '<th style="width:32px;"><input type="checkbox" onchange="document.querySelectorAll(\'.req-check\').forEach(function(cb){cb.checked=event.target.checked;});RequestsPage._updateBulk();" title="Select all"></th>'
+      + self._sortTh('Client', 'clientName')
+      + self._sortTh('Description', 'service')
+      + self._sortTh('Property', 'property')
+      + self._sortTh('Requested', 'createdAt')
+      + self._sortTh('Status', 'status')
+      + '</tr></thead><tbody>';
+
+    if (page.length === 0) {
+      html += '<tr><td colspan="6">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No requests match "' + self._search + '"</div>' : UI.emptyState('&#128229;', 'No requests yet', 'New requests from your website form will appear here.')) + '</td></tr>';
     } else {
-      // Floating bulk bar
-      html += '<div id="req-bulk-bar" style="display:none;position:fixed;bottom:0;left:var(--sidebar-w,0);right:0;z-index:500;background:#1a1a2e;color:#fff;padding:12px 24px;padding-bottom:max(12px,env(safe-area-inset-bottom));align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(0,0,0,.3);">'
-        + '<span id="req-bulk-count" style="font-weight:700;font-size:14px;">0 selected</span>'
-        + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
-        +   '<button onclick="RequestsPage._bulkConvert()" style="background:#2e7d32;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">➜ Convert to Quote</button>'
-        +   '<button onclick="RequestsPage._bulkIgnore()" style="background:#455a64;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🙈 Ignore</button>'
-        +   '<button onclick="RequestsPage._bulkDelete()" style="background:#c62828;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">🗑 Delete</button>'
-        +   '<button onclick="RequestsPage._bulkClear()" style="background:none;color:rgba(255,255,255,.7);border:none;padding:8px 12px;font-size:16px;cursor:pointer;">&#10005;</button>'
-        + '</div></div>';
-
-      // ── DESKTOP table ──
-      html += '<div class="q-desktop-only" style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;">';
-      html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-        + '<thead><tr style="background:var(--bg);border-bottom:1px solid var(--border);">'
-        + '<th style="width:32px;padding:10px 8px;"><input type="checkbox" onchange="document.querySelectorAll(\'.req-check\').forEach(function(cb){cb.checked=event.target.checked;});RequestsPage._updateBulk();"></th>'
-        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Client</th>'
-        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Description</th>'
-        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Property</th>'
-        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Requested</th>'
-        + '<th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;">Status</th>'
-        + '</tr></thead><tbody>';
-
-      filtered.forEach(function(r) {
+      page.forEach(function(r) {
         var isOverdue = self._isOverdue(r);
         var displayStatus = isOverdue && r.status === 'new' ? 'overdue' : r.status;
         // Highlight rows that need attention. Overdue → red-tinted, plain new → yellow-tinted.
-        var rowBg = isOverdue && r.status === 'new' ? '#fff5f5'
-                  : r.status === 'new' ? '#fffde7'
-                  : 'transparent';
-        var hoverBg = isOverdue && r.status === 'new' ? '#ffe5e5'
-                    : r.status === 'new' ? '#fff9c4'
-                    : 'var(--bg)';
+        var rowBg = isOverdue && r.status === 'new' ? 'background:#fff5f5;'
+                  : r.status === 'new' ? 'background:#fffde7;'
+                  : '';
         var desc = r.service || r.notes || '';
-        if (desc.length > 50) desc = desc.substring(0, 50) + '...';
         var prop = r.property || '';
-        if (prop.length > 35) prop = prop.substring(0, 35) + '...';
 
-        html += '<tr onclick="RequestsPage.showDetail(\'' + r.id + '\')" style="cursor:pointer;border-bottom:1px solid var(--border);background:' + rowBg + ';transition:background .1s;" '
-          + 'onmouseenter="this.style.background=\'' + hoverBg + '\'" onmouseleave="this.style.background=\'' + rowBg + '\'">'
-          + '<td onclick="event.stopPropagation()" style="padding:12px 8px;"><input type="checkbox" class="req-check" value="' + r.id + '" onchange="RequestsPage._updateBulk()" style="width:16px;height:16px;"></td>'
-          + '<td style="padding:12px 14px;font-weight:600;">' + UI.esc(r.clientName || 'Unknown') + '</td>'
-          + '<td style="padding:12px 14px;color:var(--text-light);">' + UI.esc(desc || '—') + '</td>'
-          + '<td style="padding:12px 14px;color:var(--text-light);font-size:12px;">' + UI.esc(prop || '—') + '</td>'
-          + '<td style="padding:12px 14px;white-space:nowrap;">' + UI.dateShort(r.createdAt) + '</td>'
-          + '<td style="padding:12px 14px;">' + UI.statusBadge(displayStatus) + '</td>'
+        html += '<tr style="cursor:pointer;' + rowBg + '" onclick="RequestsPage.showDetail(\'' + r.id + '\')">'
+          + '<td onclick="event.stopPropagation()"><input type="checkbox" class="req-check" value="' + r.id + '" onchange="RequestsPage._updateBulk()" style="width:16px;height:16px;"></td>'
+          + '<td><strong>' + UI.esc(r.clientName || 'Unknown') + '</strong></td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + UI.esc(desc) + '">' + UI.esc(desc || '—') + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + UI.esc(prop) + '">' + UI.esc(prop || '—') + '</td>'
+          + '<td style="white-space:nowrap;">' + UI.dateShort(r.createdAt) + '</td>'
+          + '<td>' + UI.statusBadge(displayStatus) + '</td>'
           + '</tr>';
       });
+    }
+    html += '</tbody></table></div>';
 
-      html += '</tbody></table></div>';
-
+    if (page.length > 0) {
       // ── MOBILE cards ──
       html += '<div class="q-mobile-only" style="display:none;">';
-      filtered.forEach(function(r) {
+      page.forEach(function(r) {
         var isOverdue = self._isOverdue(r);
         var displayStatus = isOverdue && r.status === 'new' ? 'overdue' : r.status;
         var cardBg = isOverdue && r.status === 'new' ? '#fff5f5'
@@ -372,6 +382,23 @@ var RequestsPage = {
       }, 0);
     }
 
+    // Pagination (matches Jobs page shape)
+    var totalPages = Math.ceil(filtered.length / self._perPage);
+    if (totalPages > 1 || self._showAll) {
+      html += '<div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;">';
+      if (!self._showAll) {
+        html += '<button class="btn btn-outline" onclick="RequestsPage._goPage(' + (self._page - 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page === 0 ? ' disabled' : '') + '>‹</button>';
+        for (var p = Math.max(0, self._page - 2); p <= Math.min(totalPages - 1, self._page + 2); p++) {
+          html += '<button class="btn ' + (p === self._page ? 'btn-primary' : 'btn-outline') + '" onclick="RequestsPage._goPage(' + p + ')" style="font-size:12px;padding:5px 10px;min-width:32px;">' + (p + 1) + '</button>';
+        }
+        html += '<button class="btn btn-outline" onclick="RequestsPage._goPage(' + (self._page + 1) + ')" style="font-size:12px;padding:5px 10px;"' + (self._page >= totalPages - 1 ? ' disabled' : '') + '>›</button>';
+      }
+      html += '<button class="btn btn-outline" onclick="RequestsPage._toggleShowAll()" style="font-size:12px;padding:5px 12px;margin-left:8px;">'
+        + (self._showAll ? 'Paginate (' + self._perPage + '/page)' : 'Show all ' + filtered.length)
+        + '</button>';
+      html += '</div>';
+    }
+
     return html;
   },
 
@@ -403,8 +430,15 @@ var RequestsPage = {
           || (r.source||'').toLowerCase().indexOf(s) >= 0;
       });
     }
-    // Sort: newest first
-    all.sort(function(a,b){ return new Date(b.createdAt||0) - new Date(a.createdAt||0); });
+    // Sort by current column / direction
+    var col = self._sortCol || 'createdAt';
+    var dir = self._sortDir === 'asc' ? 1 : -1;
+    all.sort(function(a, b) {
+      var va = a[col], vb = b[col];
+      if (col === 'createdAt') return ((new Date(va || 0)).getTime() - (new Date(vb || 0)).getTime()) * dir;
+      va = (va || '').toString().toLowerCase(); vb = (vb || '').toString().toLowerCase();
+      return va < vb ? -1 * dir : va > vb ? 1 * dir : 0;
+    });
     return all;
   },
   _setFilter: function(f) { RequestsPage._filter = f; loadPage('requests'); },

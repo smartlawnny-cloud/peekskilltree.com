@@ -56,32 +56,42 @@ var ClientsPage = {
     var stats = DB.dashboard.getStats();
     var clients = self._getFiltered();
 
-    // previous system-style stat cards row
+    // Stats row — 4-cell bordered grid (matches Jobs page shape)
     var now = new Date();
     var ago30 = new Date(); ago30.setDate(ago30.getDate()-30);
     var allClients = DB.clients.getAll();
+    var activeCount = allClients.filter(function(c){ return c.status==='active'; }).length;
+    var leadCount = allClients.filter(function(c){ return c.status==='lead'; }).length;
+    var noEmailCount = allClients.filter(function(c){ return c.status!=='archived' && !c.email; }).length;
     var newLeads30 = allClients.filter(function(c){ return c.status==='lead' && new Date(c.createdAt)>=ago30; }).length;
     var newClients30 = allClients.filter(function(c){ return c.status==='active' && new Date(c.createdAt)>=ago30; }).length;
     var ytdClients = allClients.filter(function(c){ return new Date(c.createdAt).getFullYear()===now.getFullYear(); }).length;
 
-    var html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
-      // New leads
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:var(--white);" class="stat-row">'
+      // Overview — colored-dot mini-rows that filter the list
+      + '<div style="padding:14px 16px;border-right:1px solid var(--border);">'
+      +   '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Overview</div>'
+      +   '<div onclick="ClientsPage.setFilter(\'active\')" style="display:flex;justify-content:space-between;font-size:12px;cursor:pointer;padding:2px 0;"><span><span style="color:#2e7d32;">●</span> Active</span><span>' + activeCount + '</span></div>'
+      +   '<div onclick="ClientsPage.setFilter(\'lead\')" style="display:flex;justify-content:space-between;font-size:12px;cursor:pointer;padding:2px 0;"><span><span style="color:#e07c24;">●</span> Lead</span><span>' + leadCount + '</span></div>'
+      +   '<div onclick="ClientsPage.setFilter(\'no-email\')" style="display:flex;justify-content:space-between;font-size:12px;cursor:pointer;padding:2px 0;"><span><span style="color:#9e9e9e;">●</span> Missing email</span><span>' + noEmailCount + '</span></div>'
+      + '</div>'
+      // New leads (30d)
       + '<div onclick="ClientsPage.setFilter(\'lead\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;">New leads</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + newLeads30 + '</div>'
+      +   '<div style="font-size:14px;font-weight:700;">New leads</div>'
+      +   '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      +   '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + newLeads30 + '</div>'
       + '</div>'
-      // New clients
+      // New clients (30d)
       + '<div onclick="ClientsPage.setFilter(\'active\')" style="padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;">New clients</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + newClients30 + '</div>'
+      +   '<div style="font-size:14px;font-weight:700;">New clients</div>'
+      +   '<div style="font-size:12px;color:var(--text-light);">Past 30 days</div>'
+      +   '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + newClients30 + '</div>'
       + '</div>'
-      // Total new clients YTD
+      // YTD
       + '<div onclick="ClientsPage.setFilter(\'all\')" style="padding:14px 16px;cursor:pointer;">'
-      + '<div style="font-size:14px;font-weight:700;">Total new clients</div>'
-      + '<div style="font-size:12px;color:var(--text-light);">Year to date</div>'
-      + '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + ytdClients + '</div>'
+      +   '<div style="font-size:14px;font-weight:700;">Total new clients</div>'
+      +   '<div style="font-size:12px;color:var(--text-light);">Year to date</div>'
+      +   '<div style="font-size:28px;font-weight:700;margin-top:4px;">' + ytdClients + '</div>'
       + '</div>'
       + '</div>';
 
@@ -136,49 +146,73 @@ var ClientsPage = {
     // Paginated slice — skipped when Show All is active
     var pageClients = self._showAll ? clients : clients.slice(self._page * self._perPage, (self._page + 1) * self._perPage);
 
-    // Card-style list (iOS/Airbnb vibe) — each client is a rounded card with spacing
+    // Helper for "last activity" relative label
+    function lastActLabel(c) {
+      var _lastAct = c.updatedAt || c.createdAt || '';
+      if (!_lastAct) return '';
+      var d = new Date(_lastAct); var now = new Date();
+      var days = Math.floor((now - d) / 86400000);
+      if (days === 0) return 'Today';
+      if (days === 1) return 'Yesterday';
+      if (days < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      return UI.dateShort(_lastAct);
+    }
+
+    // ── DESKTOP table (matches Jobs page shape: data-table + sortable headers) ──
+    html += '<div class="q-desktop-only" style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;">'
+      + '<table class="data-table"><thead><tr>'
+      + '<th style="width:32px;"><input type="checkbox" onchange="document.querySelectorAll(\'.client-check\').forEach(function(cb){cb.checked=event.target.checked;});ClientsPage._updateBulk();" title="Select all"></th>'
+      + self._sortHeader('Client', 'name')
+      + self._sortHeader('Status', 'status')
+      + '<th>Address</th>'
+      + self._sortHeader('Last activity', 'updatedAt')
+      + '</tr></thead><tbody>';
+
     if (pageClients.length === 0) {
-      html += self._search
-        ? '<div style="text-align:center;padding:40px 20px;color:var(--text-light);background:var(--white);border-radius:12px;border:1px solid var(--border);">No clients match "' + UI.esc(self._search) + '"</div>'
-        : UI.emptyState('👥', 'No clients yet', 'Add your first client or import.', '+ Add Client', 'ClientsPage.showForm()');
+      html += '<tr><td colspan="5">' + (self._search ? '<div style="text-align:center;padding:24px;color:var(--text-light);">No clients match "' + UI.esc(self._search) + '"</div>' : UI.emptyState('👥', 'No clients yet', 'Add your first client or import.', '+ Add Client', 'ClientsPage.showForm()')) + '</td></tr>';
     } else {
-      html += '<div style="display:flex;flex-direction:column;gap:10px;">';
       pageClients.forEach(function(c) {
-        var _lastAct = c.updatedAt || c.createdAt || '';
-        var _lastActLabel = _lastAct ? (function() {
-          var d = new Date(_lastAct); var now = new Date();
-          var days = Math.floor((now - d) / 86400000);
-          if (days === 0) return 'Today';
-          if (days === 1) return 'Yesterday';
-          if (days < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
-          return UI.dateShort(_lastAct);
-        })() : '';
+        html += '<tr style="cursor:pointer;" onclick="ClientsPage.showDetail(\'' + c.id + '\')">'
+          + '<td onclick="event.stopPropagation()"><input type="checkbox" class="client-check" value="' + c.id + '" onchange="ClientsPage._updateBulk()" style="width:16px;height:16px;"></td>'
+          + '<td><strong>' + UI.esc(c.name || 'Unnamed') + '</strong>'
+          + (c.company ? '<div style="font-size:12px;color:var(--text-light);font-weight:400;">' + UI.esc(c.company) + '</div>' : '')
+          + (c.tags && c.tags.length ? '<div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap;">' + c.tags.slice(0, 3).map(function(t) {
+              return '<span style="padding:1px 7px;background:var(--green-bg);border-radius:8px;font-size:10px;font-weight:600;color:var(--green-dark);">' + UI.esc(t) + '</span>';
+            }).join('') + (c.tags.length > 3 ? '<span style="font-size:10px;color:var(--text-light);margin-left:4px;">+' + (c.tags.length - 3) + '</span>' : '') + '</div>' : '')
+          + '</td>'
+          + '<td>' + UI.statusBadge(c.status) + '</td>'
+          + '<td style="font-size:13px;color:var(--text-light);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + UI.esc(c.address || '') + '">' + UI.esc(c.address || '—') + '</td>'
+          + '<td style="white-space:nowrap;font-size:12px;color:var(--text-light);">' + lastActLabel(c) + '</td>'
+          + '</tr>';
+      });
+    }
+    html += '</tbody></table></div>';
+
+    // ── MOBILE cards (kept as avatar/gradient style) ──
+    if (pageClients.length > 0) {
+      html += '<div class="q-mobile-only" style="display:none;flex-direction:column;gap:10px;">';
+      pageClients.forEach(function(c) {
         var initials = (c.name || '')
           .split(/\s+/).filter(Boolean).slice(0, 2)
           .map(function(w) { return w.charAt(0).toUpperCase(); }).join('') || '?';
         var statusColor = c.status === 'active' ? '#2e7d32' : c.status === 'lead' ? '#e07c24' : '#9e9e9e';
+        var _lastActLabel = lastActLabel(c);
         html += '<div class="client-card" data-status="' + c.status + '" data-cid="' + c.id + '" '
           + 'style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;'
           + 'box-shadow:0 1px 3px rgba(0,0,0,0.04);transition:box-shadow .15s,transform .1s;display:flex;align-items:center;gap:14px;-webkit-tap-highlight-color:transparent;">'
           + '<div onclick="event.stopPropagation()" style="flex-shrink:0;"><input type="checkbox" class="client-check" value="' + c.id + '" onchange="ClientsPage._updateBulk()" style="width:18px;height:18px;"></div>'
-          // Avatar circle
           + '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,' + statusColor + '22,' + statusColor + '44);color:' + statusColor + ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">' + initials + '</div>'
-          // Main content
           + '<div style="flex:1;min-width:0;">'
-          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap;">'
-          + '<strong style="font-size:15px;color:var(--text);">' + UI.esc(c.name || 'Unnamed') + '</strong>'
-          + UI.statusBadge(c.status)
+          +   '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap;">'
+          +     '<strong style="font-size:15px;color:var(--text);">' + UI.esc(c.name || 'Unnamed') + '</strong>'
+          +     UI.statusBadge(c.status)
+          +   '</div>'
+          +   (c.company ? '<div style="font-size:12px;color:var(--text-light);">' + UI.esc(c.company) + '</div>' : '')
+          +   (c.address ? '<div style="font-size:13px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + UI.esc(c.address) + '</div>' : '')
           + '</div>'
-          + (c.company ? '<div style="font-size:12px;color:var(--text-light);">' + UI.esc(c.company) + '</div>' : '')
-          + (c.address ? '<div style="font-size:13px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + UI.esc(c.address) + '</div>' : '')
-          + (c.tags && c.tags.length ? '<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;">' + c.tags.slice(0, 3).map(function(t) {
-              return '<span style="padding:1px 7px;background:var(--green-bg);border-radius:8px;font-size:10px;font-weight:600;color:var(--green-dark);">' + UI.esc(t) + '</span>';
-            }).join('') + (c.tags.length > 3 ? '<span style="font-size:10px;color:var(--text-light);">+' + (c.tags.length - 3) + '</span>' : '') + '</div>' : '')
-          + '</div>'
-          // Right-side metadata
           + '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;gap:2px;">'
-          + (_lastActLabel ? '<div style="font-size:11px;color:var(--text-light);">' + _lastActLabel + '</div>' : '')
-          + '<div style="font-size:18px;color:var(--text-light);">›</div>'
+          +   (_lastActLabel ? '<div style="font-size:11px;color:var(--text-light);">' + _lastActLabel + '</div>' : '')
+          +   '<div style="font-size:18px;color:var(--text-light);">›</div>'
           + '</div>'
           + '</div>';
       });

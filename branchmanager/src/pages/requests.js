@@ -551,6 +551,7 @@ var RequestsPage = {
       + '<button class="btn btn-outline" onclick="loadPage(\'requests\')" style="padding:6px 12px;font-size:12px;">← Back to Requests</button>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       + '<button class="btn btn-primary" onclick="RequestsPage._createQuote(\'' + r.id + '\',\'' + (r.clientId||'') + '\',\'' + UI.esc(r.clientName||'') + '\')" style="font-size:12px;">📝 Create Quote</button>'
+      + '<button class="btn btn-outline" onclick="RequestsPage._archiveRequest(\'' + r.id + '\')" style="font-size:12px;padding:6px 12px;">Archive</button>'
       + '</div></div>'
 
     // Header card
@@ -725,6 +726,13 @@ var RequestsPage = {
     DB.requests.update(id, { status: status });
     UI.toast('Status updated to ' + RequestsPage._statusLabel(status));
     RequestsPage.showDetail(id);
+  },
+
+  _archiveRequest: function(id) {
+    if (!confirm('Archive this request? You can restore it from the Archive page.')) return;
+    DB.requests.update(id, { status: 'archived' });
+    UI.toast('Request archived');
+    loadPage('requests');
   },
 
   _updateStatus: function(id, status) {

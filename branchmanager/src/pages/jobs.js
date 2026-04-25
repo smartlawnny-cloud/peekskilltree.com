@@ -257,6 +257,8 @@ var JobsPage = {
   _getFiltered: function() {
     var self = JobsPage;
     var all = DB.jobs.getAll();
+    // Hide archived from default list view
+    all = all.filter(function(j) { return j.status !== 'archived'; });
     if (self._filter === 'requires_invoicing') {
       var cutoff60 = new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0];
       var cutoff7 = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -829,6 +831,7 @@ var JobsPage = {
       + (j.status === 'completed' && !j.invoiceId ? '<button onclick="(function(){var inv=Workflow.jobToInvoice(\'' + id + '\');loadPage(\'invoices\');if(inv)setTimeout(function(){InvoicesPage.showDetail(inv.id);},100);})()" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">💰 Create Invoice</button>' : '')
       + '<button onclick="JobsPage._requestReview(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">⭐ Request Review</button>'
       + '<div style="height:1px;background:var(--border);margin:4px 0;"></div>'
+      + '<button onclick="JobsPage._archiveJob(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">Archive</button>'
       + '<button onclick="JobsPage.setStatus(\'' + id + '\',\'cancelled\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:#dc3545;">✗ Cancel Job</button>'
       + '</div></div>'
       + '</div></div>'
@@ -1188,6 +1191,13 @@ var JobsPage = {
     DB.jobs.update(id, { status: status });
     UI.toast('Job status: ' + status.replace(/_/g, ' '));
     UI.closeModal();
+    loadPage('jobs');
+  },
+
+  _archiveJob: function(id) {
+    if (!confirm('Archive this job? You can restore it from the Archive page.')) return;
+    DB.jobs.update(id, { status: 'archived' });
+    UI.toast('Job archived');
     loadPage('jobs');
   },
 

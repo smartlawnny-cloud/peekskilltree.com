@@ -217,6 +217,8 @@ var InvoicesPage = {
   _getFiltered: function() {
     var self = InvoicesPage;
     var all = DB.invoices.getAll();
+    // Hide archived from default list view
+    all = all.filter(function(i) { return i.status !== 'archived'; });
     var now = new Date();
     if (self._filter === 'unpaid') all = all.filter(function(i) { return i.status !== 'paid'; });
     else if (self._filter === 'past_due') all = all.filter(function(i) { return i.status !== 'paid' && i.status !== 'cancelled' && (i.status === 'overdue' || (i.dueDate && new Date(i.dueDate) < now)); });
@@ -688,6 +690,7 @@ var InvoicesPage = {
       + '<button onclick="PDF.generateInvoice(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">📄 Download PDF</button>'
       + '<button onclick="InvoicesPage.showForm(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">✏️ Edit Invoice</button>'
       + '<div style="height:1px;background:var(--border);margin:4px 0;"></div>'
+      + '<button onclick="InvoicesPage._archiveInvoice(\'' + id + '\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text);">Archive</button>'
       + '<button onclick="InvoicesPage.setStatus(\'' + id + '\',\'cancelled\')" style="display:block;width:100%;text-align:left;padding:8px 14px;font-size:13px;background:none;border:none;cursor:pointer;color:#dc3545;">✗ Cancel Invoice</button>'
       + '</div></div>'
       + '</div></div>'
@@ -814,6 +817,13 @@ var InvoicesPage = {
     document.getElementById('pageAction').style.display = 'none';
     if (typeof lucide !== 'undefined') lucide.createIcons();
     return;
+  },
+
+  _archiveInvoice: function(id) {
+    if (!confirm('Archive this invoice? You can restore it from the Archive page.')) return;
+    DB.invoices.update(id, { status: 'archived' });
+    UI.toast('Invoice archived');
+    loadPage('invoices');
   },
 
   setStatus: function(id, status) {

@@ -212,6 +212,8 @@ var ClientsPage = {
   _getFiltered: function() {
     var self = ClientsPage;
     var clients = DB.clients.getAll();
+    // Hide archived from default list view (Archive page surfaces them)
+    clients = clients.filter(function(c) { return c.archived !== true; });
 
     // Filter by status (or special filters)
     if (self._filter === 'no-email') {
@@ -742,6 +744,7 @@ var ClientsPage = {
       +       '<button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="ClientsPage.showForm(\'' + id + '\')">Edit</button>'
       +       '<button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="ClientsPage._showPortalMenu(\'' + id + '\')">🔗 Portal</button>'
       +       '<button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="ClientsPage.showStatement(\'' + id + '\')">📄 Statement</button>'
+      +       '<button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="ClientsPage._archiveClient(\'' + id + '\')">Archive</button>'
       +     '</div>'
       +   '</div>'
       + '</div>'
@@ -1295,6 +1298,13 @@ var ClientsPage = {
       status.textContent = 'Saved';
       setTimeout(function(){ if (status.textContent === 'Saved') status.textContent = ''; }, 1500);
     }
+  },
+
+  _archiveClient: function(id) {
+    if (!confirm('Archive this client? You can restore it from the Archive page.')) return;
+    DB.clients.update(id, { archived: true });
+    if (typeof UI !== 'undefined' && UI.toast) UI.toast('Client archived');
+    loadPage('clients');
   },
 
   _toggleReview: function(id, checked) {

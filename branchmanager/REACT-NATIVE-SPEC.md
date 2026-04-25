@@ -1,7 +1,22 @@
 # Branch Manager — React Native Mobile App Spec
 
-## Status: NOT STARTED
-## Updated: 2026-04-09
+## Status: ABANDONED — went with Capacitor PWA wrapper instead
+## Original draft: 2026-04-09
+## Abandoned (noted): 2026-04-25
+
+The Capacitor approach (web app loaded inside a thin native shell, plus the
+background-geolocation plugin) shipped faster and reuses the existing PWA
+codebase. The native app loads `peekskilltree.com/branchmanager/` live, so
+JS updates ship via the web deploy without an App Store rebuild.
+
+- Sync script: `~/Desktop/Tree/Claude-branch-manager/sync-from-peekskilltree.sh`
+- Capacitor config: `~/Desktop/Tree/peekskilltree-deploy/branchmanager/capacitor.config.json`
+
+This RN spec is preserved as historical reference for the path not taken.
+
+---
+
+## (Original spec below — for reference only)
 
 ## Overview
 Full React Native + TypeScript native app for Branch Manager.

@@ -60,6 +60,20 @@ var SettingsPage = {
     }
     function groupClose() { return '</details>'; }
 
+    // v413: cardOpen/cardClose — collapsible white card inside a meta-group.
+    // Replaces ~7 hand-rolled <details> blocks with the same shell + chevron.
+    // Pass {open:true} to default-expand; otherwise it opens on click.
+    function cardOpen(title, opts) {
+      var open = opts && opts.open;
+      return '<details ' + (open ? 'open' : '') + ' style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
+        +   '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
+        +     '<span>' + title + '</span>'
+        +     '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
+        +   '</summary>'
+        +   '<div style="padding:0 18px 18px;">';
+    }
+    function cardClose() { return '</div></details>'; }
+
     // ════════════════════════════════════════════════════════════════════════
     // META-GROUP 1 / 4: USER (per-device, this user only) — default OPEN
     // ════════════════════════════════════════════════════════════════════════
@@ -166,12 +180,7 @@ var SettingsPage = {
       + '</summary>'
       + '<div style="padding:16px 20px;border-top:1px solid var(--border);">';
 
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Company Info</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Company Info')
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Company Name</label><input id="co-name" value="' + UI.esc(co.name) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Phone</label><input id="co-phone" value="' + UI.esc(co.phone) + '" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
@@ -197,12 +206,7 @@ var SettingsPage = {
       minJobDuration: localStorage.getItem('bm-min-job-hrs') || '2',
       crewSeeClientInfo: localStorage.getItem('bm-crew-see-client') !== 'false'
     };
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Work Settings</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Work Settings')
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Default Start Time</label>'
       + '<input type="time" id="ws-start" value="' + ws.defaultStart + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;"></div>'
@@ -248,12 +252,7 @@ var SettingsPage = {
     var locTrack = localStorage.getItem('bm-gps-tracking') !== 'false';
     var locWorkOnly = localStorage.getItem('bm-gps-work-only') !== 'false';
     var locGeofence = localStorage.getItem('bm-geofence') === 'true';
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Location Services</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Location Services')
       + '<div style="display:flex;flex-direction:column;gap:12px;">'
       + '<label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">'
       + '<input type="checkbox" id="loc-tracking" style="width:18px;height:18px;"' + (locTrack ? ' checked' : '') + '>'
@@ -398,12 +397,7 @@ var SettingsPage = {
       showLineItemPrices: localStorage.getItem('bm-show-line-prices') !== 'false',
       companyLogo: localStorage.getItem('bm-company-logo') || ''
     };
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Quote & Invoice Defaults</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Quote & Invoice Defaults')
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Payment Terms</label>'
       + '<select id="qd-terms" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">'
@@ -435,12 +429,7 @@ var SettingsPage = {
       requireAddress: localStorage.getItem('bm-booking-require-address') !== 'false',
       showServices: localStorage.getItem('bm-booking-show-services') !== 'false'
     };
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Online Booking</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Online Booking')
       + '<div style="display:flex;flex-direction:column;gap:10px;">'
       + '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">'
       + '<input type="checkbox" id="bf-enabled" style="width:18px;height:18px;"' + (bf.enabled ? ' checked' : '') + '>'
@@ -468,12 +457,7 @@ var SettingsPage = {
       delayDays: localStorage.getItem('bm-review-delay') || '1',
       autoSend: localStorage.getItem('bm-review-auto') === 'true'
     };
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Review Requests</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Review Requests')
       + '<div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Google Review Link</label>'
       + '<input type="url" id="rev-google-url" value="' + UI.esc(rev.googleUrl) + '" placeholder="https://g.page/r/your-business/review" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;">'
       + '<div style="font-size:11px;color:var(--text-light);margin-top:2px;">Get this from Google Business Profile → Share review link</div></div>'
@@ -513,12 +497,7 @@ var SettingsPage = {
       reviewRequest_email:            'Hi {firstName},\n\nThanks for trusting us with your {service}! If you were happy with our work, a Google review would mean the world: {reviewUrl}\n\n— Doug & Catherine\n{company}'
     };
     function _tpv(k){ return (_tpl[k] != null) ? _tpl[k] : _defaultTpl[k]; }
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Emails & Text Messages</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Emails & Text Messages')
       + '<p style="font-size:12px;color:var(--text-light);margin:0 0 14px;">Edit the automated messages customers receive. Tokens like <code>{firstName}</code>, <code>{service}</code>, <code>{address}</code>, <code>{phone}</code>, <code>{invoiceTotal}</code>, <code>{reviewUrl}</code>, <code>{company}</code> are filled at send time.</p>';
     [
       ['bookingConfirm_email_subject', 'Booking confirmation — email subject', 'input'],
@@ -547,12 +526,7 @@ var SettingsPage = {
 
     // ── Client Hub — portal branding ───────────────────────────────────────
     var _hub = (function(){ try { return JSON.parse(localStorage.getItem('bm-client-hub') || '{}') || {}; } catch(e){ return {}; } })();
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Client Hub</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Client Hub')
       + '<p style="font-size:12px;color:var(--text-light);margin:0 0 14px;">Branding + copy for the public client portal at <code>client.html?id=CLIENT_UUID</code>.</p>'
       + '<div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Welcome Headline</label>'
       +   '<input type="text" id="hub-headline" value="' + UI.esc(_hub.headline || 'Hello, {firstName}!') + '" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;box-sizing:border-box;"></div>'
@@ -570,12 +544,7 @@ var SettingsPage = {
 
     // ── Regional Settings ──
     var _zip = localStorage.getItem('bm-zip') || '10566';
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Regional Settings</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Regional Settings')
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
       + '<div><label style="font-size:12px;font-weight:600;color:var(--text-light);display:block;margin-bottom:4px;">Country</label>'
       + '<div style="padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;">United States</div></div>'
@@ -590,12 +559,7 @@ var SettingsPage = {
 
     // — T&M Pricing Rates (moved here from standalone section at the bottom) —
     var _tmRates = (typeof QuotesPage !== 'undefined' && QuotesPage.getTMRates) ? QuotesPage.getTMRates() : {};
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-top:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>🛠 T&M Pricing Rates</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('🛠 T&M Pricing Rates')
       + '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Used by the Price Check on every quote. Override per your crew + equipment costs.</p>'
       + '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Crew (hourly)</div>'
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;">'
@@ -642,12 +606,7 @@ var SettingsPage = {
 
     // Products & Services Catalog
     var allServices = DB.services.getAll();
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Products & Services</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Products & Services')
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
       + '<div style="font-size:12px;color:var(--text-light);">' + allServices.length + ' items — used in quotes and invoices</div>'
       + '<button onclick="SettingsPage.addService()" style="background:var(--green-dark);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;">+ Add Item</button>'
@@ -665,12 +624,7 @@ var SettingsPage = {
     html += '</div></div></details>';
 
     // Data Summary
-    html += '<details style="background:var(--white);border-radius:12px;padding:0;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden;">'
-      + '<summary style="padding:14px 18px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">'
-      +   '<span>Data Summary</span>'
-      +   '<span style="font-size:11px;color:var(--text-light);font-weight:500;">▾</span>'
-      + '</summary>'
-      + '<div style="padding:0 18px 18px;">'
+    html += cardOpen('Data Summary')
       + '<div class="stat-grid" style="margin-bottom:0;">'
       + '<div class="stat-card"><div class="stat-label">Clients</div><div class="stat-value">' + stats.totalClients + '</div></div>'
       + '<div class="stat-card"><div class="stat-label">Jobs</div><div class="stat-value">' + DB.jobs.count() + '</div></div>'

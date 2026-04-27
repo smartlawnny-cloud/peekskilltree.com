@@ -793,7 +793,7 @@ section, .section { padding: 5rem 0; }
 .section-light .faq-answer p,
 .section-cream .faq-answer p { color: var(--gray-600); }
 
-/* ============ CONTACT / JOBBER FORM ============ */
+/* ============ CONTACT FORM ============ */
 .contact-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -820,14 +820,14 @@ section, .section { padding: 5rem 0; }
 .contact-info-text p { color: var(--gray-600); font-size: 0.95rem; margin-bottom: 0; }
 .contact-info-text a { color: var(--green-primary); font-weight: 600; }
 
-.jobber-form-wrapper {
+.contact-form-wrapper {
   background: var(--white);
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--gray-200);
 }
-.jobber-form-wrapper iframe {
+.contact-form-wrapper iframe {
   width: 100%;
   min-height: 700px;
   border: none;

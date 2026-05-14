@@ -1630,9 +1630,41 @@
         cancelBtn.addEventListener("click", async () => {
           if (!confirm(o.status === "paid" ? "Cancel this order? We'll refund the payment to your card." : "Cancel this order?")) return;
           cancelBtn.disabled = true; cancelBtn.textContent = "…";
-          const { error } = await sb.from("transactions").update({ status: "cancelled" }).eq("id", o.id);
-          if (error) { toast("Cancel failed: " + error.message); cancelBtn.disabled = false; return; }
-          toast(o.status === "paid" ? "Cancelled — refund in 5-10 business days" : "Cancelled");
+
+          if (o.status === "paid" && o.stripe_payment_intent && !String(o.stripe_payment_intent).startsWith("ext_")) {
+            // Real Stripe-paid order — issue refund via edge fn
+            const { data:{ session } } = await sb.auth.getSession();
+            const r = await fetch(`${SB_URL}/functions/v1/refund-order`, {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                apikey: SB_ANON,
+                authorization: `Bearer ${session?.access_token || SB_ANON}`,
+              },
+              body: JSON.stringify({ transaction_id: o.id }),
+            });
+            const data = await r.json();
+            if (data.error) {
+              if (data.error === "STRIPE_SECRET_KEY not configured") {
+                // Fall through to plain cancel
+                const { error } = await sb.from("transactions").update({ status: "cancelled" }).eq("id", o.id);
+                if (error) { toast("Cancel failed: " + error.message); cancelBtn.disabled = false; return; }
+                toast("Cancelled (Stripe refund offline — manual refund needed)", 6000);
+              } else {
+                toast("Refund failed: " + (data.detail || data.error));
+                cancelBtn.disabled = false; cancelBtn.textContent = "Cancel & refund";
+                return;
+              }
+            } else {
+              toast(data.refunded ? `Refunded $${(data.amount || o.total || 0).toFixed(2)} — appears in 5–10 days` : "Cancelled", 5000);
+            }
+          } else {
+            // Pending or pay-at-pickup — just cancel the row
+            const { error } = await sb.from("transactions").update({ status: "cancelled" }).eq("id", o.id);
+            if (error) { toast("Cancel failed: " + error.message); cancelBtn.disabled = false; return; }
+            toast("Cancelled");
+          }
+
           document.getElementById("confirmSheet").classList.remove("show");
           loadActiveOrders();
           loadBudget();

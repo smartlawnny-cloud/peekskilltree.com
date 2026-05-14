@@ -118,6 +118,7 @@ const checks = {
     { id:"fn-receipt", name:"receipt-ocr edge fn",  meta:"OpenAI vision · needs OPENAI_API_KEY" },
     { id:"fn-checkout",name:"create-checkout edge fn", meta:"Stripe · needs STRIPE_SECRET_KEY" },
     { id:"fn-finalize",name:"finalize-order edge fn", meta:"Stripe + service role" },
+    { id:"fn-refund",  name:"refund-order edge fn",   meta:"Stripe refunds · uses STRIPE_SECRET_KEY" },
     { id:"fn-webhook", name:"stripe-webhook edge fn", meta:"Stripe webhook · optional STRIPE_WEBHOOK_SECRET" },
   ],
   public: [
@@ -218,7 +219,7 @@ async function probe(){
       const data = await r.json();
       if (r.ok && !data.error) { setState(id,"ok","responding"); tally("ok"); return; }
       if (data?.error?.includes(expectKeyName)) { setState(id,"warn","needs "+expectKeyName); tally("warn"); return; }
-      if (data?.error === "missing image" || data?.error === "missing session_id" || data?.error === "no items") {
+      if (/^(missing |no items|auth required)/.test(String(data?.error||""))) {
         setState(id,"ok","fn deployed · awaiting real request"); tally("ok"); return;
       }
       setState(id,"warn", String(data?.error||"unknown").slice(0,40)); tally("warn");
@@ -228,6 +229,7 @@ async function probe(){
   await probeFn("fn-receipt",  "receipt-ocr",     { image:"" },       "OPENAI_API_KEY");
   await probeFn("fn-checkout", "create-checkout", { items:[] },       "STRIPE_SECRET_KEY");
   await probeFn("fn-finalize", "finalize-order",  { session_id:"" },  "STRIPE_SECRET_KEY");
+  await probeFn("fn-refund",   "refund-order",    { transaction_id:""}, "STRIPE_SECRET_KEY");
   // stripe-webhook can't be probed without a signed Stripe payload — just check it exists
   try {
     const r = await fetch(`${SB_URL}/functions/v1/stripe-webhook`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_ANON }, body:"{}" });

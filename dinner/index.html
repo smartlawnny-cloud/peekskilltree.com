@@ -176,7 +176,19 @@
   <div class="ctas">
     <a href="/dinner/app.html" class="btn primary">Open the app</a>
     <a href="#how" class="btn ghost">See how it works</a>
+    <button id="shareBtn" class="btn ghost" style="display:none;cursor:pointer">Share</button>
   </div>
+  <script>
+    if (navigator.share) {
+      const b = document.getElementById("shareBtn");
+      b.style.display = "";
+      b.addEventListener("click", () => navigator.share({
+        title: "dinner",
+        text: "What's for dinner tonight, actually answered. Hyperlocal, no DoorDash.",
+        url: "https://peekskilltree.com/dinner/",
+      }).catch(()=>{}));
+    }
+  </script>
   <div class="meta">
     <span><i></i> No subscription</span>
     <span><i></i> Works offline</span>

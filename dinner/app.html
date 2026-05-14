@@ -283,6 +283,8 @@
       </div>
     </div>
 
+    <div id="activeOrderCard" style="display:none"></div>
+
     <h3 style="margin:24px 0 10px">Right now</h3>
     <div class="quick-list">
       <button class="quick" data-go="fridge">
@@ -1502,6 +1504,120 @@
       if (fav?.id) await sb.from("favorites").update({ last_cooked_at: new Date().toISOString().slice(0,10) }).eq("id", fav.id);
     }
     toast("Logged · enjoy");
+  });
+
+  // ============================================================
+  // ACTIVE ORDERS — live status card on Home + realtime updates
+  // ============================================================
+  const ORDER_STATUS = {
+    pending:   { icon:"⏳", title:"Waiting for payment",      sub:"Complete checkout from your cart." },
+    paid:      { icon:"👨‍🍳", title:"Order received",            sub:"Your operator is preparing it now." },
+    ready:     { icon:"🔔", title:"Ready for pickup!",        sub:"Head to the locker — your PIN unlocks bay #4." },
+    picked_up: { icon:"✓",  title:"Picked up",                 sub:"Enjoy." },
+    cancelled: { icon:"✕",  title:"Cancelled",                  sub:"Order was cancelled." },
+  };
+
+  async function loadActiveOrders(){
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data: orders } = await sb.from("transactions")
+      .select("id, status, pickup_pin, pickup_locker_id, items, subtotal, total, created_at, operators(name), lockers:pickup_locker_id(name)")
+      .eq("household_id", user.id)
+      .in("status", ["pending","paid","ready"])
+      .order("created_at", { ascending:false })
+      .limit(3);
+    const root = document.getElementById("activeOrderCard");
+    if (!root) return;
+    if (!orders?.length) { root.style.display = "none"; root.innerHTML = ""; return; }
+    root.style.display = "";
+    root.innerHTML = `<h3 style="margin:24px 0 10px">Your order${orders.length>1?"s":""}</h3>` + orders.map(o => {
+      const meta = ORDER_STATUS[o.status] || ORDER_STATUS.pending;
+      const items = (o.items||[]).map(i => `${i.qty||1}× ${i.name}`).join(", ");
+      const lockerName = o.lockers?.name || "Hudson Skate Plaza · #4";
+      const ready = o.status === "ready";
+      return `<div class="card" style="cursor:pointer" data-order="${o.id}" style="${ready?'background:linear-gradient(160deg,var(--sage-3),var(--bg-2));border-color:var(--sage)':''}">
+        <div class="row between">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px">${meta.icon}</div>
+            <div>
+              <div style="font-weight:600;font-size:15px">${meta.title}</div>
+              <div class="tiny" style="margin-top:2px">${escapeHtml(o.operators?.name||"")} · ${escapeHtml(items).slice(0,60)}${items.length>60?'…':''}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            ${o.pickup_pin ? `<div class="pill ${ready?'sage':''}" style="font-family:'SF Mono',monospace;letter-spacing:2px">PIN ${o.pickup_pin}</div>` : ""}
+          </div>
+        </div>
+        ${ready ? `<div class="tiny" style="margin-top:10px;color:var(--sage)">📍 ${escapeHtml(lockerName)} · tap PIN at locker keypad</div>` : ""}
+      </div>`;
+    }).join("");
+    root.querySelectorAll("[data-order]").forEach(c => {
+      c.addEventListener("click", () => showOrderDetail(orders.find(o => o.id === c.dataset.order)));
+    });
+  }
+
+  function showOrderDetail(o){
+    if (!o) return;
+    const meta = ORDER_STATUS[o.status] || ORDER_STATUS.pending;
+    const lockerName = o.lockers?.name || "Hudson Skate Plaza · #4";
+    showConfirmation(o.items||[], o.pickup_pin, o.subtotal || o.total, lockerName);
+    // Update the confirmation hero to reflect current status (not just "order placed")
+    const hero = document.querySelector("#confirmSheet .confirm-hero h2");
+    if (hero) hero.textContent = meta.title;
+    const subEl = document.querySelector("#confirmSheet .confirm-hero p");
+    if (subEl) subEl.textContent = meta.sub;
+  }
+
+  // Realtime — listen for status flips on this user's orders
+  let _orderChannel = null;
+  function subscribeToOrderChanges(userId){
+    if (_orderChannel) return;
+    _orderChannel = sb.channel(`hh-orders-${userId}`)
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "transactions",
+        filter: `household_id=eq.${userId}`,
+      }, (payload) => {
+        const status = payload.new?.status;
+        if (status === "ready") {
+          // Browser notification if permission granted
+          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+            try { new Notification("Your food is ready", { body: "Head to the locker — PIN " + (payload.new.pickup_pin||""), icon: "/dinner/icon-180.png" }); } catch {}
+          }
+          toast("🔔 Your order is ready for pickup");
+        } else if (status === "picked_up") {
+          toast("✓ Order marked picked up");
+        }
+        loadActiveOrders();
+      })
+      .subscribe();
+  }
+
+  // refresh active orders when Home is visited + on auth ready + every 60s
+  document.querySelectorAll('[data-go="home"]').forEach(b => b.addEventListener("click", () => setTimeout(loadActiveOrders, 50)));
+  loadActiveOrders();
+  setInterval(() => loadActiveOrders(), 60_000);
+
+  // Once we have a user id, subscribe to realtime
+  (async () => {
+    const { data:{ user } } = await sb.auth.getUser();
+    if (user) subscribeToOrderChanges(user.id);
+  })();
+
+  // Make budget rows tappable to view order detail
+  // (delegated since the budget list re-renders)
+  document.addEventListener("click", async (e) => {
+    const txEl = e.target.closest("#budgetTx .tx");
+    if (!txEl) return;
+    // find the order this row represents — we don't store id on the row, so re-fetch
+    const idx = Array.from(txEl.parentElement.children).indexOf(txEl);
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const { data: txs } = await sb.from("transactions").select("*, operators(name), lockers:pickup_locker_id(name)").eq("household_id", user.id).gte("created_at", monthStart).order("created_at", { ascending:false });
+    const o = txs?.[idx];
+    if (o) showOrderDetail(o);
   });
 
   // Register service worker for offline + Add-to-Home-Screen install

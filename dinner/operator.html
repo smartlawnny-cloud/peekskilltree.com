@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#161514" />
 <title>dinner · operator</title>
+<link rel="manifest" href="/dinner/manifest.webmanifest" />
+<link rel="icon" type="image/svg+xml" href="/dinner/icon.svg" />
+<link rel="apple-touch-icon" href="/dinner/icon-180.png" />
+<meta name="apple-mobile-web-app-title" content="dinner ops" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/dinner/sw.js",{scope:"/dinner/"}).catch(()=>{})}</script>
 <style>
   :root{
     --bg:#161514;--bg-2:#1f1d1b;--bg-3:#26231f;--line:#2c2926;
@@ -386,6 +393,10 @@ function renderTx(){
 let _rtChannel = null;
 function subscribeToOrders(){
   if (_rtChannel) return;
+  // Request browser notification permission on first subscription
+  if (typeof Notification !== "undefined" && Notification.permission === "default") {
+    Notification.requestPermission().catch(()=>{});
+  }
   _rtChannel = sb.channel(`op-orders-${operator.id}`)
     .on("postgres_changes", {
       event: "*",
@@ -394,8 +405,10 @@ function subscribeToOrders(){
       filter: `operator_id=eq.${operator.id}`,
     }, async (payload) => {
       const ev = payload.eventType;
-      if (ev === "INSERT") {
-        // gentle audio chime
+      if (ev === "INSERT" || (ev === "UPDATE" && payload.new?.status === "paid" && payload.old?.status === "pending")) {
+        const t = payload.new || payload.record;
+        const itemSummary = (t?.items||[]).map(i=>`${i.qty||1}× ${i.name}`).join(", ");
+        // Audio chime — two-note ascending
         try {
           const ctx = new (window.AudioContext||window.webkitAudioContext)();
           const o = ctx.createOscillator(); const g = ctx.createGain();
@@ -409,7 +422,20 @@ function subscribeToOrders(){
             o2.start(); o2.stop(ctx.currentTime + 0.18);
           }, 180);
         } catch {}
-        toast("New order");
+        // Native browser notification (works on desktop + iOS 16.4+ when installed as PWA)
+        if (typeof Notification !== "undefined" && Notification.permission === "granted" && document.visibilityState !== "visible") {
+          try {
+            const n = new Notification("New dinner order", {
+              body: `$${Number(t?.subtotal||0).toFixed(2)} · ${itemSummary || "items"}${t?.pickup_pin ? " · PIN " + t.pickup_pin : ""}`,
+              icon: "/dinner/icon-180.png",
+              badge: "/dinner/icon-180.png",
+              tag: "dinner-order-" + (t?.id||""),
+              requireInteraction: false,
+            });
+            n.onclick = () => { window.focus(); n.close(); };
+          } catch {}
+        }
+        toast("New order · " + (itemSummary||"check pickups"));
       }
       await loadTodayTx();
     })

@@ -451,44 +451,25 @@
   <!-- BUDGET -->
   <section class="screen" id="screen-budget">
     <h1 style="padding:20px 0 4px">Budget</h1>
-    <p style="margin-bottom:14px">May 1 – May 31</p>
+    <p style="margin-bottom:14px" id="budgetPeriod">—</p>
 
     <div class="bgt">
-      <div><span class="num">$248</span><span class="ofnum">/ $400 left</span></div>
-      <div class="barwrap"><div class="bar"></div></div>
+      <div><span class="num" id="budgetLeft">$—</span><span class="ofnum" id="budgetTotal">/ $— left</span></div>
+      <div class="barwrap"><div class="bar" id="budgetBar" style="width:0%"></div></div>
       <div class="breakdown">
-        <span>$152 spent · 38%</span>
-        <span>18 days left</span>
+        <span id="budgetSpent">— spent</span>
+        <span id="budgetDays">— days left</span>
       </div>
     </div>
+
+    <button class="btn ghost" style="margin-top:14px" id="addReceiptBtn">📷 Add receipt</button>
+    <input type="file" accept="image/*" capture="environment" id="receiptFile" style="display:none" />
 
     <h3 style="margin:24px 0 10px">Where it went</h3>
-    <div class="breakcat">
-      <div class="item">
-        <div class="swatch" style="background:var(--sage)"></div>
-        <div class="nm"><div class="lab">Groceries</div><div class="sub">Stop &amp; Shop, Trader Joe's</div></div>
-        <div class="amt">$84</div>
-      </div>
-      <div class="item">
-        <div class="swatch" style="background:var(--sage-2)"></div>
-        <div class="nm"><div class="lab">Local market</div><div class="sub">EarthTone, Maria's</div></div>
-        <div class="amt">$41</div>
-      </div>
-      <div class="item">
-        <div class="swatch" style="background:var(--warn)"></div>
-        <div class="nm"><div class="lab">Eating out</div><div class="sub">2 nights</div></div>
-        <div class="amt">$27</div>
-      </div>
-    </div>
+    <div class="breakcat" id="budgetBreakdown"><div class="item"><div class="swatch" style="background:var(--text-3)"></div><div class="nm"><div class="lab muted">No spending yet this month</div></div></div></div>
 
     <h3 style="margin:24px 0 10px">Recent</h3>
-    <div class="card" style="padding:0">
-      <div class="tx"><div class="ico">🌾</div><div class="mid"><div class="v">EarthTone Farm</div><div class="s">May 12 · pickup</div></div><div class="amt">-$14.75</div></div>
-      <div class="tx"><div class="ico">🛒</div><div class="mid"><div class="v">Stop &amp; Shop</div><div class="s">May 10 · auto-import</div></div><div class="amt">-$62.40</div></div>
-      <div class="tx"><div class="ico">🍝</div><div class="mid"><div class="v">Maria's Kitchen</div><div class="s">May 9 · perogies + sauce</div></div><div class="amt">-$25.00</div></div>
-      <div class="tx"><div class="ico">🍕</div><div class="mid"><div class="v">Pizzeria Roma</div><div class="s">May 7 · eating out</div></div><div class="amt">-$27.10</div></div>
-      <div class="tx"><div class="ico">🛒</div><div class="mid"><div class="v">Trader Joe's</div><div class="s">May 3</div></div><div class="amt">-$22.75</div></div>
-    </div>
+    <div class="card" style="padding:0" id="budgetTx"><div class="empty-cart" style="padding:30px 14px;font-size:13px">No transactions yet. Place an order from the Market.</div></div>
   </section>
 
   <!-- FAVORITES -->
@@ -1138,49 +1119,246 @@
 
   async function placeOrder(){
     if (!cartCount()) return;
-    const { data:{ user } } = await sb.auth.getUser();
+    const { data:{ session: realSession } } = await sb.auth.getSession();
+    const user = realSession?.user;
     if (!user) { toast("Sign-in needed"); return; }
     const items = Object.entries(cart.items).map(([id,it]) => ({
       inventory_id: id, name: it.name, qty: it.qty, price: Number(it.price), line_total: +(it.qty * Number(it.price)).toFixed(2)
     }));
+    const placeBtn = document.getElementById("placeOrderBtn");
+    placeBtn.disabled = true; placeBtn.textContent = "Opening checkout…";
+
+    // Persist cart in localStorage so we can refer to it on Stripe return (success or cancel)
+    try { localStorage.setItem("dinner-pending-checkout", JSON.stringify({ items, operator_id: cart.operator_id, operator_name: cart.operator_name })); } catch {}
+
+    try {
+      const r = await fetch(`${SB_URL}/functions/v1/create-checkout`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          apikey: SB_ANON,
+          authorization: `Bearer ${realSession?.access_token || SB_ANON}`,
+        },
+        body: JSON.stringify({
+          items,
+          operator_id: cart.operator_id,
+          success_url: window.location.origin + "/dinner/app.html?checkout=success&sid={CHECKOUT_SESSION_ID}",
+          cancel_url: window.location.origin + "/dinner/app.html?checkout=cancel",
+        }),
+      });
+      const data = await r.json();
+      placeBtn.disabled = false; placeBtn.textContent = "Place pickup order";
+      if (data.error) {
+        if (data.error === "STRIPE_SECRET_KEY not configured") {
+          toast("Payment not configured yet — running order without payment");
+          return placeOrderWithoutPayment(items);
+        }
+        toast("Checkout failed: " + (data.detail || data.error));
+        return;
+      }
+      window.location.href = data.url;
+    } catch (err) {
+      placeBtn.disabled = false; placeBtn.textContent = "Place pickup order";
+      toast("Network error — try again");
+    }
+  }
+
+  // Fallback when Stripe key isn't configured yet: write transaction directly
+  async function placeOrderWithoutPayment(items){
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
     const subtotal = +cartSubtotal().toFixed(2);
     const platform_fee = +(subtotal * 0.12).toFixed(2);
     const pin = String(Math.floor(1000 + Math.random() * 9000));
-    // Pickup window: now → +90 min
     const now = new Date();
     const end = new Date(now.getTime() + 90*60*1000);
-    // Look up the locker (we only have one seeded)
     const { data: lockers } = await sb.from("lockers").select("id,name").eq("active", true).limit(1);
     const locker = lockers?.[0];
-    const payload = {
-      household_id: user.id,
-      operator_id: cart.operator_id,
-      items,
-      subtotal,
-      platform_fee,
-      total: subtotal,
-      status: "pending",
-      pickup_locker_id: locker?.id || null,
-      pickup_pin: pin,
+    const { error } = await sb.from("transactions").insert({
+      household_id: user.id, operator_id: cart.operator_id,
+      items, subtotal, platform_fee, total: subtotal, status: "pending",
+      pickup_locker_id: locker?.id || null, pickup_pin: pin,
       pickup_window: `[${now.toISOString()},${end.toISOString()})`,
-    };
-    const placeBtn = document.getElementById("placeOrderBtn");
-    placeBtn.disabled = true; placeBtn.textContent = "Placing…";
-    const { data, error } = await sb.from("transactions").insert(payload).select().single();
-    placeBtn.disabled = false; placeBtn.textContent = "Place pickup order";
+    });
     if (error) { toast("Order failed: " + error.message); return; }
-
-    // Show confirmation
-    document.getElementById("confirmPin").textContent = pin.split("").join(" ");
-    document.getElementById("confirmWhere").textContent = locker?.name || "Hudson Skate Plaza · #4";
-    document.getElementById("confirmItems").innerHTML = items.map(i => `${i.qty}× ${escapeHtml(i.name)} <span style="float:right">$${i.line_total.toFixed(2)}</span><br>`).join("") + `<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:8px;font-weight:600;color:var(--text)">Total <span style="float:right;color:var(--sage)">$${subtotal.toFixed(2)}</span></div>`;
-    closeCart();
-    document.getElementById("confirmSheet").classList.add("show");
-
-    // Wipe cart
+    showConfirmation(items, pin, subtotal, locker?.name);
     cart = { operator_id: null, operator_name: null, items: {} };
     saveCart();
     refreshMarketCartState();
+  }
+
+  function showConfirmation(items, pin, subtotal, lockerName){
+    document.getElementById("confirmPin").textContent = String(pin).split("").join(" ");
+    document.getElementById("confirmWhere").textContent = lockerName || "Hudson Skate Plaza · #4";
+    document.getElementById("confirmItems").innerHTML = items.map(i => `${i.qty}× ${escapeHtml(i.name)} <span style="float:right">$${(i.line_total ?? i.qty*i.price).toFixed(2)}</span><br>`).join("") + `<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:8px;font-weight:600;color:var(--text)">Total <span style="float:right;color:var(--sage)">$${Number(subtotal).toFixed(2)}</span></div>`;
+    closeCart();
+    document.getElementById("confirmSheet").classList.add("show");
+  }
+
+  // ---- Handle Stripe redirect-back ----
+  async function handleCheckoutReturn(){
+    const params = new URLSearchParams(window.location.search);
+    const ckout = params.get("checkout");
+    if (!ckout) return;
+    if (ckout === "cancel") {
+      toast("Payment canceled");
+      history.replaceState(null, "", "/dinner/app.html");
+      return;
+    }
+    if (ckout === "success") {
+      const sid = params.get("sid");
+      history.replaceState(null, "", "/dinner/app.html");
+      if (!sid) { toast("Missing session id"); return; }
+      const { data:{ session } } = await sb.auth.getSession();
+      const r = await fetch(`${SB_URL}/functions/v1/finalize-order`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          apikey: SB_ANON,
+          authorization: `Bearer ${session?.access_token || SB_ANON}`,
+        },
+        body: JSON.stringify({ session_id: sid }),
+      });
+      const data = await r.json();
+      if (data.error) { toast("Couldn't finalize: " + (data.detail || data.error)); return; }
+
+      // Read the items back from the pending stash to display
+      let pending = {};
+      try { pending = JSON.parse(localStorage.getItem("dinner-pending-checkout") || "{}"); } catch {}
+      const items = pending.items || [];
+      const subtotal = items.reduce((s,i)=>s+(i.line_total ?? i.qty*i.price), 0);
+      showConfirmation(items, data.pin, subtotal, data.locker_name);
+      cart = { operator_id: null, operator_name: null, items: {} };
+      saveCart();
+      refreshMarketCartState();
+      try { localStorage.removeItem("dinner-pending-checkout"); } catch {}
+    }
+  }
+  handleCheckoutReturn();
+
+  // ============================================================
+  // BUDGET — live from transactions
+  // ============================================================
+  async function loadBudget(){
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd   = new Date(now.getFullYear(), now.getMonth()+1, 0);
+    const daysLeft = Math.max(0, Math.ceil((monthEnd - now)/(1000*60*60*24)));
+    const monthName = monthStart.toLocaleString("en", { month:"long" });
+
+    const [{ data: profile }, { data: txs }] = await Promise.all([
+      sb.from("profiles").select("monthly_budget").eq("household_id", user.id).maybeSingle(),
+      sb.from("transactions").select("id,subtotal,total,operator_id,items,status,created_at,operators(name,kind)").eq("household_id", user.id).gte("created_at", monthStart.toISOString()).order("created_at", { ascending:false }),
+    ]);
+
+    const budget = Number(profile?.monthly_budget) || 400;
+    const spent = (txs||[]).reduce((s,t)=>s+Number(t.total||t.subtotal||0), 0);
+    const left = Math.max(0, budget - spent);
+    const pct = budget > 0 ? Math.min(100, Math.round((spent/budget)*100)) : 0;
+
+    document.getElementById("budgetPeriod").textContent = `${monthName} ${monthStart.getFullYear()}`;
+    document.getElementById("budgetLeft").textContent = `$${left.toFixed(0)}`;
+    document.getElementById("budgetTotal").textContent = `/ $${budget.toFixed(0)} left`;
+    document.getElementById("budgetBar").style.width = pct + "%";
+    document.getElementById("budgetSpent").textContent = `$${spent.toFixed(0)} spent · ${pct}%`;
+    document.getElementById("budgetDays").textContent = `${daysLeft} days left`;
+
+    // Breakdown by operator kind
+    const byKind = {};
+    (txs||[]).forEach(t => {
+      const k = t.operators?.kind || "other";
+      byKind[k] = (byKind[k] || 0) + Number(t.total || t.subtotal || 0);
+    });
+    const KIND_LABEL = { farm:"Local farms", home_cook:"Home cooks", meal_prep:"Meal prep", other:"Other" };
+    const KIND_COLOR = { farm:"var(--sage)", home_cook:"var(--sage-2)", meal_prep:"var(--warn)", other:"var(--text-3)" };
+    const breakEl = document.getElementById("budgetBreakdown");
+    if (Object.keys(byKind).length === 0) {
+      breakEl.innerHTML = `<div class="item"><div class="swatch" style="background:var(--text-3)"></div><div class="nm"><div class="lab muted">No spending yet this month</div></div></div>`;
+    } else {
+      breakEl.innerHTML = Object.entries(byKind).sort((a,b)=>b[1]-a[1]).map(([k,v]) =>
+        `<div class="item"><div class="swatch" style="background:${KIND_COLOR[k]||"var(--sage)"}"></div><div class="nm"><div class="lab">${KIND_LABEL[k]||k}</div></div><div class="amt">$${v.toFixed(0)}</div></div>`
+      ).join("");
+    }
+
+    // Tx list
+    const KIND_ICO = { farm:"🌾", home_cook:"🍝", meal_prep:"🍱" };
+    const txEl = document.getElementById("budgetTx");
+    if (!(txs||[]).length) {
+      txEl.innerHTML = `<div class="empty-cart" style="padding:30px 14px;font-size:13px">No transactions yet. Place an order from the Market.</div>`;
+    } else {
+      txEl.innerHTML = txs.map(t => {
+        const d = new Date(t.created_at);
+        const dateStr = d.toLocaleDateString([], { month:"short", day:"numeric" });
+        const opName = t.operators?.name || "Operator";
+        const ico = KIND_ICO[t.operators?.kind] || "🛒";
+        return `<div class="tx"><div class="ico">${ico}</div><div class="mid"><div class="v">${escapeHtml(opName)}</div><div class="s">${dateStr} · ${escapeHtml(t.status)}</div></div><div class="amt">-$${Number(t.total||t.subtotal||0).toFixed(2)}</div></div>`;
+      }).join("");
+    }
+  }
+  // Refresh when the Budget tab is opened
+  document.querySelector('[data-go="budget"]')?.addEventListener("click", () => setTimeout(loadBudget, 50));
+  document.querySelector('.nav-item[data-go="budget"]')?.addEventListener("click", () => setTimeout(loadBudget, 50));
+  // Initial load
+  loadBudget();
+
+  // ============================================================
+  // RECEIPT OCR — wire the Add receipt button
+  // ============================================================
+  const receiptBtn = document.getElementById("addReceiptBtn");
+  const receiptFile = document.getElementById("receiptFile");
+  if (receiptBtn && receiptFile) {
+    receiptBtn.addEventListener("click", () => receiptFile.click());
+    receiptFile.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      receiptBtn.disabled = true;
+      receiptBtn.textContent = "Reading receipt…";
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const { data:{ session } } = await sb.auth.getSession();
+          const r = await fetch(`${SB_URL}/functions/v1/receipt-ocr`, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              apikey: SB_ANON,
+              authorization: `Bearer ${session?.access_token || SB_ANON}`,
+            },
+            body: JSON.stringify({ image: reader.result }),
+          });
+          const data = await r.json();
+          if (data.error) {
+            toast(data.error === "OPENAI_API_KEY not configured" ? "Receipt OCR offline — paste OpenAI key" : ("OCR failed: " + data.error));
+            receiptBtn.disabled = false;
+            receiptBtn.textContent = "📷 Add receipt";
+            return;
+          }
+          // Write a synthetic transaction for the budget tracker
+          // (we don't tie it to an operator — it's external spend)
+          const { data:{ user } } = await sb.auth.getUser();
+          await sb.from("transactions").insert({
+            household_id: user.id,
+            operator_id: null,    // external receipt — no operator
+            items: data.line_items || [],
+            subtotal: Number(data.subtotal || data.total || 0),
+            total: Number(data.total || 0),
+            status: "paid",
+            stripe_payment_intent: "ext_" + (data.store||"unknown").toLowerCase().replace(/\s+/g,"_") + "_" + Date.now(),
+          });
+          toast(`Imported ${data.store || "receipt"} · $${Number(data.total||0).toFixed(2)}`);
+          await loadBudget();
+        } catch (err) {
+          toast("OCR error: " + String(err).slice(0,40));
+        } finally {
+          receiptBtn.disabled = false;
+          receiptBtn.textContent = "📷 Add receipt";
+          receiptFile.value = "";
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   }
   document.getElementById("placeOrderBtn").addEventListener("click", placeOrder);
   document.getElementById("confirmDoneBtn").addEventListener("click", () => {

@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="theme-color" content="#161514" />
+<title>dinner — what's for dinner, actually</title>
+<meta name="description" content="The dinner question, answered. Scans your fridge, sources from neighbors, stays inside your budget. Hyperlocal food, monochrome interface, no algorithm trying to feed you ads." />
+<style>
+  :root{
+    --bg:#161514;
+    --bg-2:#1f1d1b;
+    --bg-3:#26231f;
+    --line:#2c2926;
+    --text:#f1ece1;
+    --text-2:#a8a297;
+    --text-3:#6e6a62;
+    --sage:#9ab086;
+    --sage-2:#7f9870;
+    --sage-3:#3d4a36;
+    --warn:#c98a5b;
+    --bad:#a85c52;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:16px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;letter-spacing:.005em}
+  h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.02em}
+  h1{font-size:clamp(40px,7vw,76px);line-height:1.02}
+  h2{font-size:clamp(28px,4vw,42px);line-height:1.1}
+  h3{font-size:20px}
+  p{margin:0;color:var(--text-2)}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+  nav{position:sticky;top:0;background:rgba(22,21,20,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line);z-index:10}
+  nav .row{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.02em;font-size:18px}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--sage);box-shadow:0 0 12px var(--sage)}
+  .nav-links{display:flex;gap:28px;font-size:14px;color:var(--text-2)}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{padding:9px 16px;background:var(--sage);color:#15170f;border-radius:999px;font-size:13px;font-weight:500}
+
+  /* hero */
+  .hero{padding:90px 0 60px;text-align:left;max-width:880px}
+  .hero .tag{display:inline-block;font-size:12px;color:var(--sage);text-transform:uppercase;letter-spacing:.15em;margin-bottom:24px;padding:6px 12px;background:var(--sage-3);border-radius:999px}
+  .hero h1 span{color:var(--sage)}
+  .hero p.lede{font-size:clamp(17px,1.7vw,20px);margin-top:24px;max-width:640px;line-height:1.5}
+  .hero .ctas{display:flex;gap:12px;margin-top:36px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 22px;border-radius:999px;font-weight:500;font-size:15px;transition:transform .1s}
+  .btn:active{transform:scale(.98)}
+  .btn.primary{background:var(--sage);color:#15170f}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+  .hero .meta{display:flex;gap:24px;margin-top:36px;color:var(--text-3);font-size:13px;flex-wrap:wrap}
+  .hero .meta span{display:flex;align-items:center;gap:6px}
+  .hero .meta i{width:6px;height:6px;border-radius:50%;background:var(--sage);font-style:normal}
+
+  /* phone mock */
+  .show{display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:center;padding:40px 0 80px}
+  @media (max-width:880px){.show{grid-template-columns:1fr;gap:40px}}
+  .phone{justify-self:center;width:300px;height:610px;background:var(--bg-2);border-radius:42px;border:8px solid #2a2724;box-shadow:0 30px 80px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.04);overflow:hidden;position:relative}
+  .phone::before{content:"";position:absolute;top:14px;left:50%;transform:translateX(-50%);width:90px;height:24px;background:#0d0c0b;border-radius:14px;z-index:2}
+  .phone .scrn{padding:54px 18px 18px;height:100%;overflow:hidden;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+  .phone .scrn .hh{font-size:22px;font-weight:600;letter-spacing:-.02em;margin:8px 4px 2px}
+  .phone .scrn .ss{font-size:11px;color:var(--text-2);margin:0 4px 8px}
+  .phone .scrn .card{background:linear-gradient(160deg,var(--bg-2),var(--bg-3));border:1px solid var(--line);border-radius:12px;padding:14px}
+  .phone .scrn .card .meta{display:flex;gap:5px;margin-bottom:8px}
+  .phone .scrn .card .meta .pill{font-size:9px;background:var(--bg-3);padding:3px 7px;border-radius:999px;color:var(--text-2)}
+  .phone .scrn .card .meta .pill.sage{background:var(--sage-3);color:var(--sage)}
+  .phone .scrn .card h4{font-size:14px;line-height:1.25}
+  .phone .scrn .card p{font-size:11px;margin-top:5px}
+  .phone .scrn .gridq{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+  .phone .scrn .q{background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .phone .scrn .q .ic{width:24px;height:24px;border-radius:6px;background:var(--bg-3);display:grid;place-items:center;margin-bottom:5px;font-size:11px}
+  .phone .scrn .q .lb{font-size:11px;font-weight:500}
+  .phone .scrn .q .vl{font-size:9px;color:var(--text-3);margin-top:2px}
+  .phone .scrn .bnav{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:10px 4px 12px;background:rgba(22,21,20,.95);border-top:1px solid var(--line);border-radius:0 0 34px 34px}
+  .phone .scrn .bnav .ni{font-size:7px;color:var(--text-3);text-align:center;letter-spacing:.05em;text-transform:uppercase}
+  .phone .scrn .bnav .ni.a{color:var(--sage)}
+  .phone .scrn .bnav .ni::before{content:"●";display:block;font-size:10px;margin-bottom:2px}
+
+  .show-copy h2{margin-bottom:14px}
+  .show-copy p{font-size:17px;line-height:1.6}
+  .show-copy ul{list-style:none;padding:0;margin:24px 0 0;display:flex;flex-direction:column;gap:14px}
+  .show-copy li{display:flex;gap:14px;align-items:flex-start;color:var(--text-2);font-size:15px}
+  .show-copy li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sage);margin-top:9px;flex-shrink:0}
+
+  /* feature grid */
+  .features{padding:80px 0;border-top:1px solid var(--line)}
+  .features-head{max-width:680px;margin-bottom:48px}
+  .features-head h2{margin-bottom:12px}
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media (max-width:880px){.fgrid{grid-template-columns:1fr 1fr}}
+  @media (max-width:560px){.fgrid{grid-template-columns:1fr}}
+  .feat{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:28px;min-height:200px}
+  .feat .ic{width:40px;height:40px;border-radius:10px;background:var(--bg-3);display:grid;place-items:center;margin-bottom:18px;font-size:18px}
+  .feat h3{font-size:18px;margin-bottom:8px}
+  .feat p{font-size:14px;line-height:1.55}
+
+  /* comparison */
+  .compare{padding:80px 0;border-top:1px solid var(--line)}
+  .compare-head{max-width:680px;margin-bottom:40px}
+  .compare-head h2{margin-bottom:12px}
+  .ctable{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .ctable .ch{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;padding:18px 20px;border-bottom:1px solid var(--line);background:var(--bg-3);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:500}
+  .ctable .cr{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;padding:18px 20px;border-bottom:1px solid var(--line);align-items:center;font-size:14px}
+  .ctable .cr:last-child{border-bottom:0}
+  .ctable .cl{font-weight:500;color:var(--text)}
+  .ctable .v{color:var(--text-2);font-size:13px}
+  .ctable .v.y{color:var(--sage)}
+  .ctable .v.n{color:var(--text-3)}
+  .ctable .v.us{color:var(--sage);font-weight:600}
+  @media (max-width:880px){
+    .ctable .ch{display:none}
+    .ctable .cr{grid-template-columns:1fr;gap:6px;padding:18px 20px}
+    .ctable .cr .v::before{content:attr(data-l) " · ";color:var(--text-3);text-transform:uppercase;font-size:10px;letter-spacing:.08em}
+  }
+
+  /* social */
+  .why{padding:80px 0;border-top:1px solid var(--line)}
+  .why .pair{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+  @media (max-width:760px){.why .pair{grid-template-columns:1fr;gap:24px}}
+  .why h2{margin-bottom:14px}
+  .why blockquote{margin:0;font-size:20px;line-height:1.5;color:var(--text);letter-spacing:-.01em}
+  .why blockquote::before{content:"\201C";color:var(--sage);font-size:48px;line-height:0;display:block;margin-bottom:14px}
+  .why cite{display:block;margin-top:18px;color:var(--text-3);font-style:normal;font-size:13px}
+
+  /* CTA */
+  .cta{padding:90px 0;border-top:1px solid var(--line);text-align:center}
+  .cta h2{font-size:clamp(32px,5vw,52px);max-width:760px;margin:0 auto 20px}
+  .cta p{max-width:520px;margin:0 auto 32px;font-size:17px}
+  .cta .btn{font-size:16px;padding:16px 28px}
+
+  footer{padding:50px 0 80px;border-top:1px solid var(--line);color:var(--text-3);font-size:13px}
+  footer .row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px}
+  footer a:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap row">
+    <a href="/" class="brand"><span class="dot"></span><span>dinner</span></a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#compare">vs. others</a>
+      <a href="#why">Why we built it</a>
+    </div>
+    <a href="/dinner/app.html" class="nav-cta">Open app →</a>
+  </div>
+</nav>
+
+<header class="wrap hero">
+  <div class="tag">private beta · Hudson Valley</div>
+  <h1>What's for dinner. <span>Actually answered.</span></h1>
+  <p class="lede">A quiet little app that scans what's in your fridge, sources from neighbors who cook, and stays inside the budget you set. Hyperlocal. No ads. No infinite scroll trying to sell you DoorDash.</p>
+  <div class="ctas">
+    <a href="/dinner/app.html" class="btn primary">Open the app</a>
+    <a href="#how" class="btn ghost">See how it works</a>
+  </div>
+  <div class="meta">
+    <span><i></i> No subscription</span>
+    <span><i></i> Works offline</span>
+    <span><i></i> Your data stays yours</span>
+  </div>
+</header>
+
+<section class="wrap show" id="how">
+  <div class="phone">
+    <div class="scrn">
+      <div class="hh">Good evening</div>
+      <div class="ss">What's for dinner tonight?</div>
+      <div class="card">
+        <div class="meta"><span class="pill sage">uses fridge</span><span class="pill">22 min</span></div>
+        <h4>Lemon-garlic chicken &amp; potatoes</h4>
+        <p>Pulled from what's already in your fridge. You have everything except parsley.</p>
+      </div>
+      <div class="gridq">
+        <div class="q"><div class="ic">📷</div><div class="lb">Scan fridge</div><div class="vl">2 days ago</div></div>
+        <div class="q"><div class="ic">🌿</div><div class="lb">Local market</div><div class="vl">3 nearby</div></div>
+        <div class="q"><div class="ic">$</div><div class="lb">Budget</div><div class="vl">$248 left</div></div>
+        <div class="q"><div class="ic">♡</div><div class="lb">Favorites</div><div class="vl">5 forgotten</div></div>
+      </div>
+      <div class="bnav">
+        <div class="ni a">Home</div>
+        <div class="ni">Fridge</div>
+        <div class="ni">Market</div>
+        <div class="ni">Budget</div>
+        <div class="ni">Favs</div>
+      </div>
+    </div>
+  </div>
+  <div class="show-copy">
+    <h2>It opens to one screen. One question. Tonight's answer.</h2>
+    <p>Everything else hangs off that. No newsfeed. No restaurants ranked by who paid the most.</p>
+    <ul>
+      <li>Scan your fridge with the camera — it reads the shelves, lists what's there, suggests three meals you can make right now.</li>
+      <li>If you're missing one or two things, it surfaces a neighbor or local farm 1–4 miles away that has it today.</li>
+      <li>The budget tracker is the same color palette as the rest of the app. Not a scary spreadsheet. Just where the money's been.</li>
+      <li>Favorites remembers what you used to love and stopped making. "743 days since you've had Mom's perogies."</li>
+    </ul>
+  </div>
+</section>
+
+<section class="wrap features">
+  <div class="features-head">
+    <h3 style="color:var(--sage);font-size:12px;text-transform:uppercase;letter-spacing:.15em;margin-bottom:14px">What's inside</h3>
+    <h2>Five screens. Nothing else.</h2>
+    <p style="margin-top:12px;font-size:16px;max-width:560px">We didn't add a social feed, a gamified streak system, or AI-generated meal plans for next month. Just the five things you actually use.</p>
+  </div>
+  <div class="fgrid">
+    <div class="feat">
+      <div class="ic">🏠</div>
+      <h3>Home</h3>
+      <p>Tonight's answer, the four things you do most, and the connections you've wired up. That's the whole screen.</p>
+    </div>
+    <div class="feat">
+      <div class="ic">📷</div>
+      <h3>Fridge</h3>
+      <p>Hold your phone up. Vision model reads the shelves. You get a list of ingredients and three meals that use them — including one prioritized to use the spinach before it turns.</p>
+    </div>
+    <div class="feat">
+      <div class="ic">🌾</div>
+      <h3>Market</h3>
+      <p>Hyperlocal directory of farms, home cooks, and meal-prep operators within 4 miles. Pickup at a skate-park locker. No delivery fee, no driver tip, no algorithm.</p>
+    </div>
+    <div class="feat">
+      <div class="ic">$</div>
+      <h3>Budget</h3>
+      <p>You set a number. The app shows where it went — groceries, local market, eating out — and what's left. Same monochrome aesthetic. Calm, not anxious.</p>
+    </div>
+    <div class="feat">
+      <div class="ic">♡</div>
+      <h3>Favorites</h3>
+      <p>Add the meals you love during onboarding. The app reminds you when you haven't made them in a while and ingredients line up. Not nostalgia-bait. Just memory.</p>
+    </div>
+    <div class="feat">
+      <div class="ic">🛹</div>
+      <h3>Skate-park lockers</h3>
+      <p>Pickup hubs at local plazas — open 24/7, code unlocks at the moment of pickup. The hyperlocal piece that makes neighbor-to-neighbor food actually work.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap compare" id="compare">
+  <div class="compare-head">
+    <h3 style="color:var(--sage);font-size:12px;text-transform:uppercase;letter-spacing:.15em;margin-bottom:14px">vs. the rest</h3>
+    <h2>Not a delivery app. Not a recipe app. Not a meal kit.</h2>
+    <p style="margin-top:12px;font-size:16px;max-width:560px">Each of those solves a slice. None of them answer the actual question. Here's the honest comparison.</p>
+  </div>
+
+  <div class="ctable">
+    <div class="ch">
+      <div></div>
+      <div>dinner</div>
+      <div>DoorDash</div>
+      <div>HelloFresh</div>
+      <div>SuperCook</div>
+    </div>
+    <div class="cr">
+      <div class="cl">Answers "what's for dinner tonight"</div>
+      <div class="v us" data-l="dinner">yes, default screen</div>
+      <div class="v n" data-l="DoorDash">no, shows 200 restaurants</div>
+      <div class="v n" data-l="HelloFresh">no, plans next week</div>
+      <div class="v" data-l="SuperCook">sort of</div>
+    </div>
+    <div class="cr">
+      <div class="cl">Uses what's already in your fridge</div>
+      <div class="v us y" data-l="dinner">vision scan</div>
+      <div class="v n" data-l="DoorDash">no</div>
+      <div class="v n" data-l="HelloFresh">no, ships you new</div>
+      <div class="v y" data-l="SuperCook">manual entry only</div>
+    </div>
+    <div class="cr">
+      <div class="cl">Hyperlocal sourcing</div>
+      <div class="v us y" data-l="dinner">≤4 mi, neighbors</div>
+      <div class="v" data-l="DoorDash">chain restaurants</div>
+      <div class="v n" data-l="HelloFresh">national warehouse</div>
+      <div class="v n" data-l="SuperCook">no sourcing</div>
+    </div>
+    <div class="cr">
+      <div class="cl">Budget-aware</div>
+      <div class="v us y" data-l="dinner">monthly cap, breakdown</div>
+      <div class="v n" data-l="DoorDash">no, will charge $34 for tacos</div>
+      <div class="v" data-l="HelloFresh">flat sub</div>
+      <div class="v n" data-l="SuperCook">no</div>
+    </div>
+    <div class="cr">
+      <div class="cl">Remembers forgotten favorites</div>
+      <div class="v us y" data-l="dinner">surfaces by ingredient match</div>
+      <div class="v n" data-l="DoorDash">no</div>
+      <div class="v n" data-l="HelloFresh">no</div>
+      <div class="v n" data-l="SuperCook">no</div>
+    </div>
+    <div class="cr">
+      <div class="cl">Ads in the feed</div>
+      <div class="v us y" data-l="dinner">none, ever</div>
+      <div class="v n" data-l="DoorDash">sponsored top 5</div>
+      <div class="v" data-l="HelloFresh">upsells</div>
+      <div class="v y" data-l="SuperCook">banner ads</div>
+    </div>
+    <div class="cr">
+      <div class="cl">Subscription required</div>
+      <div class="v us y" data-l="dinner">no, free tier covers it</div>
+      <div class="v" data-l="DoorDash">DashPass $10/mo</div>
+      <div class="v n" data-l="HelloFresh">$80–120/mo</div>
+      <div class="v y" data-l="SuperCook">free</div>
+    </div>
+  </div>
+</section>
+
+<section class="why wrap" id="why">
+  <div class="pair">
+    <div>
+      <h3 style="color:var(--sage);font-size:12px;text-transform:uppercase;letter-spacing:.15em;margin-bottom:14px">Why we built it</h3>
+      <h2>The dinner question used to be answered by your block.</h2>
+      <p style="margin-top:16px;font-size:16px">Maria across the street made too many perogies. The farm at the end of the road sold eggs on the honor system. Your neighbor's dad smoked brisket on Saturdays and gave half of it away.</p>
+      <p style="margin-top:14px;font-size:16px">Then we replaced all of that with apps that ship boxes from New Jersey and restaurants priced for a tip a stranger keeps. The app should put the block back.</p>
+    </div>
+    <div>
+      <blockquote>I don't want to scroll seventeen ramen places at 6:45pm. I want to know what I have, what my neighbor has, and what I can afford. That's it.</blockquote>
+      <cite>— the design brief</cite>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <h2>One question, answered well.</h2>
+    <p>Open it tonight. See what your fridge already wants to be.</p>
+    <a href="/dinner/app.html" class="btn primary">Open dinner →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap row">
+    <div>© 2026 dinner · Hudson Valley, NY</div>
+    <div style="display:flex;gap:22px">
+      <a href="/dinner/admin.html">Operators</a>
+      <a href="mailto:hello@dinner.app">Contact</a>
+      <a href="#">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

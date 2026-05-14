@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#1a1a1a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>dinner</title>
+<style>
+  :root{
+    --bg:#161514;
+    --bg-2:#1f1d1b;
+    --bg-3:#26231f;
+    --line:#2c2926;
+    --text:#f1ece1;
+    --text-2:#a8a297;
+    --text-3:#6e6a62;
+    --sage:#9ab086;
+    --sage-2:#7f9870;
+    --sage-3:#3d4a36;
+    --warn:#c98a5b;
+    --bad:#a85c52;
+    --radius:14px;
+    --radius-sm:10px;
+    --safe-bot:env(safe-area-inset-bottom,0px);
+    --safe-top:env(safe-area-inset-top,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;letter-spacing:.005em;overscroll-behavior:none}
+  body{padding-top:var(--safe-top);min-height:100vh;min-height:100dvh}
+  button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+  input,textarea,select{font:inherit;color:inherit;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;width:100%;outline:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--sage-2)}
+  h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em}
+  h1{font-size:28px;letter-spacing:-.02em}
+  h2{font-size:20px}
+  h3{font-size:15px;color:var(--text-2);font-weight:500;text-transform:uppercase;letter-spacing:.08em;font-size:11px}
+  p{margin:0;color:var(--text-2)}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;padding-bottom:calc(80px + var(--safe-bot));position:relative}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 8px;position:sticky;top:0;background:linear-gradient(var(--bg) 70%,transparent);z-index:5;padding-top:calc(var(--safe-top) + 18px);margin-top:calc(var(--safe-top) * -1)}
+  .brand{font-size:20px;font-weight:600;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--sage);box-shadow:0 0 10px var(--sage)}
+  .avatar{width:36px;height:36px;border-radius:50%;background:var(--bg-3);border:1px solid var(--line);display:grid;place-items:center;font-weight:600;color:var(--text);font-size:13px}
+  .avatar.empty{color:var(--text-3);font-weight:400}
+  .screen{padding:0 20px 24px;display:none;animation:fadein .25s ease}
+  .screen.active{display:block}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .card{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .card+.card{margin-top:14px}
+  .row{display:flex;align-items:center;gap:12px}
+  .row.between{justify-content:space-between}
+  .stack{display:flex;flex-direction:column;gap:6px}
+  .muted{color:var(--text-2)}
+  .tiny{font-size:12px;color:var(--text-3)}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg-3);border:1px solid var(--line);padding:5px 10px;border-radius:999px;font-size:12px;color:var(--text-2)}
+  .pill.sage{background:var(--sage-3);border-color:transparent;color:var(--sage)}
+  .pill.warn{color:var(--warn)}
+  .pill.bad{color:var(--bad)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 18px;border-radius:var(--radius-sm);background:var(--bg-3);border:1px solid var(--line);font-weight:500;color:var(--text);width:100%;transition:transform .08s}
+  .btn:active{transform:scale(.985)}
+  .btn.primary{background:var(--sage);color:#15170f;border-color:transparent}
+  .btn.ghost{background:transparent}
+  .btn.small{padding:9px 12px;font-size:13px;width:auto}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .divider{height:1px;background:var(--line);margin:14px 0}
+
+  /* bottom nav */
+  .nav{position:fixed;bottom:0;left:0;right:0;background:rgba(22,21,20,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 4px calc(8px + var(--safe-bot));z-index:10}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-3);padding:6px 4px;font-size:10px;letter-spacing:.05em;text-transform:uppercase}
+  .nav-item.active{color:var(--sage)}
+  .nav-item svg{width:22px;height:22px}
+
+  /* home */
+  .hero{padding:24px 0 8px}
+  .hero h1{font-size:30px;line-height:1.1}
+  .hero p{margin-top:6px}
+  .tonight{background:linear-gradient(160deg,var(--bg-2) 0%,var(--bg-3) 100%);border:1px solid var(--line);border-radius:var(--radius);padding:22px;position:relative;overflow:hidden}
+  .tonight::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 100% 0%,rgba(154,176,134,.08),transparent 50%);pointer-events:none}
+  .tonight .meta{display:flex;gap:8px;margin-bottom:10px;position:relative}
+  .tonight h2{font-size:22px;line-height:1.2;position:relative}
+  .tonight .sub{margin-top:10px;font-size:13px;line-height:1.55;position:relative}
+  .tonight .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;position:relative}
+  .quick-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .quick{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;text-align:left;color:var(--text)}
+  .quick .ico{width:32px;height:32px;border-radius:8px;background:var(--bg-3);display:grid;place-items:center;margin-bottom:10px}
+  .quick .lab{font-weight:500;font-size:14px}
+  .quick .v{margin-top:4px;color:var(--text-3);font-size:12px}
+
+  /* fridge */
+  .scan-card{background:linear-gradient(160deg,var(--sage-3) 0%,var(--bg-2) 90%);border:1px solid var(--line);border-radius:var(--radius);padding:22px;text-align:center}
+  .scan-card .ring{width:88px;height:88px;border:2px dashed var(--sage-2);border-radius:50%;display:grid;place-items:center;margin:0 auto 14px;color:var(--sage)}
+  .scan-card h2{margin-bottom:4px}
+  .ingr-list{display:flex;flex-direction:column;gap:0;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .ingr{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line)}
+  .ingr:last-child{border-bottom:0}
+  .ingr .name{flex:1;font-size:14px}
+  .ingr .qty{font-size:12px;color:var(--text-3)}
+  .recipe{display:flex;gap:12px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px;align-items:flex-start}
+  .recipe .thumb{width:64px;height:64px;border-radius:10px;background:var(--bg-3);flex-shrink:0;display:grid;place-items:center;font-size:24px}
+  .recipe .body{flex:1;min-width:0}
+  .recipe .body h4{font-size:15px;margin-bottom:4px}
+  .recipe .match{font-size:11px;color:var(--sage);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-top:6px}
+
+  /* market */
+  .vendor{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .vendor+.vendor{margin-top:12px}
+  .vendor .head{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--line)}
+  .vendor .logo{width:44px;height:44px;border-radius:10px;background:var(--bg-3);display:grid;place-items:center;font-size:18px;flex-shrink:0}
+  .vendor .meta{flex:1;min-width:0}
+  .vendor .name{font-weight:600;font-size:15px}
+  .vendor .dist{font-size:12px;color:var(--text-3);margin-top:2px}
+  .vendor .items{padding:6px 0}
+  .vendor .item{display:flex;align-items:center;gap:12px;padding:10px 16px}
+  .vendor .item .ico{width:28px;height:28px;border-radius:7px;background:var(--bg-3);display:grid;place-items:center;font-size:13px;flex-shrink:0}
+  .vendor .item .ttl{flex:1;font-size:13.5px}
+  .vendor .item .price{font-size:13px;color:var(--sage);font-weight:500}
+  .pickup{background:linear-gradient(160deg,var(--bg-3) 0%,var(--bg-2) 100%);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:12px}
+  .pickup .ico{width:40px;height:40px;border-radius:10px;background:var(--sage-3);display:grid;place-items:center;color:var(--sage);flex-shrink:0}
+
+  /* budget */
+  .bgt{background:linear-gradient(160deg,var(--bg-2) 0%,var(--bg-3) 100%);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+  .bgt .num{font-size:42px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .bgt .ofnum{color:var(--text-3);font-size:15px;margin-left:6px;font-weight:400}
+  .bgt .barwrap{height:6px;background:var(--bg-3);border-radius:3px;margin-top:18px;overflow:hidden}
+  .bgt .bar{height:100%;background:var(--sage);width:62%;border-radius:3px}
+  .bgt .breakdown{display:flex;justify-content:space-between;margin-top:14px;font-size:12px;color:var(--text-3)}
+  .breakcat{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .breakcat .item{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .breakcat .item:last-child{border-bottom:0}
+  .breakcat .swatch{width:8px;height:32px;border-radius:2px;flex-shrink:0}
+  .breakcat .nm{flex:1}
+  .breakcat .nm .lab{font-size:14px;font-weight:500}
+  .breakcat .nm .sub{font-size:11px;color:var(--text-3);margin-top:2px}
+  .breakcat .amt{font-weight:600;font-size:14px}
+  .tx{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .tx:last-child{border-bottom:0}
+  .tx .ico{width:32px;height:32px;border-radius:8px;background:var(--bg-3);display:grid;place-items:center;font-size:14px;flex-shrink:0}
+  .tx .mid{flex:1;min-width:0}
+  .tx .mid .v{font-size:14px}
+  .tx .mid .s{font-size:11px;color:var(--text-3);margin-top:1px}
+  .tx .amt{font-size:14px;font-weight:500}
+
+  /* favorites */
+  .fav{display:flex;align-items:flex-start;gap:14px;padding:16px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius)}
+  .fav+.fav{margin-top:10px}
+  .fav .thumb{width:54px;height:54px;border-radius:12px;background:var(--bg-3);display:grid;place-items:center;font-size:24px;flex-shrink:0}
+  .fav .mid{flex:1;min-width:0}
+  .fav .ttl{font-weight:500;font-size:15px}
+  .fav .since{font-size:12px;color:var(--warn);margin-top:3px}
+  .fav .since.long{color:var(--bad)}
+  .fav .last{font-size:11px;color:var(--text-3);margin-top:4px}
+  .fav .act{flex-shrink:0}
+
+  /* modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;z-index:50;animation:fadein .2s ease}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--bg);width:100%;max-width:480px;max-height:92vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;animation:slideup .3s cubic-bezier(.2,.7,.2,1)}
+  @keyframes slideup{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 8px}
+  .modal-head h2{font-size:17px}
+  .modal-head .close{color:var(--text-3);font-size:24px;line-height:1;padding:4px 8px}
+  .modal-body{padding:8px 20px 20px;overflow-y:auto}
+  .progress{height:3px;background:var(--bg-3);margin:0 20px;border-radius:2px;overflow:hidden}
+  .progress .pb{height:100%;background:var(--sage);transition:width .3s ease}
+  .step-label{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 4px}
+  .opt-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .opt{padding:14px 16px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius-sm);display:flex;align-items:center;gap:12px;cursor:pointer}
+  .opt.sel{border-color:var(--sage);background:var(--sage-3)}
+  .opt .em{font-size:20px}
+  .opt .lab{flex:1;font-size:14px}
+  .opt .ck{color:var(--sage);font-size:18px;display:none}
+  .opt.sel .ck{display:block}
+  .modal-foot{padding:14px 20px calc(14px + var(--safe-bot));border-top:1px solid var(--line);display:flex;gap:10px}
+  .modal-foot .btn{flex:1}
+
+  /* toast */
+  .toast{position:fixed;bottom:calc(100px + var(--safe-bot));left:50%;transform:translateX(-50%);background:var(--bg-3);border:1px solid var(--line);padding:11px 18px;border-radius:999px;font-size:13px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:30;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+  /* skate locker map */
+  .map{height:120px;background:repeating-linear-gradient(45deg,var(--bg-2) 0 12px,var(--bg-3) 12px 24px);border-radius:10px;margin-top:12px;position:relative;overflow:hidden;border:1px solid var(--line)}
+  .map .pin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:var(--sage);display:grid;place-items:center;color:#15170f;font-weight:600;box-shadow:0 0 0 8px rgba(154,176,134,.18);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 8px rgba(154,176,134,.18)}50%{box-shadow:0 0 0 14px rgba(154,176,134,.08)}}
+
+  /* fridge scanning anim */
+  .scanning .ring{animation:spin 1.4s linear infinite;border-color:var(--sage)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span><span>dinner</span></div>
+    <button class="avatar empty" id="avatarBtn" aria-label="profile">+</button>
+  </div>
+
+  <!-- HOME -->
+  <section class="screen active" id="screen-home">
+    <div class="hero">
+      <h1>Good evening</h1>
+      <p>What's for dinner tonight?</p>
+    </div>
+    <div class="tonight">
+      <div class="meta">
+        <span class="pill sage">✱ uses fridge</span>
+        <span class="pill">22 min</span>
+      </div>
+      <h2>Lemon-garlic chicken with roasted potatoes</h2>
+      <p class="sub">Pulled from what's already in your fridge. You have everything except parsley — optional.</p>
+      <div class="actions">
+        <button class="btn primary" data-go="fridge">Start cooking</button>
+        <button class="btn ghost">See 3 alternates</button>
+      </div>
+    </div>
+
+    <h3 style="margin:24px 0 10px">Right now</h3>
+    <div class="quick-list">
+      <button class="quick" data-go="fridge">
+        <div class="ico">📷</div>
+        <div class="lab">Scan fridge</div>
+        <div class="v">last: 2 days ago</div>
+      </button>
+      <button class="quick" data-go="market">
+        <div class="ico">🌿</div>
+        <div class="lab">Local market</div>
+        <div class="v">3 vendors nearby</div>
+      </button>
+      <button class="quick" data-go="budget">
+        <div class="ico">$</div>
+        <div class="lab">Budget</div>
+        <div class="v">$248 of $400 left</div>
+      </button>
+      <button class="quick" data-go="favs">
+        <div class="ico">♡</div>
+        <div class="lab">Favorites</div>
+        <div class="v">5 forgotten</div>
+      </button>
+    </div>
+
+    <h3 style="margin:24px 0 10px">Connections</h3>
+    <div class="card">
+      <div class="row between">
+        <div class="stack">
+          <div style="font-weight:500">Stop &amp; Shop</div>
+          <div class="tiny">Auto-import receipts &amp; loyalty deals</div>
+        </div>
+        <button class="btn small" onclick="toast('Coming soon — Stop &amp; Shop API auth')">Connect</button>
+      </div>
+      <div class="divider"></div>
+      <div class="row between">
+        <div class="stack">
+          <div style="font-weight:500">Upload receipt</div>
+          <div class="tiny">Snap any receipt, we'll add items</div>
+        </div>
+        <button class="btn small" onclick="toast('Receipt OCR — paste API key in admin')">Upload</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FRIDGE -->
+  <section class="screen" id="screen-fridge">
+    <h1 style="padding:20px 0 4px">Fridge</h1>
+    <p style="margin-bottom:14px">What you have. What it can become.</p>
+
+    <div class="scan-card" id="scanCard">
+      <div class="ring" id="scanRing">📷</div>
+      <h2 id="scanTitle">Scan your fridge</h2>
+      <p id="scanSub" style="margin:6px 0 16px;font-size:13px">Open the door, point your camera, hold for 3 seconds.</p>
+      <button class="btn primary" id="scanBtn">Start scan</button>
+    </div>
+
+    <h3 style="margin:24px 0 10px" id="ingrHead" hidden>Detected · 8 items</h3>
+    <div class="ingr-list" id="ingrList" hidden>
+      <div class="ingr"><span>🥚</span><span class="name">Eggs</span><span class="qty">6 left</span></div>
+      <div class="ingr"><span>🥛</span><span class="name">Whole milk</span><span class="qty">½ gal</span></div>
+      <div class="ingr"><span>🧈</span><span class="name">Butter</span><span class="qty">1 stick</span></div>
+      <div class="ingr"><span>🍗</span><span class="name">Chicken thighs</span><span class="qty">~1.4 lb</span></div>
+      <div class="ingr"><span>🍋</span><span class="name">Lemons</span><span class="qty">2</span></div>
+      <div class="ingr"><span>🧄</span><span class="name">Garlic</span><span class="qty">1 bulb</span></div>
+      <div class="ingr"><span>🥔</span><span class="name">Yukon potatoes</span><span class="qty">5</span></div>
+      <div class="ingr"><span>🥬</span><span class="name">Spinach</span><span class="qty">half-bag · use soon</span></div>
+    </div>
+
+    <h3 style="margin:24px 0 10px" id="recHead" hidden>Tonight you could make</h3>
+    <div id="recList" hidden>
+      <div class="recipe">
+        <div class="thumb">🍗</div>
+        <div class="body">
+          <h4>Lemon-garlic chicken &amp; potatoes</h4>
+          <p style="font-size:12.5px">Sheet-pan, 22 min · uses 6 of 8 fridge items</p>
+          <div class="match">100% match</div>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="recipe">
+        <div class="thumb">🥬</div>
+        <div class="body">
+          <h4>Wilted spinach + egg toast</h4>
+          <p style="font-size:12.5px">Quick · saves the spinach before it turns</p>
+          <div class="match">priority · use spinach</div>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="recipe">
+        <div class="thumb">🥔</div>
+        <div class="body">
+          <h4>Crispy smashed potatoes</h4>
+          <p style="font-size:12.5px">Side · 30 min · 4 fridge items</p>
+          <div class="match">87% match</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKET -->
+  <section class="screen" id="screen-market">
+    <h1 style="padding:20px 0 4px">Market</h1>
+    <p style="margin-bottom:14px">Hyperlocal. Within 4 miles of you.</p>
+
+    <div class="vendor">
+      <div class="head">
+        <div class="logo">🌾</div>
+        <div class="meta">
+          <div class="name">EarthTone Farm</div>
+          <div class="dist">1.4 mi · open until 6pm · pickup today</div>
+        </div>
+        <span class="pill sage">organic</span>
+      </div>
+      <div class="items">
+        <div class="item"><div class="ico">🥬</div><div class="ttl">Rainbow chard, bunch</div><div class="price">$4.50</div></div>
+        <div class="item"><div class="ico">🥕</div><div class="ttl">Heirloom carrots, lb</div><div class="price">$3.25</div></div>
+        <div class="item"><div class="ico">🥚</div><div class="ttl">Pastured eggs, dozen</div><div class="price">$7.00</div></div>
+      </div>
+    </div>
+
+    <div class="vendor">
+      <div class="head">
+        <div class="logo">🍝</div>
+        <div class="meta">
+          <div class="name">Maria's Kitchen</div>
+          <div class="dist">2.1 mi · made today · 4 left</div>
+        </div>
+        <span class="pill">homemade</span>
+      </div>
+      <div class="items">
+        <div class="item"><div class="ico">🥟</div><div class="ttl">Hand-rolled perogies, dozen</div><div class="price">$14.00</div></div>
+        <div class="item"><div class="ico">🍞</div><div class="ttl">Sourdough boule</div><div class="price">$9.00</div></div>
+        <div class="item"><div class="ico">🍅</div><div class="ttl">Slow-simmer pomodoro, qt</div><div class="price">$11.00</div></div>
+      </div>
+    </div>
+
+    <div class="vendor">
+      <div class="head">
+        <div class="logo">🍱</div>
+        <div class="meta">
+          <div class="name">Hudson Meal Prep</div>
+          <div class="dist">3.6 mi · ready in 1h · subscription</div>
+        </div>
+        <span class="pill">meal prep</span>
+      </div>
+      <div class="items">
+        <div class="item"><div class="ico">🐟</div><div class="ttl">Miso salmon + rice bowl</div><div class="price">$13.50</div></div>
+        <div class="item"><div class="ico">🥗</div><div class="ttl">Harvest grain bowl</div><div class="price">$11.50</div></div>
+        <div class="item"><div class="ico">🍲</div><div class="ttl">Chickpea coconut curry</div><div class="price">$10.00</div></div>
+      </div>
+    </div>
+
+    <h3 style="margin:24px 0 10px">Pickup</h3>
+    <div class="pickup">
+      <div class="ico">🛹</div>
+      <div style="flex:1">
+        <div style="font-weight:500">Skate park locker · #4</div>
+        <div class="tiny" style="margin-top:2px">Hudson Skate Plaza · open 24/7 · code unlocks at pickup</div>
+      </div>
+    </div>
+    <div class="map"><div class="pin">▾</div></div>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="screen" id="screen-budget">
+    <h1 style="padding:20px 0 4px">Budget</h1>
+    <p style="margin-bottom:14px">May 1 – May 31</p>
+
+    <div class="bgt">
+      <div><span class="num">$248</span><span class="ofnum">/ $400 left</span></div>
+      <div class="barwrap"><div class="bar"></div></div>
+      <div class="breakdown">
+        <span>$152 spent · 38%</span>
+        <span>18 days left</span>
+      </div>
+    </div>
+
+    <h3 style="margin:24px 0 10px">Where it went</h3>
+    <div class="breakcat">
+      <div class="item">
+        <div class="swatch" style="background:var(--sage)"></div>
+        <div class="nm"><div class="lab">Groceries</div><div class="sub">Stop &amp; Shop, Trader Joe's</div></div>
+        <div class="amt">$84</div>
+      </div>
+      <div class="item">
+        <div class="swatch" style="background:var(--sage-2)"></div>
+        <div class="nm"><div class="lab">Local market</div><div class="sub">EarthTone, Maria's</div></div>
+        <div class="amt">$41</div>
+      </div>
+      <div class="item">
+        <div class="swatch" style="background:var(--warn)"></div>
+        <div class="nm"><div class="lab">Eating out</div><div class="sub">2 nights</div></div>
+        <div class="amt">$27</div>
+      </div>
+    </div>
+
+    <h3 style="margin:24px 0 10px">Recent</h3>
+    <div class="card" style="padding:0">
+      <div class="tx"><div class="ico">🌾</div><div class="mid"><div class="v">EarthTone Farm</div><div class="s">May 12 · pickup</div></div><div class="amt">-$14.75</div></div>
+      <div class="tx"><div class="ico">🛒</div><div class="mid"><div class="v">Stop &amp; Shop</div><div class="s">May 10 · auto-import</div></div><div class="amt">-$62.40</div></div>
+      <div class="tx"><div class="ico">🍝</div><div class="mid"><div class="v">Maria's Kitchen</div><div class="s">May 9 · perogies + sauce</div></div><div class="amt">-$25.00</div></div>
+      <div class="tx"><div class="ico">🍕</div><div class="mid"><div class="v">Pizzeria Roma</div><div class="s">May 7 · eating out</div></div><div class="amt">-$27.10</div></div>
+      <div class="tx"><div class="ico">🛒</div><div class="mid"><div class="v">Trader Joe's</div><div class="s">May 3</div></div><div class="amt">-$22.75</div></div>
+    </div>
+  </section>
+
+  <!-- FAVORITES -->
+  <section class="screen" id="screen-favs">
+    <h1 style="padding:20px 0 4px">Forgotten favorites</h1>
+    <p style="margin-bottom:14px">Things you used to love. Hadn't in a while.</p>
+
+    <div class="fav">
+      <div class="thumb">🥟</div>
+      <div class="mid">
+        <div class="ttl">Hand-rolled perogies</div>
+        <div class="since long">743 days since you made this</div>
+        <div class="last">Maria's Kitchen has a dozen left today</div>
+      </div>
+      <div class="act"><button class="btn small">Add</button></div>
+    </div>
+    <div class="fav">
+      <div class="thumb">🍲</div>
+      <div class="mid">
+        <div class="ttl">Mom's chicken &amp; dumplings</div>
+        <div class="since long">512 days</div>
+        <div class="last">All ingredients in fridge · 45 min</div>
+      </div>
+      <div class="act"><button class="btn small">Cook</button></div>
+    </div>
+    <div class="fav">
+      <div class="thumb">🥘</div>
+      <div class="mid">
+        <div class="ttl">Saturday paella</div>
+        <div class="since">218 days</div>
+        <div class="last">Missing: saffron, shrimp</div>
+      </div>
+      <div class="act"><button class="btn small">Plan</button></div>
+    </div>
+    <div class="fav">
+      <div class="thumb">🍜</div>
+      <div class="mid">
+        <div class="ttl">Cold sesame noodles</div>
+        <div class="since">181 days</div>
+        <div class="last">10 min · 4 fridge items</div>
+      </div>
+      <div class="act"><button class="btn small">Cook</button></div>
+    </div>
+    <div class="fav">
+      <div class="thumb">🥧</div>
+      <div class="mid">
+        <div class="ttl">Brown butter apple crumble</div>
+        <div class="since">94 days</div>
+        <div class="last">Saved Oct 2025 · seasonal</div>
+      </div>
+      <div class="act"><button class="btn small">Plan</button></div>
+    </div>
+  </section>
+
+  <!-- BOTTOM NAV -->
+  <nav class="nav">
+    <button class="nav-item active" data-go="home" aria-label="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-5v-6h-4v6H5a1 1 0 01-1-1v-9z"/></svg>
+      Home
+    </button>
+    <button class="nav-item" data-go="fridge" aria-label="fridge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 10h14M9 6.5v1M9 13.5v3"/></svg>
+      Fridge
+    </button>
+    <button class="nav-item" data-go="market" aria-label="market">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7h18l-2 11a2 2 0 01-2 2H7a2 2 0 01-2-2L3 7zM8 7V5a4 4 0 018 0v2"/></svg>
+      Market
+    </button>
+    <button class="nav-item" data-go="budget" aria-label="budget">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M8 7h6a3 3 0 010 6H10a3 3 0 000 6h7"/></svg>
+      Budget
+    </button>
+    <button class="nav-item" data-go="favs" aria-label="favorites">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg>
+      Favorites
+    </button>
+  </nav>
+</div>
+
+<!-- INTAKE MODAL -->
+<div class="modal-bg" id="intakeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="stepTitle">Welcome</h2>
+      <button class="close" id="closeIntake">×</button>
+    </div>
+    <div class="progress"><div class="pb" id="pb" style="width:16%"></div></div>
+    <div class="modal-body" id="stepBody"></div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="prevStep" style="display:none">Back</button>
+      <button class="btn primary" id="nextStep">Continue</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // --- nav ---
+  document.querySelectorAll("[data-go]").forEach(b=>{
+    b.addEventListener("click",()=>go(b.dataset.go));
+  });
+  function go(name){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+    document.getElementById("screen-"+name).classList.add("active");
+    document.querySelector('.nav-item[data-go="'+name+'"]')?.classList.add("active");
+    window.scrollTo(0,0);
+  }
+
+  // --- fridge scan sim ---
+  const scanCard=document.getElementById("scanCard");
+  const scanBtn=document.getElementById("scanBtn");
+  const scanTitle=document.getElementById("scanTitle");
+  const scanSub=document.getElementById("scanSub");
+  const scanRing=document.getElementById("scanRing");
+  scanBtn.addEventListener("click",()=>{
+    scanCard.classList.add("scanning");
+    scanTitle.textContent="Scanning…";
+    scanSub.textContent="Identifying items via vision model.";
+    scanBtn.textContent="…";
+    scanBtn.disabled=true;
+    scanRing.textContent="";
+    setTimeout(()=>{
+      scanCard.classList.remove("scanning");
+      scanTitle.textContent="Scan complete";
+      scanSub.textContent="8 items detected. 3 recipes match.";
+      scanBtn.textContent="Re-scan";
+      scanBtn.disabled=false;
+      scanRing.textContent="✓";
+      ["ingrHead","ingrList","recHead","recList"].forEach(id=>document.getElementById(id).hidden=false);
+      toast("Fridge scanned · 8 items");
+    },1800);
+  });
+
+  // --- toast ---
+  const toastEl=document.getElementById("toast");
+  let toastT;
+  function toast(msg){
+    toastEl.textContent=msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastT);
+    toastT=setTimeout(()=>toastEl.classList.remove("show"),2400);
+  }
+
+  // --- intake modal ---
+  const steps=[
+    {
+      title:"Who's eating?",
+      label:"Step 1 of 6 · Household",
+      body:`<p style="margin-bottom:6px">Pick what fits. You can change this later.</p>
+      <div class="opt-list" data-multi="0">
+        <div class="opt" data-v="solo"><span class="em">👤</span><span class="lab">Just me</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="couple"><span class="em">🥂</span><span class="lab">Me + partner</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="family"><span class="em">👨‍👩‍👧</span><span class="lab">Family · 3+</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="roommates"><span class="em">🏠</span><span class="lab">Roommates</span><span class="ck">✓</span></div>
+      </div>`
+    },
+    {
+      title:"How do you eat?",
+      label:"Step 2 of 6 · Diet",
+      body:`<p style="margin-bottom:6px">Anything you avoid?</p>
+      <div class="opt-list" data-multi="1">
+        <div class="opt" data-v="omni"><span class="em">🍖</span><span class="lab">Everything</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="veg"><span class="em">🥗</span><span class="lab">Vegetarian</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="vegan"><span class="em">🌱</span><span class="lab">Vegan</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="gf"><span class="em">🌾</span><span class="lab">Gluten-free</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="df"><span class="em">🥛</span><span class="lab">Dairy-free</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="nut"><span class="em">🥜</span><span class="lab">No nuts</span><span class="ck">✓</span></div>
+      </div>`
+    },
+    {
+      title:"How much time?",
+      label:"Step 3 of 6 · Time",
+      body:`<p style="margin-bottom:6px">On a typical weeknight.</p>
+      <div class="opt-list" data-multi="0">
+        <div class="opt" data-v="15"><span class="em">⚡</span><span class="lab">15 min or less</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="30"><span class="em">⏱</span><span class="lab">15–30 min</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="45"><span class="em">🍳</span><span class="lab">30–45 min, I enjoy it</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="any"><span class="em">🍷</span><span class="lab">Whatever it takes</span><span class="ck">✓</span></div>
+      </div>`
+    },
+    {
+      title:"Skill level?",
+      label:"Step 4 of 6 · Skill",
+      body:`<p style="margin-bottom:6px">No wrong answer.</p>
+      <div class="opt-list" data-multi="0">
+        <div class="opt" data-v="beg"><span class="em">🐣</span><span class="lab">I burn toast</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="ok"><span class="em">🍳</span><span class="lab">Comfortable with basics</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="solid"><span class="em">🔪</span><span class="lab">Solid home cook</span><span class="ck">✓</span></div>
+        <div class="opt" data-v="pro"><span class="em">🍷</span><span class="lab">Bring it on</span><span class="ck">✓</span></div>
+      </div>`
+    },
+    {
+      title:"Monthly food budget",
+      label:"Step 5 of 6 · Budget",
+      body:`<p style="margin-bottom:14px">Groceries + local market combined. Eating out tracked separately.</p>
+      <input type="number" placeholder="$400" id="budgetInput" inputmode="numeric" />
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn small" onclick="document.getElementById('budgetInput').value=300">$300</button>
+        <button class="btn small" onclick="document.getElementById('budgetInput').value=400">$400</button>
+        <button class="btn small" onclick="document.getElementById('budgetInput').value=600">$600</button>
+        <button class="btn small" onclick="document.getElementById('budgetInput').value=800">$800</button>
+      </div>`
+    },
+    {
+      title:"Anything you love?",
+      label:"Step 6 of 6 · Favorites",
+      body:`<p style="margin-bottom:6px">Tell us 1–3 things. We'll remember and surface them when ingredients line up.</p>
+      <input id="fav1" placeholder="e.g. Mom's perogies" />
+      <div style="height:8px"></div>
+      <input id="fav2" placeholder="e.g. Saturday paella" />
+      <div style="height:8px"></div>
+      <input id="fav3" placeholder="e.g. Cold sesame noodles" />`
+    }
+  ];
+  let stepIdx=0;
+  const intake={};
+  const modal=document.getElementById("intakeModal");
+  const stepTitle=document.getElementById("stepTitle");
+  const stepBody=document.getElementById("stepBody");
+  const pb=document.getElementById("pb");
+  const prevBtn=document.getElementById("prevStep");
+  const nextBtn=document.getElementById("nextStep");
+
+  document.getElementById("avatarBtn").addEventListener("click",()=>{
+    stepIdx=0;render();modal.classList.add("show");
+  });
+  document.getElementById("closeIntake").addEventListener("click",()=>modal.classList.remove("show"));
+  prevBtn.addEventListener("click",()=>{if(stepIdx>0){stepIdx--;render()}});
+  nextBtn.addEventListener("click",()=>{
+    if(stepIdx<steps.length-1){stepIdx++;render()}
+    else finish();
+  });
+  function render(){
+    const s=steps[stepIdx];
+    stepTitle.textContent=s.title;
+    stepBody.innerHTML=`<div class="step-label">${s.label}</div>${s.body}`;
+    pb.style.width=Math.round(((stepIdx+1)/steps.length)*100)+"%";
+    prevBtn.style.display=stepIdx===0?"none":"";
+    nextBtn.textContent=stepIdx===steps.length-1?"Finish":"Continue";
+    stepBody.querySelectorAll(".opt").forEach(o=>{
+      o.addEventListener("click",()=>{
+        const multi=o.parentElement.dataset.multi==="1";
+        if(!multi)stepBody.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));
+        o.classList.toggle("sel");
+      });
+    });
+  }
+  function finish(){
+    modal.classList.remove("show");
+    const av=document.getElementById("avatarBtn");
+    av.classList.remove("empty");av.textContent="D";
+    toast("Profile saved · personalizing");
+  }
+</script>
+</body>
+</html>

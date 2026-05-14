@@ -156,69 +156,85 @@
           </div>
 
           <h2 id="rates">Stump Grinding Rates</h2>
-          <p>Pricing is straightforward: <strong>$12 per inch at the widest point of the stump</strong>, with a tier multiplier based on diameter. Bigger stumps need more passes, harder teeth, and longer runtime — the multiplier reflects the real time and equipment wear involved.</p>
+          <p>Pricing is straightforward: <strong>$12 per inch of stump diameter</strong> at the widest point, multiplied by how deep below grade you want us to grind. The basic grind takes the stump to about 3" below grade — enough that it disappears under chips and you can mow over it. Going deeper for a new lawn, garden bed, or construction adds time and equipment wear, so the multiplier kicks in.</p>
 
           <div style="border:1px solid var(--border,#ddd);border-radius:10px;overflow:hidden;margin:1.2rem 0;background:#fff;">
             <table style="width:100%;border-collapse:collapse;font-size:.95rem;">
               <thead>
                 <tr style="background:var(--green-dark,#1f4d2c);color:#fff;">
-                  <th style="text-align:left;padding:.7rem 1rem;font-weight:600;">Stump diameter</th>
-                  <th style="text-align:left;padding:.7rem 1rem;font-weight:600;">Tier</th>
-                  <th style="text-align:right;padding:.7rem 1rem;font-weight:600;">Rate per inch</th>
-                  <th style="text-align:right;padding:.7rem 1rem;font-weight:600;">Example</th>
+                  <th style="text-align:left;padding:.7rem 1rem;font-weight:600;">Grind depth (below grade)</th>
+                  <th style="text-align:left;padding:.7rem 1rem;font-weight:600;">Best for</th>
+                  <th style="text-align:right;padding:.7rem 1rem;font-weight:600;">Multiplier</th>
+                  <th style="text-align:right;padding:.7rem 1rem;font-weight:600;">Rate per inch of diameter</th>
                 </tr>
               </thead>
               <tbody>
                 <tr style="border-bottom:1px solid var(--border,#eee);">
-                  <td style="padding:.65rem 1rem;">0 – 3 inches</td>
-                  <td style="padding:.65rem 1rem;">Base (1×)</td>
+                  <td style="padding:.65rem 1rem;">0 – 3 inches (basic)</td>
+                  <td style="padding:.65rem 1rem;">Mow over it · stump gone visually</td>
+                  <td style="padding:.65rem 1rem;text-align:right;">1×</td>
                   <td style="padding:.65rem 1rem;text-align:right;font-weight:600;">$12 / inch</td>
-                  <td style="padding:.65rem 1rem;text-align:right;color:var(--text-light,#666);">3" stump → $36</td>
                 </tr>
                 <tr style="border-bottom:1px solid var(--border,#eee);background:#f7faf7;">
                   <td style="padding:.65rem 1rem;">3 – 6 inches</td>
-                  <td style="padding:.65rem 1rem;">2×</td>
+                  <td style="padding:.65rem 1rem;">New lawn or garden bed</td>
+                  <td style="padding:.65rem 1rem;text-align:right;">2×</td>
                   <td style="padding:.65rem 1rem;text-align:right;font-weight:600;">$24 / inch</td>
-                  <td style="padding:.65rem 1rem;text-align:right;color:var(--text-light,#666);">5" stump → $120</td>
                 </tr>
                 <tr>
-                  <td style="padding:.65rem 1rem;">6 inches and up</td>
-                  <td style="padding:.65rem 1rem;">3×</td>
+                  <td style="padding:.65rem 1rem;">6 inches and deeper</td>
+                  <td style="padding:.65rem 1rem;">Construction · plant a new tree in the same spot</td>
+                  <td style="padding:.65rem 1rem;text-align:right;">3×</td>
                   <td style="padding:.65rem 1rem;text-align:right;font-weight:600;">$36 / inch</td>
-                  <td style="padding:.65rem 1rem;text-align:right;color:var(--text-light,#666);">12" stump → $432</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
+          <p style="font-size:.85rem;color:var(--text-light,#666);margin:0 0 1rem;">
+            <em>Examples:</em>
+            5" stump · basic depth → 5 × $12 = <strong>$60</strong> &middot;&middot;
+            5" stump · 3–6" deep → 5 × $24 = <strong>$120</strong> &middot;&middot;
+            10" stump · 6"+ deep → 10 × $36 = <strong>$360</strong>
+          </p>
+
           <!-- INTERACTIVE STUMP CALCULATOR -->
           <div style="border:2px solid var(--green-dark,#1f4d2c);border-radius:10px;padding:1.2rem 1.3rem;margin:1.2rem 0;background:linear-gradient(180deg,#f7faf7 0%,#fff 100%);">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
-              <strong style="font-size:1.05rem;">Estimate your stump</strong>
-              <span id="stump-tier-label" style="font-size:.78rem;color:var(--text-light,#666);">3–6 inches · 2×</span>
-            </div>
-            <p style="margin:0 0 .8rem;font-size:.85rem;color:var(--text-light,#666);">Measure the widest point of the stump in inches.</p>
+            <strong style="font-size:1.05rem;">Estimate your stump</strong>
+            <p style="margin:.3rem 0 .9rem;font-size:.85rem;color:var(--text-light,#666);">Measure the widest point of the stump, then choose how deep you want it ground.</p>
+
+            <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem;">Stump diameter (widest point)</label>
             <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;">
               <input type="range" id="stump-d" min="1" max="36" step="1" value="6" style="flex:1;min-width:200px;accent-color:var(--green-dark,#1f4d2c);" oninput="updateStump()" />
               <div style="display:flex;align-items:center;gap:.4rem;background:#fff;border:1px solid var(--border,#ddd);border-radius:8px;padding:.35rem .55rem;">
-                <input type="number" id="stump-d-num" min="1" max="120" step="1" value="6" style="width:54px;border:0;outline:0;font-size:1rem;font-weight:600;text-align:right;color:var(--green-dark,#1f4d2c);" oninput="updateStump()" />
+                <input type="number" id="stump-d-num" min="0" max="120" step="1" value="6" placeholder="0" style="width:54px;border:0;outline:0;font-size:1rem;font-weight:600;text-align:right;color:var(--green-dark,#1f4d2c);" oninput="updateStump()" />
                 <span style="font-size:.85rem;color:var(--text-light,#666);">inches</span>
               </div>
             </div>
-            <div style="margin-top:1rem;padding:.9rem 1rem;background:var(--green-dark,#1f4d2c);color:#fff;border-radius:8px;display:flex;justify-content:space-between;align-items:baseline;">
-              <span style="font-size:.85rem;opacity:.9;">Estimate</span>
-              <span style="font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;" id="stump-total">$144</span>
+
+            <label style="display:block;font-size:.85rem;font-weight:600;margin:1rem 0 .4rem;">Grind depth</label>
+            <div style="display:flex;flex-wrap:wrap;gap:.4rem;" id="depth-btns">
+              <button type="button" class="depth-btn active" data-mult="1" onclick="setDepth(1)" style="flex:1;min-width:130px;padding:.55rem .7rem;border-radius:8px;border:2px solid var(--green-dark,#1f4d2c);background:var(--green-dark,#1f4d2c);color:#fff;cursor:pointer;font-size:.82rem;font-weight:600;">Basic · 0–3" deep<br><span style="font-weight:400;font-size:.72rem;opacity:.85;">mow-over</span></button>
+              <button type="button" class="depth-btn" data-mult="2" onclick="setDepth(2)" style="flex:1;min-width:130px;padding:.55rem .7rem;border-radius:8px;border:2px solid var(--border,#ddd);background:#fff;cursor:pointer;font-size:.82rem;">3–6" deep · 2×<br><span style="font-weight:400;font-size:.72rem;color:var(--text-light,#666);">replant lawn/garden</span></button>
+              <button type="button" class="depth-btn" data-mult="3" onclick="setDepth(3)" style="flex:1;min-width:130px;padding:.55rem .7rem;border-radius:8px;border:2px solid var(--border,#ddd);background:#fff;cursor:pointer;font-size:.82rem;">6"+ deep · 3×<br><span style="font-weight:400;font-size:.72rem;color:var(--text-light,#666);">construction</span></button>
+            </div>
+
+            <div id="stump-needs-d" style="display:none;margin-top:1rem;padding:.9rem 1rem;background:#fff8e7;border-left:3px solid #d4a017;border-radius:4px;font-size:.88rem;">
+              Enter the stump diameter above to see your estimate.
+            </div>
+            <div id="stump-result" style="margin-top:1rem;padding:.9rem 1rem;background:var(--green-dark,#1f4d2c);color:#fff;border-radius:8px;display:flex;justify-content:space-between;align-items:baseline;">
+              <span style="font-size:.85rem;opacity:.9;"><span id="stump-formula">6" × $12</span></span>
+              <span style="font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;" id="stump-total">$72</span>
             </div>
             <p style="margin:.7rem 0 0;font-size:.78rem;color:var(--text-light,#666);">Single stump, accessible (truck within 30 ft). Multiple stumps on the same property qualify for volume pricing — call for a real quote.</p>
           </div>
 
-          <h3 style="margin-top:1.6rem;">What can shift the price</h3>
+          <h3 style="margin-top:1.6rem;">What else can shift the price</h3>
           <ul style="margin:.4rem 0 1rem 1.4rem;font-size:.95rem;line-height:1.6;">
             <li><strong>Volume.</strong> Three or more stumps on one property typically run 15–25% less per stump.</li>
             <li><strong>Access.</strong> Stumps requiring fence removal, hand-grinder transport down stairs, or backyard-only access add labor time.</li>
             <li><strong>Hardness.</strong> Old hardwoods (oak, hickory) take longer than softer or partially-decayed wood — usually a minor adjustment.</li>
             <li><strong>Backfill &amp; haul-away.</strong> Chips fill the hole by default. Topsoil backfill or full chip removal is quoted separately.</li>
-            <li><strong>Below-grade depth.</strong> Standard grind is 6–12" below grade. Construction-depth grinding (18"+) is quoted separately.</li>
           </ul>
 
           <p style="margin-top:1.2rem;padding:.8rem 1rem;background:#fff8e7;border-left:3px solid #d4a017;border-radius:4px;font-size:.9rem;">
@@ -226,29 +242,45 @@
           </p>
 
           <script>
-            function updateStump(){
-              var d = parseInt(document.getElementById('stump-d-num').value || document.getElementById('stump-d').value || 0, 10);
-              if (isNaN(d) || d < 0) d = 0;
-              // sync slider + numeric input
-              var slider = document.getElementById('stump-d');
-              if (d <= 36) slider.value = d;
-              document.getElementById('stump-d-num').value = d;
-              // tier multiplier
-              var mult = 1, label = 'base · 1×';
-              if (d > 6)      { mult = 3; label = '6+ inches · 3×'; }
-              else if (d > 3) { mult = 2; label = '3–6 inches · 2×'; }
-              var price = d * 12 * mult;
-              document.getElementById('stump-tier-label').textContent = label;
-              document.getElementById('stump-total').textContent = '$' + price.toLocaleString();
-            }
-            updateStump();
+            (function(){
+              var depthMult = 1;
+              window.setDepth = function(m){
+                depthMult = m;
+                document.querySelectorAll('#depth-btns .depth-btn').forEach(function(b){
+                  var on = Number(b.dataset.mult) === m;
+                  b.classList.toggle('active', on);
+                  b.style.background = on ? 'var(--green-dark,#1f4d2c)' : '#fff';
+                  b.style.color      = on ? '#fff' : '';
+                  b.style.borderColor= on ? 'var(--green-dark,#1f4d2c)' : 'var(--border,#ddd)';
+                  b.style.fontWeight = on ? '600' : '';
+                  b.querySelectorAll('span').forEach(function(s){ s.style.color = on ? 'rgba(255,255,255,.85)' : ''; });
+                });
+                updateStump();
+              };
+              window.updateStump = function(){
+                var rawNum = document.getElementById('stump-d-num').value;
+                var d = parseInt(rawNum, 10);
+                if (isNaN(d) || d < 0) d = 0;
+                var slider = document.getElementById('stump-d');
+                if (d > 0 && d <= 36) slider.value = d;
+                document.getElementById('stump-d-num').value = (rawNum === '' && d === 0) ? '' : d;
+                var rate = 12 * depthMult;
+                var price = d * rate;
+                var depthLabel = depthMult === 1 ? 'basic depth' : depthMult === 2 ? '3–6" deep' : '6"+ deep';
+                document.getElementById('stump-formula').textContent = (d > 0 ? d + '" × $' + rate : 'enter diameter') + ' · ' + depthLabel;
+                document.getElementById('stump-total').textContent = d > 0 ? '$' + price.toLocaleString() : '—';
+                document.getElementById('stump-needs-d').style.display = d > 0 ? 'none' : '';
+                document.getElementById('stump-result').style.display  = d > 0 ? 'flex' : 'none';
+              };
+              updateStump();
+            })();
           </script>
 
           <h2 style="margin-top:2.5rem;">Frequently Asked Questions</h2>
           <div class="faq-list">
             <div class="faq-item">
               <div class="faq-question">How deep does stump grinding go?</div>
-              <div class="faq-answer"><p>We grind stumps 6 to 12 inches below ground level, sufficient for planting grass or garden beds. Deeper grinding is available for construction projects.</p></div>
+              <div class="faq-answer"><p>The basic grind takes the stump to about 3" below grade — enough that it disappears under chips and you can mow over it ($12 per inch of stump diameter). For new lawn or garden beds, 3–6" below grade is recommended ($24/inch). For construction or planting a new tree in the same spot, 6"+ below grade ($36/inch). All three depth options are quoted upfront — see the rate table above.</p></div>
             </div>
             <div class="faq-item">
               <div class="faq-question">What happens to the wood chips?</div>

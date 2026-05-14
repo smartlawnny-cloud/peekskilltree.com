@@ -652,6 +652,14 @@
   document.getElementById("closeIntake").addEventListener("click",()=>modal.classList.remove("show"));
   prevBtn.addEventListener("click",()=>{if(stepIdx>0){stepIdx--;render()}});
   nextBtn.addEventListener("click",()=>{
+    if(stepIdx===4){ // budget step — capture before render advances
+      const b=document.getElementById("budgetInput");
+      if(b&&b.value)intake.budget=Number(b.value);
+    }
+    if(stepIdx===5){ // favorites step
+      intake.favorites=[document.getElementById("fav1"),document.getElementById("fav2"),document.getElementById("fav3")]
+        .map(el=>el?.value?.trim()).filter(Boolean);
+    }
     if(stepIdx<steps.length-1){stepIdx++;render()}
     else finish();
   });
@@ -667,6 +675,10 @@
         const multi=o.parentElement.dataset.multi==="1";
         if(!multi)stepBody.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));
         o.classList.toggle("sel");
+        // persist selections per step into the shared intake object
+        const key=["household_size","diet","time_pref","skill","budget","favorites"][stepIdx];
+        const vals=Array.from(stepBody.querySelectorAll(".opt.sel")).map(x=>x.dataset.v);
+        intake[key]=multi?vals:vals[0];
       });
     });
   }
@@ -675,6 +687,135 @@
     const av=document.getElementById("avatarBtn");
     av.classList.remove("empty");av.textContent="D";
     toast("Profile saved · personalizing");
+    DinnerAPI.saveProfile(intake).catch(()=>{});
+  }
+</script>
+
+<!-- ============================================================== -->
+<!-- SUPABASE WIRING — real backend                                  -->
+<!-- ============================================================== -->
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+  const SB_URL = "https://eeentpgitsniymnctiag.supabase.co";
+  const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlZW50cGdpdHNuaXltbmN0aWFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NjQzMDQsImV4cCI6MjA5NDM0MDMwNH0.tmcLFZ-BGtC2IA6YZfIzEM2txlEhGitO-1sAXcWCRhI";
+  const sb = createClient(SB_URL, SB_ANON, { auth: { persistSession: true, autoRefreshToken: true } });
+
+  // Anonymous auth on first visit — every device gets a household_id.
+  async function ensureSession(){
+    let { data:{ session } } = await sb.auth.getSession();
+    if (session) return session;
+    const { data, error } = await sb.auth.signInAnonymously();
+    if (error) { console.warn("anon auth failed:", error.message); return null; }
+    return data.session;
+  }
+
+  async function loadMarket(){
+    const { data: operators, error } = await sb
+      .from("operators")
+      .select("id,name,kind,blurb,distance_band,badges,open_until,inventory_items(id,name,unit,price,qty_available,emoji)")
+      .eq("active", true)
+      .order("distance_band");
+    if (error || !operators?.length) return;  // fall back to static markup
+
+    const KIND_LOGO = { farm:"🌾", home_cook:"🍝", meal_prep:"🍱" };
+    const root = document.getElementById("screen-market");
+    if (!root) return;
+    const headSection = root.querySelector("h1");
+    // Replace static vendor blocks
+    root.querySelectorAll(".vendor").forEach(v => v.remove());
+    let insertAfter = root.querySelector("p");
+    operators.forEach(op => {
+      const vendor = document.createElement("div");
+      vendor.className = "vendor";
+      const badgesHtml = (op.badges||[]).map(b => `<span class="pill ${b==='organic'?'sage':''}">${b}</span>`).join("");
+      const itemsHtml = (op.inventory_items||[]).map(it =>
+        `<div class="item"><div class="ico">${it.emoji||"·"}</div><div class="ttl">${escapeHtml(it.name)}${it.unit&&it.unit!=='each'?', '+it.unit:''}</div><div class="price">$${Number(it.price).toFixed(2)}</div></div>`
+      ).join("");
+      vendor.innerHTML = `
+        <div class="head">
+          <div class="logo">${KIND_LOGO[op.kind]||"🛒"}</div>
+          <div class="meta">
+            <div class="name">${escapeHtml(op.name)}</div>
+            <div class="dist">${op.distance_band||"?"} mi · ${op.blurb?escapeHtml(op.blurb):""}</div>
+          </div>
+          ${badgesHtml}
+        </div>
+        <div class="items">${itemsHtml}</div>`;
+      insertAfter.after(vendor);
+      insertAfter = vendor;
+    });
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+  // Expose to non-module code
+  window.DinnerAPI = {
+    sb,
+    async saveProfile(intake){
+      const { data:{ user } } = await sb.auth.getUser();
+      if (!user) return;
+      await sb.from("households").upsert({ id: user.id, display_name: "You" });
+      const favs = Array.isArray(intake.favorites) ? intake.favorites : [];
+      await sb.from("profiles").upsert({
+        household_id: user.id,
+        household_size: intake.household_size || null,
+        diet: Array.isArray(intake.diet) ? intake.diet : [],
+        time_pref: intake.time_pref || null,
+        skill: intake.skill || null,
+        monthly_budget: intake.budget || 400,
+        favorites: favs,
+      });
+      for (const f of favs) {
+        await sb.from("favorites").upsert({ household_id: user.id, name: f });
+      }
+    },
+    async logSimulatedScan(){
+      const { data:{ user } } = await sb.auth.getUser();
+      if (!user) return;
+      const detected = [
+        {name:"Eggs",emoji:"🥚",qty:"6 left",confidence:0.96},
+        {name:"Whole milk",emoji:"🥛",qty:"½ gal",confidence:0.92},
+        {name:"Butter",emoji:"🧈",qty:"1 stick",confidence:0.95},
+        {name:"Chicken thighs",emoji:"🍗",qty:"~1.4 lb",confidence:0.88},
+        {name:"Lemons",emoji:"🍋",qty:"2",confidence:0.97},
+        {name:"Garlic",emoji:"🧄",qty:"1 bulb",confidence:0.91},
+        {name:"Yukon potatoes",emoji:"🥔",qty:"5",confidence:0.94},
+        {name:"Spinach",emoji:"🥬",qty:"half-bag · use soon",confidence:0.89},
+      ];
+      const recipes = [
+        {title:"Lemon-garlic chicken & potatoes",match_pct:100,time_min:22,uses:["chicken","potatoes","lemon","garlic"]},
+        {title:"Wilted spinach + egg toast",match_pct:95,time_min:10,uses:["spinach","eggs"],note:"use spinach"},
+        {title:"Crispy smashed potatoes",match_pct:87,time_min:30,uses:["potatoes","butter","garlic"]},
+      ];
+      await sb.from("fridge_scans").insert({ household_id:user.id, detected, recipes });
+    },
+    async scanFridge(imageDataUrl){
+      const { data:{ session } } = await sb.auth.getSession();
+      const r = await fetch(`${SB_URL}/functions/v1/fridge-scan`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          apikey: SB_ANON,
+          authorization: `Bearer ${session?.access_token || SB_ANON}`,
+        },
+        body: JSON.stringify({ image: imageDataUrl }),
+      });
+      return r.json();
+    },
+  };
+
+  // ---- bootstrap ----
+  await ensureSession();
+  loadMarket();
+
+  // After simulated scan completes, write a real row to fridge_scans so the prototype has history.
+  // Wait for the original handler to finish (~1.8s), then log.
+  const scanBtn = document.getElementById("scanBtn");
+  if (scanBtn) {
+    scanBtn.addEventListener("click", () => {
+      setTimeout(() => DinnerAPI.logSimulatedScan().catch(()=>{}), 2200);
+    });
   }
 </script>
 </body>

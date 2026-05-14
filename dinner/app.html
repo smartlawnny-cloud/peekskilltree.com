@@ -311,18 +311,18 @@
     <div class="card">
       <div class="row between">
         <div class="stack">
-          <div style="font-weight:500">Stop &amp; Shop</div>
-          <div class="tiny">Auto-import receipts &amp; loyalty deals</div>
+          <div style="font-weight:500">Save your data</div>
+          <div class="tiny">Link an email so you don't lose this if you clear the browser or switch phones</div>
         </div>
-        <button class="btn small" onclick="toast('Coming soon — Stop &amp; Shop API auth')">Connect</button>
+        <button class="btn small" id="saveDataBtn" onclick="window.upgradeAccount()">Link email</button>
       </div>
       <div class="divider"></div>
       <div class="row between">
         <div class="stack">
-          <div style="font-weight:500">Upload receipt</div>
-          <div class="tiny">Snap any receipt, we'll add items</div>
+          <div style="font-weight:500">Upload a receipt</div>
+          <div class="tiny">Snap any grocery receipt; it counts toward your monthly budget</div>
         </div>
-        <button class="btn small" onclick="toast('Receipt OCR — paste API key in admin')">Upload</button>
+        <button class="btn small" onclick="document.querySelector('[data-go=\'budget\']').click();setTimeout(()=>document.getElementById('addReceiptBtn').click(),200)">Add</button>
       </div>
     </div>
   </section>
@@ -593,6 +593,29 @@
   </div>
 </div>
 
+<!-- RECIPE DETAIL SHEET -->
+<div class="modal-bg" id="recipeSheet">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="recipeName">Recipe</h2>
+        <p id="recipeMeta" style="font-size:12px;margin-top:2px"></p>
+      </div>
+      <button class="close" id="closeRecipe" style="color:var(--text-3);font-size:24px;line-height:1;padding:4px 8px">×</button>
+    </div>
+    <div class="modal-body">
+      <h3 style="margin:14px 0 8px">In your fridge</h3>
+      <div id="recipeHas" style="display:flex;flex-wrap:wrap;gap:6px;line-height:2"></div>
+      <h3 style="margin:18px 0 8px">Missing</h3>
+      <div id="recipeMissing" style="display:flex;flex-wrap:wrap;gap:6px;line-height:2"></div>
+      <div id="recipeSuggestions"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn primary" id="recipeStartBtn">Start cooking</button>
+    </div>
+  </div>
+</div>
+
 <!-- INTAKE MODAL -->
 <div class="modal-bg" id="intakeModal">
   <div class="modal">
@@ -652,21 +675,82 @@
     }
   }
 
+  let _lastScan = { items:[], recipes:[] };
   function renderScanResults(items, recipes, sourceLabel){
+    _lastScan = { items: items||[], recipes: recipes||[] };
     ingrHead.textContent="Detected · "+(items?.length||0)+" items";
     ingrList.innerHTML = (items||[]).map(it=>
       `<div class="ingr"><span>${it.emoji||"·"}</span><span class="name">${escapeHTML(it.name||"")}</span><span class="qty">${escapeHTML(it.qty||"")}</span></div>`
     ).join("");
-    recList.innerHTML = (recipes||[]).map(r=>{
+    recList.innerHTML = (recipes||[]).map((r,idx)=>{
       const thumb = (r.uses?.[0]?.match(/chicken/i)?"🍗":r.uses?.[0]?.match(/spinach|salad/i)?"🥬":r.uses?.[0]?.match(/potato/i)?"🥔":"🍽");
-      return `<div class="recipe"><div class="thumb">${thumb}</div><div class="body"><h4>${escapeHTML(r.title||"")}</h4><p style="font-size:12.5px">${r.time_min?r.time_min+" min · ":""}${escapeHTML((r.uses||[]).join(", "))}</p><div class="match">${r.match_pct?r.match_pct+"% match":""}${r.note?" · "+escapeHTML(r.note):""}</div></div></div>`;
+      return `<div class="recipe" data-recipe-idx="${idx}" style="cursor:pointer"><div class="thumb">${thumb}</div><div class="body"><h4>${escapeHTML(r.title||"")}</h4><p style="font-size:12.5px">${r.time_min?r.time_min+" min · ":""}${escapeHTML((r.uses||[]).join(", "))}</p><div class="match">${r.match_pct?r.match_pct+"% match":""}${r.note?" · "+escapeHTML(r.note):""}</div></div></div>`;
     }).join("<div style=\"height:10px\"></div>");
     [ingrHead,ingrList,recHead,recList].forEach(el=>el.hidden=false);
     scanTitle.textContent="Scan complete";
     scanSub.textContent=sourceLabel||((items?.length||0)+" items detected. "+(recipes?.length||0)+" recipes match.");
     scanRing.textContent="✓";
     scanBtn.textContent="Re-scan";
+    // Tap a recipe to see ingredient match + missing → market suggestions
+    recList.querySelectorAll(".recipe").forEach(r => r.addEventListener("click", () => openRecipeDetail(Number(r.dataset.recipeIdx))));
     toast("Fridge scanned · "+(items?.length||0)+" items");
+  }
+
+  async function openRecipeDetail(idx){
+    const recipe = _lastScan.recipes[idx];
+    if (!recipe) return;
+    const detected = _lastScan.items.map(i => (i.name||"").toLowerCase());
+    const uses = (recipe.uses||[]).map(u => String(u).toLowerCase());
+    // "you have" = any uses term that fuzzy-matches a detected item
+    const has = uses.filter(u => detected.some(d => d.includes(u) || u.includes(d)));
+    const missing = uses.filter(u => !has.includes(u));
+    // Search operator inventory for each missing ingredient (loose ILIKE)
+    let suggestions = [];
+    if (missing.length) {
+      const orFilter = missing.map(m => `name.ilike.%${m.replace(/[%,]/g,"")}%`).join(",");
+      const { data } = await sb.from("inventory_items")
+        .select("id,name,price,emoji,operator_id,operators(name)")
+        .or(orFilter)
+        .gt("qty_available", 0)
+        .limit(8);
+      suggestions = data || [];
+    }
+    showRecipeSheet(recipe, has, missing, suggestions);
+  }
+
+  function showRecipeSheet(recipe, has, missing, suggestions){
+    const sheet = document.getElementById("recipeSheet");
+    if (!sheet) return;
+    document.getElementById("recipeName").textContent = recipe.title || "Recipe";
+    document.getElementById("recipeMeta").textContent = (recipe.time_min ? recipe.time_min+" min" : "") + (recipe.match_pct ? " · "+recipe.match_pct+"% match" : "");
+    document.getElementById("recipeHas").innerHTML = has.length
+      ? has.map(h => `<span class="pill sage">✓ ${escapeHTML(h)}</span>`).join(" ")
+      : "<em>nothing detected matches the recipe</em>";
+    const missEl = document.getElementById("recipeMissing");
+    missEl.innerHTML = missing.length
+      ? missing.map(m => `<span class="pill warn">need ${escapeHTML(m)}</span>`).join(" ")
+      : "<em>You have everything for this.</em>";
+    const sugEl = document.getElementById("recipeSuggestions");
+    if (suggestions.length) {
+      sugEl.innerHTML = `<h3 style="margin:14px 0 8px">From your local market</h3>` + suggestions.map(s =>
+        `<div class="ingr" style="cursor:pointer" data-add="${s.id}" data-name="${escapeHTML(s.name)}" data-price="${s.price}" data-emoji="${s.emoji||"·"}" data-op="${s.operator_id}" data-opname="${escapeHTML(s.operators?.name||"")}">
+          <span>${s.emoji||"·"}</span>
+          <span class="name">${escapeHTML(s.name)}</span>
+          <span class="qty">$${Number(s.price).toFixed(2)} · ${escapeHTML(s.operators?.name||"")}</span>
+        </div>`).join("");
+      sugEl.querySelectorAll("[data-add]").forEach(row => {
+        row.addEventListener("click", () => {
+          const item = { id: row.dataset.add, name: row.dataset.name, price: Number(row.dataset.price), emoji: row.dataset.emoji };
+          const op = { id: row.dataset.op, name: row.dataset.opname };
+          addToCart(item, op);
+        });
+      });
+    } else if (missing.length) {
+      sugEl.innerHTML = `<h3 style="margin:14px 0 8px">From your local market</h3><p style="font-size:13px">Nobody nearby has ${escapeHTML(missing.join(", "))} listed today.</p>`;
+    } else {
+      sugEl.innerHTML = "";
+    }
+    sheet.classList.add("show");
   }
 
   function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -1302,6 +1386,134 @@
   document.querySelector('.nav-item[data-go="budget"]')?.addEventListener("click", () => setTimeout(loadBudget, 50));
   // Initial load
   loadBudget();
+
+  // ============================================================
+  // HOME — live tonight card + quick-list counts
+  // ============================================================
+  async function loadHome(){
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+
+    // Tonight's recipe = top recipe from most recent fridge_scan
+    const { data: scan } = await sb.from("fridge_scans")
+      .select("recipes,created_at,detected")
+      .eq("household_id", user.id)
+      .order("created_at", { ascending:false })
+      .limit(1)
+      .maybeSingle();
+
+    const tonightCard = document.querySelector("#screen-home .tonight");
+    if (tonightCard && scan?.recipes?.length) {
+      const top = scan.recipes[0];
+      const ago = new Date(scan.created_at);
+      const hours = Math.round((Date.now()-ago.getTime())/(1000*60*60));
+      tonightCard.querySelector("h2").textContent = top.title || "Tonight's pick";
+      const sub = tonightCard.querySelector(".sub");
+      if (sub) sub.textContent = (top.note || (top.uses?.length ? "Uses " + top.uses.slice(0,3).join(", ") : "Pulled from your most recent fridge scan.")) + ` · ${hours<1?"just now":hours+"h ago"}`;
+      const meta = tonightCard.querySelector(".meta");
+      if (meta) meta.innerHTML = `<span class="pill sage">✱ ${top.match_pct||100}% match</span>` + (top.time_min ? `<span class="pill">${top.time_min} min</span>` : "");
+    }
+
+    // Quick-list counts
+    const { count: scanCount } = await sb.from("fridge_scans").select("id", { count:"exact", head:true }).eq("household_id", user.id);
+    const { count: favCount } = await sb.from("favorites").select("id", { count:"exact", head:true }).eq("household_id", user.id);
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const { data: monthTx } = await sb.from("transactions").select("total,subtotal").eq("household_id", user.id).gte("created_at", monthStart);
+    const spent = (monthTx||[]).reduce((s,t)=>s+Number(t.total||t.subtotal||0),0);
+    const { data: profile } = await sb.from("profiles").select("monthly_budget").eq("household_id", user.id).maybeSingle();
+    const budget = Number(profile?.monthly_budget) || 400;
+    const left = Math.max(0, budget - spent);
+
+    // Update the four quick tiles
+    const tiles = document.querySelectorAll("#screen-home .quick");
+    if (tiles[0]) tiles[0].querySelector(".v").textContent = scan ? "last: just now" : "first scan";
+    if (tiles[2]) tiles[2].querySelector(".v").textContent = `$${left.toFixed(0)} of $${budget.toFixed(0)} left`;
+    if (tiles[3]) tiles[3].querySelector(".v").textContent = favCount ? `${favCount} saved` : "add some";
+  }
+  // Refresh Home when navigated to + on initial load
+  document.querySelectorAll('[data-go="home"]').forEach(b => b.addEventListener("click", () => setTimeout(loadHome, 50)));
+  loadHome();
+
+  // ============================================================
+  // FAVORITES — live from favorites table
+  // ============================================================
+  async function loadFavorites(){
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data: favs } = await sb.from("favorites").select("*").eq("household_id", user.id).order("created_at");
+    const root = document.getElementById("screen-favs");
+    if (!root) return;
+    // Replace all .fav cards with live data
+    root.querySelectorAll(".fav").forEach(f => f.remove());
+    const insertAfter = root.querySelector("p");
+    if (!favs?.length) {
+      const empty = document.createElement("div");
+      empty.className = "fav";
+      empty.innerHTML = `<div class="thumb">♡</div><div class="mid"><div class="ttl">Nothing saved yet</div><div class="last">Tap the avatar (top-right) and finish onboarding — pick 1–3 meals you love and we'll remember them.</div></div>`;
+      insertAfter.after(empty);
+      return;
+    }
+    const cur = new Date();
+    favs.forEach(f => {
+      const card = document.createElement("div");
+      card.className = "fav";
+      let days = null;
+      if (f.last_cooked_at) {
+        days = Math.floor((cur - new Date(f.last_cooked_at)) / (1000*60*60*24));
+      }
+      const sinceLabel = days === null ? "Saved · never cooked in app yet" : days + " days since you made this";
+      const sinceCls = days !== null && days > 365 ? "since long" : "since";
+      card.innerHTML = `<div class="thumb">${(f.notes||"").startsWith("emoji:") ? f.notes.slice(6) : "♥"}</div>
+        <div class="mid"><div class="ttl">${escapeHtml(f.name)}</div>
+        <div class="${sinceCls}">${sinceLabel}</div>
+        <div class="last">${f.required_ingredients?.length ? "Needs: "+escapeHtml(f.required_ingredients.join(", ")) : "Tap to mark cooked"}</div></div>
+        <div class="act"><button class="btn small" data-fav="${f.id}">Cooked</button></div>`;
+      insertAfter.after(card);
+    });
+    root.querySelectorAll('[data-fav]').forEach(b => {
+      b.addEventListener("click", async () => {
+        const id = b.dataset.fav;
+        b.disabled = true; b.textContent = "✓";
+        await sb.from("favorites").update({ last_cooked_at: new Date().toISOString().slice(0,10) }).eq("id", id);
+        const fav = favs.find(x => x.id === id);
+        await sb.from("recipes_cooked").insert({ household_id: user.id, recipe_name: fav?.name || "favorite", favorite_id: id });
+        toast("Marked cooked");
+        loadFavorites();
+      });
+    });
+  }
+  document.querySelectorAll('[data-go="favs"]').forEach(b => b.addEventListener("click", () => setTimeout(loadFavorites, 50)));
+  loadFavorites();
+
+  // ============================================================
+  // MAGIC-LINK ACCOUNT UPGRADE
+  // Anonymous → email-linked so user keeps their data on new devices.
+  // ============================================================
+  // Recipe sheet close + start-cooking handlers
+  document.getElementById("closeRecipe")?.addEventListener("click", () => document.getElementById("recipeSheet")?.classList.remove("show"));
+  document.getElementById("recipeStartBtn")?.addEventListener("click", async () => {
+    document.getElementById("recipeSheet")?.classList.remove("show");
+    const recipeName = document.getElementById("recipeName")?.textContent;
+    const { data:{ user } } = await sb.auth.getUser();
+    if (user && recipeName) {
+      // Log as cooked + match against favorites by name
+      const { data: fav } = await sb.from("favorites").select("id").eq("household_id", user.id).ilike("name", `%${recipeName.slice(0,20)}%`).maybeSingle();
+      await sb.from("recipes_cooked").insert({ household_id: user.id, recipe_name: recipeName, favorite_id: fav?.id || null });
+      if (fav?.id) await sb.from("favorites").update({ last_cooked_at: new Date().toISOString().slice(0,10) }).eq("id", fav.id);
+    }
+    toast("Logged · enjoy");
+  });
+
+  window.upgradeAccount = async () => {
+    const email = prompt("Save your data to an email — we'll send a one-tap link to confirm. (Free, no password.)");
+    if (!email || !email.includes("@")) return;
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return toast("Sign-in not ready");
+    // Use updateUser to attach the email to the anonymous user
+    const { error } = await sb.auth.updateUser({ email });
+    if (error) return toast("Couldn't link: " + error.message);
+    toast("Check your email — tap the link to confirm");
+  };
 
   // ============================================================
   // RECEIPT OCR — wire the Add receipt button

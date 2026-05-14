@@ -337,15 +337,29 @@ function renderTx(){
     itemCount += (t.items||[]).reduce((s,i)=>s+(i.qty||1), 0);
     const time = new Date(t.created_at).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
     const itemSummary = (t.items||[]).map(i=>`${i.qty||1}× ${i.name}`).join(", ");
-    return `<div class="tx-row">
-      <div style="font-size:22px">${t.status==='picked_up'?'✓':t.status==='paid'?'📦':'⏳'}</div>
+    const done = t.status === "picked_up";
+    return `<div class="tx-row" data-id="${t.id}">
+      <div style="font-size:22px">${done?'✓':t.status==='paid'?'📦':'⏳'}</div>
       <div class="mid">
         <div class="v">${esc(itemSummary)}</div>
         <div class="s">${time} · ${esc(t.status)}${t.pickup_pin?' · PIN '+t.pickup_pin:''}</div>
       </div>
-      <div class="amt">$${Number(t.subtotal||0).toFixed(2)}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="amt">$${Number(t.subtotal||0).toFixed(2)}</div>
+        ${done ? '' : `<button class="btn small primary mark-done" data-id="${t.id}">Mark picked up</button>`}
+      </div>
     </div>`;
   }).join("");
+  list.querySelectorAll(".mark-done").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      btn.disabled = true; btn.textContent = "…";
+      const { error } = await sb.from("transactions").update({ status: "picked_up" }).eq("id", btn.dataset.id);
+      if (error) { toast("Update failed: " + error.message); btn.disabled = false; btn.textContent = "Mark picked up"; return; }
+      toast("Marked picked up");
+      await loadTodayTx();
+    });
+  });
   $("statSold").textContent = itemCount;
   $("statGross").textContent = "$" + gross.toFixed(0);
   $("statPayout").textContent = "$" + (gross * 0.88).toFixed(0);

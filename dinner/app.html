@@ -179,6 +179,50 @@
   .toast{position:fixed;bottom:calc(100px + var(--safe-bot));left:50%;transform:translateX(-50%);background:var(--bg-3);border:1px solid var(--line);padding:11px 18px;border-radius:999px;font-size:13px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:30;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
+  /* market item tap affordance */
+  .vendor .item{cursor:pointer;transition:background .1s}
+  .vendor .item:active{background:var(--bg-3)}
+  .vendor .item .plus{width:26px;height:26px;border-radius:50%;background:var(--sage-3);color:var(--sage);font-weight:600;display:grid;place-items:center;font-size:15px;flex-shrink:0;margin-left:4px}
+  .vendor .item.in-cart .plus{background:var(--sage);color:#15170f}
+  .vendor .item .qty-badge{display:none;min-width:24px;height:24px;border-radius:12px;background:var(--sage);color:#15170f;font-weight:600;font-size:12px;align-items:center;justify-content:center;padding:0 7px;margin-left:4px}
+  .vendor .item.in-cart .qty-badge{display:inline-flex}
+  .vendor .item.in-cart .plus{display:none}
+
+  /* cart icon in topbar */
+  .cart-btn{position:relative;width:36px;height:36px;border-radius:50%;background:var(--bg-3);border:1px solid var(--line);display:grid;place-items:center;color:var(--text)}
+  .cart-btn svg{width:18px;height:18px}
+  .cart-btn .cnt{position:absolute;top:-3px;right:-3px;background:var(--sage);color:#15170f;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 5px}
+  .cart-btn.has .cnt{display:flex}
+  .topbar-right{display:flex;align-items:center;gap:10px}
+
+  /* cart sheet */
+  .cart-sheet-head{padding:18px 20px 4px;display:flex;justify-content:space-between;align-items:flex-start}
+  .cart-sheet-head h2{font-size:22px;letter-spacing:-.02em}
+  .cart-line{display:grid;grid-template-columns:32px 1fr auto auto;gap:10px;padding:14px 20px;border-bottom:1px solid var(--line);align-items:center}
+  .cart-line:last-of-type{border-bottom:0}
+  .cart-line .em{font-size:22px}
+  .cart-line .nm{font-size:14px}
+  .cart-line .meta{font-size:11px;color:var(--text-3);margin-top:2px}
+  .cart-line .stepper{display:flex;align-items:center;gap:0;background:var(--bg-3);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .cart-line .stepper button{padding:6px 11px;font-size:14px;color:var(--text-2);background:transparent;border:0}
+  .cart-line .stepper button:active{background:var(--bg-2)}
+  .cart-line .stepper .v{padding:0 4px;font-size:13px;font-variant-numeric:tabular-nums;min-width:18px;text-align:center}
+  .cart-line .ln{font-size:13px;font-weight:600;color:var(--sage);text-align:right;min-width:55px}
+  .cart-summary{padding:14px 20px;background:var(--bg-2);border-top:1px solid var(--line)}
+  .cart-summary .ln{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--text-2)}
+  .cart-summary .ln.total{font-size:17px;color:var(--text);font-weight:600;padding-top:8px;border-top:1px solid var(--line);margin-top:6px}
+  .empty-cart{padding:60px 20px;text-align:center;color:var(--text-3);font-size:14px}
+  .empty-cart .em{font-size:40px;display:block;margin-bottom:14px;opacity:.6}
+
+  /* order confirmation */
+  .confirm-hero{padding:40px 20px 20px;text-align:center}
+  .confirm-hero .check{width:64px;height:64px;border-radius:50%;background:var(--sage-3);color:var(--sage);display:grid;place-items:center;font-size:30px;margin:0 auto 16px}
+  .confirm-hero h2{font-size:24px;margin-bottom:6px;letter-spacing:-.02em}
+  .pin-box{background:linear-gradient(160deg,var(--sage-3) 0%,var(--bg-2) 100%);border:1px solid var(--line);border-radius:var(--radius);padding:24px;text-align:center;margin:14px 0}
+  .pin-box .lab{font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:.12em}
+  .pin-box .pin{font-size:42px;font-weight:600;letter-spacing:.12em;color:var(--sage);margin-top:8px;font-variant-numeric:tabular-nums}
+  .pin-box .where{margin-top:10px;font-size:13px;color:var(--text-2)}
+
   /* skate locker map */
   .map{height:120px;background:repeating-linear-gradient(45deg,var(--bg-2) 0 12px,var(--bg-3) 12px 24px);border-radius:10px;margin-top:12px;position:relative;overflow:hidden;border:1px solid var(--line)}
   .map .pin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:var(--sage);display:grid;place-items:center;color:#15170f;font-weight:600;box-shadow:0 0 0 8px rgba(154,176,134,.18);animation:pulse 2s infinite}
@@ -195,7 +239,13 @@
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="brand"><span class="dot"></span><span>dinner</span></div>
-    <button class="avatar empty" id="avatarBtn" aria-label="profile">+</button>
+    <div class="topbar-right">
+      <button class="cart-btn" id="cartBtn" aria-label="cart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h2l2.5 11.5a2 2 0 002 1.5h8a2 2 0 002-1.6L21 9H6"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/></svg>
+        <span class="cnt" id="cartCnt">0</span>
+      </button>
+      <button class="avatar empty" id="avatarBtn" aria-label="profile">+</button>
+    </div>
   </div>
 
   <!-- HOME -->
@@ -502,6 +552,50 @@
   </nav>
 </div>
 
+<!-- CART SHEET -->
+<div class="modal-bg" id="cartSheet">
+  <div class="modal">
+    <div class="cart-sheet-head">
+      <div>
+        <h2>Your cart</h2>
+        <p id="cartVendor" style="font-size:12px;margin-top:2px"></p>
+      </div>
+      <button class="close" id="closeCart" style="color:var(--text-3);font-size:24px;line-height:1;padding:4px 8px">×</button>
+    </div>
+    <div class="modal-body" id="cartLines" style="padding:6px 0 0;max-height:50vh"></div>
+    <div class="cart-summary" id="cartSummary"></div>
+    <div class="modal-foot">
+      <button class="btn primary" id="placeOrderBtn">Place pickup order</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER CONFIRMATION SHEET -->
+<div class="modal-bg" id="confirmSheet">
+  <div class="modal">
+    <div class="confirm-hero">
+      <div class="check">✓</div>
+      <h2>Order placed</h2>
+      <p style="font-size:13px;margin-top:4px">Pickup ready in 60–90 min · pay at the locker</p>
+    </div>
+    <div class="modal-body" style="padding-top:0">
+      <div class="pin-box">
+        <div class="lab">Locker PIN</div>
+        <div class="pin" id="confirmPin">— — — —</div>
+        <div class="where" id="confirmWhere">Hudson Skate Plaza · #4</div>
+      </div>
+      <h3 style="margin:18px 0 8px">Order summary</h3>
+      <div id="confirmItems" style="font-size:13px;color:var(--text-2);line-height:1.7"></div>
+      <p style="font-size:11px;color:var(--text-3);text-align:center;margin-top:24px;padding-bottom:6px">
+        We'll text you when it's ready. Keep this PIN — it unlocks bay #4 at pickup time.
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn primary" id="confirmDoneBtn">Done</button>
+    </div>
+  </div>
+</div>
+
 <!-- INTAKE MODAL -->
 <div class="modal-bg" id="intakeModal">
   <div class="modal">
@@ -792,12 +886,20 @@
   // Anonymous auth on first visit — every device gets a household_id.
   async function ensureSession(){
     let { data:{ session } } = await sb.auth.getSession();
-    if (session) return session;
-    const { data, error } = await sb.auth.signInAnonymously();
-    if (error) { console.warn("anon auth failed:", error.message); return null; }
-    return data.session;
+    if (!session) {
+      const { data, error } = await sb.auth.signInAnonymously();
+      if (error) { console.warn("anon auth failed:", error.message); return null; }
+      session = data.session;
+    }
+    // Ensure a public.households row exists so transactions/scans can FK to it.
+    // upsert is idempotent — running on every load is cheap and self-heals if anything got out of sync.
+    if (session?.user) {
+      try { await sb.from("households").upsert({ id: session.user.id }, { onConflict: "id" }); } catch {}
+    }
+    return session;
   }
 
+  let _marketOps = [];  // cached for tap-to-add lookups
   async function loadMarket(){
     const { data: operators, error } = await sb
       .from("operators")
@@ -805,21 +907,28 @@
       .eq("active", true)
       .order("distance_band");
     if (error || !operators?.length) return;  // fall back to static markup
+    _marketOps = operators;
 
     const KIND_LOGO = { farm:"🌾", home_cook:"🍝", meal_prep:"🍱" };
     const root = document.getElementById("screen-market");
     if (!root) return;
-    const headSection = root.querySelector("h1");
     // Replace static vendor blocks
     root.querySelectorAll(".vendor").forEach(v => v.remove());
     let insertAfter = root.querySelector("p");
     operators.forEach(op => {
       const vendor = document.createElement("div");
       vendor.className = "vendor";
-      const badgesHtml = (op.badges||[]).map(b => `<span class="pill ${b==='organic'?'sage':''}">${b}</span>`).join("");
-      const itemsHtml = (op.inventory_items||[]).map(it =>
-        `<div class="item"><div class="ico">${it.emoji||"·"}</div><div class="ttl">${escapeHtml(it.name)}${it.unit&&it.unit!=='each'?', '+it.unit:''}</div><div class="price">$${Number(it.price).toFixed(2)}</div></div>`
-      ).join("");
+      const badgesHtml = (op.badges||[]).map(b => `<span class="pill ${b==='organic'?'sage':''}">${escapeHtml(b)}</span>`).join("");
+      const itemsHtml = (op.inventory_items||[]).map(it => {
+        const out = (it.qty_available||0) === 0;
+        return `<div class="item${out?' out':''}" data-inv-id="${it.id}" data-op-id="${op.id}">
+          <div class="ico">${it.emoji||"·"}</div>
+          <div class="ttl">${escapeHtml(it.name)}${it.unit&&it.unit!=='each'?', '+escapeHtml(it.unit):''}</div>
+          <div class="price">$${Number(it.price).toFixed(2)}</div>
+          <div class="plus">+</div>
+          <div class="qty-badge">0</div>
+        </div>`;
+      }).join("");
       vendor.innerHTML = `
         <div class="head">
           <div class="logo">${KIND_LOGO[op.kind]||"🛒"}</div>
@@ -833,6 +942,19 @@
       insertAfter.after(vendor);
       insertAfter = vendor;
     });
+    // Wire tap-to-add (cart functions are defined below; deferred via timeout to be safe)
+    setTimeout(()=>{
+      document.querySelectorAll("#screen-market .vendor .item[data-inv-id]").forEach(row => {
+        row.addEventListener("click", () => {
+          const invId = row.dataset.invId;
+          const opId = row.dataset.opId;
+          const op = _marketOps.find(o => o.id === opId);
+          const it = op?.inventory_items?.find(x => x.id === invId);
+          if (it && op && window.__addToCart) window.__addToCart(it, op);
+        });
+      });
+      if (window.__refreshMarketCartState) window.__refreshMarketCartState();
+    }, 0);
   }
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -897,10 +1019,162 @@
   await ensureSession();
   loadMarket();
 
-  // Scan persistence is now handled inline:
-  //  - real scans: edge function writes the row on the server side (RLS-scoped via the user JWT)
-  //  - demo scans: the demo button calls DinnerAPI.logSimulatedScan() directly
-  // Nothing to wire here anymore.
+  // Scan persistence is handled inline (edge fn server-side for real scans,
+  // logSimulatedScan() for the demo button).
+
+  // ============================================================
+  // CART + CHECKOUT
+  // ============================================================
+  const CART_KEY = "dinner-cart-v1";
+  let cart = { operator_id: null, operator_name: null, items: {} };  // items: { inventory_id: {name,price,emoji,qty} }
+  try { const s = localStorage.getItem(CART_KEY); if (s) cart = JSON.parse(s); } catch {}
+  function saveCart(){ try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch {} renderCartBadge(); }
+  function cartCount(){ return Object.values(cart.items||{}).reduce((s,it)=>s+(it.qty||0),0); }
+  function cartSubtotal(){ return Object.values(cart.items||{}).reduce((s,it)=>s+(it.qty||0)*Number(it.price||0),0); }
+  function renderCartBadge(){
+    const c = cartCount();
+    document.getElementById("cartCnt").textContent = c;
+    document.getElementById("cartBtn").classList.toggle("has", c > 0);
+  }
+  renderCartBadge();
+
+  function addToCart(item, operator){
+    if (cart.operator_id && cart.operator_id !== operator.id && cartCount() > 0) {
+      const ok = confirm("Your cart has items from " + cart.operator_name + ". Replace with " + operator.name + "?");
+      if (!ok) return;
+      cart = { operator_id: null, operator_name: null, items: {} };
+    }
+    cart.operator_id = operator.id;
+    cart.operator_name = operator.name;
+    const entry = cart.items[item.id] || { name: item.name, price: item.price, emoji: item.emoji||"·", qty: 0 };
+    entry.qty += 1;
+    cart.items[item.id] = entry;
+    saveCart();
+    refreshMarketCartState();
+    toast("Added · " + item.name);
+  }
+  function changeQty(invId, delta){
+    if (!cart.items[invId]) return;
+    cart.items[invId].qty = Math.max(0, cart.items[invId].qty + delta);
+    if (cart.items[invId].qty === 0) delete cart.items[invId];
+    if (!Object.keys(cart.items).length) { cart.operator_id = null; cart.operator_name = null; }
+    saveCart();
+    renderCartLines();
+    refreshMarketCartState();
+  }
+  function refreshMarketCartState(){
+    document.querySelectorAll("#screen-market .vendor .item").forEach(row => {
+      const invId = row.dataset.invId;
+      if (!invId) return;
+      const inCart = cart.items[invId];
+      row.classList.toggle("in-cart", !!inCart);
+      const badge = row.querySelector(".qty-badge");
+      if (badge && inCart) badge.textContent = inCart.qty;
+    });
+  }
+
+  function openCart(){
+    if (!cartCount()) { toast("Cart is empty"); return; }
+    renderCartLines();
+    document.getElementById("cartSheet").classList.add("show");
+  }
+  function closeCart(){ document.getElementById("cartSheet").classList.remove("show"); }
+  function renderCartLines(){
+    const linesEl = document.getElementById("cartLines");
+    const summaryEl = document.getElementById("cartSummary");
+    const vendorEl = document.getElementById("cartVendor");
+    if (!cartCount()) {
+      linesEl.innerHTML = `<div class="empty-cart"><span class="em">🛒</span>Empty. Add items from the Market.</div>`;
+      summaryEl.innerHTML = "";
+      vendorEl.textContent = "";
+      return;
+    }
+    vendorEl.textContent = "Pickup from " + cart.operator_name;
+    linesEl.innerHTML = Object.entries(cart.items).map(([id,it]) => `
+      <div class="cart-line">
+        <div class="em">${it.emoji||"·"}</div>
+        <div>
+          <div class="nm">${escapeHtml(it.name)}</div>
+          <div class="meta">$${Number(it.price).toFixed(2)} each</div>
+        </div>
+        <div class="stepper">
+          <button data-id="${id}" data-d="-1">−</button>
+          <span class="v">${it.qty}</span>
+          <button data-id="${id}" data-d="1">+</button>
+        </div>
+        <div class="ln">$${(it.qty * Number(it.price)).toFixed(2)}</div>
+      </div>`).join("");
+    linesEl.querySelectorAll(".stepper button").forEach(b => {
+      b.addEventListener("click", () => changeQty(b.dataset.id, Number(b.dataset.d)));
+    });
+    const sub = cartSubtotal();
+    const fee = sub * 0.12;  // platform fee — operator-side, shown for transparency
+    summaryEl.innerHTML = `
+      <div class="ln"><span>Subtotal</span><span>$${sub.toFixed(2)}</span></div>
+      <div class="ln"><span>Pickup at locker</span><span>free</span></div>
+      <div class="ln total"><span>Total</span><span>$${sub.toFixed(2)}</span></div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:8px;text-align:center">${cart.operator_name} keeps $${(sub*0.88).toFixed(2)} · dinner platform fee $${fee.toFixed(2)}</div>`;
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+  document.getElementById("cartBtn").addEventListener("click", openCart);
+  document.getElementById("closeCart").addEventListener("click", closeCart);
+
+  async function placeOrder(){
+    if (!cartCount()) return;
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) { toast("Sign-in needed"); return; }
+    const items = Object.entries(cart.items).map(([id,it]) => ({
+      inventory_id: id, name: it.name, qty: it.qty, price: Number(it.price), line_total: +(it.qty * Number(it.price)).toFixed(2)
+    }));
+    const subtotal = +cartSubtotal().toFixed(2);
+    const platform_fee = +(subtotal * 0.12).toFixed(2);
+    const pin = String(Math.floor(1000 + Math.random() * 9000));
+    // Pickup window: now → +90 min
+    const now = new Date();
+    const end = new Date(now.getTime() + 90*60*1000);
+    // Look up the locker (we only have one seeded)
+    const { data: lockers } = await sb.from("lockers").select("id,name").eq("active", true).limit(1);
+    const locker = lockers?.[0];
+    const payload = {
+      household_id: user.id,
+      operator_id: cart.operator_id,
+      items,
+      subtotal,
+      platform_fee,
+      total: subtotal,
+      status: "pending",
+      pickup_locker_id: locker?.id || null,
+      pickup_pin: pin,
+      pickup_window: `[${now.toISOString()},${end.toISOString()})`,
+    };
+    const placeBtn = document.getElementById("placeOrderBtn");
+    placeBtn.disabled = true; placeBtn.textContent = "Placing…";
+    const { data, error } = await sb.from("transactions").insert(payload).select().single();
+    placeBtn.disabled = false; placeBtn.textContent = "Place pickup order";
+    if (error) { toast("Order failed: " + error.message); return; }
+
+    // Show confirmation
+    document.getElementById("confirmPin").textContent = pin.split("").join(" ");
+    document.getElementById("confirmWhere").textContent = locker?.name || "Hudson Skate Plaza · #4";
+    document.getElementById("confirmItems").innerHTML = items.map(i => `${i.qty}× ${escapeHtml(i.name)} <span style="float:right">$${i.line_total.toFixed(2)}</span><br>`).join("") + `<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:8px;font-weight:600;color:var(--text)">Total <span style="float:right;color:var(--sage)">$${subtotal.toFixed(2)}</span></div>`;
+    closeCart();
+    document.getElementById("confirmSheet").classList.add("show");
+
+    // Wipe cart
+    cart = { operator_id: null, operator_name: null, items: {} };
+    saveCart();
+    refreshMarketCartState();
+  }
+  document.getElementById("placeOrderBtn").addEventListener("click", placeOrder);
+  document.getElementById("confirmDoneBtn").addEventListener("click", () => {
+    document.getElementById("confirmSheet").classList.remove("show");
+    go("home");
+  });
+
+  // expose for the loadMarket renderer above
+  window.__addToCart = addToCart;
+  window.__refreshMarketCartState = refreshMarketCartState;
 </script>
 </body>
 </html>

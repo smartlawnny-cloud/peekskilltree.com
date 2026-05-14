@@ -595,6 +595,45 @@
   </div>
 </div>
 
+<!-- PROFILE / SETTINGS SHEET -->
+<div class="modal-bg" id="profileSheet">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>You</h2>
+      <button class="close" id="closeProfile" style="color:var(--text-3);font-size:24px;line-height:1;padding:4px 8px">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="card">
+        <div class="row between">
+          <div class="stack">
+            <div style="font-weight:500" id="profEmail">Anonymous</div>
+            <div class="tiny" id="profEmailSub">Linked email keeps your data when you switch devices</div>
+          </div>
+          <button class="btn small" id="profLinkBtn" onclick="window.upgradeAccount()">Link email</button>
+        </div>
+      </div>
+
+      <h3 style="margin:18px 0 8px">Monthly food budget</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" id="profBudget" inputmode="numeric" placeholder="400" />
+        <button class="btn small primary" id="profSaveBudget">Save</button>
+      </div>
+
+      <h3 style="margin:18px 0 8px">Forgotten favorites</h3>
+      <div id="profFavs" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <input id="profNewFav" placeholder="Add a favorite meal" />
+        <button class="btn small primary" id="profAddFav">Add</button>
+      </div>
+
+      <h3 style="margin:24px 0 8px">Account</h3>
+      <button class="btn ghost" id="profRedoIntake" style="margin-bottom:8px">Redo onboarding</button>
+      <button class="btn ghost" id="profSignOut" style="color:var(--bad)">Sign out + clear this device</button>
+      <p class="tiny" style="margin-top:10px;color:var(--text-3)">Signing out clears your anonymous session. If you linked an email, sign back in with the magic link.</p>
+    </div>
+  </div>
+</div>
+
 <!-- RECIPE DETAIL SHEET -->
 <div class="modal-bg" id="recipeSheet">
   <div class="modal">
@@ -824,11 +863,11 @@
   // --- toast ---
   const toastEl=document.getElementById("toast");
   let toastT;
-  function toast(msg){
+  function toast(msg, ms){
     toastEl.textContent=msg;
     toastEl.classList.add("show");
     clearTimeout(toastT);
-    toastT=setTimeout(()=>toastEl.classList.remove("show"),2400);
+    toastT=setTimeout(()=>toastEl.classList.remove("show"), ms || 2400);
   }
 
   // --- intake modal ---
@@ -911,8 +950,21 @@
   const prevBtn=document.getElementById("prevStep");
   const nextBtn=document.getElementById("nextStep");
 
-  document.getElementById("avatarBtn").addEventListener("click",()=>{
-    stepIdx=0;render();modal.classList.add("show");
+  // Avatar tap: open profile sheet if profile exists, else intake wizard
+  document.getElementById("avatarBtn").addEventListener("click", async ()=>{
+    let hasProfile = false;
+    try {
+      const { data:{ user } } = await sb.auth.getUser();
+      if (user) {
+        const { data: prof } = await sb.from("profiles").select("household_id").eq("household_id", user.id).maybeSingle();
+        hasProfile = !!prof;
+      }
+    } catch {}
+    if (hasProfile) {
+      window.openProfileSheet?.();
+    } else {
+      stepIdx=0;render();modal.classList.add("show");
+    }
   });
   document.getElementById("closeIntake").addEventListener("click",()=>modal.classList.remove("show"));
   prevBtn.addEventListener("click",()=>{if(stepIdx>0){stepIdx--;render()}});
@@ -1585,7 +1637,7 @@
           if (typeof Notification !== "undefined" && Notification.permission === "granted") {
             try { new Notification("Your food is ready", { body: "Head to the locker — PIN " + (payload.new.pickup_pin||""), icon: "/dinner/icon-180.png" }); } catch {}
           }
-          toast("🔔 Your order is ready for pickup");
+          toast("🔔 Your order is ready for pickup", 7000);
         } else if (status === "picked_up") {
           toast("✓ Order marked picked up");
         }
@@ -1632,6 +1684,83 @@
     // Add a tiny pulsing dot on the avatar to hint at install
     a.title = "Tap to install on home screen";
     a.addEventListener("click", () => e.prompt(), { once: true });
+  });
+
+  // ============================================================
+  // PROFILE / SETTINGS SHEET
+  // ============================================================
+  async function openProfileSheet(){
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data: prof } = await sb.from("profiles").select("*").eq("household_id", user.id).maybeSingle();
+    const { data: favs } = await sb.from("favorites").select("*").eq("household_id", user.id).order("created_at");
+
+    document.getElementById("profEmail").textContent = user.email || "Anonymous";
+    document.getElementById("profEmailSub").textContent = user.email
+      ? "Signed in · synced across your devices"
+      : "Tap 'Link email' to keep your data on new devices";
+    document.getElementById("profLinkBtn").style.display = user.email ? "none" : "";
+    document.getElementById("profBudget").value = prof?.monthly_budget || 400;
+
+    const favsEl = document.getElementById("profFavs");
+    favsEl.innerHTML = (favs||[]).length === 0
+      ? `<div class="tiny">None saved yet.</div>`
+      : (favs||[]).map(f => `<div class="row between" style="background:var(--bg-3);padding:8px 12px;border-radius:8px">
+          <div style="font-size:14px">${escapeHtml(f.name)}</div>
+          <button class="btn small danger" data-rmfav="${f.id}" style="background:transparent;color:var(--bad)">remove</button>
+        </div>`).join("");
+    favsEl.querySelectorAll("[data-rmfav]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await sb.from("favorites").delete().eq("id", btn.dataset.rmfav);
+        openProfileSheet();
+        loadFavorites();
+        toast("Removed");
+      });
+    });
+
+    document.getElementById("profileSheet").classList.add("show");
+  }
+  window.openProfileSheet = openProfileSheet;
+
+  document.getElementById("closeProfile").addEventListener("click", () =>
+    document.getElementById("profileSheet").classList.remove("show"));
+
+  document.getElementById("profSaveBudget").addEventListener("click", async () => {
+    const v = Number(document.getElementById("profBudget").value);
+    if (!v || v < 0) return;
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+    await sb.from("profiles").update({ monthly_budget: v }).eq("household_id", user.id);
+    toast("Budget saved");
+    loadBudget();
+    loadHome();
+  });
+
+  document.getElementById("profAddFav").addEventListener("click", async () => {
+    const name = document.getElementById("profNewFav").value.trim();
+    if (!name) return;
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+    await sb.from("favorites").insert({ household_id: user.id, name });
+    document.getElementById("profNewFav").value = "";
+    openProfileSheet();
+    loadFavorites();
+    toast("Favorite added");
+  });
+
+  document.getElementById("profRedoIntake").addEventListener("click", () => {
+    document.getElementById("profileSheet").classList.remove("show");
+    stepIdx = 0;
+    render();
+    modal.classList.add("show");
+  });
+
+  document.getElementById("profSignOut").addEventListener("click", async () => {
+    if (!confirm("Sign out? Your anonymous data on this device will be cleared. (Link an email first if you want to keep it.)")) return;
+    try { localStorage.removeItem("dinner-cart-v1"); } catch {}
+    try { localStorage.removeItem("dinner-pending-checkout"); } catch {}
+    await sb.auth.signOut();
+    location.reload();
   });
 
   window.upgradeAccount = async () => {

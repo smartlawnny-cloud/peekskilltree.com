@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="theme-color" content="#161514" />
+<title>dinner · status</title>
+<style>
+  :root{
+    --bg:#161514;--bg-2:#1f1d1b;--bg-3:#26231f;--line:#2c2926;
+    --text:#f1ece1;--text-2:#a8a297;--text-3:#6e6a62;
+    --sage:#9ab086;--sage-2:#7f9870;--sage-3:#3d4a36;
+    --warn:#c98a5b;--bad:#a85c52;
+    --radius:14px;--radius-sm:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;letter-spacing:.005em}
+  h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0 0 4px}
+  h3{font-size:11px;color:var(--text-2);font-weight:500;text-transform:uppercase;letter-spacing:.1em;margin:24px 0 10px}
+  p{margin:0;color:var(--text-2)}
+  a{color:var(--sage)}
+  .wrap{max-width:720px;margin:0 auto;padding:30px 20px 60px}
+  .brand{font-weight:600;letter-spacing:-.02em;font-size:17px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--sage);box-shadow:0 0 10px var(--sage)}
+  .tag{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.1em;background:var(--bg-3);padding:2px 8px;border-radius:999px;margin-left:6px}
+  .check{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:0;overflow:hidden}
+  .row{display:grid;grid-template-columns:42px 1fr auto;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);align-items:center}
+  .row:last-child{border-bottom:0}
+  .dot-state{width:14px;height:14px;border-radius:50%;background:var(--text-3);align-self:center;margin:0 auto;position:relative}
+  .dot-state.checking{background:var(--text-3);animation:pulse 1.2s infinite}
+  .dot-state.ok{background:var(--sage);box-shadow:0 0 0 5px rgba(154,176,134,.15)}
+  .dot-state.warn{background:var(--warn);box-shadow:0 0 0 5px rgba(201,138,91,.15)}
+  .dot-state.bad{background:var(--bad);box-shadow:0 0 0 5px rgba(168,92,82,.15)}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .name{font-size:14px;font-weight:500}
+  .meta{font-size:11px;color:var(--text-3);margin-top:2px}
+  .status{font-size:12px;text-align:right;text-transform:uppercase;letter-spacing:.06em}
+  .status.ok{color:var(--sage)}
+  .status.warn{color:var(--warn)}
+  .status.bad{color:var(--bad)}
+  details{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin-top:14px}
+  details summary{cursor:pointer;font-size:13px;color:var(--text-2)}
+  details pre{font-size:11px;color:var(--text-3);overflow-x:auto;margin-top:10px;background:var(--bg);padding:10px;border-radius:8px;white-space:pre-wrap}
+  .links{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;font-size:13px}
+  .links a{color:var(--text-2);text-decoration:none;padding:8px 12px;background:var(--bg-2);border:1px solid var(--line);border-radius:999px}
+  .links a:hover{color:var(--sage);border-color:var(--sage-2)}
+  .ready{padding:14px 18px;margin-top:14px;border-radius:var(--radius);font-size:14px;text-align:center}
+  .ready.green{background:var(--sage-3);color:var(--sage)}
+  .ready.amber{background:rgba(201,138,91,.12);color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><span class="dot"></span>dinner<span class="tag">status</span></div>
+  <h1>System checks</h1>
+  <p>Live probe of every dependency. Green = ready. Amber = needs your secret pasted. Red = something is wrong.</p>
+
+  <div id="readyBanner" class="ready amber">Checking…</div>
+
+  <h3>Backend</h3>
+  <div class="check" id="checksBackend"></div>
+
+  <h3>Data integrity</h3>
+  <div class="check" id="checksData"></div>
+
+  <h3>Integrations (need secrets pasted)</h3>
+  <div class="check" id="checksIntegrations"></div>
+
+  <h3>Public surfaces</h3>
+  <div class="check" id="checksPublic"></div>
+
+  <div class="links">
+    <a href="/dinner/">marketing</a>
+    <a href="/dinner/app.html">household app</a>
+    <a href="/dinner/operator.html">operator</a>
+    <a href="/dinner/doug.html">doug admin</a>
+    <a href="/dinner/admin.html">operator brief</a>
+  </div>
+
+  <details>
+    <summary>Paste-these-keys cheatsheet</summary>
+    <pre>
+# OpenAI Vision (unlocks fridge scan + receipt OCR)
+SUPABASE_ACCESS_TOKEN=&lt;your-sbp-PAT-from-supabase.com/account/tokens&gt; \
+  supabase secrets set OPENAI_API_KEY=sk-proj-...  --project-ref eeentpgitsniymnctiag
+
+# Stripe (unlocks real checkout, otherwise app falls back to "pay at pickup")
+SUPABASE_ACCESS_TOKEN=&lt;your-sbp-PAT-from-supabase.com/account/tokens&gt; \
+  supabase secrets set STRIPE_SECRET_KEY=sk_test_...  --project-ref eeentpgitsniymnctiag
+
+# Stripe webhook (optional, hardens against race conditions)
+SUPABASE_ACCESS_TOKEN=&lt;your-sbp-PAT-from-supabase.com/account/tokens&gt; \
+  supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...  --project-ref eeentpgitsniymnctiag
+    </pre>
+  </details>
+</div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SB_URL  = "https://eeentpgitsniymnctiag.supabase.co";
+const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlZW50cGdpdHNuaXltbmN0aWFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NjQzMDQsImV4cCI6MjA5NDM0MDMwNH0.tmcLFZ-BGtC2IA6YZfIzEM2txlEhGitO-1sAXcWCRhI";
+const sb = createClient(SB_URL, SB_ANON);
+
+const checks = {
+  backend: [
+    { id:"supa-rest", name:"Supabase REST", meta:"REST endpoint reachable" },
+    { id:"supa-auth", name:"Anonymous auth",  meta:"can sign up + persist sessions" },
+    { id:"supa-realtime", name:"Realtime",    meta:"websocket can connect (optional)" },
+  ],
+  data: [
+    { id:"data-ops", name:"Operators seeded",  meta:"3 operators expected" },
+    { id:"data-inv", name:"Inventory seeded",  meta:"9 items expected" },
+    { id:"data-lockers", name:"Lockers seeded", meta:"1 locker expected" },
+  ],
+  integrations: [
+    { id:"fn-fridge",  name:"fridge-scan edge fn",  meta:"OpenAI vision · needs OPENAI_API_KEY" },
+    { id:"fn-receipt", name:"receipt-ocr edge fn",  meta:"OpenAI vision · needs OPENAI_API_KEY" },
+    { id:"fn-checkout",name:"create-checkout edge fn", meta:"Stripe · needs STRIPE_SECRET_KEY" },
+    { id:"fn-finalize",name:"finalize-order edge fn", meta:"Stripe + service role" },
+    { id:"fn-webhook", name:"stripe-webhook edge fn", meta:"Stripe webhook · optional STRIPE_WEBHOOK_SECRET" },
+  ],
+  public: [
+    { id:"pub-index", name:"peekskilltree.com/dinner/", meta:"marketing site" },
+    { id:"pub-app",   name:"app.html",      meta:"household app" },
+    { id:"pub-op",    name:"operator.html", meta:"operator dashboard" },
+    { id:"pub-doug",  name:"doug.html",     meta:"admin gate" },
+    { id:"pub-manifest",name:"manifest.webmanifest", meta:"PWA install" },
+  ],
+};
+
+function render(){
+  const sets = { backend:"checksBackend", data:"checksData", integrations:"checksIntegrations", public:"checksPublic" };
+  Object.entries(sets).forEach(([key, elId]) => {
+    document.getElementById(elId).innerHTML = checks[key].map(c =>
+      `<div class="row" data-id="${c.id}">
+        <div class="dot-state checking"></div>
+        <div><div class="name">${c.name}</div><div class="meta">${c.meta}</div></div>
+        <div class="status">checking…</div>
+      </div>`
+    ).join("");
+  });
+}
+render();
+
+function setState(id, state, msg){
+  const row = document.querySelector(`.row[data-id="${id}"]`);
+  if (!row) return;
+  const dot = row.querySelector(".dot-state");
+  const st = row.querySelector(".status");
+  dot.className = "dot-state " + state;
+  st.className = "status " + state;
+  st.textContent = msg;
+}
+
+const counters = { ok:0, warn:0, bad:0, total:0 };
+function tally(state){ counters[state] = (counters[state]||0) + 1; counters.total++; updateBanner(); }
+function updateBanner(){
+  const total = Object.values(checks).flat().length;
+  const b = document.getElementById("readyBanner");
+  if (counters.bad > 0) {
+    b.className = "ready amber";
+    b.textContent = `${counters.bad} red · ${counters.warn} amber · ${counters.ok} green of ${total}`;
+  } else if (counters.warn > 0) {
+    b.className = "ready amber";
+    b.textContent = `${counters.warn} integration${counters.warn>1?"s":""} need${counters.warn===1?"s":""} a key pasted · everything else green`;
+  } else if (counters.ok === total) {
+    b.className = "ready green";
+    b.textContent = `All ${total} checks green — ready for users`;
+  }
+}
+
+async function probe(){
+  // Backend
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/operators?select=count`, { headers: { apikey: SB_ANON, prefer:"count=exact" } });
+    if (r.ok) { setState("supa-rest","ok","reachable"); tally("ok"); }
+    else { setState("supa-rest","bad","HTTP "+r.status); tally("bad"); }
+  } catch (e) { setState("supa-rest","bad","unreachable"); tally("bad"); }
+
+  try {
+    const r = await sb.auth.signInAnonymously();
+    if (r.error) { setState("supa-auth","bad", r.error.message); tally("bad"); }
+    else { setState("supa-auth","ok","signed in"); tally("ok"); }
+  } catch { setState("supa-auth","bad","exception"); tally("bad"); }
+
+  try {
+    const channel = sb.channel("status-probe");
+    let opened = false;
+    const t = setTimeout(()=>{ if (!opened) { setState("supa-realtime","warn","no websocket"); tally("warn"); channel.unsubscribe(); } }, 2500);
+    channel.subscribe(s => { if (s === "SUBSCRIBED") { opened = true; clearTimeout(t); setState("supa-realtime","ok","subscribed"); tally("ok"); channel.unsubscribe(); } });
+  } catch { setState("supa-realtime","warn","exception"); tally("warn"); }
+
+  // Data integrity
+  const dataChecks = [
+    { id:"data-ops", table:"operators", expected: 3 },
+    { id:"data-inv", table:"inventory_items", expected: 9 },
+    { id:"data-lockers", table:"lockers", expected: 1 },
+  ];
+  for (const d of dataChecks) {
+    try {
+      const { count, error } = await sb.from(d.table).select("id", { count:"exact", head:true });
+      if (error) { setState(d.id,"bad",error.message); tally("bad"); }
+      else if (count >= d.expected) { setState(d.id,"ok", count+" rows"); tally("ok"); }
+      else { setState(d.id,"warn", `${count}/${d.expected} rows`); tally("warn"); }
+    } catch { setState(d.id,"bad","exception"); tally("bad"); }
+  }
+
+  // Edge functions — probe each by sending an empty or known-bad payload
+  // and inspecting the error code to differentiate "key missing" from "function down"
+  async function probeFn(id, fn, body, expectKeyName){
+    try {
+      const r = await fetch(`${SB_URL}/functions/v1/${fn}`, {
+        method: "POST",
+        headers: { "content-type":"application/json", apikey: SB_ANON, authorization:`Bearer ${SB_ANON}` },
+        body: JSON.stringify(body),
+      });
+      const data = await r.json();
+      if (r.ok && !data.error) { setState(id,"ok","responding"); tally("ok"); return; }
+      if (data?.error?.includes(expectKeyName)) { setState(id,"warn","needs "+expectKeyName); tally("warn"); return; }
+      if (data?.error === "missing image" || data?.error === "missing session_id" || data?.error === "no items") {
+        setState(id,"ok","fn deployed · awaiting real request"); tally("ok"); return;
+      }
+      setState(id,"warn", String(data?.error||"unknown").slice(0,40)); tally("warn");
+    } catch { setState(id,"bad","unreachable"); tally("bad"); }
+  }
+  await probeFn("fn-fridge",   "fridge-scan",     { image:"" },       "OPENAI_API_KEY");
+  await probeFn("fn-receipt",  "receipt-ocr",     { image:"" },       "OPENAI_API_KEY");
+  await probeFn("fn-checkout", "create-checkout", { items:[] },       "STRIPE_SECRET_KEY");
+  await probeFn("fn-finalize", "finalize-order",  { session_id:"" },  "STRIPE_SECRET_KEY");
+  // stripe-webhook can't be probed without a signed Stripe payload — just check it exists
+  try {
+    const r = await fetch(`${SB_URL}/functions/v1/stripe-webhook`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_ANON }, body:"{}" });
+    if (r.status === 400 || r.status === 200) { setState("fn-webhook","ok","fn deployed"); tally("ok"); }
+    else { setState("fn-webhook","warn","HTTP "+r.status); tally("warn"); }
+  } catch { setState("fn-webhook","bad","unreachable"); tally("bad"); }
+
+  // Public surfaces
+  const pubs = [
+    { id:"pub-index",    url:"/dinner/" },
+    { id:"pub-app",      url:"/dinner/app.html" },
+    { id:"pub-op",       url:"/dinner/operator.html" },
+    { id:"pub-doug",     url:"/dinner/doug.html" },
+    { id:"pub-manifest", url:"/dinner/manifest.webmanifest" },
+  ];
+  for (const p of pubs) {
+    try {
+      const r = await fetch(p.url, { method:"HEAD" });
+      if (r.ok) { setState(p.id,"ok","HTTP 200"); tally("ok"); }
+      else { setState(p.id,"bad","HTTP "+r.status); tally("bad"); }
+    } catch { setState(p.id,"bad","unreachable"); tally("bad"); }
+  }
+}
+probe();
+</script>
+</body>
+</html>

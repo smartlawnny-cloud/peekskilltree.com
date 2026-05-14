@@ -1504,6 +1504,20 @@
     toast("Logged · enjoy");
   });
 
+  // Register service worker for offline + Add-to-Home-Screen install
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/dinner/sw.js", { scope: "/dinner/" }).catch(()=>{});
+  }
+  // Capture install prompt and show subtle hint
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    const a = document.getElementById("avatarBtn");
+    if (!a) return;
+    // Add a tiny pulsing dot on the avatar to hint at install
+    a.title = "Tap to install on home screen";
+    a.addEventListener("click", () => e.prompt(), { once: true });
+  });
+
   window.upgradeAccount = async () => {
     const email = prompt("Save your data to an email — we'll send a one-tap link to confirm. (Free, no password.)");
     if (!email || !email.includes("@")) return;

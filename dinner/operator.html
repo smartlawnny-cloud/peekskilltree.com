@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#161514" />
+<title>dinner · operator</title>
+<style>
+  :root{
+    --bg:#161514;--bg-2:#1f1d1b;--bg-3:#26231f;--line:#2c2926;
+    --text:#f1ece1;--text-2:#a8a297;--text-3:#6e6a62;
+    --sage:#9ab086;--sage-2:#7f9870;--sage-3:#3d4a36;
+    --warn:#c98a5b;--bad:#a85c52;
+    --radius:14px;--radius-sm:10px;
+    --safe-bot:env(safe-area-inset-bottom,0px);--safe-top:env(safe-area-inset-top,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;letter-spacing:.005em}
+  body{padding-top:var(--safe-top);min-height:100vh;min-height:100dvh}
+  h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em}
+  h1{font-size:26px;letter-spacing:-.02em}
+  h2{font-size:18px}
+  h3{font-size:11px;color:var(--text-2);font-weight:500;text-transform:uppercase;letter-spacing:.1em}
+  p{margin:0;color:var(--text-2)}
+  button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+  input,select{font:inherit;color:inherit;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 13px;width:100%;outline:none}
+  input:focus,select:focus{border-color:var(--sage-2)}
+  .wrap{max-width:520px;margin:0 auto;padding:0 18px 60px}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 4px;max-width:520px;margin:0 auto;padding-top:calc(var(--safe-top) + 18px)}
+  .brand{font-weight:600;letter-spacing:-.02em;font-size:17px;display:flex;align-items:center;gap:8px}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--sage);box-shadow:0 0 10px var(--sage)}
+  .brand .tag{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.1em;margin-left:6px;background:var(--bg-3);padding:3px 8px;border-radius:999px}
+  .top .logout{font-size:13px;color:var(--text-3)}
+  .card{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .card+.card{margin-top:14px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;border-radius:var(--radius-sm);background:var(--bg-3);border:1px solid var(--line);font-weight:500;color:var(--text);width:100%;transition:transform .08s}
+  .btn:active{transform:scale(.985)}
+  .btn.primary{background:var(--sage);color:#15170f;border-color:transparent}
+  .btn.ghost{background:transparent}
+  .btn.small{padding:8px 12px;font-size:13px;width:auto}
+  .btn.danger{color:var(--bad);background:transparent}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;background:var(--bg-3);border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--text-2)}
+  .pill.sage{background:var(--sage-3);border-color:transparent;color:var(--sage)}
+  .pill.warn{color:var(--warn)}
+
+  /* login */
+  .login{padding:40px 0 20px;text-align:center}
+  .login h1{font-size:32px;margin-bottom:8px}
+  .login p{font-size:15px;margin-bottom:24px}
+  .login form{display:flex;flex-direction:column;gap:10px}
+  .login .small{font-size:12px;color:var(--text-3);margin-top:16px;line-height:1.5}
+
+  /* item row */
+  .item{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:0}
+  .item .emoji{font-size:22px}
+  .item .name{font-size:14px;font-weight:500}
+  .item .meta{font-size:12px;color:var(--text-3);margin-top:2px}
+  .item .price{font-size:14px;font-weight:600;color:var(--sage);text-align:right}
+  .item .qty{font-size:11px;color:var(--text-3);text-align:right;margin-top:2px}
+  .item.out{opacity:.55}
+
+  /* inline edit */
+  .edit-row{display:grid;grid-template-columns:48px 2fr 1fr 1fr;gap:8px;padding:10px 14px;align-items:center;border-bottom:1px solid var(--line)}
+  .edit-row input{padding:8px 10px;font-size:13px}
+  .edit-row .em-in{text-align:center}
+  .edit-row .actions{grid-column:1/-1;display:flex;gap:6px;padding-top:6px}
+  .edit-row .actions .btn{flex:1}
+
+  .add-bar{display:grid;grid-template-columns:48px 2fr 1fr 1fr;gap:6px;padding:10px 14px;border-top:1px solid var(--line);background:var(--bg-3)}
+  .add-bar input{padding:8px 10px;font-size:13px}
+  .add-bar .save{grid-column:1/-1;margin-top:4px}
+
+  /* status banner */
+  .banner{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px;background:var(--bg-3);border:1px solid var(--line)}
+  .banner.ok{background:var(--sage-3);border-color:transparent;color:var(--sage)}
+  .banner.err{color:var(--bad)}
+
+  /* toast */
+  .toast{position:fixed;bottom:calc(20px + var(--safe-bot));left:50%;transform:translateX(-50%);background:var(--bg-3);border:1px solid var(--line);padding:10px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+  .tx-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .tx-row:last-child{border-bottom:0}
+  .tx-row .mid{flex:1;min-width:0}
+  .tx-row .mid .v{font-size:14px}
+  .tx-row .mid .s{font-size:11px;color:var(--text-3);margin-top:2px}
+  .tx-row .amt{font-weight:600;font-size:14px;color:var(--sage)}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+  .stat{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+  .stat .v{font-size:22px;font-weight:600;letter-spacing:-.02em;color:var(--sage);line-height:1}
+  .stat .l{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+
+  .empty{text-align:center;padding:30px 14px;color:var(--text-3);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand"><span class="dot"></span>dinner<span class="tag">operator</span></div>
+  <button class="logout" id="logoutBtn" style="display:none">Sign out</button>
+</div>
+
+<div class="wrap" id="app">
+  <!-- LOGIN -->
+  <div id="loginView" class="login">
+    <h1>Operator sign-in</h1>
+    <p>Enter the email tied to your operator account. We'll text you a magic link.</p>
+    <form id="loginForm">
+      <input type="email" id="loginEmail" placeholder="you@yourfarm.com" autocomplete="email" required />
+      <button class="btn primary" type="submit" id="loginSubmit">Send magic link</button>
+    </form>
+    <div class="small">
+      New here? Reply to Doug's intro email or hit <a href="mailto:Doug@2ntr.com" style="color:var(--sage)">Doug@2ntr.com</a> — we'll get you set up.
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashView" style="display:none">
+    <h1 id="opName" style="margin:14px 0 4px">—</h1>
+    <p id="opBlurb" style="margin-bottom:14px">—</p>
+
+    <div class="stats">
+      <div class="stat"><div class="v" id="statSold">0</div><div class="l">Items sold today</div></div>
+      <div class="stat"><div class="v" id="statGross">$0</div><div class="l">Gross today</div></div>
+      <div class="stat"><div class="v" id="statPayout">$0</div><div class="l">Your share (88%)</div></div>
+    </div>
+
+    <h3 style="margin:16px 0 8px">Today's inventory</h3>
+    <p style="font-size:12px;margin-bottom:10px">Tap a row to edit. Set qty to 0 to mark sold out.</p>
+    <div class="card" style="padding:0" id="invList"></div>
+
+    <h3 style="margin:24px 0 8px">Add item</h3>
+    <div class="card" style="padding:0">
+      <div class="add-bar">
+        <input id="newEm" placeholder="🥚" maxlength="2" class="em-in" />
+        <input id="newName" placeholder="Item name" />
+        <input id="newPrice" type="number" step="0.01" placeholder="0.00" inputmode="decimal" />
+        <input id="newQty" type="number" placeholder="qty" inputmode="numeric" />
+        <button class="btn primary save" id="addBtn">Add to today</button>
+      </div>
+    </div>
+
+    <h3 style="margin:24px 0 8px">Pickups today</h3>
+    <div class="card" style="padding:0" id="txList"><div class="empty">No orders yet today.</div></div>
+
+    <p style="text-align:center;font-size:11px;color:var(--text-3);margin-top:30px">
+      Payouts weekly via ACH · You keep 88% · 12% platform fee
+    </p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SB_URL  = "https://eeentpgitsniymnctiag.supabase.co";
+const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlZW50cGdpdHNuaXltbmN0aWFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NjQzMDQsImV4cCI6MjA5NDM0MDMwNH0.tmcLFZ-BGtC2IA6YZfIzEM2txlEhGitO-1sAXcWCRhI";
+const sb = createClient(SB_URL, SB_ANON);
+
+const $ = (id) => document.getElementById(id);
+const toast = (m) => { const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2200); };
+const esc = (s) => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+let operator = null;   // current operator row
+let inv = [];          // current inventory_items
+let txs = [];          // today's transactions
+
+// ---------- AUTH ----------
+async function checkAuth(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { showLogin(); return; }
+  const { data: opu, error } = await sb
+    .from("operator_users")
+    .select("operator_id, role, operators(*)")
+    .eq("user_id", session.user.id)
+    .maybeSingle();
+  if (error || !opu) {
+    showLogin();
+    toast("Not linked to an operator yet — reply to Doug's email");
+    setTimeout(()=>sb.auth.signOut(), 1200);
+    return;
+  }
+  operator = opu.operators;
+  showDash();
+  await Promise.all([loadInventory(), loadTodayTx()]);
+}
+
+function showLogin(){ $("loginView").style.display=""; $("dashView").style.display="none"; $("logoutBtn").style.display="none"; }
+function showDash(){
+  $("loginView").style.display="none";
+  $("dashView").style.display="";
+  $("logoutBtn").style.display="";
+  $("opName").textContent = operator.name;
+  $("opBlurb").textContent = operator.blurb || "";
+}
+
+$("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = $("loginEmail").value.trim();
+  if (!email) return;
+  $("loginSubmit").disabled = true;
+  $("loginSubmit").textContent = "Sending…";
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin + "/dinner/operator.html" }
+  });
+  $("loginSubmit").disabled = false;
+  $("loginSubmit").textContent = "Send magic link";
+  if (error) { toast("Failed: " + error.message); return; }
+  $("loginView").innerHTML = `
+    <h1>Check your email</h1>
+    <p>We sent a sign-in link to <strong style="color:var(--sage)">${esc(email)}</strong>. Open it on this device.</p>
+    <p class="small" style="margin-top:24px">Didn't get it? Check spam. The link expires in an hour.</p>`;
+});
+
+$("logoutBtn").addEventListener("click", async () => {
+  await sb.auth.signOut();
+  location.reload();
+});
+
+// ---------- INVENTORY ----------
+async function loadInventory(){
+  const { data, error } = await sb
+    .from("inventory_items")
+    .select("*")
+    .eq("operator_id", operator.id)
+    .order("created_at");
+  if (error) { toast("Load failed"); return; }
+  inv = data || [];
+  renderInv();
+}
+
+function renderInv(){
+  const list = $("invList");
+  if (!inv.length) { list.innerHTML = `<div class="empty">No items yet — add one below.</div>`; return; }
+  list.innerHTML = inv.map(it => {
+    const out = (it.qty_available||0) === 0;
+    return `<div class="item ${out?'out':''}" data-id="${it.id}">
+      <div class="emoji">${esc(it.emoji||"·")}</div>
+      <div>
+        <div class="name">${esc(it.name)}</div>
+        <div class="meta">$${Number(it.price).toFixed(2)} · ${it.unit||"each"}${out?' · <span style="color:var(--warn)">sold out</span>':''}</div>
+      </div>
+      <div>
+        <div class="price">$${Number(it.price).toFixed(2)}</div>
+        <div class="qty">${it.qty_available||0} left</div>
+      </div>
+    </div>`;
+  }).join("");
+  list.querySelectorAll(".item").forEach(row => {
+    row.addEventListener("click", () => openEdit(row.dataset.id));
+  });
+}
+
+function openEdit(id){
+  const it = inv.find(x => x.id === id);
+  if (!it) return;
+  const list = $("invList");
+  const rows = list.querySelectorAll(".item");
+  rows.forEach(r => {
+    if (r.dataset.id === id) {
+      r.outerHTML = `<div class="edit-row" data-id="${id}">
+        <input class="em-in" value="${esc(it.emoji||"")}" maxlength="2" />
+        <input class="e-name" value="${esc(it.name)}" />
+        <input class="e-price" type="number" step="0.01" value="${Number(it.price).toFixed(2)}" inputmode="decimal" />
+        <input class="e-qty" type="number" value="${it.qty_available||0}" inputmode="numeric" />
+        <div class="actions">
+          <button class="btn small danger" data-act="del">Delete</button>
+          <button class="btn small" data-act="cancel">Cancel</button>
+          <button class="btn small primary" data-act="save">Save</button>
+        </div>
+      </div>`;
+    }
+  });
+  const editRow = list.querySelector(`.edit-row[data-id="${id}"]`);
+  editRow.querySelector('[data-act="cancel"]').addEventListener("click", renderInv);
+  editRow.querySelector('[data-act="save"]').addEventListener("click", async () => {
+    const patch = {
+      emoji: editRow.querySelector(".em-in").value,
+      name: editRow.querySelector(".e-name").value.trim(),
+      price: Number(editRow.querySelector(".e-price").value),
+      qty_available: Number(editRow.querySelector(".e-qty").value),
+    };
+    const { error } = await sb.from("inventory_items").update(patch).eq("id", id);
+    if (error) { toast("Save failed: " + error.message); return; }
+    toast("Saved");
+    await loadInventory();
+  });
+  editRow.querySelector('[data-act="del"]').addEventListener("click", async () => {
+    if (!confirm("Delete this item?")) return;
+    const { error } = await sb.from("inventory_items").delete().eq("id", id);
+    if (error) { toast("Delete failed"); return; }
+    toast("Deleted");
+    await loadInventory();
+  });
+}
+
+$("addBtn").addEventListener("click", async () => {
+  const name = $("newName").value.trim();
+  const price = Number($("newPrice").value);
+  const qty = Number($("newQty").value || 0);
+  const emoji = $("newEm").value.trim() || "·";
+  if (!name || !price) { toast("Need name + price"); return; }
+  const { error } = await sb.from("inventory_items").insert({
+    operator_id: operator.id, name, price, qty_available: qty, emoji, unit: "each",
+  });
+  if (error) { toast("Add failed: " + error.message); return; }
+  $("newName").value=""; $("newPrice").value=""; $("newQty").value=""; $("newEm").value="";
+  toast("Added");
+  await loadInventory();
+});
+
+// ---------- TRANSACTIONS ----------
+async function loadTodayTx(){
+  const start = new Date();
+  start.setHours(0,0,0,0);
+  const { data, error } = await sb
+    .from("transactions")
+    .select("*")
+    .eq("operator_id", operator.id)
+    .gte("created_at", start.toISOString())
+    .order("created_at", { ascending: false });
+  if (error) return;
+  txs = data || [];
+  renderTx();
+}
+
+function renderTx(){
+  const list = $("txList");
+  if (!txs.length) { list.innerHTML = `<div class="empty">No orders yet today.</div>`; return; }
+  let gross = 0, itemCount = 0;
+  list.innerHTML = txs.map(t => {
+    gross += Number(t.subtotal||0);
+    itemCount += (t.items||[]).reduce((s,i)=>s+(i.qty||1), 0);
+    const time = new Date(t.created_at).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+    const itemSummary = (t.items||[]).map(i=>`${i.qty||1}× ${i.name}`).join(", ");
+    return `<div class="tx-row">
+      <div style="font-size:22px">${t.status==='picked_up'?'✓':t.status==='paid'?'📦':'⏳'}</div>
+      <div class="mid">
+        <div class="v">${esc(itemSummary)}</div>
+        <div class="s">${time} · ${esc(t.status)}${t.pickup_pin?' · PIN '+t.pickup_pin:''}</div>
+      </div>
+      <div class="amt">$${Number(t.subtotal||0).toFixed(2)}</div>
+    </div>`;
+  }).join("");
+  $("statSold").textContent = itemCount;
+  $("statGross").textContent = "$" + gross.toFixed(0);
+  $("statPayout").textContent = "$" + (gross * 0.88).toFixed(0);
+}
+
+// ---------- bootstrap ----------
+checkAuth();
+sb.auth.onAuthStateChange(() => checkAuth());
+</script>
+</body>
+</html>

@@ -1474,15 +1474,32 @@
       .maybeSingle();
 
     const tonightCard = document.querySelector("#screen-home .tonight");
-    if (tonightCard && scan?.recipes?.length) {
-      const top = scan.recipes[0];
-      const ago = new Date(scan.created_at);
-      const hours = Math.round((Date.now()-ago.getTime())/(1000*60*60));
-      tonightCard.querySelector("h2").textContent = top.title || "Tonight's pick";
-      const sub = tonightCard.querySelector(".sub");
-      if (sub) sub.textContent = (top.note || (top.uses?.length ? "Uses " + top.uses.slice(0,3).join(", ") : "Pulled from your most recent fridge scan.")) + ` · ${hours<1?"just now":hours+"h ago"}`;
-      const meta = tonightCard.querySelector(".meta");
-      if (meta) meta.innerHTML = `<span class="pill sage">✱ ${top.match_pct||100}% match</span>` + (top.time_min ? `<span class="pill">${top.time_min} min</span>` : "");
+    if (tonightCard) {
+      if (scan?.recipes?.length) {
+        const top = scan.recipes[0];
+        const ago = new Date(scan.created_at);
+        const hours = Math.round((Date.now()-ago.getTime())/(1000*60*60));
+        tonightCard.querySelector("h2").textContent = top.title || "Tonight's pick";
+        const sub = tonightCard.querySelector(".sub");
+        if (sub) sub.textContent = (top.note || (top.uses?.length ? "Uses " + top.uses.slice(0,3).join(", ") : "Pulled from your most recent fridge scan.")) + ` · ${hours<1?"just now":hours+"h ago"}`;
+        const meta = tonightCard.querySelector(".meta");
+        if (meta) meta.innerHTML = `<span class="pill sage">✱ ${top.match_pct||100}% match</span>` + (top.time_min ? `<span class="pill">${top.time_min} min</span>` : "");
+        const actions = tonightCard.querySelector(".actions");
+        if (actions) actions.innerHTML = `<button class="btn primary" data-go="fridge">Start cooking</button><button class="btn ghost" data-go="market">Skip — order in</button>`;
+      } else {
+        // First-time: no scans yet. CTA card.
+        tonightCard.querySelector("h2").textContent = "Tell us what's in your fridge.";
+        const sub = tonightCard.querySelector(".sub");
+        if (sub) sub.textContent = "Scan once and we'll suggest meals you can make right now from what you already have. Or browse the market for tonight's pickups.";
+        const meta = tonightCard.querySelector(".meta");
+        if (meta) meta.innerHTML = `<span class="pill sage">✱ first scan</span>`;
+        const actions = tonightCard.querySelector(".actions");
+        if (actions) actions.innerHTML = `<button class="btn primary" data-go="fridge">Scan your fridge</button><button class="btn ghost" data-go="market">Browse market</button>`;
+      }
+      // Rewire data-go handlers (we just replaced innerHTML)
+      tonightCard.querySelectorAll("[data-go]").forEach(b => {
+        b.addEventListener("click", () => go(b.dataset.go));
+      });
     }
 
     // Quick-list counts

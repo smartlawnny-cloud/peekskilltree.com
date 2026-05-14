@@ -244,6 +244,14 @@
   .map .pin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:var(--sage);display:grid;place-items:center;color:#15170f;font-weight:600;box-shadow:0 0 0 8px rgba(154,176,134,.18);animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 8px rgba(154,176,134,.18)}50%{box-shadow:0 0 0 14px rgba(154,176,134,.08)}}
 
+  /* ready order sticky banner */
+  .ready-banner{position:fixed;left:0;right:0;bottom:calc(80px + var(--safe-bot));z-index:9;display:none;justify-content:center;pointer-events:none}
+  .ready-banner.show{display:flex}
+  .ready-banner .inner{pointer-events:auto;max-width:460px;width:calc(100% - 28px);margin:0 14px;padding:12px 16px;border-radius:14px;background:linear-gradient(160deg,#9ab086 0%,#7f9870 100%);color:#15170f;font-weight:600;font-size:14px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(154,176,134,.4);animation:slidein 0.4s cubic-bezier(.2,.7,.2,1)}
+  .ready-banner .inner .pin{background:rgba(21,23,15,.18);padding:5px 11px;border-radius:8px;font-family:"SF Mono",monospace;letter-spacing:2px;font-size:13px}
+  .ready-banner .inner .ch{font-size:20px}
+  @keyframes slidein{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+
   /* fridge scanning anim */
   .scanning .ring{animation:spin 1.4s linear infinite;border-color:var(--sage)}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -671,6 +679,15 @@
       <button class="btn primary" id="nextStep">Continue</button>
     </div>
   </div>
+</div>
+
+<!-- Persistent ready-order banner — always visible until picked up -->
+<div class="ready-banner" id="readyBanner">
+  <button class="inner" id="readyBannerBtn">
+    <span class="ch">🔔</span>
+    <span style="flex:1;text-align:left">Order ready · <span id="readyBannerOp"></span></span>
+    <span class="pin" id="readyBannerPin">— — — —</span>
+  </button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1569,15 +1586,29 @@
     cancelled: { icon:"✕",  title:"Cancelled",                  sub:"Order was cancelled." },
   };
 
+  let _activeOrders = [];
   async function loadActiveOrders(){
     const { data:{ user } } = await sb.auth.getUser();
     if (!user) return;
     const { data: orders } = await sb.from("transactions")
-      .select("id, status, pickup_pin, pickup_locker_id, items, subtotal, total, created_at, operators(name), lockers:pickup_locker_id(name)")
+      .select("id, status, pickup_pin, pickup_locker_id, items, subtotal, total, created_at, stripe_payment_intent, operators(name), lockers:pickup_locker_id(name)")
       .eq("household_id", user.id)
       .in("status", ["pending","paid","ready"])
       .order("created_at", { ascending:false })
       .limit(3);
+    _activeOrders = orders || [];
+    // Sticky banner: show only when there's a ready order
+    const readyOrder = (orders||[]).find(o => o.status === "ready");
+    const banner = document.getElementById("readyBanner");
+    if (readyOrder && banner) {
+      document.getElementById("readyBannerOp").textContent = readyOrder.operators?.name || "pickup";
+      document.getElementById("readyBannerPin").textContent = (readyOrder.pickup_pin || "----").split("").join(" ");
+      banner.classList.add("show");
+      const btn = document.getElementById("readyBannerBtn");
+      btn.onclick = () => showOrderDetail(readyOrder);
+    } else if (banner) {
+      banner.classList.remove("show");
+    }
     const root = document.getElementById("activeOrderCard");
     if (!root) return;
     if (!orders?.length) { root.style.display = "none"; root.innerHTML = ""; return; }
@@ -1717,6 +1748,18 @@
     const { data:{ user } } = await sb.auth.getUser();
     if (user) subscribeToOrderChanges(user.id);
   })();
+
+  // When the tab regains focus, refresh data (cheap — small queries)
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    loadActiveOrders();
+    loadHome();
+    // Refresh the currently-visible screen if it's data-driven
+    const active = document.querySelector(".screen.active")?.id;
+    if (active === "screen-budget") loadBudget();
+    if (active === "screen-favs")   loadFavorites();
+    if (active === "screen-market") loadMarket();
+  });
 
   // Make budget rows tappable to view order detail
   // (delegated since the budget list re-renders)

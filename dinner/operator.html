@@ -138,7 +138,10 @@
       <div class="stat"><div class="v" id="statPayout">$0</div><div class="l">Your share (88%)</div></div>
     </div>
 
-    <h3 style="margin:16px 0 8px">Today's inventory</h3>
+    <div class="row between" style="margin:16px 0 8px">
+      <h3 style="margin:0">Today's inventory</h3>
+      <button class="btn small" id="bulkRestockBtn">Restock all…</button>
+    </div>
     <p style="font-size:12px;margin-bottom:10px">Tap a row to edit. Set qty to 0 to mark sold out.</p>
     <div class="card" style="padding:0" id="invList"></div>
 
@@ -308,6 +311,18 @@ function openEdit(id){
     await loadInventory();
   });
 }
+
+// Bulk restock: prompt for a single qty, apply to every item
+document.getElementById("bulkRestockBtn").addEventListener("click", async () => {
+  const v = prompt("Set qty_available to this number for every item:\n(e.g. 10 = restock everything to 10. Items not currently in your list aren't touched.)");
+  const n = Number(v);
+  if (!v || isNaN(n) || n < 0) return;
+  if (!confirm(`Set qty_available = ${n} on all ${inv.length} items?`)) return;
+  const { error } = await sb.from("inventory_items").update({ qty_available: n }).eq("operator_id", operator.id);
+  if (error) { toast("Failed: " + error.message); return; }
+  toast(`Restocked ${inv.length} items to ${n}`);
+  await loadInventory();
+});
 
 $("addBtn").addEventListener("click", async () => {
   const name = $("newName").value.trim();

@@ -269,8 +269,10 @@
     <div class="scan-card" id="scanCard">
       <div class="ring" id="scanRing">📷</div>
       <h2 id="scanTitle">Scan your fridge</h2>
-      <p id="scanSub" style="margin:6px 0 16px;font-size:13px">Open the door, point your camera, hold for 3 seconds.</p>
-      <button class="btn primary" id="scanBtn">Start scan</button>
+      <p id="scanSub" style="margin:6px 0 16px;font-size:13px">Open the door, point your camera at the shelves, snap one photo.</p>
+      <input type="file" accept="image/*" capture="environment" id="scanFile" style="display:none" />
+      <button class="btn primary" id="scanBtn">Take photo</button>
+      <button class="btn ghost" id="scanDemoBtn" style="margin-top:8px;font-size:12px">Or run demo without camera</button>
     </div>
 
     <h3 style="margin:24px 0 10px" id="ingrHead" hidden>Detected · 8 items</h3>
@@ -531,29 +533,115 @@
     window.scrollTo(0,0);
   }
 
-  // --- fridge scan sim ---
+  // --- fridge scan ---
   const scanCard=document.getElementById("scanCard");
   const scanBtn=document.getElementById("scanBtn");
+  const scanDemoBtn=document.getElementById("scanDemoBtn");
+  const scanFile=document.getElementById("scanFile");
   const scanTitle=document.getElementById("scanTitle");
   const scanSub=document.getElementById("scanSub");
   const scanRing=document.getElementById("scanRing");
-  scanBtn.addEventListener("click",()=>{
-    scanCard.classList.add("scanning");
-    scanTitle.textContent="Scanning…";
-    scanSub.textContent="Identifying items via vision model.";
-    scanBtn.textContent="…";
-    scanBtn.disabled=true;
-    scanRing.textContent="";
-    setTimeout(()=>{
+  const ingrHead=document.getElementById("ingrHead");
+  const ingrList=document.getElementById("ingrList");
+  const recHead=document.getElementById("recHead");
+  const recList=document.getElementById("recList");
+
+  function setScanning(on, label){
+    if(on){
+      scanCard.classList.add("scanning");
+      scanTitle.textContent=label||"Scanning…";
+      scanSub.textContent="Sending photo to vision model.";
+      scanBtn.disabled=true;
+      scanDemoBtn.disabled=true;
+      scanRing.textContent="";
+    }else{
       scanCard.classList.remove("scanning");
-      scanTitle.textContent="Scan complete";
-      scanSub.textContent="8 items detected. 3 recipes match.";
-      scanBtn.textContent="Re-scan";
       scanBtn.disabled=false;
-      scanRing.textContent="✓";
-      ["ingrHead","ingrList","recHead","recList"].forEach(id=>document.getElementById(id).hidden=false);
-      toast("Fridge scanned · 8 items");
-    },1800);
+      scanDemoBtn.disabled=false;
+    }
+  }
+
+  function renderScanResults(items, recipes, sourceLabel){
+    ingrHead.textContent="Detected · "+(items?.length||0)+" items";
+    ingrList.innerHTML = (items||[]).map(it=>
+      `<div class="ingr"><span>${it.emoji||"·"}</span><span class="name">${escapeHTML(it.name||"")}</span><span class="qty">${escapeHTML(it.qty||"")}</span></div>`
+    ).join("");
+    recList.innerHTML = (recipes||[]).map(r=>{
+      const thumb = (r.uses?.[0]?.match(/chicken/i)?"🍗":r.uses?.[0]?.match(/spinach|salad/i)?"🥬":r.uses?.[0]?.match(/potato/i)?"🥔":"🍽");
+      return `<div class="recipe"><div class="thumb">${thumb}</div><div class="body"><h4>${escapeHTML(r.title||"")}</h4><p style="font-size:12.5px">${r.time_min?r.time_min+" min · ":""}${escapeHTML((r.uses||[]).join(", "))}</p><div class="match">${r.match_pct?r.match_pct+"% match":""}${r.note?" · "+escapeHTML(r.note):""}</div></div></div>`;
+    }).join("<div style=\"height:10px\"></div>");
+    [ingrHead,ingrList,recHead,recList].forEach(el=>el.hidden=false);
+    scanTitle.textContent="Scan complete";
+    scanSub.textContent=sourceLabel||((items?.length||0)+" items detected. "+(recipes?.length||0)+" recipes match.");
+    scanRing.textContent="✓";
+    scanBtn.textContent="Re-scan";
+    toast("Fridge scanned · "+(items?.length||0)+" items");
+  }
+
+  function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+  // Real scan: open camera/file picker
+  scanBtn.addEventListener("click",()=>scanFile.click());
+
+  scanFile.addEventListener("change",async (e)=>{
+    const file=e.target.files?.[0];
+    if(!file)return;
+    setScanning(true,"Reading photo…");
+    const reader=new FileReader();
+    reader.onload=async ()=>{
+      const dataUrl=reader.result;
+      try{
+        scanTitle.textContent="Scanning…";
+        const res=await window.DinnerAPI.scanFridge(dataUrl);
+        if(res?.error){
+          setScanning(false);
+          scanRing.textContent="!";
+          scanTitle.textContent="Scan unavailable";
+          if(res.error==="OPENAI_API_KEY not configured"){
+            scanSub.textContent="Vision API key not set yet. Tap 'Or run demo' below to preview the flow.";
+          }else{
+            scanSub.textContent=res.error+(res.detail?" · "+res.detail.slice(0,60):"");
+          }
+          scanBtn.textContent="Try again";
+          toast("Scan failed — see card");
+          return;
+        }
+        setScanning(false);
+        renderScanResults(res.items||[], res.recipes||[], "Live scan · "+(res.items?.length||0)+" items detected");
+      }catch(err){
+        setScanning(false);
+        scanRing.textContent="!";
+        scanTitle.textContent="Connection error";
+        scanSub.textContent=String(err).slice(0,80);
+        scanBtn.textContent="Try again";
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Demo: canned data, no camera
+  const DEMO_ITEMS=[
+    {name:"Eggs",emoji:"🥚",qty:"6 left"},
+    {name:"Whole milk",emoji:"🥛",qty:"½ gal"},
+    {name:"Butter",emoji:"🧈",qty:"1 stick"},
+    {name:"Chicken thighs",emoji:"🍗",qty:"~1.4 lb"},
+    {name:"Lemons",emoji:"🍋",qty:"2"},
+    {name:"Garlic",emoji:"🧄",qty:"1 bulb"},
+    {name:"Yukon potatoes",emoji:"🥔",qty:"5"},
+    {name:"Spinach",emoji:"🥬",qty:"half-bag · use soon"}
+  ];
+  const DEMO_RECIPES=[
+    {title:"Lemon-garlic chicken & potatoes",match_pct:100,time_min:22,uses:["chicken","potatoes","lemon","garlic"]},
+    {title:"Wilted spinach + egg toast",match_pct:95,time_min:10,uses:["spinach","eggs"],note:"use spinach"},
+    {title:"Crispy smashed potatoes",match_pct:87,time_min:30,uses:["potatoes","butter","garlic"]}
+  ];
+  scanDemoBtn.addEventListener("click",()=>{
+    setScanning(true,"Demo scan…");
+    setTimeout(()=>{
+      setScanning(false);
+      renderScanResults(DEMO_ITEMS, DEMO_RECIPES, "Demo · canned data, not your fridge");
+      window.DinnerAPI?.logSimulatedScan?.().catch(()=>{});
+    },1500);
   });
 
   // --- toast ---
@@ -809,14 +897,10 @@
   await ensureSession();
   loadMarket();
 
-  // After simulated scan completes, write a real row to fridge_scans so the prototype has history.
-  // Wait for the original handler to finish (~1.8s), then log.
-  const scanBtn = document.getElementById("scanBtn");
-  if (scanBtn) {
-    scanBtn.addEventListener("click", () => {
-      setTimeout(() => DinnerAPI.logSimulatedScan().catch(()=>{}), 2200);
-    });
-  }
+  // Scan persistence is now handled inline:
+  //  - real scans: edge function writes the row on the server side (RLS-scoped via the user JWT)
+  //  - demo scans: the demo button calls DinnerAPI.logSimulatedScan() directly
+  // Nothing to wire here anymore.
 </script>
 </body>
 </html>

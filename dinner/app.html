@@ -1618,6 +1618,35 @@
     if (hero) hero.textContent = meta.title;
     const subEl = document.querySelector("#confirmSheet .confirm-hero p");
     if (subEl) subEl.textContent = meta.sub;
+    // Swap the Done button for a Cancel button if the order is still cancellable
+    const foot = document.querySelector("#confirmSheet .modal-foot");
+    if (foot) {
+      foot.innerHTML = "";
+      if (o.status === "pending" || o.status === "paid") {
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "btn ghost";
+        cancelBtn.style.color = "var(--bad)";
+        cancelBtn.textContent = o.status === "paid" ? "Cancel & refund" : "Cancel order";
+        cancelBtn.addEventListener("click", async () => {
+          if (!confirm(o.status === "paid" ? "Cancel this order? We'll refund the payment to your card." : "Cancel this order?")) return;
+          cancelBtn.disabled = true; cancelBtn.textContent = "…";
+          const { error } = await sb.from("transactions").update({ status: "cancelled" }).eq("id", o.id);
+          if (error) { toast("Cancel failed: " + error.message); cancelBtn.disabled = false; return; }
+          toast(o.status === "paid" ? "Cancelled — refund in 5-10 business days" : "Cancelled");
+          document.getElementById("confirmSheet").classList.remove("show");
+          loadActiveOrders();
+          loadBudget();
+        });
+        foot.appendChild(cancelBtn);
+      }
+      const doneBtn = document.createElement("button");
+      doneBtn.className = "btn primary";
+      doneBtn.textContent = "Done";
+      doneBtn.addEventListener("click", () => {
+        document.getElementById("confirmSheet").classList.remove("show");
+      });
+      foot.appendChild(doneBtn);
+    }
   }
 
   // Realtime — listen for status flips on this user's orders

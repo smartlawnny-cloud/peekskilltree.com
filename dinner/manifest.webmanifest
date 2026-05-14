@@ -1,0 +1,16 @@
+{
+  "name": "dinner",
+  "short_name": "dinner",
+  "description": "What's for dinner tonight, answered. Fridge scan, hyperlocal market, calm budget.",
+  "start_url": "/dinner/app.html",
+  "scope": "/dinner/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#161514",
+  "theme_color": "#161514",
+  "icons": [
+    { "src": "/dinner/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/dinner/icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/dinner/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

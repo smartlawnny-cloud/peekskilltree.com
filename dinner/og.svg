@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="bg" cx="80%" cy="0%" r="120%">
+      <stop offset="0%" stop-color="#3d4a36" stop-opacity="0.6"/>
+      <stop offset="40%" stop-color="#1f1d1b"/>
+      <stop offset="100%" stop-color="#161514"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- sage dot -->
+  <circle cx="100" cy="100" r="14" fill="#9ab086"/>
+  <text x="135" y="108" font-family="-apple-system,'SF Pro Text',system-ui,sans-serif" font-size="24" font-weight="600" fill="#f1ece1" letter-spacing="-0.5">dinner</text>
+
+  <!-- main headline -->
+  <text x="100" y="320" font-family="-apple-system,'SF Pro Text',system-ui,sans-serif" font-size="78" font-weight="600" fill="#f1ece1" letter-spacing="-2">What's for dinner.</text>
+  <text x="100" y="410" font-family="-apple-system,'SF Pro Text',system-ui,sans-serif" font-size="78" font-weight="600" fill="#9ab086" letter-spacing="-2">Actually answered.</text>
+
+  <text x="100" y="478" font-family="-apple-system,'SF Pro Text',system-ui,sans-serif" font-size="26" fill="#a8a297" letter-spacing="-0.3">Scans your fridge. Sources from neighbors. Stays in your budget.</text>
+
+  <!-- footer pill -->
+  <rect x="100" y="528" width="200" height="42" rx="21" fill="#3d4a36"/>
+  <text x="200" y="556" font-family="-apple-system,'SF Pro Text',system-ui,sans-serif" font-size="16" font-weight="500" fill="#9ab086" text-anchor="middle" letter-spacing="2">HUDSON VALLEY · BETA</text>
+
+  <text x="1100" y="595" font-family="-apple-system,'SF Pro Text',system-ui,sans-serif" font-size="16" fill="#6e6a62" text-anchor="end">peekskilltree.com/dinner</text>
+</svg>

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#161514" />
+<title>dinner · doug-admin</title>
+<style>
+  :root{
+    --bg:#161514;--bg-2:#1f1d1b;--bg-3:#26231f;--line:#2c2926;
+    --text:#f1ece1;--text-2:#a8a297;--text-3:#6e6a62;
+    --sage:#9ab086;--sage-2:#7f9870;--sage-3:#3d4a36;
+    --warn:#c98a5b;--bad:#a85c52;
+    --radius:14px;--radius-sm:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;letter-spacing:.005em}
+  h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em}
+  h1{font-size:28px;letter-spacing:-.02em}
+  h2{font-size:16px}
+  h3{font-size:11px;color:var(--text-2);font-weight:500;text-transform:uppercase;letter-spacing:.1em}
+  p{margin:0;color:var(--text-2)}
+  button,input,select{font:inherit;color:inherit}
+  input,select{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 13px;width:100%;outline:none}
+  input:focus,select:focus{border-color:var(--sage-2)}
+  .wrap{max-width:680px;margin:0 auto;padding:20px 20px 60px}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:18px 0 4px}
+  .brand{font-weight:600;letter-spacing:-.02em;font-size:17px;display:flex;align-items:center;gap:8px}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--sage);box-shadow:0 0 10px var(--sage)}
+  .brand .tag{font-size:11px;color:var(--bad);text-transform:uppercase;letter-spacing:.1em;margin-left:6px;background:rgba(168,92,82,.15);padding:3px 8px;border-radius:999px;border:1px solid var(--bad)}
+  .card{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:0;overflow:hidden}
+  .card+.card{margin-top:14px}
+  .row{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .ico{width:36px;height:36px;border-radius:9px;background:var(--bg-3);display:grid;place-items:center;font-size:16px;flex-shrink:0}
+  .row .mid{flex:1;min-width:0}
+  .row .name{font-size:14px;font-weight:500}
+  .row .meta{font-size:11px;color:var(--text-3);margin-top:2px;word-break:break-all}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:var(--radius-sm);background:var(--bg-3);border:1px solid var(--line);font-size:13px;font-weight:500;color:var(--text);cursor:pointer}
+  .btn.primary{background:var(--sage);color:#15170f;border-color:transparent}
+  .btn.danger{color:var(--bad);background:transparent}
+  .btn:disabled{opacity:.4;cursor:default}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;background:var(--bg-3);border:1px solid var(--line);border-radius:999px;font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em}
+  .pill.sage{background:var(--sage-3);border-color:transparent;color:var(--sage)}
+  .pill.warn{color:var(--warn)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 20px}
+  .stat{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+  .stat .v{font-size:22px;font-weight:600;letter-spacing:-.02em;color:var(--sage);line-height:1}
+  .stat .l{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+  .gate{padding:60px 0;text-align:center}
+  .gate h1{margin-bottom:8px}
+  .gate p{margin-bottom:24px}
+  .gate form{display:flex;flex-direction:column;gap:10px;max-width:340px;margin:0 auto}
+  .empty{text-align:center;padding:30px;color:var(--text-3);font-size:13px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg-3);border:1px solid var(--line);padding:10px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  details{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin-top:12px}
+  details summary{cursor:pointer;font-size:13px;color:var(--text-2)}
+  details pre{font-size:11px;color:var(--text-3);overflow-x:auto;margin-top:10px;background:var(--bg);padding:10px;border-radius:8px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><span class="dot"></span>dinner<span class="tag">doug admin</span></div>
+    <button class="btn" id="logoutBtn" style="display:none">Sign out</button>
+  </div>
+
+  <!-- GATE: service-role key required -->
+  <div id="gate" class="gate">
+    <h1>Service key required</h1>
+    <p style="max-width:380px;margin:0 auto 24px">This page makes server-side changes (linking auth users to operators). Paste the dinner project's service-role key once — it stays in this device's localStorage, never sent anywhere except direct Supabase calls.</p>
+    <form id="gateForm">
+      <input type="password" id="srKey" placeholder="sb_secret_... or eyJ... service_role" required />
+      <button class="btn primary" type="submit">Unlock</button>
+    </form>
+    <p style="font-size:11px;margin-top:18px;max-width:380px;margin-left:auto;margin-right:auto">
+      Find it at supabase.com → Dinner App project → Project Settings → API → Service Role secret. <br>
+      <a href="https://supabase.com/dashboard/project/eeentpgitsniymnctiag/settings/api-keys" target="_blank" style="color:var(--sage)">Open the page</a>
+    </p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash" style="display:none">
+    <h1 style="margin:14px 0 4px">Operators &amp; pending users</h1>
+    <p style="margin-bottom:14px">Link a new sign-up to one of the seeded operators. They sign in at /dinner/operator.html with their email, you approve them here.</p>
+
+    <div class="stats" id="stats">
+      <div class="stat"><div class="v" id="sOps">—</div><div class="l">Active operators</div></div>
+      <div class="stat"><div class="v" id="sPending">—</div><div class="l">Unlinked users</div></div>
+      <div class="stat"><div class="v" id="sTx">—</div><div class="l">Orders today</div></div>
+      <div class="stat"><div class="v" id="sHouseholds">—</div><div class="l">Households</div></div>
+    </div>
+
+    <h3 style="margin:18px 0 8px">Unlinked users (waiting to be approved)</h3>
+    <div class="card" id="pendingList"><div class="empty">None pending.</div></div>
+
+    <h3 style="margin:24px 0 8px">Operators</h3>
+    <div class="card" id="opsList"></div>
+
+    <details>
+      <summary>Add a new operator</summary>
+      <form id="newOpForm" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+        <input id="opName" placeholder="Operator name" required style="grid-column:1/-1" />
+        <select id="opKind"><option value="farm">farm</option><option value="home_cook">home cook</option><option value="meal_prep">meal prep</option></select>
+        <input id="opDist" type="number" placeholder="distance band (mi)" />
+        <input id="opBlurb" placeholder="One-line blurb" style="grid-column:1/-1" />
+        <button class="btn primary" type="submit" style="grid-column:1/-1">Create operator</button>
+      </form>
+    </details>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SB_URL = "https://eeentpgitsniymnctiag.supabase.co";
+const KEY_STORAGE = "dinner-doug-srkey";
+let sb;
+
+const $ = (id) => document.getElementById(id);
+const toast = (m) => { const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2400); };
+const esc = (s) => String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function init(key){
+  sb = createClient(SB_URL, key, { auth: { persistSession: false } });
+  $("gate").style.display = "none";
+  $("dash").style.display = "";
+  $("logoutBtn").style.display = "";
+  loadAll();
+}
+
+$("gateForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const k = $("srKey").value.trim();
+  if (!k) return;
+  localStorage.setItem(KEY_STORAGE, k);
+  init(k);
+});
+$("logoutBtn").addEventListener("click", () => {
+  localStorage.removeItem(KEY_STORAGE);
+  location.reload();
+});
+
+// Auto-unlock if we have a key already
+const saved = localStorage.getItem(KEY_STORAGE);
+if (saved) init(saved);
+
+async function loadAll(){
+  const [ops, opUsers, users, txToday, households] = await Promise.all([
+    sb.from("operators").select("*").order("name"),
+    sb.from("operator_users").select("*"),
+    sb.auth.admin.listUsers(),
+    sb.from("transactions").select("id,subtotal,status,created_at").gte("created_at", new Date(new Date().setHours(0,0,0,0)).toISOString()),
+    sb.from("households").select("id,display_name,created_at"),
+  ]);
+
+  const operators = ops.data || [];
+  const linked = new Set((opUsers.data||[]).map(o => o.user_id));
+  const linkedByOp = {}; (opUsers.data||[]).forEach(o => { (linkedByOp[o.operator_id] = linkedByOp[o.operator_id] || []).push(o.user_id); });
+  const allUsers = (users.data?.users || users.users || []);
+  const householdRows = households.data || [];
+  // "unlinked users" = email/non-anonymous users not yet in operator_users
+  const pending = allUsers.filter(u => u.email && !u.is_anonymous && !linked.has(u.id));
+
+  $("sOps").textContent = operators.filter(o=>o.active).length;
+  $("sPending").textContent = pending.length;
+  $("sTx").textContent = (txToday.data||[]).length;
+  $("sHouseholds").textContent = householdRows.length;
+
+  // Pending list
+  const pList = $("pendingList");
+  if (!pending.length) {
+    pList.innerHTML = `<div class="empty">No one waiting. When an operator signs in at /dinner/operator.html they'll show up here.</div>`;
+  } else {
+    pList.innerHTML = pending.map(u => `
+      <div class="row">
+        <div class="ico">📩</div>
+        <div class="mid">
+          <div class="name">${esc(u.email)}</div>
+          <div class="meta">${esc(u.id)} · joined ${new Date(u.created_at).toLocaleDateString()}</div>
+        </div>
+        <select class="link-op" data-user="${u.id}" style="width:auto;font-size:12px;padding:7px 8px">
+          <option value="">link to operator…</option>
+          ${operators.filter(o=>o.active).map(o => `<option value="${o.id}">${esc(o.name)}</option>`).join("")}
+        </select>
+        <button class="btn primary link-btn" data-user="${u.id}" disabled>Link</button>
+      </div>`).join("");
+    pList.querySelectorAll(".link-op").forEach(sel => {
+      sel.addEventListener("change", (e) => {
+        const btn = pList.querySelector(`.link-btn[data-user="${e.target.dataset.user}"]`);
+        if (btn) btn.disabled = !e.target.value;
+      });
+    });
+    pList.querySelectorAll(".link-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const userId = btn.dataset.user;
+        const opId = pList.querySelector(`.link-op[data-user="${userId}"]`).value;
+        if (!opId) return;
+        btn.disabled = true; btn.textContent = "…";
+        const { error } = await sb.from("operator_users").insert({ user_id: userId, operator_id: opId, role: "owner" });
+        if (error) { toast("Link failed: " + error.message); btn.disabled=false; btn.textContent="Link"; return; }
+        toast("Linked");
+        await loadAll();
+      });
+    });
+  }
+
+  // Operators
+  $("opsList").innerHTML = operators.map(op => {
+    const owners = (linkedByOp[op.id]||[]).map(uid => {
+      const u = allUsers.find(x => x.id === uid);
+      return u?.email || uid.slice(0,8);
+    }).join(", ") || "no users yet";
+    const KIND_LOGO = { farm:"🌾", home_cook:"🍝", meal_prep:"🍱" };
+    return `
+      <div class="row">
+        <div class="ico">${KIND_LOGO[op.kind]||"🛒"}</div>
+        <div class="mid">
+          <div class="name">${esc(op.name)} ${op.active?'':'<span class="pill warn">inactive</span>'}</div>
+          <div class="meta">${esc(op.kind)} · ${op.distance_band||"?"} mi · owners: ${esc(owners)}</div>
+        </div>
+        <button class="btn small toggle-op" data-id="${op.id}" data-active="${op.active}">${op.active?'Deactivate':'Activate'}</button>
+      </div>`;
+  }).join("");
+  $("opsList").querySelectorAll(".toggle-op").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id, active = btn.dataset.active === "true";
+      btn.disabled = true;
+      const { error } = await sb.from("operators").update({ active: !active }).eq("id", id);
+      if (error) { toast("Failed: " + error.message); btn.disabled = false; return; }
+      toast(active ? "Deactivated" : "Activated");
+      await loadAll();
+    });
+  });
+}
+
+$("newOpForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("opName").value.trim();
+  const kind = $("opKind").value;
+  const distance_band = Number($("opDist").value) || null;
+  const blurb = $("opBlurb").value.trim() || null;
+  if (!name) return;
+  const { error } = await sb.from("operators").insert({ name, kind, distance_band, blurb });
+  if (error) { toast("Failed: " + error.message); return; }
+  $("opName").value=""; $("opDist").value=""; $("opBlurb").value="";
+  toast("Created");
+  await loadAll();
+});
+</script>
+</body>
+</html>

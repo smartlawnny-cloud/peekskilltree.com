@@ -80,8 +80,12 @@
   .toast{position:fixed;bottom:calc(20px + var(--safe-bot));left:50%;transform:translateX(-50%);background:var(--bg-3);border:1px solid var(--line);padding:10px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.4)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
-  .tx-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .tx-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);transition:background .3s}
   .tx-row:last-child{border-bottom:0}
+  .tx-row.new{background:linear-gradient(90deg,var(--sage-3) 0%,transparent 100%);animation:slidein .35s ease}
+  .tx-row .new-dot{position:absolute;top:-2px;right:-3px;width:10px;height:10px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 4px rgba(154,176,134,.18);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(154,176,134,.18)}50%{box-shadow:0 0 0 10px rgba(154,176,134,.04)}}
+  @keyframes slidein{from{background:var(--sage-3);transform:translateX(-6px)}to{background:transparent;transform:none}}
   .tx-row .mid{flex:1;min-width:0}
   .tx-row .mid .v{font-size:14px}
   .tx-row .mid .s{font-size:11px;color:var(--text-3);margin-top:2px}
@@ -328,35 +332,48 @@ async function loadTodayTx(){
   renderTx();
 }
 
+const STATUS_META = {
+  pending:   { icon:"⏳", label:"awaiting payment", next:null,         nextLabel:null },
+  paid:      { icon:"📦", label:"paid · prep + drop in locker", next:"ready",     nextLabel:"Ready for pickup" },
+  ready:     { icon:"🔔", label:"in the locker · awaiting pickup",   next:"picked_up", nextLabel:"Mark picked up" },
+  picked_up: { icon:"✓",  label:"done",                              next:null,        nextLabel:null },
+  cancelled: { icon:"✕",  label:"cancelled",                          next:null,        nextLabel:null },
+};
+
 function renderTx(){
   const list = $("txList");
   if (!txs.length) { list.innerHTML = `<div class="empty">No orders yet today.</div>`; return; }
   let gross = 0, itemCount = 0;
+  const now = Date.now();
   list.innerHTML = txs.map(t => {
     gross += Number(t.subtotal||0);
     itemCount += (t.items||[]).reduce((s,i)=>s+(i.qty||1), 0);
     const time = new Date(t.created_at).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
     const itemSummary = (t.items||[]).map(i=>`${i.qty||1}× ${i.name}`).join(", ");
-    const done = t.status === "picked_up";
-    return `<div class="tx-row" data-id="${t.id}">
-      <div style="font-size:22px">${done?'✓':t.status==='paid'?'📦':'⏳'}</div>
+    const m = STATUS_META[t.status] || { icon:"·", label:t.status };
+    const isNew = (now - new Date(t.created_at).getTime()) < 60_000 && t.status === "paid";
+    return `<div class="tx-row${isNew?' new':''}" data-id="${t.id}">
+      <div style="font-size:22px;position:relative">
+        ${m.icon}
+        ${isNew?'<span class="new-dot"></span>':''}
+      </div>
       <div class="mid">
         <div class="v">${esc(itemSummary)}</div>
-        <div class="s">${time} · ${esc(t.status)}${t.pickup_pin?' · PIN '+t.pickup_pin:''}</div>
+        <div class="s">${time} · ${esc(m.label)}${t.pickup_pin?' · PIN '+t.pickup_pin:''}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <div class="amt">$${Number(t.subtotal||0).toFixed(2)}</div>
-        ${done ? '' : `<button class="btn small primary mark-done" data-id="${t.id}">Mark picked up</button>`}
+        ${m.next ? `<button class="btn small primary advance-tx" data-id="${t.id}" data-next="${m.next}">${m.nextLabel}</button>` : ''}
       </div>
     </div>`;
   }).join("");
-  list.querySelectorAll(".mark-done").forEach(btn => {
+  list.querySelectorAll(".advance-tx").forEach(btn => {
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
-      btn.disabled = true; btn.textContent = "…";
-      const { error } = await sb.from("transactions").update({ status: "picked_up" }).eq("id", btn.dataset.id);
-      if (error) { toast("Update failed: " + error.message); btn.disabled = false; btn.textContent = "Mark picked up"; return; }
-      toast("Marked picked up");
+      btn.disabled = true; const prev = btn.textContent; btn.textContent = "…";
+      const { error } = await sb.from("transactions").update({ status: btn.dataset.next }).eq("id", btn.dataset.id);
+      if (error) { toast("Update failed: " + error.message); btn.disabled = false; btn.textContent = prev; return; }
+      toast("Updated · " + btn.dataset.next.replace("_"," "));
       await loadTodayTx();
     });
   });
@@ -365,9 +382,50 @@ function renderTx(){
   $("statPayout").textContent = "$" + (gross * 0.88).toFixed(0);
 }
 
+// ---------- realtime: new orders auto-appear ----------
+let _rtChannel = null;
+function subscribeToOrders(){
+  if (_rtChannel) return;
+  _rtChannel = sb.channel(`op-orders-${operator.id}`)
+    .on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "transactions",
+      filter: `operator_id=eq.${operator.id}`,
+    }, async (payload) => {
+      const ev = payload.eventType;
+      if (ev === "INSERT") {
+        // gentle audio chime
+        try {
+          const ctx = new (window.AudioContext||window.webkitAudioContext)();
+          const o = ctx.createOscillator(); const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.type = "sine"; o.frequency.value = 880; g.gain.value = 0.07;
+          o.start(); o.stop(ctx.currentTime + 0.18);
+          setTimeout(() => {
+            const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+            o2.connect(g2); g2.connect(ctx.destination);
+            o2.type = "sine"; o2.frequency.value = 1320; g2.gain.value = 0.07;
+            o2.start(); o2.stop(ctx.currentTime + 0.18);
+          }, 180);
+        } catch {}
+        toast("New order");
+      }
+      await loadTodayTx();
+    })
+    .subscribe();
+}
+
 // ---------- bootstrap ----------
-checkAuth();
+async function bootstrap(){
+  await checkAuth();
+  if (operator) subscribeToOrders();
+}
+bootstrap();
 sb.auth.onAuthStateChange(() => checkAuth());
+
+// also auto-refresh stats every 60s as a safety net if realtime drops
+setInterval(() => { if (operator) loadTodayTx(); }, 60_000);
 </script>
 </body>
 </html>

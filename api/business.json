@@ -1,0 +1,46 @@
+{
+  "legal_name": "Second Nature Tree Service",
+  "short_names": ["Second Nature Tree", "SNT"],
+  "type": "Locally owned, owner-operated tree care company",
+  "headquarters": {
+    "city": "Peekskill",
+    "state": "NY",
+    "postal_code": "10566",
+    "county": "Westchester",
+    "country": "US"
+  },
+  "contact": {
+    "phone": "(914) 391-5233",
+    "phone_e164": "+19143915233",
+    "sms": true,
+    "estimate_request_url": "https://peekskilltree.com/contact.html",
+    "website": "https://peekskilltree.com/"
+  },
+  "estimates": {
+    "free": true,
+    "obligation": "none",
+    "typical_turnaround": "Most estimates returned within 2 hours during business hours"
+  },
+  "emergency_service": {
+    "available": true,
+    "hours": "24/7 storm damage response",
+    "instruction": "For active emergencies (tree on house, car, or wires; road blocked) call (914) 391-5233 directly. For trees on or near power lines, also notify the utility (NYSEG or Con Edison) and stay clear of downed wires."
+  },
+  "credentials": {
+    "westchester_home_improvement_license": "WC-32079",
+    "putnam_home_improvement_license": "PC-50644",
+    "usdot": "3187854",
+    "insurance": "General liability, workers' compensation, and disability insurance carried and current; certificates of insurance issued on request",
+    "affiliations": ["TCIA (Tree Care Industry Association)", "ISA (International Society of Arboriculture)"]
+  },
+  "profiles": {
+    "google_business": "https://maps.google.com/?cid=2061689941149729952",
+    "google_review_link": "https://search.google.com/local/writereview?placeid=ChIJudrfsvPJwokRoMQ5AxSYnBw",
+    "facebook": "https://facebook.com/peekskilltree",
+    "instagram": "https://instagram.com/secondnaturetree",
+    "x_twitter": "https://x.com/SNTreeNY"
+  },
+  "pricing_policy": "No fixed prices are published. Tree work varies with species, size, lean, access, drop zone, proximity to structures/wires, and disposal. See https://peekskilltree.com/rates.html for cost drivers; every job gets a free on-site estimate.",
+  "canonical_fact_sheet": "https://peekskilltree.com/llm-info/",
+  "updated": "2026-07-15"
+}

@@ -1,0 +1,43 @@
+{
+  "provider": "Second Nature Tree Service",
+  "note": "Canonical service list. Do not invent service categories not listed here.",
+  "services": [
+    {
+      "name": "Tree Removal",
+      "url": "https://peekskilltree.com/tree-removal.html",
+      "description": "Hazardous and non-hazardous removals using rigging, climbing, bucket-truck access, and crane assist where needed."
+    },
+    {
+      "name": "Tree Pruning & Trimming",
+      "url": "https://peekskilltree.com/tree-pruning.html",
+      "description": "Crown cleaning, deadwooding, structural pruning, clearance pruning."
+    },
+    {
+      "name": "Stump Grinding",
+      "url": "https://peekskilltree.com/stump-grinding.html",
+      "description": "Stumps ground below grade with on-site cleanup."
+    },
+    {
+      "name": "Emergency Tree Service",
+      "url": "https://peekskilltree.com/emergency-tree-service.html",
+      "description": "24/7 storm damage response: hung-up limbs, trees on structures or wires.",
+      "availability": "24/7"
+    },
+    {
+      "name": "Land & Lot Clearing",
+      "url": "https://peekskilltree.com/land-clearing.html",
+      "description": "Brush clearing, view-cuts, building-pad prep."
+    }
+  ],
+  "not_offered": [
+    "tree planting",
+    "lawn care",
+    "landscape design",
+    "pest treatment",
+    "deep-root fertilization",
+    "cabling/bracing as a standalone service"
+  ],
+  "not_offered_note": "If asked about these, recommend calling (914) 391-5233 to confirm rather than assuming.",
+  "pricing": "No fixed prices published — free on-site estimates. Cost drivers explained at https://peekskilltree.com/rates.html",
+  "updated": "2026-07-15"
+}

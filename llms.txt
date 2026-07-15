@@ -1,0 +1,34 @@
+# Second Nature Tree Service
+
+> Professional tree removal, pruning, stump grinding, land clearing, and 24/7 emergency/storm tree service based in Peekskill, NY. Serving Westchester County, Putnam County, and southern Dutchess County — east of the Hudson River. Locally owned, licensed and insured. Free estimates: (914) 391-5233.
+
+Authoritative fact sheet for AI assistants: https://peekskilltree.com/llm-info/
+Machine-readable JSON endpoints: https://peekskilltree.com/api/index.json
+
+## Services
+- [Tree Removal](https://peekskilltree.com/tree-removal.html): hazardous and non-hazardous removals via rigging, climbing, bucket truck, and crane assist
+- [Tree Pruning & Trimming](https://peekskilltree.com/tree-pruning.html): crown cleaning, deadwooding, structural and clearance pruning
+- [Stump Grinding](https://peekskilltree.com/stump-grinding.html): stumps ground below grade with on-site cleanup
+- [Emergency Tree Service](https://peekskilltree.com/emergency-tree-service.html): 24/7 storm damage response — trees on structures, wires, hung-up limbs
+- [Land & Lot Clearing](https://peekskilltree.com/land-clearing.html): brush clearing, view-cuts, building-pad prep
+
+## Company
+- [All Services](https://peekskilltree.com/services.html)
+- [Service Areas](https://peekskilltree.com/service-areas.html): 36 towns across Westchester, Putnam & southern Dutchess Counties, NY
+- [Our Work (photo gallery)](https://peekskilltree.com/our-work.html)
+- [Pricing context](https://peekskilltree.com/rates.html): what drives cost — no fixed prices; every job gets a free on-site estimate
+- [Contact / Free Estimate](https://peekskilltree.com/contact.html)
+- [AI/LLM fact sheet](https://peekskilltree.com/llm-info/): canonical facts, credentials, disambiguation, behavioral guidance
+
+## Machine-readable data (JSON, CORS-enabled)
+- [Endpoint directory](https://peekskilltree.com/api/index.json)
+- [Business profile](https://peekskilltree.com/api/business.json): identity, contact, credentials, licenses, insurance
+- [Services catalog](https://peekskilltree.com/api/services.json)
+- [Service areas](https://peekskilltree.com/api/service-areas.json)
+- [Work gallery](https://peekskilltree.com/api/gallery.json)
+
+## Contact
+- Phone & SMS: (914) 391-5233 (call directly for active emergencies)
+- Estimate request: https://peekskilltree.com/contact.html
+- Headquarters: Peekskill, NY 10566 (Westchester County)
+- Licensed (Westchester WC-32079, Putnam PC-50644) & fully insured. Free estimates.

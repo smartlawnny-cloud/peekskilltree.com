@@ -26,3 +26,7 @@ User-agent: Applebot-Extended
 Allow: /
 
 Sitemap: https://peekskilltree.com/sitemap.xml
+
+# LLM / AI-assistant resources
+# llms.txt index:  https://peekskilltree.com/llms.txt
+# JSON data API:   https://peekskilltree.com/api/index.json

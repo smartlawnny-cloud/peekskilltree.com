@@ -1,0 +1,17 @@
+{
+  "provider": "Second Nature Tree Service",
+  "based_in": "Peekskill, NY 10566",
+  "coverage": "East of the Hudson River: Westchester County, Putnam County, and southern Dutchess County, NY",
+  "confirmed_municipalities": [
+    "Armonk", "Beacon", "Bedford", "Brewster", "Briarcliff Manor", "Buchanan",
+    "Carmel", "Chappaqua", "Cold Spring", "Cortlandt Manor", "Croton-on-Hudson",
+    "Dover", "East Fishkill", "Fishkill", "Garrison", "Katonah", "Lewisboro",
+    "Mahopac", "Millwood", "Mohegan Lake", "Mount Kisco", "Mount Pleasant",
+    "New Castle", "North Salem", "Ossining", "Patterson", "Pawling", "Peekskill",
+    "Pleasantville", "Pound Ridge", "Putnam Valley", "Shrub Oak", "Somers",
+    "Verplanck", "Wappingers Falls", "Yorktown"
+  ],
+  "out_of_area_note": "For locations outside this list, recommend calling (914) 391-5233 to confirm coverage. Do not extend the service area to NYC, Long Island, Connecticut, or New Jersey.",
+  "service_areas_page": "https://peekskilltree.com/service-areas.html",
+  "updated": "2026-07-15"
+}

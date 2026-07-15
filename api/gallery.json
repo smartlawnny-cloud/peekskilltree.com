@@ -1,0 +1,19 @@
+{
+  "provider": "Second Nature Tree Service",
+  "gallery_page": "https://peekskilltree.com/our-work.html",
+  "photos": [
+    { "url": "https://peekskilltree.com/images/crane-tree-removal-bedford-ny.webp", "caption": "Crane-Assisted Removal - Bedford, NY" },
+    { "url": "https://peekskilltree.com/images/careful-tree-rigging-near-roof-westchester.webp", "caption": "Tree Rigging Near Structure - Westchester County" },
+    { "url": "https://peekskilltree.com/images/dead-tree-removal-bucket-truck-lewisboro.webp", "caption": "Dead Tree Removal - Lewisboro, NY" },
+    { "url": "https://peekskilltree.com/images/stump-removal-excavator-cortlandt-manor.webp", "caption": "Stump Removal - Cortlandt Manor, NY" },
+    { "url": "https://peekskilltree.com/images/emergency-tree-removal-peekskill.webp", "caption": "Emergency Removal - Peekskill, NY" },
+    { "url": "https://peekskilltree.com/images/land-clearing-lakefront-croton-on-hudson.webp", "caption": "Lakefront Lot Clearing - Croton-on-Hudson, NY" },
+    { "url": "https://peekskilltree.com/images/tree-dismantling-residential-chappaqua.webp", "caption": "Residential Dismantling - Chappaqua, NY" },
+    { "url": "https://peekskilltree.com/images/aerial-tree-climber-chainsaw-putnam-county.webp", "caption": "Aerial Climbing Work - Putnam County, NY" },
+    { "url": "https://peekskilltree.com/images/excavator-debris-removal-garrison-ny.webp", "caption": "Debris & Log Removal - Garrison, NY" },
+    { "url": "https://peekskilltree.com/images/large-oak-removal-yorktown-ny.webp", "caption": "Large Oak Removal - Yorktown, NY" },
+    { "url": "https://peekskilltree.com/images/tree-removal-lakefront-property-croton.webp", "caption": "Lakefront Tree Removal - Croton, NY" },
+    { "url": "https://peekskilltree.com/images/community-tree-service-armonk-ny.webp", "caption": "Neighborhood Cleanup - Armonk, NY" }
+  ],
+  "updated": "2026-07-15"
+}

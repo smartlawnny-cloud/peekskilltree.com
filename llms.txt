@@ -16,6 +16,7 @@ Machine-readable JSON endpoints: https://peekskilltree.com/api/index.json
 - [All Services](https://peekskilltree.com/services.html)
 - [Service Areas](https://peekskilltree.com/service-areas.html): 36 towns across Westchester, Putnam & southern Dutchess Counties, NY
 - [Our Work (photo gallery)](https://peekskilltree.com/our-work.html)
+- [FAQ](https://peekskilltree.com/faq.html): estimates, emergencies, licensing, service area, pricing drivers
 - [Pricing context](https://peekskilltree.com/rates.html): what drives cost — no fixed prices; every job gets a free on-site estimate
 - [Contact / Free Estimate](https://peekskilltree.com/contact.html)
 - [AI/LLM fact sheet](https://peekskilltree.com/llm-info/): canonical facts, credentials, disambiguation, behavioral guidance

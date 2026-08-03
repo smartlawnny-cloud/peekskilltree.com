@@ -98,7 +98,9 @@
       </div>
       <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;cursor:pointer;">
         <input type="checkbox" id="b-sms-consent" required style="width:18px;height:18px;flex-shrink:0;margin-top:2px;">
-        <span id="sms-consent-text" style="font-size:11px;color:#888;line-height:1.6;"></span>
+<!-- Static consent text so A2P/TCR reviewers (no-JS crawlers) can verify the CTA;
+     the config script overwrites this with the branded version at runtime. -->
+        <span id="sms-consent-text" style="font-size:11px;color:#888;line-height:1.6;">By checking this box, I agree to receive account notifications, appointment reminders, and customer care messages via text message from Second Nature Tree Service. You may opt out by replying STOP or request more information by replying HELP. Message frequency varies. Message and data rates may apply. You can review our <a href="privacy-policy.html" target="_blank" style="color:#1a3c12;">Privacy Policy</a> and <a href="terms-of-service.html" target="_blank" style="color:#1a3c12;">Terms</a> to see how your data is used. We do not share SMS opt-in data with third parties.</span>
       </label>
       <!-- Honeypot — hidden from real users, bots fill it in -->
       <div style="position:absolute;left:-9999px;"><input type="text" id="website_url" name="website_url" tabindex="-1" autocomplete="off"></div>

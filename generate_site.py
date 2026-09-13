@@ -158,6 +158,7 @@ def header(title, desc, canonical, hero_img=None, h1="", breadcrumb="", active_n
         </li>
         <li><a href="service-areas.html">Service Areas</a></li>
         <li><a href="our-work.html">Our Work</a></li>
+        <li><a href="recent-work.html">Recent Work</a></li>
         <li><a href="contact.html">Contact</a></li>
       </ul>
       <div class="header-cta">

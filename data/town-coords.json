@@ -178,5 +178,10 @@
   "name": "Dover",
   "lat": 41.689444,
   "lng": -73.580833
+ },
+ "philipstown": {
+  "name": "Philipstown",
+  "lat": 41.422778,
+  "lng": -73.950556
  }
 }

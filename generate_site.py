@@ -1,6 +1,6 @@
 import os, re
 
-BASE = "/Users/dougbrown/Desktop/Claude/peekskilltree.com"
+BASE = os.environ.get("SITE_BASE") or os.path.dirname(os.path.abspath(__file__))  # Sept 20 2026: generate next to this script (was a hardcoded Desktop path)
 
 def webp_swap(html):
     """Replace .jpg with .webp in <img> src attributes only (not og:image, schema, poster)."""
@@ -179,6 +179,19 @@ def header(title, desc, canonical, hero_img=None, h1="", breadcrumb="", active_n
 {breadcrumb_schema}
   <main>
 '''
+
+
+# ── Recent work near <town> strip (Sept 20 2026) — feed-driven, no names/addresses; coords in data/town-coords.json ──
+import json as _json
+try: _TOWN_COORDS = _json.load(open("data/town-coords.json"))
+except Exception: _TOWN_COORDS = {}
+def rw_widget(slug=None, town_name=None, lat=None, lng=None):
+    c = _TOWN_COORDS.get(slug) if slug else None
+    if c: lat, lng, town_name = c["lat"], c["lng"], town_name or c["name"]
+    if lat is None: return ""
+    return (f'<link rel="stylesheet" href="css/recent-work-widget.css">'
+            f'<section class="rwn" id="rw-near" data-lat="{lat:.5f}" data-lng="{lng:.5f}" data-town="{town_name}" aria-label="Recent work near {town_name}"></section>'
+            f'<script src="js/recent-work-widget.js" defer></script>')
 
 FOOTER = '''
   </main>
@@ -785,7 +798,7 @@ index_content = header(
   </script>
 '''
 
-write_page("index.html", index_content + FOOTER)
+write_page("index.html", index_content + rw_widget(None, "Peekskill", 41.29009, -73.92042) + FOOTER)
 print("Created index.html")
 
 # ============================================================
@@ -1654,7 +1667,7 @@ for town in towns:
   <script type="application/ld+json">{faq_schema}</script>
 {town_schema}
 '''
-    t += FOOTER
+    t += rw_widget(slug, town['name']) + FOOTER
     write_page(filename, t)
     print(f"Created {filename}")
 

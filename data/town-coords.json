@@ -1,0 +1,182 @@
+{
+ "yorktown": {
+  "name": "Yorktown",
+  "lat": 41.2956496,
+  "lng": -73.80819
+ },
+ "cortlandt": {
+  "name": "Cortlandt Manor",
+  "lat": 41.2815783,
+  "lng": -73.7131153
+ },
+ "briarcliff-manor": {
+  "name": "Briarcliff Manor",
+  "lat": 41.1456512,
+  "lng": -73.8237456
+ },
+ "chappaqua": {
+  "name": "Chappaqua",
+  "lat": 41.157284,
+  "lng": -73.7676998
+ },
+ "garrison": {
+  "name": "Garrison",
+  "lat": 41.3825364,
+  "lng": -73.9466505
+ },
+ "croton-on-hudson": {
+  "name": "Croton-on-Hudson",
+  "lat": 41.2088215,
+  "lng": -73.8905175
+ },
+ "ossining": {
+  "name": "Ossining",
+  "lat": 41.1613168,
+  "lng": -73.8620367
+ },
+ "cold-spring": {
+  "name": "Cold Spring",
+  "lat": 41.4200938,
+  "lng": -73.9545831
+ },
+ "mount-kisco": {
+  "name": "Mount Kisco",
+  "lat": 41.2042616,
+  "lng": -73.7270761
+ },
+ "somers": {
+  "name": "Somers",
+  "lat": 41.3280884,
+  "lng": -73.685745
+ },
+ "buchanan": {
+  "name": "Buchanan",
+  "lat": 41.2620383,
+  "lng": -73.9381943
+ },
+ "mahopac": {
+  "name": "Mahopac",
+  "lat": 41.3712985,
+  "lng": -73.7390641
+ },
+ "katonah": {
+  "name": "Katonah",
+  "lat": 41.2558715,
+  "lng": -73.6847453
+ },
+ "pleasantville": {
+  "name": "Pleasantville",
+  "lat": 41.1328736,
+  "lng": -73.7926335
+ },
+ "bedford": {
+  "name": "Bedford",
+  "lat": 41.2041304,
+  "lng": -73.642509
+ },
+ "putnam-valley": {
+  "name": "Putnam Valley",
+  "lat": 41.3406164,
+  "lng": -73.8769558
+ },
+ "pound-ridge": {
+  "name": "Pound Ridge",
+  "lat": 41.2087066,
+  "lng": -73.5748483
+ },
+ "lewisboro": {
+  "name": "Lewisboro",
+  "lat": 41.2381511,
+  "lng": -73.5226245
+ },
+ "north-salem": {
+  "name": "North Salem",
+  "lat": 41.3348169,
+  "lng": -73.5712374
+ },
+ "armonk": {
+  "name": "Armonk",
+  "lat": 41.132973,
+  "lng": -73.7126064
+ },
+ "new-castle": {
+  "name": "New Castle",
+  "lat": 41.185278,
+  "lng": -73.768611
+ },
+ "peekskill": {
+  "name": "Peekskill",
+  "lat": 41.289811,
+  "lng": -73.9204922
+ },
+ "mohegan-lake": {
+  "name": "Mohegan Lake",
+  "lat": 41.314821,
+  "lng": -73.8461971
+ },
+ "shrub-oak": {
+  "name": "Shrub Oak",
+  "lat": 41.321508,
+  "lng": -73.8298696
+ },
+ "verplanck": {
+  "name": "Verplanck",
+  "lat": 41.2561895,
+  "lng": -73.9611121
+ },
+ "mount-pleasant": {
+  "name": "Mount Pleasant",
+  "lat": 41.0962975,
+  "lng": -73.7934355
+ },
+ "millwood": {
+  "name": "Millwood",
+  "lat": 41.194297,
+  "lng": -73.794718
+ },
+ "carmel": {
+  "name": "Carmel",
+  "lat": 41.4266361,
+  "lng": -73.6788272
+ },
+ "brewster": {
+  "name": "Brewster",
+  "lat": 41.3943918,
+  "lng": -73.6170896
+ },
+ "patterson": {
+  "name": "Patterson",
+  "lat": 41.513726,
+  "lng": -73.6062323
+ },
+ "beacon": {
+  "name": "Beacon",
+  "lat": 41.5048402,
+  "lng": -73.9695409
+ },
+ "fishkill": {
+  "name": "Fishkill",
+  "lat": 41.5355745,
+  "lng": -73.898702
+ },
+ "east-fishkill": {
+  "name": "East Fishkill",
+  "lat": 41.5533306,
+  "lng": -73.7956214
+ },
+ "wappingers-falls": {
+  "name": "Wappingers Falls",
+  "lat": 41.597081,
+  "lng": -73.9169663
+ },
+ "pawling": {
+  "name": "Pawling",
+  "lat": 41.5618381,
+  "lng": -73.6026148
+ },
+ "dover": {
+  "name": "Dover",
+  "lat": 41.689444,
+  "lng": -73.580833
+ }
+}
